@@ -1,4 +1,4 @@
-package services;
+package sync;
 
 import entities.Race;
 import org.springframework.stereotype.Service;

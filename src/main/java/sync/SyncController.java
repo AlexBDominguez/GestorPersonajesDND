@@ -1,9 +1,8 @@
-package controllers;
+package sync;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import services.RaceSyncService;
 
 @RestController
 @RequestMapping("/api/sync")
