@@ -1,5 +1,8 @@
 package entities;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -10,7 +13,9 @@ public class Spell {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String indexApi; // Ej: "fireball"
+    @Column(unique=true)
+    private String indexApi;
+
     private String name;
     private int level;
     private String school;
@@ -21,6 +26,11 @@ public class Spell {
 
     @Column(length = 2000)
     private String description;
+
+
+    @OneToMany(mappedBy = "spell")
+    private Set<CharacterSpell> characterSpells = new HashSet<>();
+    
 
     // Constructors
     public Spell() {}

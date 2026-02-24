@@ -3,10 +3,13 @@ package services;
 import dto.PlayerCharacterDto;
 import entities.PlayerCharacter;
 import entities.Race;
+import entities.Spell;
+import entities.CharacterSpell;
 import entities.DndClass;
 import org.springframework.stereotype.Service;
 import repositories.PlayerCharacterRepository;
 import repositories.RaceRepository;
+import repositories.SpellRepository;
 import repositories.DndClassRepository;
 
 import java.util.List;
@@ -18,6 +21,8 @@ public class PlayerCharacterService {
     private final PlayerCharacterRepository characterRepository;
     private final RaceRepository raceRepository;
     private final DndClassRepository dndClassRepository;
+    private final CharacterSpellRepository CharacterSpellRepository;
+    private final SpellRepository spellRepository;
 
     public PlayerCharacterService(PlayerCharacterRepository characterRepository,
                                   RaceRepository raceRepository,
@@ -90,4 +95,60 @@ public class PlayerCharacterService {
 
         return dto;
     }
+
+    public void addSpellToCharacter(Long characterId, Long spellId){
+        
+        PlayerCharacter character = PlayerCharacterRepository.findById(characterId)
+            .orElseThrow(() -> new RuntimeException("Character not found"));
+
+        Spell spell = spellRepository.findById(spellId)
+            .orElseThrow(() -> new RuntimeException("Spelle not found"));
+
+        character.getSpells().add(spell);
+
+        PlayerCharacterRepository.save(character);
+    }
+
+
+    public void learnSpell(Long characterId, Long spellId) {
+
+        PlayerCharacter character = PlayerCharacterRepository.findById(characterId)
+            .orElseThrow(() -> new RuntimeException("Character not found"));
+
+        Spell spell = spellRepository.findById(spellId)
+            .orElseThrow(() -> new RuntimeException("Spell not found"));
+
+        CharacterSpell characterSpell = new CharacterSpell(character, spell);
+        
+        CharacterSpellRepository.save(characterSpell);
+    }
+
+    public void prepareSpell(Long characterId, Long spellId) {
+        
+        CharacterSpell characterSpell = characterSpellRepository
+            .findByCharacterIdAndSpellId(characterId, spellId)
+            .orElseThrow(() -> new RuntimeException("Spell not learned"));
+
+        characterSpell.setPrepared(true);
+
+        characterSpellRepository.save(characterSpell);
+    }
+
+    public void castSpell(Long characterId, Long spellId){
+
+        CharacterSpell characterSpell = characterSpellRepository
+            .findByCharacterIdAndSpellId(characterId, spellId)
+            .orElseThrow(() -> new RuntimeException("Spell not learned"));
+
+        if (!characterSpell.isPrepared()){
+            throw new RuntimeException("Spell is not prepared");            
+        }
+
+        characterSpell.setTimesCast(characterSpell.getTimesCast() + 1);
+
+        characterRepository.save(characterSpell)
+    }
+
+
+
 }

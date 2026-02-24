@@ -31,4 +31,35 @@ public class PlayerCharacterController {
         return playerCharacterService.create(dto);
     }
 
+    @PostMapping("/{characterId}/spells/{spellId}")
+    public void addSpellToCharacter(
+        @PathVariable Long characterId,
+        @PathVariable Long spellId) {
+            
+        playerCharacterService.addSpellToCharacter(characterId, spellId);
+        }
+        
+    @PostMapping("/{characterId}/learn-spell/{spellId}")
+    public void learnSpell(
+        @PathVariable Long characterId,
+        @PathVariable Long spellId) {
+
+            playerCharacterService.learnSpell(characterId, spellId);
+        }
+
+    @PostMapping("/{characterId}/spells{spellId}/prepare")
+    public void prepareSpell(
+        @PathVariable Long characterId,
+        @PathVariable Long spellId) {
+
+        playerCharacterService.prepareSpell(characterId, spellId);
+        }
+
+    @PostMapping("/{characterId}/spells{spellId}/cast")
+    public void castSpell(
+        @PathVariable Long characterId,
+        @PathVariable Long spellId) {
+
+        playerCharacterService.castSpell(characterId, spellId);
+        }
 }

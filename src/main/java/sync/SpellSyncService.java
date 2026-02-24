@@ -22,23 +22,58 @@ public class SpellSyncService {
 
     public void syncSpells() {
 
-        Map response = restTemplate.getForObject(BASE_URL, Map.class);
+        Map<String, Object> response = restTemplate.getForObject(BASE_URL, Map.class);
+        List<Map<String, Object>> results =
+                (List<Map<String, Object>>) response.get("results");
 
-        var results = (java.util.List<Map<String, Object>>) response.get("results");
+        for (Map<String, Object> spellSummary : results) {
 
-        for (Map<String, Object> spellData : results) {
+            String index = (String) spellSummary.get("index");
 
-            String index = (String) spellData.get("index");
-
-            if (spellRepository.findByIndexApi(index).isEmpty()) {
-
-                Spell spell = new Spell();
-                spell.setIndexApi(index);
-                spell.setName((String) spellData.get("name"));
-                spell.setLevel(0); // De momento simplificado
-
-                spellRepository.save(spell);
+            if (spellRepository.findByIndexApi(index).isPresent()) {
+                continue;
             }
+
+            // Llamada detalle
+            Map<String, Object> detail =
+                    restTemplate.getForObject(BASE_URL + "/" + index, Map.class);
+
+            Spell spell = new Spell();
+
+            spell.setIndexApi(index);
+            spell.setName((String) detail.get("name"));
+            spell.setLevel((Integer) detail.get("level"));
+
+            // School
+            Map<String, Object> school =
+                    (Map<String, Object>) detail.get("school");
+            if (school != null) {
+                spell.setSchool((String) school.get("name"));
+            }
+
+            spell.setCastingTime((String) detail.get("casting_time"));
+            spell.setRange((String) detail.get("range"));
+            spell.setDuration((String) detail.get("duration"));
+
+            // Components (array → string)
+            List<String> components =
+                    (List<String>) detail.get("components");
+            if (components != null) {
+                spell.setComponents(String.join(", ", components));
+            }
+
+            // Description (array → texto largo)
+            List<String> descList =
+                    (List<String>) detail.get("desc");
+            if (descList != null) {
+                spell.setDescription(String.join("\n", descList));
+            }
+
+            spellRepository.save(spell);
         }
+
+        System.out.println("Spells synchronized correctly.");
     }
 }
+
+

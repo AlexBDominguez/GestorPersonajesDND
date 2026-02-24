@@ -2,7 +2,10 @@ package entities;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
 
 @Entity
 @Table(name = "characters")
@@ -35,6 +38,14 @@ public class PlayerCharacter {
 
     @Column(columnDefinition = "TEXT")
     private String backstory;
+
+    @OneToMany(mappedBy = "character", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CharacterSpell> characterSpells = new HashSet<>();
+    
+
+    private Set<Spell> spells = new HashSet<>();
+
+
 
     public PlayerCharacter(){}
 
