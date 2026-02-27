@@ -16,7 +16,8 @@ public class PlayerCharacter {
     private Long id;
     private String name;
     private int level;
-
+    
+    
     @ManyToOne
     @JoinColumn(name = "race_id")
     private Race race;
