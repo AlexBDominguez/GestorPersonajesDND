@@ -4,12 +4,17 @@ import dto.PlayerCharacterDto;
 import entities.PlayerCharacter;
 import entities.Race;
 import entities.Spell;
+import entities.SpellSlotProgression;
 import entities.CharacterSpell;
+import entities.CharacterSpellSlot;
 import entities.DndClass;
 import org.springframework.stereotype.Service;
 import repositories.PlayerCharacterRepository;
 import repositories.RaceRepository;
 import repositories.SpellRepository;
+import repositories.SpellSlotProgressionRepository;
+import repositories.CharacterSpellSlotRepository;
+import repositories.CharacterSpellRepository;
 import repositories.DndClassRepository;
 
 import java.util.List;
@@ -21,15 +26,25 @@ public class PlayerCharacterService {
     private final PlayerCharacterRepository characterRepository;
     private final RaceRepository raceRepository;
     private final DndClassRepository dndClassRepository;
-    private final CharacterSpellRepository CharacterSpellRepository;
+    private final CharacterSpellRepository characterSpellRepository;
     private final SpellRepository spellRepository;
+    private final SpellSlotProgressionRepository progressionRepository;
+    private final CharacterSpellSlotRepository slotRepository;
 
     public PlayerCharacterService(PlayerCharacterRepository characterRepository,
                                   RaceRepository raceRepository,
-                                  DndClassRepository dndClassRepository) {
+                                  DndClassRepository dndClassRepository,
+                                  CharacterSpellRepository characterSpellRepository,
+                                  SpellRepository spellRepository,
+                                  SpellSlotProgressionRepository progressionRepository,
+                                  CharacterSpellSlotRepository slotRepository) {
         this.characterRepository = characterRepository;
         this.raceRepository = raceRepository;
         this.dndClassRepository = dndClassRepository;
+        this.characterSpellRepository = characterSpellRepository;
+        this.spellRepository = spellRepository;
+        this.progressionRepository = progressionRepository;
+        this.slotRepository = slotRepository;
     }
 
     public List<PlayerCharacterDto> getAll() {
@@ -66,7 +81,7 @@ public class PlayerCharacterService {
         playerCharacter.setProficiencyBonus((int) Math.ceil((2 + (dto.getLevel() - 1) / 4.0)));
 
         characterRepository.save(playerCharacter);
-
+        generateSpellSlots(playerCharacter);
         return toDto(playerCharacter);
     }
 
@@ -96,23 +111,25 @@ public class PlayerCharacterService {
         return dto;
     }
 
+    // Añadir hechizos al personaje
     public void addSpellToCharacter(Long characterId, Long spellId){
         
-        PlayerCharacter character = PlayerCharacterRepository.findById(characterId)
+        PlayerCharacter character = characterRepository.findById(characterId)
             .orElseThrow(() -> new RuntimeException("Character not found"));
 
         Spell spell = spellRepository.findById(spellId)
-            .orElseThrow(() -> new RuntimeException("Spelle not found"));
+            .orElseThrow(() -> new RuntimeException("Spell not found"));
 
-        character.getSpells().add(spell);
-
-        PlayerCharacterRepository.save(character);
+        // Crear la relación CharacterSpell en lugar de usar getSpells()
+        CharacterSpell characterSpell = new CharacterSpell(character, spell);
+        characterSpellRepository.save(characterSpell);
     }
 
 
+    // Aprender hechizos
     public void learnSpell(Long characterId, Long spellId) {
 
-        PlayerCharacter character = PlayerCharacterRepository.findById(characterId)
+        PlayerCharacter character = characterRepository.findById(characterId)
             .orElseThrow(() -> new RuntimeException("Character not found"));
 
         Spell spell = spellRepository.findById(spellId)
@@ -120,9 +137,10 @@ public class PlayerCharacterService {
 
         CharacterSpell characterSpell = new CharacterSpell(character, spell);
         
-        CharacterSpellRepository.save(characterSpell);
+        characterSpellRepository.save(characterSpell);
     }
 
+    //Preparar hechizos
     public void prepareSpell(Long characterId, Long spellId) {
         
         CharacterSpell characterSpell = characterSpellRepository
@@ -134,6 +152,7 @@ public class PlayerCharacterService {
         characterSpellRepository.save(characterSpell);
     }
 
+    // Lanzar hechizos
     public void castSpell(Long characterId, Long spellId){
 
         CharacterSpell characterSpell = characterSpellRepository
@@ -144,9 +163,49 @@ public class PlayerCharacterService {
             throw new RuntimeException("Spell is not prepared");            
         }
 
+        Spell spell = characterSpell.getSpell();
+        int spellLevel = spell.getLevel();
+
+        CharacterSpellSlot slot = slotRepository.findByCharacterIdAndSpellLevel(characterId, spellLevel);
+
+        if(slot == null){
+            throw new RuntimeException("No spell slots available for this spell level");
+        }
+
+        if(slot.getUsedSlots() >= slot.getMaxSlots()){
+            throw new RuntimeException("No spell slots available");
+        }
+
+        slot.setUsedSlots(slot.getUsedSlots() + 1);
         characterSpell.setTimesCast(characterSpell.getTimesCast() + 1);
 
-        characterRepository.save(characterSpell)
+        slotRepository.save(slot);
+        characterSpellRepository.save(characterSpell);
+}
+
+    // Generar ranuras de hechizos
+    public void generateSpellSlots(PlayerCharacter character) {
+        //Borrar slots anteriores
+
+        List<CharacterSpellSlot> existingSlots = slotRepository.findByCharacterId(character.getId());
+        slotRepository.deleteAll(existingSlots);
+
+        //Buscar progresión según clase y nivel
+        List<SpellSlotProgression> progression = 
+            progressionRepository.findByDndClassAndCharacterLevel(
+                character.getDndClass(),
+                character.getLevel()  
+        );
+
+        for(SpellSlotProgression p: progression){
+            CharacterSpellSlot slot = new CharacterSpellSlot();
+            slot.setCharacter(character);
+            slot.setSpellLevel(p.getSpellLevel());
+            slot.setMaxSlots(p.getSlots());
+            slot.setUsedSlots(0);
+
+            slotRepository.save(slot);
+        }
     }
 
 

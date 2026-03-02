@@ -1,4 +1,4 @@
-public package repositories;
+package repositories;
 
 import java.util.List;
 import java.util.Optional;
@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import entities.CharacterSpell;
 
-interface CharacterSpellRepository extends JpaRepository<CharacterSpell, Long> {
+public interface CharacterSpellRepository extends JpaRepository<CharacterSpell, Long> {
 
     List<CharacterSpell> findByCharacter(Long CharacterId);
 

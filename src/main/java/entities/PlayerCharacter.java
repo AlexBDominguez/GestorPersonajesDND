@@ -44,10 +44,6 @@ public class PlayerCharacter {
     private Set<CharacterSpell> characterSpells = new HashSet<>();
     
 
-    private Set<Spell> spells = new HashSet<>();
-
-
-
     public PlayerCharacter(){}
 
     public Long getId() {
