@@ -51,7 +51,7 @@ public class DndClassSyncService {
 
             }
 
-            existing.setIndexName(indexName);
+            existing.setIndexApi(indexName);
             existing.setName(name);
             existing.setHitDie(hitDie);
             existing.setProficiencies(proficiencies);

@@ -1,6 +1,9 @@
 package controllers;
 
+import dto.LevelUpRequest;
 import dto.PlayerCharacterDto;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import services.PlayerCharacterService;
 
@@ -62,4 +65,22 @@ public class PlayerCharacterController {
 
         playerCharacterService.castSpell(characterId, spellId);
         }
+
+    @PostMapping("/{id}/level-up")
+    public ResponseEntity<String> levelUp(
+        @PathVariable Long id,
+        @RequestBody LevelUpRequest request){
+
+            playerCharacterService.levelUp(id, request);
+            return ResponseEntity.ok("Character leveled up!");
+        } 
+
+    @PostMapping("/{id}/long-rest")
+    public ResponseEntity<String> longRest(@PathVariable Long id){
+        playerCharacterService.longRest(id);
+        return ResponseEntity.ok("Character has taken a long rest");
+    }
+
+      
+    
 }

@@ -10,7 +10,11 @@ public class DndClass {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String indexName;
+
+    @Column(unique = true)
+    private String indexApi;
+
+    
     private String name;
     private int hitDie;
 
@@ -31,11 +35,11 @@ public class DndClass {
     public void setId(Long id){
         this.id = id;
     }
-    public String getIndexName(){
-        return indexName;
+    public String getIndexApi(){
+        return indexApi;
     }
-    public void setIndexName(String indexName){
-        this.indexName = indexName;
+    public void setIndexApi(String indexApi){
+        this.indexApi = indexApi;
     }
     public String getName(){
         return name;

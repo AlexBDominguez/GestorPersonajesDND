@@ -1,13 +1,19 @@
 package services;
 
+import dto.LevelUpRequest;
 import dto.PlayerCharacterDto;
 import entities.PlayerCharacter;
 import entities.Race;
 import entities.Spell;
 import entities.SpellSlotProgression;
+import jakarta.transaction.Transactional;
 import entities.CharacterSpell;
 import entities.CharacterSpellSlot;
+import entities.ClassLevelFeature;
+import entities.ClassLevelProgression;
 import entities.DndClass;
+
+import org.springframework.beans.factory.config.RuntimeBeanNameReference;
 import org.springframework.stereotype.Service;
 import repositories.PlayerCharacterRepository;
 import repositories.RaceRepository;
@@ -207,6 +213,61 @@ public class PlayerCharacterService {
             slotRepository.save(slot);
         }
     }
+
+    //Subir de nivel
+    @Transactional
+    public void startLevelUp(Long characterId){
+
+        PlayerCharacter character = characterRepository.findById(characterId)
+            .orElseThrow(() -> new RuntimeException("Character not found"));
+
+        int newLevel = character.getLevel() + 1;
+        character.setLevel(newLevel);
+
+        updateProficiency(character);
+
+        characterRepository.save(character);
+
+        ClassLevelProgression progression =
+            progressionRepository
+                .findByDndClassAndLevel(character.getDndClass(), newLevel)
+                .orElseThrow(() -> new RuntimeException("No progression data"));
+
+        for(ClassLevelFeature feature : progression.getFeatures()){
+
+            if(feature.isRequiresChoice()){
+                createTask(character, newLevel, feature);
+            } else {
+                applyAutomaticFeature(character, feature);
+            }
+        }
+}
+
+
+    
+
+    //Descanso largo
+    @Transactional
+    public void longRest(Long characterId) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+            .orElseThrow(() -> new RuntimeException("Character not found"));
+
+        // Recuperar todos los spell slots
+        List<CharacterSpellSlot> slots = 
+            slotRepository.findByCharacterId(characterId);
+
+        for (CharacterSpellSlot slot: slots){
+            slot.setUsedSlots(0);
+        }
+
+        slotRepository.saveAll(slots);
+
+        //Recuperar HP al máximo
+        character.setCurrentHP(character.getMaxHP());
+        characterRepository.save(character);
+    }
+
+
 
 
 

@@ -32,7 +32,7 @@ public class DndClassService {
     public DndClassDto create(DndClassDto dto){
         DndClass dndClass = new DndClass();
         dndClass.setName(dto.getName());
-        dndClass.setIndexName(dto.getIndexName());
+        dndClass.setIndexApi(dto.getIndexName());
         dndClass.setHitDie(dto.getHitDie());
         dndClass.setProficiencies(dto.getProficiencies());
         dndClass.setDescription(dto.getDescription());
@@ -46,7 +46,7 @@ public class DndClassService {
         DndClassDto dto = new DndClassDto();
         dto.setId(dndClass.getId());
         dto.setName(dndClass.getName());
-        dto.setIndexName(dndClass.getIndexName());
+        dto.setIndexName(dndClass.getIndexApi());
         dto.setHitDie(dndClass.getHitDie());
         dto.setProficiencies(dndClass.getProficiencies());
         dto.setDescription(dndClass.getDescription());
