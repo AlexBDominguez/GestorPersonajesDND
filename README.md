@@ -142,24 +142,8 @@ mvn spring-boot:run
 - `POST /api/sync/races` - Sincronizar razas
 - `POST /api/sync/spells` - Sincronizar hechizos
 
-## 📄 Licencia
-
-Este proyecto es de código abierto y está disponible bajo la licencia MIT.
 
 ## 👤 Autor
 
 Alexandre Barbeito
 
-## 🤝 Contribuciones
-
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/NuevaCaracteristica`)
-3. Commit tus cambios (`git commit -m 'Añadir nueva característica'`)
-4. Push a la rama (`git push origin feature/NuevaCaracteristica`)
-5. Abre un Pull Request
-
-## 📞 Soporte
-
-Para reportar bugs o solicitar nuevas características, por favor abre un issue en el repositorio.
