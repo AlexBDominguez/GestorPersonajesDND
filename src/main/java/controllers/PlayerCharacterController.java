@@ -1,6 +1,5 @@
 package controllers;
 
-import dto.LevelUpRequest;
 import dto.PlayerCharacterDto;
 
 import org.springframework.http.ResponseEntity;
@@ -67,11 +66,8 @@ public class PlayerCharacterController {
         }
 
     @PostMapping("/{id}/level-up")
-    public ResponseEntity<String> levelUp(
-        @PathVariable Long id,
-        @RequestBody LevelUpRequest request){
-
-            playerCharacterService.levelUp(id, request);
+    public ResponseEntity<String> levelUp(@PathVariable Long id){
+            playerCharacterService.startLevelUp(id);
             return ResponseEntity.ok("Character leveled up!");
         } 
 

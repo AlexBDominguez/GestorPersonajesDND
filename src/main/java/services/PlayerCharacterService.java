@@ -1,6 +1,5 @@
 package services;
 
-import dto.LevelUpRequest;
 import dto.PlayerCharacterDto;
 import entities.PlayerCharacter;
 import entities.Race;
@@ -13,7 +12,6 @@ import entities.ClassLevelFeature;
 import entities.ClassLevelProgression;
 import entities.DndClass;
 
-import org.springframework.beans.factory.config.RuntimeBeanNameReference;
 import org.springframework.stereotype.Service;
 import repositories.PlayerCharacterRepository;
 import repositories.RaceRepository;
@@ -22,6 +20,7 @@ import repositories.SpellSlotProgressionRepository;
 import repositories.CharacterSpellSlotRepository;
 import repositories.CharacterSpellRepository;
 import repositories.DndClassRepository;
+import repositories.ClassLevelProgressionRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,23 +33,26 @@ public class PlayerCharacterService {
     private final DndClassRepository dndClassRepository;
     private final CharacterSpellRepository characterSpellRepository;
     private final SpellRepository spellRepository;
-    private final SpellSlotProgressionRepository progressionRepository;
+    private final SpellSlotProgressionRepository spellSlotProgressionRepository;
     private final CharacterSpellSlotRepository slotRepository;
+    private final ClassLevelProgressionRepository classLevelProgressionRepository;
 
     public PlayerCharacterService(PlayerCharacterRepository characterRepository,
                                   RaceRepository raceRepository,
                                   DndClassRepository dndClassRepository,
                                   CharacterSpellRepository characterSpellRepository,
                                   SpellRepository spellRepository,
-                                  SpellSlotProgressionRepository progressionRepository,
-                                  CharacterSpellSlotRepository slotRepository) {
+                                  SpellSlotProgressionRepository spellSlotProgressionRepository,
+                                  CharacterSpellSlotRepository slotRepository,
+                                  ClassLevelProgressionRepository classLevelProgressionRepository) {
         this.characterRepository = characterRepository;
         this.raceRepository = raceRepository;
         this.dndClassRepository = dndClassRepository;
         this.characterSpellRepository = characterSpellRepository;
         this.spellRepository = spellRepository;
-        this.progressionRepository = progressionRepository;
+        this.spellSlotProgressionRepository = spellSlotProgressionRepository;
         this.slotRepository = slotRepository;
+        this.classLevelProgressionRepository = classLevelProgressionRepository;
     }
 
     public List<PlayerCharacterDto> getAll() {
@@ -187,7 +189,7 @@ public class PlayerCharacterService {
 
         slotRepository.save(slot);
         characterSpellRepository.save(characterSpell);
-}
+    }   
 
     // Generar ranuras de hechizos
     public void generateSpellSlots(PlayerCharacter character) {
@@ -198,7 +200,7 @@ public class PlayerCharacterService {
 
         //Buscar progresión según clase y nivel
         List<SpellSlotProgression> progression = 
-            progressionRepository.findByDndClassAndCharacterLevel(
+            spellSlotProgressionRepository.findByDndClassAndCharacterLevel(
                 character.getDndClass(),
                 character.getLevel()  
         );
@@ -228,22 +230,19 @@ public class PlayerCharacterService {
 
         characterRepository.save(character);
 
-        ClassLevelProgression progression =
-            progressionRepository
-                .findByDndClassAndLevel(character.getDndClass(), newLevel)
-                .orElseThrow(() -> new RuntimeException("No progression data"));
+        ClassLevelProgression progression = 
+            classLevelProgressionRepository
+            .findByDndClassAndLevel(character.getDndClass(), newLevel)
+            .orElseThrow(() -> new RuntimeException("No progression data"));
 
         for(ClassLevelFeature feature : progression.getFeatures()){
-
             if(feature.isRequiresChoice()){
                 createTask(character, newLevel, feature);
-            } else {
+            }else{
                 applyAutomaticFeature(character, feature);
             }
         }
-}
-
-
+    }
     
 
     //Descanso largo
@@ -267,8 +266,21 @@ public class PlayerCharacterService {
         characterRepository.save(character);
     }
 
+    private void updateProficiency(PlayerCharacter character){
+        int level = character.getLevel();
 
+        int proficiency = 2 + ((level -1) / 4);
+        character.setProficiencyBonus(proficiency);
+    }
 
+    private void createTask(PlayerCharacter character, int targetLevel, ClassLevelFeature feature) {
+        // TODO: Implementar lógica de creación de tareas
+        // Este método será implementado en el futuro
+    }
 
+    private void applyAutomaticFeature(PlayerCharacter character, ClassLevelFeature feature) {
+        // TODO: Implementar lógica de aplicación automática de features
+        // Este método será implementado en el futuro
+    }
 
 }

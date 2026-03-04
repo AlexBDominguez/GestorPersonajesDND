@@ -29,7 +29,7 @@ public class DndClassSyncService {
 
         for (Map<String, String> cls: results){
             String indexName = cls.get("index");
-            String detailUrl = "https://www.dnd5eapi.co/api.classes/" + indexName;
+            String detailUrl = "https://www.dnd5eapi.co/api/classes/" + indexName; 
 
 
             //2. Obtener datos detallados
@@ -51,7 +51,7 @@ public class DndClassSyncService {
 
             }
 
-            existing.setIndexApi(indexName);
+            existing.setIndexName(indexName);
             existing.setName(name);
             existing.setHitDie(hitDie);
             existing.setProficiencies(proficiencies);

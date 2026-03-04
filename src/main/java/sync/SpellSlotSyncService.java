@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import entities.DndClass;
+import entities.SpellSlotProgression;
 import repositories.DndClassRepository;
 import repositories.SpellSlotProgressionRepository;
 
@@ -34,7 +35,7 @@ public class SpellSlotSyncService {
             throw new RuntimeException("Class not found: " + classIndex);
         }
 
-        String url = BASE_URL + classIndex + "levels";
+        String url = BASE_URL + classIndex + "/levels";
 
         Object[] levels = restTemplate.getForObject(url, Object[].class);
 
@@ -47,9 +48,9 @@ public class SpellSlotSyncService {
                 Map<String, Object> spellcasting = 
                     (Map<String, Object>) levelMap.get("spellcasting");
 
-                for (int spellLevel = 1, spellLevel <= 9; spellLevel++){
+                for (int spellLevel = 1; spellLevel <= 9; spellLevel++){
                     String key = "spell_slots_level_" + spellLevel;
-                    if (spellcasting.containsKey(key){
+                    if (spellcasting.containsKey(key)){
 
                         Integer slots = (Integer) spellcasting.get(key);
 

@@ -5,7 +5,7 @@ import entities.Spell;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import repositories.SpellRepository;
-
+import java.util.List; 
 import java.util.Map;
 
 @Service

@@ -7,6 +7,9 @@ import repositories.RaceRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+
+@Service
 public class RaceService {
     private final RaceRepository raceRepository;
 

@@ -6,5 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface DndClassRepository extends JpaRepository<DndClass, Long> {
-    Optional<DndClass> findByIndexApi(String indexApi);
+    Optional<DndClass> findByIndexName(String indexName);
+    DndClass findByIndexApi(String indexApi);
+
 }

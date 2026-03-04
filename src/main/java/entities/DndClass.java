@@ -12,7 +12,7 @@ public class DndClass {
     private Long id;
 
     @Column(unique = true)
-    private String indexApi;
+    private String indexName;
 
     
     private String name;
@@ -35,11 +35,11 @@ public class DndClass {
     public void setId(Long id){
         this.id = id;
     }
-    public String getIndexApi(){
-        return indexApi;
+    public String getIndexName(){
+        return indexName;
     }
-    public void setIndexApi(String indexApi){
-        this.indexApi = indexApi;
+    public void setIndexName(String indexName){
+        this.indexName = indexName;
     }
     public String getName(){
         return name;

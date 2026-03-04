@@ -12,8 +12,9 @@ public class SyncController {
     private final RaceSyncService raceSyncService;
     private final SpellSlotSyncService spellSlotSyncService;
 
-    public SyncController(RaceSyncService raceSyncService) {
+    public SyncController(RaceSyncService raceSyncService, SpellSlotSyncService spellSlotSyncService) {
         this.raceSyncService = raceSyncService;
+        this.spellSlotSyncService = spellSlotSyncService;
     }
 
     @PostMapping("/races")
