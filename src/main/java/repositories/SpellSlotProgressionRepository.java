@@ -9,6 +9,8 @@ import entities.SpellSlotProgression;
 
 public interface SpellSlotProgressionRepository extends JpaRepository<SpellSlotProgression, Long> {
     
+    void deleteByDndClassAndCharacterLevel(DndClass dndClass, int characterLevel);
+
     List<SpellSlotProgression> findByDndClassAndCharacterLevel(DndClass dndClass, int characterLevel);
 
 }

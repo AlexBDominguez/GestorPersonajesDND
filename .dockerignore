@@ -1,0 +1,14 @@
+# No incluir estos archivos/carpetas en la imagen Docker
+target/
+.git/
+.gitignore
+*.md
+.env
+.env.example
+docker-compose.yml
+Dockerfile
+.dockerignore
+*.log
+.vscode/
+.idea/
+*.iml

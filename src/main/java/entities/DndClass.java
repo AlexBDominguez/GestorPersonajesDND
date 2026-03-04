@@ -13,7 +13,6 @@ public class DndClass {
 
     @Column(unique = true)
     private String indexName;
-
     
     private String name;
     private int hitDie;
@@ -22,6 +21,19 @@ public class DndClass {
     @CollectionTable(name = "class_proficiencies", joinColumns = @JoinColumn(name = "class_id"))
     @Column(name = "proficiency")
     private List<String> proficiencies;
+
+    //Saving Throws
+    @ElementCollection
+    @CollectionTable(name = "class_saving_throws", joinColumns = @JoinColumn(name = "class_id"))
+    @Column(name = "saving_throw")
+    private List<String> savingThrows;
+
+    //SpellCasting
+    private String spellcastingAbility;
+
+    //Nivel al que se elige subclase
+    private Integer subclassLevel;
+
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -65,5 +77,25 @@ public class DndClass {
     public void setDescription(String description){
         this.description = description;
     }
+    public String getSpellcastingAbility() {
+        return spellcastingAbility;
+    }
+    public void setSpellcastingAbility(String spellcastingAbility) {
+        this.spellcastingAbility = spellcastingAbility;
+    }
+    public Integer getSubclassLevel() {
+        return subclassLevel;
+    }
+    public void setSubclassLevel(Integer subclassLevel) {
+        this.subclassLevel = subclassLevel;
+    }
 
+    public List<String> getSavingThrows() {
+        return savingThrows;
+    }
+
+    public void setSavingThrows(List<String> savingThrows) {
+        this.savingThrows = savingThrows;
+    }
+    
 }
