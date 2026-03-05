@@ -1,26 +1,11 @@
 package services;
 
 import dto.PlayerCharacterDto;
-import entities.PlayerCharacter;
-import entities.Race;
-import entities.Spell;
-import entities.SpellSlotProgression;
+import entities.*;
+import enumeration.FeatureType;
 import jakarta.transaction.Transactional;
-import entities.CharacterSpell;
-import entities.CharacterSpellSlot;
-import entities.ClassLevelFeature;
-import entities.ClassLevelProgression;
-import entities.DndClass;
-
 import org.springframework.stereotype.Service;
-import repositories.PlayerCharacterRepository;
-import repositories.RaceRepository;
-import repositories.SpellRepository;
-import repositories.SpellSlotProgressionRepository;
-import repositories.CharacterSpellSlotRepository;
-import repositories.CharacterSpellRepository;
-import repositories.DndClassRepository;
-import repositories.ClassLevelProgressionRepository;
+import repositories.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,22 +14,29 @@ import java.util.stream.Collectors;
 public class PlayerCharacterService {
 
     private final PlayerCharacterRepository characterRepository;
+    private final CharacterSpellRepository characterSpellRepository;
     private final RaceRepository raceRepository;
     private final DndClassRepository dndClassRepository;
-    private final CharacterSpellRepository characterSpellRepository;
     private final SpellRepository spellRepository;
     private final SpellSlotProgressionRepository spellSlotProgressionRepository;
     private final CharacterSpellSlotRepository slotRepository;
     private final ClassLevelProgressionRepository classLevelProgressionRepository;
+    private final ClassFeatureRepository classFeatureRepository;
+    private final CharacterFeatureRepository characterFeatureRepository;
+    private final PendingTaskRepository pendingTaskRepository;
 
-    public PlayerCharacterService(PlayerCharacterRepository characterRepository,
-                                  RaceRepository raceRepository,
-                                  DndClassRepository dndClassRepository,
-                                  CharacterSpellRepository characterSpellRepository,
-                                  SpellRepository spellRepository,
-                                  SpellSlotProgressionRepository spellSlotProgressionRepository,
-                                  CharacterSpellSlotRepository slotRepository,
-                                  ClassLevelProgressionRepository classLevelProgressionRepository) {
+    public PlayerCharacterService(
+            PlayerCharacterRepository characterRepository,
+            RaceRepository raceRepository,
+            DndClassRepository dndClassRepository,
+            CharacterSpellRepository characterSpellRepository,
+            SpellRepository spellRepository,
+            SpellSlotProgressionRepository spellSlotProgressionRepository,
+            CharacterSpellSlotRepository slotRepository,
+            ClassLevelProgressionRepository classLevelProgressionRepository,
+            ClassFeatureRepository classFeatureRepository,
+            CharacterFeatureRepository characterFeatureRepository,
+            PendingTaskRepository pendingTaskRepository) {
         this.characterRepository = characterRepository;
         this.raceRepository = raceRepository;
         this.dndClassRepository = dndClassRepository;
@@ -53,7 +45,12 @@ public class PlayerCharacterService {
         this.spellSlotProgressionRepository = spellSlotProgressionRepository;
         this.slotRepository = slotRepository;
         this.classLevelProgressionRepository = classLevelProgressionRepository;
+        this.classFeatureRepository = classFeatureRepository;
+        this.characterFeatureRepository = characterFeatureRepository;
+        this.pendingTaskRepository = pendingTaskRepository;
     }
+
+    // ========== CRUD BÁSICO ==========
 
     public List<PlayerCharacterDto> getAll() {
         return characterRepository.findAll().stream()
@@ -64,10 +61,10 @@ public class PlayerCharacterService {
     public PlayerCharacterDto getById(Long id) {
         PlayerCharacter playerCharacter = characterRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("PlayerCharacter not found with ID: " + id));
-
         return toDto(playerCharacter);
     }
 
+    @Transactional
     public PlayerCharacterDto create(PlayerCharacterDto dto) {
         PlayerCharacter playerCharacter = new PlayerCharacter();
 
@@ -86,15 +83,15 @@ public class PlayerCharacterService {
                 .orElseThrow(() -> new RuntimeException("DndClass not found"));
         playerCharacter.setDndClass(dndClass);
 
-        playerCharacter.setProficiencyBonus((int) Math.ceil((2 + (dto.getLevel() - 1) / 4.0)));
+        playerCharacter.setProficiencyBonus(2 + ((dto.getLevel() - 1) / 4));
 
         characterRepository.save(playerCharacter);
         generateSpellSlots(playerCharacter);
+        
         return toDto(playerCharacter);
     }
 
     private PlayerCharacterDto toDto(PlayerCharacter playerCharacter) {
-
         PlayerCharacterDto dto = new PlayerCharacterDto();
 
         dto.setId(playerCharacter.getId());
@@ -119,68 +116,60 @@ public class PlayerCharacterService {
         return dto;
     }
 
-    // Añadir hechizos al personaje
-    public void addSpellToCharacter(Long characterId, Long spellId){
-        
+    // ========== SPELL MANAGEMENT ==========
+
+    @Transactional
+    public void addSpellToCharacter(Long characterId, Long spellId) {
         PlayerCharacter character = characterRepository.findById(characterId)
-            .orElseThrow(() -> new RuntimeException("Character not found"));
+                .orElseThrow(() -> new RuntimeException("Character not found"));
 
         Spell spell = spellRepository.findById(spellId)
-            .orElseThrow(() -> new RuntimeException("Spell not found"));
+                .orElseThrow(() -> new RuntimeException("Spell not found"));
 
-        // Crear la relación CharacterSpell en lugar de usar getSpells()
         CharacterSpell characterSpell = new CharacterSpell(character, spell);
         characterSpellRepository.save(characterSpell);
     }
 
-
-    // Aprender hechizos
+    @Transactional
     public void learnSpell(Long characterId, Long spellId) {
-
         PlayerCharacter character = characterRepository.findById(characterId)
-            .orElseThrow(() -> new RuntimeException("Character not found"));
+                .orElseThrow(() -> new RuntimeException("Character not found"));
 
         Spell spell = spellRepository.findById(spellId)
-            .orElseThrow(() -> new RuntimeException("Spell not found"));
+                .orElseThrow(() -> new RuntimeException("Spell not found"));
 
         CharacterSpell characterSpell = new CharacterSpell(character, spell);
-        
         characterSpellRepository.save(characterSpell);
     }
 
-    //Preparar hechizos
+    @Transactional
     public void prepareSpell(Long characterId, Long spellId) {
-        
         CharacterSpell characterSpell = characterSpellRepository
-            .findByCharacterIdAndSpellId(characterId, spellId)
-            .orElseThrow(() -> new RuntimeException("Spell not learned"));
+                .findByCharacterIdAndSpellId(characterId, spellId)
+                .orElseThrow(() -> new RuntimeException("Spell not learned"));
 
         characterSpell.setPrepared(true);
-
         characterSpellRepository.save(characterSpell);
     }
 
-    // Lanzar hechizos
-    public void castSpell(Long characterId, Long spellId){
-
+    @Transactional
+    public void castSpell(Long characterId, Long spellId) {
         CharacterSpell characterSpell = characterSpellRepository
-            .findByCharacterIdAndSpellId(characterId, spellId)
-            .orElseThrow(() -> new RuntimeException("Spell not learned"));
+                .findByCharacterIdAndSpellId(characterId, spellId)
+                .orElseThrow(() -> new RuntimeException("Spell not learned"));
 
-        if (!characterSpell.isPrepared()){
-            throw new RuntimeException("Spell is not prepared");            
+        if (!characterSpell.isPrepared()) {
+            throw new RuntimeException("Spell is not prepared");
         }
 
         Spell spell = characterSpell.getSpell();
         int spellLevel = spell.getLevel();
 
-        CharacterSpellSlot slot = slotRepository.findByCharacterIdAndSpellLevel(characterId, spellLevel);
+        CharacterSpellSlot slot = slotRepository
+                .findByCharacterIdAndSpellLevel(characterId, spellLevel)
+                .orElseThrow(() -> new RuntimeException("No spell slots available for this spell level"));
 
-        if(slot == null){
-            throw new RuntimeException("No spell slots available for this spell level");
-        }
-
-        if(slot.getUsedSlots() >= slot.getMaxSlots()){
+        if (slot.getUsedSlots() >= slot.getMaxSlots()) {
             throw new RuntimeException("No spell slots available");
         }
 
@@ -189,23 +178,24 @@ public class PlayerCharacterService {
 
         slotRepository.save(slot);
         characterSpellRepository.save(characterSpell);
-    }   
+    }
 
-    // Generar ranuras de hechizos
+    // ========== SPELL SLOTS ==========
+
+    @Transactional
     public void generateSpellSlots(PlayerCharacter character) {
-        //Borrar slots anteriores
-
+        // Borrar slots anteriores
         List<CharacterSpellSlot> existingSlots = slotRepository.findByCharacterId(character.getId());
         slotRepository.deleteAll(existingSlots);
 
-        //Buscar progresión según clase y nivel
-        List<SpellSlotProgression> progression = 
-            spellSlotProgressionRepository.findByDndClassAndCharacterLevel(
-                character.getDndClass(),
-                character.getLevel()  
-        );
+        // Buscar progresión según clase y nivel
+        List<SpellSlotProgression> progression =
+                spellSlotProgressionRepository.findByDndClassAndCharacterLevel(
+                        character.getDndClass(),
+                        character.getLevel()
+                );
 
-        for(SpellSlotProgression p: progression){
+        for (SpellSlotProgression p : progression) {
             CharacterSpellSlot slot = new CharacterSpellSlot();
             slot.setCharacter(character);
             slot.setSpellLevel(p.getSpellLevel());
@@ -216,71 +206,302 @@ public class PlayerCharacterService {
         }
     }
 
-    //Subir de nivel
-    @Transactional
-    public void startLevelUp(Long characterId){
+    private void updateSpellSlots(PlayerCharacter character, int newLevel) {
+        DndClass dndClass = character.getDndClass();
 
+        if (dndClass == null || dndClass.getSpellcastingAbility() == null) {
+            System.out.println("Character is not a spellcaster");
+            return;
+        }
+
+        // Obtener la progresión de spell slots para este nivel
+        List<SpellSlotProgression> progressions =
+                spellSlotProgressionRepository.findByDndClassAndCharacterLevel(dndClass, newLevel);
+
+        if (progressions.isEmpty()) {
+            System.out.println("No spell slot progression for level " + newLevel);
+            return;
+        }
+
+        for (SpellSlotProgression progression : progressions) {
+            int spellLevel = progression.getSpellLevel();
+            int maxSlots = progression.getSlots();
+
+            // Buscar o crear el slot del personaje
+            CharacterSpellSlot characterSlot = slotRepository
+                    .findByCharacterAndSpellLevel(character, spellLevel)
+                    .orElse(new CharacterSpellSlot());
+
+            characterSlot.setCharacter(character);
+            characterSlot.setSpellLevel(spellLevel);
+            characterSlot.setMaxSlots(maxSlots);
+            characterSlot.setUsedSlots(0);
+
+            slotRepository.save(characterSlot);
+
+            System.out.println("Updated spell slots level " + spellLevel + ": " + maxSlots + " slots");
+        }
+    }
+
+    // ========== LEVEL UP ==========
+
+    @Transactional
+    public PlayerCharacter levelUp(Long characterId) {
         PlayerCharacter character = characterRepository.findById(characterId)
-            .orElseThrow(() -> new RuntimeException("Character not found"));
+                .orElseThrow(() -> new RuntimeException("Character not found"));
+
+        if (character.getLevel() >= 20) {
+            throw new RuntimeException("Character is already at max level (20)");
+        }
 
         int newLevel = character.getLevel() + 1;
         character.setLevel(newLevel);
 
+        System.out.println("=== Leveling up " + character.getName() + " to level " + newLevel + " ===");
+
+        // 1. Actualizar proficiency bonus
         updateProficiency(character);
 
+        // 2. Procesar ClassLevelFeatures (sistema de mecánicas)
+        processClassLevelFeatures(character, newLevel);
+
+        // 3. Añadir ClassFeatures descriptivas del API
+        addClassFeaturesFromAPI(character, newLevel);
+
+        // 4. Guardar cambios
         characterRepository.save(character);
 
-        ClassLevelProgression progression = 
-            classLevelProgressionRepository
-            .findByDndClassAndLevel(character.getDndClass(), newLevel)
-            .orElseThrow(() -> new RuntimeException("No progression data"));
+        System.out.println("=== Level up complete! ===");
 
-        for(ClassLevelFeature feature : progression.getFeatures()){
-            if(feature.isRequiresChoice()){
+        return character;
+    }
+
+    public PlayerCharacterDto levelUpAndReturnDto(Long characterId) {
+        PlayerCharacter character = levelUp(characterId);
+        return toDto(character);
+    }
+
+    private void updateProficiency(PlayerCharacter character) {
+        int level = character.getLevel();
+        int proficiency = 2 + ((level - 1) / 4);
+        character.setProficiencyBonus(proficiency);
+        System.out.println("Proficiency bonus updated to: " + proficiency);
+    }
+
+    private void processClassLevelFeatures(PlayerCharacter character, int newLevel) {
+        DndClass dndClass = character.getDndClass();
+
+        if (dndClass == null) {
+            System.out.println("Warning: Character has no class assigned");
+            return;
+        }
+
+        // Obtener la progresión de este nivel
+        ClassLevelProgression progression =
+                classLevelProgressionRepository.findByDndClassAndLevel(dndClass, newLevel)
+                        .orElse(null);
+
+        if (progression == null) {
+            System.out.println("No progression data found for " + dndClass.getName() + " level " + newLevel);
+            return;
+        }
+
+        // Obtener features mecánicas de este nivel
+        List<ClassLevelFeature> features = progression.getFeatures();
+
+        if (features == null || features.isEmpty()) {
+            System.out.println("No features configured for this level");
+            return;
+        }
+
+        for (ClassLevelFeature feature : features) {
+            if (feature.isRequiresChoice()) {
                 createTask(character, newLevel, feature);
-            }else{
-                applyAutomaticFeature(character, feature);
+            } else {
+                applyAutomaticFeature(character, newLevel, feature);
             }
         }
     }
-    
 
-    //Descanso largo
+    private void createTask(PlayerCharacter character, int level, ClassLevelFeature feature) {
+        System.out.println("Creating task for feature type: " + feature.getType());
+
+        PendingTask task = new PendingTask();
+        task.setCharacter(character);
+        task.setRelatedLevel(level);
+        task.setCompleted(false);
+
+        switch (feature.getType()) {
+            case ASI_OR_FEAT:
+                task.setTaskType("ASI_OR_FEAT");
+                task.setDescription("Choose between increasing ability scores (+2 to one or +1 to two) or taking a feat");
+                break;
+
+            case SPELL_LEARN:
+                task.setTaskType("LEARN_SPELLS");
+                task.setDescription("Learn new spell(s)");
+                task.setMetadata(feature.getMetadata());
+                break;
+
+            case SPELL_PREPARE:
+                task.setTaskType("PREPARE_SPELLS");
+                task.setDescription("Prepare your spells");
+                task.setMetadata(feature.getMetadata());
+                break;
+
+            case SUBCLASS_CHOICE:
+                task.setTaskType("CHOOSE_SUBCLASS");
+                task.setDescription("Choose your " + character.getDndClass().getName() + " subclass/archetype");
+                break;
+
+            case FIGHTING_STYLE:
+                task.setTaskType("FIGHTING_STYLE");
+                task.setDescription("Choose a fighting style");
+                break;
+
+            case INVOCATION:
+                task.setTaskType("INVOCATION");
+                task.setDescription("Choose Eldritch Invocation(s)");
+                task.setMetadata(feature.getMetadata());
+                break;
+
+            case METAMAGIC:
+                task.setTaskType("METAMAGIC");
+                task.setDescription("Choose Metamagic option(s)");
+                task.setMetadata(feature.getMetadata());
+                break;
+
+            default:
+                System.out.println("Unknown task type for: " + feature.getType());
+                return;
+        }
+
+        pendingTaskRepository.save(task);
+        System.out.println("Task created: " + task.getTaskType());
+    }
+
+    private void applyAutomaticFeature(PlayerCharacter character, int level, ClassLevelFeature feature) {
+        System.out.println("Applying automatic feature: " + feature.getType());
+
+        switch (feature.getType()) {
+            case HP_INCREASE:
+                addHitPoints(character);
+                break;
+
+            case SPELL_SLOT_UPDATE:
+                updateSpellSlots(character, level);
+                break;
+
+            case CLASS_FEATURE:
+                System.out.println("Class feature (descriptive) - handled separately");
+                break;
+
+            default:
+                System.out.println("No automatic action for: " + feature.getType());
+        }
+    }
+
+    private void addHitPoints(PlayerCharacter character) {
+        DndClass dndClass = character.getDndClass();
+
+        if (dndClass == null) {
+            throw new RuntimeException("Character has no class assigned");
+        }
+
+        int hitDie = dndClass.getHitDie();
+
+        // Fórmula: promedio del dado + modificador CON
+        int constitutionModifier = calculateAbilityModifier(
+                character.getAbilityScores().getOrDefault("con", 10)
+        );
+
+        int hpGain = (hitDie / 2) + 1 + constitutionModifier;
+
+        // Mínimo 1 HP por nivel
+        if (hpGain < 1) {
+            hpGain = 1;
+        }
+
+        int oldMaxHP = character.getMaxHP();
+        character.setMaxHP(oldMaxHP + hpGain);
+        character.setCurrentHP(character.getMaxHP());
+
+        System.out.println("HP increased by " + hpGain + " (from " + oldMaxHP + " to " + character.getMaxHP() + ")");
+    }
+
+    private int calculateAbilityModifier(int abilityScore) {
+        return (abilityScore - 10) / 2;
+    }
+
+    private void addClassFeaturesFromAPI(PlayerCharacter character, int newLevel) {
+        DndClass dndClass = character.getDndClass();
+
+        if (dndClass == null) {
+            return;
+        }
+
+        // Obtener las features del API que se desbloquean en este nivel
+        List<ClassFeature> newFeatures = classFeatureRepository
+                .findByDndClassAndLevel(dndClass, newLevel);
+
+        if (newFeatures.isEmpty()) {
+            System.out.println("No API features found for level " + newLevel);
+            return;
+        }
+
+        for (ClassFeature feature : newFeatures) {
+            // Verificar si ya tiene esta feature
+            boolean alreadyHas = characterFeatureRepository.findByCharacter(character)
+                    .stream()
+                    .anyMatch(cf -> cf.getClassFeature().getId().equals(feature.getId()));
+
+            if (!alreadyHas) {
+                CharacterFeature characterFeature = new CharacterFeature(
+                        character,
+                        feature,
+                        newLevel
+                );
+                characterFeatureRepository.save(characterFeature);
+
+                System.out.println("Added feature: " + feature.getName());
+            }
+        }
+    }
+
+    // ========== LONG REST ==========
+
     @Transactional
     public void longRest(Long characterId) {
         PlayerCharacter character = characterRepository.findById(characterId)
-            .orElseThrow(() -> new RuntimeException("Character not found"));
+                .orElseThrow(() -> new RuntimeException("Character not found"));
 
         // Recuperar todos los spell slots
-        List<CharacterSpellSlot> slots = 
-            slotRepository.findByCharacterId(characterId);
+        List<CharacterSpellSlot> slots = slotRepository.findByCharacterId(characterId);
 
-        for (CharacterSpellSlot slot: slots){
+        for (CharacterSpellSlot slot : slots) {
             slot.setUsedSlots(0);
         }
 
         slotRepository.saveAll(slots);
 
-        //Recuperar HP al máximo
+        // Recuperar HP al máximo
         character.setCurrentHP(character.getMaxHP());
         characterRepository.save(character);
+
+        System.out.println(character.getName() + " completed a long rest (HP and spell slots restored)");
     }
 
-    private void updateProficiency(PlayerCharacter character){
-        int level = character.getLevel();
+    // ========== QUERY METHODS ==========
 
-        int proficiency = 2 + ((level -1) / 4);
-        character.setProficiencyBonus(proficiency);
+    public List<CharacterFeature> getCharacterFeatures(Long characterId) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found"));
+        return characterFeatureRepository.findByCharacter(character);
     }
 
-    private void createTask(PlayerCharacter character, int targetLevel, ClassLevelFeature feature) {
-        // TODO: Implementar lógica de creación de tareas
-        // Este método será implementado en el futuro
+    public List<PendingTask> getPendingTasks(Long characterId) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found"));
+        return pendingTaskRepository.findByCharacterAndCompletedFalse(character);
     }
-
-    private void applyAutomaticFeature(PlayerCharacter character, ClassLevelFeature feature) {
-        // TODO: Implementar lógica de aplicación automática de features
-        // Este método será implementado en el futuro
-    }
-
 }

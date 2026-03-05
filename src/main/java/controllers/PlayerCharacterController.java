@@ -67,7 +67,7 @@ public class PlayerCharacterController {
 
     @PostMapping("/{id}/level-up")
     public ResponseEntity<String> levelUp(@PathVariable Long id){
-            playerCharacterService.startLevelUp(id);
+            playerCharacterService.levelUp(id);
             return ResponseEntity.ok("Character leveled up!");
         } 
 
