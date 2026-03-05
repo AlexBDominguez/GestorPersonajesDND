@@ -42,6 +42,34 @@ public class PlayerCharacter {
 
     @OneToMany(mappedBy = "character", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CharacterSpell> characterSpells = new HashSet<>();
+
+
+    @Transient
+    public int calculateAbilityModifier(String abilityScore) {
+        Integer score = abilityScores.get(abilityScore);
+        if (score == null) return 0;
+        return (score - 10) / 2;
+    }
+
+    @Transient
+    public int getPassivePerception(){
+        //Buscar skill de Perception
+        //Deolver 10 + WIS mod
+        return 10 + calculateAbilityModifier("wis");        
+    }
+
+    @Transient
+    public int getPassiveInvestigation(){
+        return 10 + calculateAbilityModifier("int");
+    }
+
+    @Transient
+    public int getPassiveInsight(){
+        return 10 + calculateAbilityModifier("wis");
+    }
+
+
+
     
 
     public PlayerCharacter(){}

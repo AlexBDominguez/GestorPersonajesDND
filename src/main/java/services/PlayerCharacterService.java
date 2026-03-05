@@ -24,6 +24,7 @@ public class PlayerCharacterService {
     private final ClassFeatureRepository classFeatureRepository;
     private final CharacterFeatureRepository characterFeatureRepository;
     private final PendingTaskRepository pendingTaskRepository;
+    private final CharacterSkillService characterSkillService;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -36,7 +37,9 @@ public class PlayerCharacterService {
             ClassLevelProgressionRepository classLevelProgressionRepository,
             ClassFeatureRepository classFeatureRepository,
             CharacterFeatureRepository characterFeatureRepository,
-            PendingTaskRepository pendingTaskRepository) {
+            PendingTaskRepository pendingTaskRepository,
+            CharacterSkillService characterSkillService
+        ) {
         this.characterRepository = characterRepository;
         this.raceRepository = raceRepository;
         this.dndClassRepository = dndClassRepository;
@@ -48,6 +51,7 @@ public class PlayerCharacterService {
         this.classFeatureRepository = classFeatureRepository;
         this.characterFeatureRepository = characterFeatureRepository;
         this.pendingTaskRepository = pendingTaskRepository;
+        this.characterSkillService = characterSkillService;
     }
 
     // ========== CRUD BÁSICO ==========
@@ -85,10 +89,15 @@ public class PlayerCharacterService {
 
         playerCharacter.setProficiencyBonus(2 + ((dto.getLevel() - 1) / 4));
 
-        characterRepository.save(playerCharacter);
-        generateSpellSlots(playerCharacter);
+        PlayerCharacter saved = characterRepository.save(playerCharacter);
+
+        //Inicializar skills y saving throws
+        characterSkillService.initializeCharacterSkills(saved);
+        characterSkillService.initializeSavingThrows(saved);
+
+        generateSpellSlots(saved);
         
-        return toDto(playerCharacter);
+        return toDto(saved);
     }
 
     private PlayerCharacterDto toDto(PlayerCharacter playerCharacter) {

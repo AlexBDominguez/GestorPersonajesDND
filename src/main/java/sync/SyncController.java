@@ -11,10 +11,12 @@ public class SyncController {
 
     private final RaceSyncService raceSyncService;
     private final SpellSlotSyncService spellSlotSyncService;
+    private final SkillSyncService skillSyncService;
 
-    public SyncController(RaceSyncService raceSyncService, SpellSlotSyncService spellSlotSyncService) {
+    public SyncController(RaceSyncService raceSyncService, SpellSlotSyncService spellSlotSyncService, SkillSyncService skillSyncService) {
         this.raceSyncService = raceSyncService;
         this.spellSlotSyncService = spellSlotSyncService;
+        this.skillSyncService = skillSyncService;
     }
 
     @PostMapping("/races")
@@ -23,12 +25,16 @@ public class SyncController {
         return "Races synced";
     }
 
-    @PostMapping("/sync/spell-slots/{classIndex}")
+    @PostMapping("/spell-slots/{classIndex}")
     public String syncSpellSlots(@PathVariable String classIndex){
         spellSlotSyncService.syncSpellSlotForClass(classIndex);
         return "Spell slots synced for class " + classIndex;
     }
 
-
+    @PostMapping("/skills")
+    public String syncSkills(){
+        skillSyncService.syncSkills();
+        return "Skills synced";
+    }
 
 }
