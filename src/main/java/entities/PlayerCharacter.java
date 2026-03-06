@@ -26,6 +26,52 @@ public class PlayerCharacter {
     @JoinColumn(name = "class_id")
     private DndClass dndClass;
 
+    @ManyToOne
+    @JoinColumn(name = "background_id")
+    private Background background;
+
+    //Monedas
+    private int copperPieces = 0;
+    private int silverPieces = 0;
+    private int electrumPieces = 0;
+    private int goldPieces = 0;
+    private int platinumPieces = 0;
+
+    //Métodos transient para calcular
+
+    @Transient
+    public int getCarryingCapacity() {
+        Integer str = abilityScore.get("str");
+        if (str == null) return 150;
+        return str * 15;
+    }
+
+    @Transient
+    public int getAttunementSlotUsed(){
+        //Lo calcularemos desde el servicio
+        return 0; //Placeholder
+    }
+
+    @Transient
+    public int getMaxAttunementSlots(){
+        return 3;
+    }
+
+        
+
+    //Características personales elegidas por el jugador
+    @Column(columnDefinition = "TEXT")
+    private String personalityTraits;
+
+    @Column(columnDefinition = "TEXT")
+    private String ideals;
+
+    @Column(columnDefinition = "TEXT")
+    private String bonds;
+
+    @Column(columnDefinition = "TEXT")
+    private String flaws;
+
     @ElementCollection
     @CollectionTable(name = "character_abilities", joinColumns = @JoinColumn(name = "character_id"))
     @MapKeyColumn(name = "ability")
@@ -67,8 +113,6 @@ public class PlayerCharacter {
     public int getPassiveInsight(){
         return 10 + calculateAbilityModifier("wis");
     }
-
-
 
     
 
@@ -153,4 +197,98 @@ public class PlayerCharacter {
     public void setBackstory(String backstory) {
         this.backstory = backstory;
     }
+
+    public Background getBackground() {
+        return background;
+    }
+
+    public void setBackground(Background background) {
+        this.background = background;
+    }
+
+    public String getPersonalityTraits() {
+        return personalityTraits;
+    }
+
+    public void setPersonalityTraits(String personalityTraits) {
+        this.personalityTraits = personalityTraits;
+    }
+
+    public String getIdeals() {
+        return ideals;
+    }
+
+    public void setIdeals(String ideals) {
+        this.ideals = ideals;
+    }
+
+    public String getBonds() {
+        return bonds;
+    }
+
+    public void setBonds(String bonds) {
+        this.bonds = bonds;
+    }
+
+    public String getFlaws() {
+        return flaws;
+    }
+
+    public void setFlaws(String flaws) {
+        this.flaws = flaws;
+    }
+
+    public Set<CharacterSpell> getCharacterSpells() {
+        return characterSpells;
+    }
+
+    public void setCharacterSpells(Set<CharacterSpell> characterSpells) {
+        this.characterSpells = characterSpells;
+    }
+
+    public int getCopperPieces() {
+        return copperPieces;
+    }
+
+    public void setCopperPieces(int copperPieces) {
+        this.copperPieces = copperPieces;
+    }
+
+    public int getSilverPieces() {
+        return silverPieces;
+    }
+
+    public void setSilverPieces(int silverPieces) {
+        this.silverPieces = silverPieces;
+    }
+
+    public int getElectrumPieces() {
+        return electrumPieces;
+    }
+
+    public void setElectrumPieces(int electrumPieces) {
+        this.electrumPieces = electrumPieces;
+    }
+
+    public int getGoldPieces() {
+        return goldPieces;
+    }
+
+    public void setGoldPieces(int goldPieces) {
+        this.goldPieces = goldPieces;
+    }
+
+    public int getPlatinumPieces() {
+        return platinumPieces;
+    }
+
+    public void setPlatinumPieces(int platinumPieces) {
+        this.platinumPieces = platinumPieces;
+    }
+
+    
+
+
+
+    
 }

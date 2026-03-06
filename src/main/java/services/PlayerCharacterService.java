@@ -2,7 +2,6 @@ package services;
 
 import dto.PlayerCharacterDto;
 import entities.*;
-import enumeration.FeatureType;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import repositories.*;
@@ -25,6 +24,7 @@ public class PlayerCharacterService {
     private final CharacterFeatureRepository characterFeatureRepository;
     private final PendingTaskRepository pendingTaskRepository;
     private final CharacterSkillService characterSkillService;
+    private final BackgroundRepository backgroundRepository;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -38,7 +38,8 @@ public class PlayerCharacterService {
             ClassFeatureRepository classFeatureRepository,
             CharacterFeatureRepository characterFeatureRepository,
             PendingTaskRepository pendingTaskRepository,
-            CharacterSkillService characterSkillService
+            CharacterSkillService characterSkillService,
+            BackgroundRepository backgroundRepository
         ) {
         this.characterRepository = characterRepository;
         this.raceRepository = raceRepository;
@@ -52,6 +53,7 @@ public class PlayerCharacterService {
         this.characterFeatureRepository = characterFeatureRepository;
         this.pendingTaskRepository = pendingTaskRepository;
         this.characterSkillService = characterSkillService;
+        this.backgroundRepository = backgroundRepository;
     }
 
     // ========== CRUD BÁSICO ==========
@@ -87,6 +89,20 @@ public class PlayerCharacterService {
                 .orElseThrow(() -> new RuntimeException("DndClass not found"));
         playerCharacter.setDndClass(dndClass);
 
+        if(dto.getBackgroundId()!= null) {
+            Background background = backgroundRepository.findById(dto.getBackgroundId())
+                    .orElseThrow(() -> new RuntimeException("Background not found"));
+            playerCharacter.setBackground(background);
+        }
+
+        // Map individual DTO fields to entity text fields
+        String personalityTraits = (dto.getPersonalityTrait1() != null ? dto.getPersonalityTrait1() : "") +
+                                  (dto.getPersonalityTrait2() != null ? "\n" + dto.getPersonalityTrait2() : "");
+        playerCharacter.setPersonalityTraits(personalityTraits.trim());
+        playerCharacter.setIdeals(dto.getIdeal());
+        playerCharacter.setBonds(dto.getBond());
+        playerCharacter.setFlaws(dto.getFlaw());
+
         playerCharacter.setProficiencyBonus(2 + ((dto.getLevel() - 1) / 4));
 
         PlayerCharacter saved = characterRepository.save(playerCharacter);
@@ -95,9 +111,23 @@ public class PlayerCharacterService {
         characterSkillService.initializeCharacterSkills(saved);
         characterSkillService.initializeSavingThrows(saved);
 
+        if(saved.getBackground() != null) {
+            applyBackgroundProficiencies(saved);
+        }
+
         generateSpellSlots(saved);
         
         return toDto(saved);
+    }
+
+    private void applyBackgroundProficiencies(PlayerCharacter character) {
+        Background background = character.getBackground();
+
+        if(background.getSkillProficiencies()!= null) {
+            for (String skillIndex : background.getSkillProficiencies()){
+                characterSkillService.applySkillProficiencyByIndex(character, skillIndex);
+            }
+        }
     }
 
     private PlayerCharacterDto toDto(PlayerCharacter playerCharacter) {
@@ -121,6 +151,20 @@ public class PlayerCharacterService {
             dto.setDndClassId(playerCharacter.getDndClass().getId());
             dto.setDndClassName(playerCharacter.getDndClass().getName());
         }
+
+        if(playerCharacter.getBackground() != null){
+            dto.setBackgroundId(playerCharacter.getBackground().getId());
+            dto.setBackgroundName(playerCharacter.getBackground().getName());
+        }
+
+        // Map entity text fields to individual DTO fields
+        String[] traits = playerCharacter.getPersonalityTraits() != null ? 
+                         playerCharacter.getPersonalityTraits().split("\n", 2) : new String[]{null, null};
+        dto.setPersonalityTrait1(traits.length > 0 ? traits[0] : null);
+        dto.setPersonalityTrait2(traits.length > 1 ? traits[1] : null);
+        dto.setIdeal(playerCharacter.getIdeals());
+        dto.setBond(playerCharacter.getBonds());
+        dto.setFlaw(playerCharacter.getFlaws());
 
         return dto;
     }

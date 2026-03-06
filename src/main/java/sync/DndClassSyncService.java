@@ -59,6 +59,8 @@ public class DndClassSyncService {
             
             String detailUrl = "https://www.dnd5eapi.co/api/classes/" + indexName;
 
+            ApiRateLimiter.waitBetweenRequests();
+
             // Obtener datos detallados
             Map detailed = restTemplate.getForObject(detailUrl, Map.class);
 
@@ -207,6 +209,8 @@ public class DndClassSyncService {
                 
                 // Obtener descripción detallada (opcional)
                 try {
+                    ApiRateLimiter.waitBetweenRequests();
+                    
                     Map featureDetail = restTemplate.getForObject(
                         "https://www.dnd5eapi.co" + featureUrl, 
                         Map.class

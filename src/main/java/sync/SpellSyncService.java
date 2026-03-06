@@ -34,6 +34,8 @@ public class SpellSyncService {
                 continue;
             }
 
+            ApiRateLimiter.waitBetweenRequests();
+
             // Llamada detalle
             Map<String, Object> detail =
                     restTemplate.getForObject(BASE_URL + "/" + index, Map.class);

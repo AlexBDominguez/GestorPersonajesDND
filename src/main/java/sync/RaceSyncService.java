@@ -28,6 +28,8 @@ public class RaceSyncService {
         for (Map<String, String> raceInfo : results) {
             String indexName = raceInfo.get("index");
 
+            ApiRateLimiter.waitBetweenRequests();
+
             Map detailed = restTemplate.getForObject(
                     "https://www.dnd5eapi.co/api/races/" + indexName,
                     Map.class

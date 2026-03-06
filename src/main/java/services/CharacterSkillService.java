@@ -51,8 +51,9 @@ public class CharacterSkillService {
             boolean proficient = dndClass.getSavingThrows() != null &&
                     dndClass.getSavingThrows().contains(ability);
 
-            CharacterSavingThrow savingThrow = new CharacterSavingThrow(character, ability, proficient);
-            savingThrowRepository.save(savingThrow);
+            CharacterSavingThrow savingThrow = new CharacterSavingThrow(character, ability);
+            savingThrow.setProficient(proficient);
+            characterSavingThrowRepository.save(savingThrow);
         }
 
         System.out.println("Initialized saving throws for character: " + character.getName());
@@ -83,5 +84,23 @@ public class CharacterSkillService {
         characterSkill.setExpertise(expertise);
         characterSkillRepository.save(characterSkill);
     }
+
+
+    @Transactional
+public void applySkillProficiencyByIndex(PlayerCharacter character, String skillIndex) {
+    Skill skill = skillRepository.findByIndexName(skillIndex)
+            .orElseThrow(() -> new RuntimeException("Skill not found: " + skillIndex));
+
+    List<CharacterSkill> characterSkills = characterSkillRepository.findByCharacter(character);
+
+    for (CharacterSkill cs : characterSkills) {
+        if (cs.getSkill().getId().equals(skill.getId())) {
+            cs.setProficient(true);
+            characterSkillRepository.save(cs);
+            System.out.println("Applied skill proficiency: " + skill.getName() + " (from background)");
+            break;
+        }
+    }
+}
 
 }

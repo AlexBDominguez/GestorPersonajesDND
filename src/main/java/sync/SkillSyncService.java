@@ -31,6 +31,7 @@ public class SkillSyncService {
             String indexName = skillInfo.get("index");
             String detailUrl = "https://www.dnd5eapi.co" + skillInfo.get("url");
 
+            ApiRateLimiter.waitBetweenRequests();
 
             Map detailed = restTemplate.getForObject(detailUrl, Map.class);
 

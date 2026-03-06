@@ -15,6 +15,15 @@ public class PlayerCharacterDto {
     private int currentHp;
     private int proficiencyBonus;
     private String backstory;
+    private Long backgroundId;
+    private String backgroundName;
+    private String personalityTrait1;
+    private String personalityTrait2;
+    private String ideal;
+    private String bond;
+    private String flaw;
+
+
 
     public Long getId() {
         return id;
@@ -111,4 +120,63 @@ public class PlayerCharacterDto {
     public void setBackstory(String backstory) {
         this.backstory = backstory;
     }
+
+    public Long getBackgroundId() {
+        return backgroundId;
+    }
+
+    public void setBackgroundId(Long backgroundId) {
+        this.backgroundId = backgroundId;
+    }
+
+    public String getBackgroundName() {
+        return backgroundName;
+    }
+
+    public void setBackgroundName(String backgroundName) {
+        this.backgroundName = backgroundName;
+    }
+
+    public String getPersonalityTrait1() {
+        return personalityTrait1;
+    }
+
+    public void setPersonalityTrait1(String personalityTrait1) {
+        this.personalityTrait1 = personalityTrait1;
+    }
+
+    public String getPersonalityTrait2() {
+        return personalityTrait2;
+    }
+
+    public void setPersonalityTrait2(String personalityTrait2) {
+        this.personalityTrait2 = personalityTrait2;
+    }
+
+    public String getIdeal() {
+        return ideal;
+    }
+
+    public void setIdeal(String ideal) {
+        this.ideal = ideal;
+    }
+
+    public String getBond() {
+        return bond;
+    }
+
+    public void setBond(String bond) {
+        this.bond = bond;
+    }
+
+    public String getFlaw() {
+        return flaw;
+    }
+
+    public void setFlaw(String flaw) {
+        this.flaw = flaw;
+    }
+
+   
+
 }
