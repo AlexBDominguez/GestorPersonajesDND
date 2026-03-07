@@ -20,11 +20,14 @@ public class Spell {
     private int level;
     private String school;
     private String castingTime;
+    
+    @Column(name = "`range`")
     private String range;
+    
     private String duration;
     private String components;
 
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
 

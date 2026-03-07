@@ -7,6 +7,4 @@ import java.util.Optional;
 
 public interface DndClassRepository extends JpaRepository<DndClass, Long> {
     Optional<DndClass> findByIndexName(String indexName);
-    DndClass findByIndexApi(String indexApi);
-
 }

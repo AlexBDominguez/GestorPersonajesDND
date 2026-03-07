@@ -41,7 +41,16 @@ public class RaceSyncService {
             race.setIndexName(indexName);
             race.setName((String) detailed.get("name"));
             race.setSize((String) detailed.get("size"));
-            race.setSpeed((int) detailed.get("speed"));
+            
+            // Speed puede venir como Integer o Double desde la API
+            Object speedObj = detailed.get("speed");
+            if (speedObj instanceof Integer) {
+                race.setSpeed((Integer) speedObj);
+            } else if (speedObj instanceof Double) {
+                race.setSpeed(((Double) speedObj).intValue());
+            } else {
+                race.setSpeed(30); // default speed
+            }
 
             // ability bonuses
             List<Map<String, Object>> bonuses = (List<Map<String, Object>>) detailed.get("ability_bonuses");
@@ -54,7 +63,11 @@ public class RaceSyncService {
 
             // description
             List<String> desc = (List<String>) detailed.get("desc");
-            race.setDescription(String.join("\n", desc));
+            if (desc != null && !desc.isEmpty()) {
+                race.setDescription(String.join("\n", desc));
+            } else {
+                race.setDescription("");
+            }
 
             raceRepository.save(race);
         }

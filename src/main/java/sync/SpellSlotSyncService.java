@@ -30,7 +30,7 @@ public class SpellSlotSyncService {
     }
     
     public void syncSpellSlotForClass(String classIndex){
-        DndClass dndClass = classRepository.findByIndexApi(classIndex);
+        DndClass dndClass = classRepository.findByIndexName(classIndex).orElse(null);
         if(dndClass == null){
             throw new RuntimeException("Class not found: " + classIndex);
         }

@@ -41,7 +41,7 @@ public class PlayerCharacter {
 
     @Transient
     public int getCarryingCapacity() {
-        Integer str = abilityScore.get("str");
+        Integer str = abilityScores.get("str");
         if (str == null) return 150;
         return str * 15;
     }

@@ -16,6 +16,7 @@ import repositories.ClassLevelProgressionRepository;
 import repositories.DndClassRepository;
 import repositories.SpellSlotProgressionRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -75,16 +76,16 @@ public class DndClassSyncService {
             // Proficiencies
             List<Map<String, String>> proficienciesRaw = 
                 (List<Map<String, String>>) detailed.get("proficiencies");
-            List<String> proficiencies = proficienciesRaw.stream()
+            List<String> proficiencies = new ArrayList<>(proficienciesRaw.stream()
                     .map(p -> p.get("name"))
-                    .toList();
+                    .toList());
 
             // Saving throws
             List<Map<String, String>> savingThrowsRaw = 
                 (List<Map<String, String>>) detailed.get("saving_throws");
-            List<String> savingThrows = savingThrowsRaw.stream()
+            List<String> savingThrows = new ArrayList<>(savingThrowsRaw.stream()
                     .map(st -> st.get("index"))
-                    .toList();
+                    .toList());
 
             // Spellcasting ability
             String spellcastingAbility = null;
@@ -151,9 +152,6 @@ public class DndClassSyncService {
             
             Map spellcasting = (Map) levelData.get("spellcasting");
             
-            // Limpiar progresiones anteriores de este nivel
-            slotProgressionRepository.deleteByDndClassAndCharacterLevel(dndClass, characterLevel);
-            
             // Guardar slots por cada nivel de hechizo (1-9)
             for (int spellLevel = 1; spellLevel <= 9; spellLevel++) {
                 String slotKey = "spell_slots_level_" + spellLevel;
@@ -162,7 +160,10 @@ public class DndClassSyncService {
                     int slots = (int) spellcasting.get(slotKey);
                     
                     if (slots > 0) {
-                        SpellSlotProgression progression = new SpellSlotProgression();
+                        SpellSlotProgression progression = slotProgressionRepository
+                            .findByDndClassAndCharacterLevelAndSpellLevel(dndClass, characterLevel, spellLevel)
+                            .orElse(new SpellSlotProgression());
+                        
                         progression.setDndClass(dndClass);
                         progression.setCharacterLevel(characterLevel);
                         progression.setSpellLevel(spellLevel);
