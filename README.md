@@ -8,13 +8,13 @@ Aplicación backend que permite crear y gestionar personajes de D&D 5e, incluyen
 
 - Gestión completa de personajes (atributos, puntos de vida, nivel)
 - Sistema de clases, razas y backgrounds
-- **Sistema de habilidades (skills) y salvaciones (saving throws)**
+- Sistema de habilidades (skills) y salvaciones (saving throws)
 - Gestión de hechizos y slots de hechizos por nivel
 - Sistema de subida de nivel automatizado
 - Progresión de características por nivel y clase
-- **Sistema de inventario y objetos**
+- Sistema de inventario y objetos
 - Sincronización de datos desde la D&D 5e API
-- **Rate limiting para peticiones API**
+- Rate limiting para peticiones API
 
 ## 🛠️ Tecnologías
 
@@ -36,7 +36,7 @@ Aplicación backend que permite crear y gestionar personajes de D&D 5e, incluyen
 
 ### Integración Externa
 - Consumo de la **D&D 5e API** (https://www.dnd5eapi.co)
-- **Rate Limiting inteligente** con pausas entre peticiones
+- Rate Limiting inteligente con pausas entre peticiones
 - Sincronización automática de:
   - 12 clases oficiales con progresión completa
   - 9 razas base con bonificadores
@@ -130,15 +130,15 @@ src/main/java/
 - Gestión de atributos (STR, DEX, CON, INT, WIS, CHA)
 - Gestión de puntos de vida (actuales y máximos)
 - Cálculo automático de bono de competencia
-- **Rasgos de personalidad, ideales, vínculos y defectos**
+- Rasgos de personalidad, ideales, vínculos y defectos
 - Percepción, investigación e intuición pasivas
 
 ### Sistema de Habilidades y Salvaciones
 - **18 habilidades de D&D 5e** (Acrobacia, Atletismo, Sigilo, etc.)
 - Inicialización automática al crear personaje
 - Gestión de competencias y expertise
-- **Cálculo automático de bonus** (modificador + competencia)
-- **6 salvaciones** vinculadas a atributos
+- Cálculo automático de bonus (modificador + competencia)
+- 6 salvaciones vinculadas a atributos
 - Aplicación automática de competencias de clase
 
 ### Sistema de Backgrounds
@@ -146,7 +146,7 @@ src/main/java/
 - Competencias en habilidades por background
 - Competencias en herramientas
 - Idiomas y opciones de idiomas
-- **Características especiales** con descripciones
+- Características especiales con descripciones
 - Rasgos de personalidad, ideales, vínculos y defectos sugeridos
 
 ### Sistema de Niveles
@@ -165,7 +165,7 @@ src/main/java/
 
 ### Sistema de Hechizos
 - Gestión de hechizos disponibles por clase
-- **Slots de hechizos por nivel de personaje**
+- Slots de hechizos por nivel de personaje
 - Asignación de hechizos conocidos/preparados
 - Progresión automática de slots según clase y nivel
 - Hechizos con toda la información: nivel, escuela, componentes, descripción
