@@ -22,6 +22,8 @@ public class PlayerCharacterDto {
     private String ideal;
     private String bond;
     private String flaw;
+    private Long subclassId;
+    private String subclassName;
 
 
 
@@ -176,6 +178,24 @@ public class PlayerCharacterDto {
     public void setFlaw(String flaw) {
         this.flaw = flaw;
     }
+
+    public Long getSubclassId() {
+        return subclassId;
+    }
+
+    public void setSubclassId(Long subclassId) {
+        this.subclassId = subclassId;
+    }
+
+    public String getSubclassName() {
+        return subclassName;
+    }
+
+    public void setSubclassName(String subclassName) {
+        this.subclassName = subclassName;
+    }
+
+    
 
    
 

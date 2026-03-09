@@ -27,6 +27,10 @@ public class PlayerCharacter {
     private DndClass dndClass;
 
     @ManyToOne
+    @JoinColumn(name = "subclass_id")
+    private Subclass subclass;
+
+    @ManyToOne
     @JoinColumn(name = "background_id")
     private Background background;
 
@@ -56,7 +60,6 @@ public class PlayerCharacter {
     public int getMaxAttunementSlots(){
         return 3;
     }
-
         
 
     //Características personales elegidas por el jugador
@@ -204,6 +207,14 @@ public class PlayerCharacter {
 
     public void setBackground(Background background) {
         this.background = background;
+    }
+
+    public Subclass getSubclass() {
+        return subclass;
+    }
+
+    public void setSubclass(Subclass subclass) {
+        this.subclass = subclass;
     }
 
     public String getPersonalityTraits() {

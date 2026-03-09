@@ -5,11 +5,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "skills")
-public class Skill {
+@Table(name = "subclasses")
+public class Subclass {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,12 +22,19 @@ public class Skill {
 
     private String name;
 
-    private String abilityScore;
+    @ManyToOne
+    @JoinColumn(name = "class_id", nullable = false)
+    private DndClass dndClass;
+
+    private String subclassFlavor;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    public Skill(){}
+    // Ability Score para spellcasting (puede ser null si no es caster)
+    private String spellcastingAbility;
+
+    public Subclass(){}
 
     public Long getId() {
         return id;
@@ -51,12 +60,20 @@ public class Skill {
         this.name = name;
     }
 
-    public String getAbilityScore() {
-        return abilityScore;
+    public DndClass getDndClass() {
+        return dndClass;
     }
 
-    public void setAbilityScore(String abilityScore) {
-        this.abilityScore = abilityScore;
+    public void setDndClass(DndClass dndClass) {
+        this.dndClass = dndClass;
+    }
+
+    public String getSubclassFlavor() {
+        return subclassFlavor;
+    }
+
+    public void setSubclassFlavor(String subclassFlavor) {
+        this.subclassFlavor = subclassFlavor;
     }
 
     public String getDescription() {
@@ -66,6 +83,16 @@ public class Skill {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public String getSpellcastingAbility() {
+        return spellcastingAbility;
+    }
+
+    public void setSpellcastingAbility(String spellcastingAbility) {
+        this.spellcastingAbility = spellcastingAbility;
+    }
+
     
-    
+
+
 }

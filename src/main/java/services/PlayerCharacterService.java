@@ -25,6 +25,7 @@ public class PlayerCharacterService {
     private final PendingTaskRepository pendingTaskRepository;
     private final CharacterSkillService characterSkillService;
     private final BackgroundRepository backgroundRepository;
+    private final SubclassRepository subclassRepository;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -39,7 +40,8 @@ public class PlayerCharacterService {
             CharacterFeatureRepository characterFeatureRepository,
             PendingTaskRepository pendingTaskRepository,
             CharacterSkillService characterSkillService,
-            BackgroundRepository backgroundRepository
+            BackgroundRepository backgroundRepository,
+            SubclassRepository subclassRepository
         ) {
         this.characterRepository = characterRepository;
         this.raceRepository = raceRepository;
@@ -54,6 +56,7 @@ public class PlayerCharacterService {
         this.pendingTaskRepository = pendingTaskRepository;
         this.characterSkillService = characterSkillService;
         this.backgroundRepository = backgroundRepository;
+        this.subclassRepository = subclassRepository;
     }
 
     // ========== CRUD BÁSICO ==========
@@ -93,6 +96,17 @@ public class PlayerCharacterService {
             Background background = backgroundRepository.findById(dto.getBackgroundId())
                     .orElseThrow(() -> new RuntimeException("Background not found"));
             playerCharacter.setBackground(background);
+        }
+
+        if(dto.getSubclassId() != null) {
+            Subclass subclass = subclassRepository.findById(dto.getSubclassId())
+                    .orElseThrow(() -> new RuntimeException("Subclass not found"));
+
+            // Verificar que la subclase pertenezca a la clase del personaje
+            if(!subclass.getDndClass().getId().equals(dndClass.getId())){
+                throw new RuntimeException("Subclass does not belong to the character's class");
+            }
+            playerCharacter.setSubclass(subclass);
         }
 
         // Map individual DTO fields to entity text fields
@@ -155,6 +169,11 @@ public class PlayerCharacterService {
         if(playerCharacter.getBackground() != null){
             dto.setBackgroundId(playerCharacter.getBackground().getId());
             dto.setBackgroundName(playerCharacter.getBackground().getName());
+        }
+
+        if(playerCharacter.getSubclass() != null) {
+            dto.setSubclassId(playerCharacter.getSubclass().getId());
+            dto.setSubclassName(playerCharacter.getSubclass().getName());
         }
 
         // Map entity text fields to individual DTO fields
@@ -543,6 +562,33 @@ public class PlayerCharacterService {
 
         System.out.println(character.getName() + " completed a long rest (HP and spell slots restored)");
     }
+
+    // ========== SUBCLASS ==========
+   @Transactional
+    public PlayerCharacterDto assignSubclass(Long characterId, Long subclassId) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+        
+        Subclass subclass = subclassRepository.findById(subclassId)
+                .orElseThrow(() -> new RuntimeException("Subclass not found with ID: " + subclassId));
+        
+        // Verificar que la subclase pertenezca a la clase del personaje
+        if (!subclass.getDndClass().getId().equals(character.getDndClass().getId())) {
+            throw new RuntimeException("Subclass does not belong to character's class");
+        }
+        
+        // Verificar que el personaje tenga el nivel adecuado
+        Integer subclassLevel = character.getDndClass().getSubclassLevel();
+        if (subclassLevel != null && character.getLevel() < subclassLevel) {
+            throw new RuntimeException("Character must be at least level " + subclassLevel + " to choose a subclass");
+        }
+        
+        character.setSubclass(subclass);
+        characterRepository.save(character);
+        
+        return toDto(character);
+    }
+
 
     // ========== QUERY METHODS ==========
 

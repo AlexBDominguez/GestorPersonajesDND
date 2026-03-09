@@ -1,9 +1,12 @@
 package sync;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import entities.Subclass;
 
 @RestController
 @RequestMapping("/api/sync")
@@ -15,13 +18,15 @@ public class SyncController {
     private final BackgroundSyncService backgroundSyncService;
     private final DndClassSyncService dndClassSyncService;
     private final SpellSyncService spellSyncService;
+    private final SubclassSyncService subclassSyncService;
 
     public SyncController(RaceSyncService raceSyncService,
                           SpellSlotSyncService spellSlotSyncService,
                           SkillSyncService skillSyncService,
                           BackgroundSyncService backgroundSyncService,
                           DndClassSyncService dndClassSyncService,
-                          SpellSyncService spellSyncService
+                          SpellSyncService spellSyncService,
+                          SubclassSyncService subclassSyncService
                         ) {
         this.raceSyncService = raceSyncService;
         this.spellSlotSyncService = spellSlotSyncService;
@@ -29,6 +34,7 @@ public class SyncController {
         this.backgroundSyncService = backgroundSyncService;
         this.dndClassSyncService = dndClassSyncService;
         this.spellSyncService = spellSyncService;
+        this.subclassSyncService = subclassSyncService;
     }
 
     @PostMapping("/races")
@@ -67,6 +73,12 @@ public class SyncController {
         return "Spells synced";
     }
 
+    @PostMapping("/subclasses")
+    public ResponseEntity<String> syncSubclasses() {
+        subclassSyncService.syncSubclasses();
+        return ResponseEntity.ok("Subclasses synchronized successfully!");
+    }
+
     @PostMapping("/all")
     public String syncAll() {
         System.out.println("=== STARTING FULL SYNCHRONIZATION ===");
@@ -90,7 +102,12 @@ public class SyncController {
             
             System.out.println("\n5/5 - Syncing Spells...");
             spellSyncService.syncSpells();
-            
+            ApiRateLimiter.waitLonger();
+
+            System.out.println("\n6/5 - Syncing Subclasses...");
+            subclassSyncService.syncSubclasses();
+            ApiRateLimiter.waitLonger();
+
             System.out.println("\n=== FULL SYNCHRONIZATION COMPLETE ===");
             return "Full synchronization completed successfully!";
             
