@@ -29,7 +29,7 @@ Aplicación backend que permite crear y gestionar personajes de D&D 5e, incluyen
 ## ✨ Características Técnicas
 
 ### Modelo de Datos
-- **19 entidades JPA** con relaciones complejas (OneToMany, ManyToOne, ElementCollection)
+- 19 entidades JPA con relaciones complejas (OneToMany, ManyToOne, ElementCollection)
 - Mapeo de atributos como Map y List
 - Métodos transient para cálculos en tiempo de ejecución
 - Cascadas y eliminación en cascada (orphanRemoval)
@@ -134,7 +134,7 @@ src/main/java/
 - Percepción, investigación e intuición pasivas
 
 ### Sistema de Habilidades y Salvaciones
-- **18 habilidades de D&D 5e** (Acrobacia, Atletismo, Sigilo, etc.)
+- 18 habilidades de D&D 5e (Acrobacia, Atletismo, Sigilo, etc.)
 - Inicialización automática al crear personaje
 - Gestión de competencias y expertise
 - Cálculo automático de bonus (modificador + competencia)
