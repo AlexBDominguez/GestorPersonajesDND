@@ -1,6 +1,6 @@
 # Gestor de Personajes DND
 
-Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot y PostgreSQL.
+Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot y MySQL.
 
 ## 📋 Descripción
 
@@ -18,13 +18,14 @@ Aplicación backend que permite crear y gestionar personajes de D&D 5e, incluyen
 
 ## 🛠️ Tecnologías
 
-- **Java 24**
+- **Java 17**
 - **Spring Boot 3.2.0**
 - **Spring Data JPA** - Persistencia de datos
-- **PostgreSQL** - Base de datos relacional
+- **MySQL 8.0** - Base de datos relacional (ejecutándose en Docker)
 - **Maven** - Gestión de dependencias
 - **RestTemplate** - Cliente HTTP para integración con D&D 5e API
 - **Hibernate** - ORM (Object-Relational Mapping)
+- **Docker & Docker Compose** - Contenedorización de MySQL
 
 ## ✨ Características Técnicas
 
@@ -178,12 +179,14 @@ src/main/java/
 
 ## 📝 Requisitos Previos
 
-- Java 24 o superior
-- Maven 3.6+
-- PostgreSQL 12+
+- **Java 17** o superior
+- **Maven 3.6+**
+- **Docker y Docker Compose** (para MySQL)
 - IDE compatible con Java (IntelliJ IDEA, Eclipse, VS Code)
 
 ## ⚙️ Configuración
+
+### Opción 1: Configuración Rápida con Docker (Recomendado)
 
 1. **Clonar el repositorio**
 ```bash
@@ -191,29 +194,108 @@ git clone <url-repositorio>
 cd GestorPersonajesDND
 ```
 
-2. **Configurar la base de datos**
+2. **Iniciar MySQL con Docker**
+```bash
+# Iniciar solo MySQL
+docker compose up -d mysql-db
 
-Crear una base de datos PostgreSQL y configurar las credenciales en `application.properties`:
+# O usar el script de ejecución que inicia todo automáticamente
+./run.sh
+```
+
+3. **Ejecutar la aplicación**
+```bash
+# Opción A: Usar el script
+./run.sh
+
+# Opción B: Con Maven directamente
+mvn spring-boot:run
+
+# Opción C: Desde tu IDE
+# Ejecuta la clase Main.java
+```
+
+La aplicación estará disponible en `http://localhost:8080`
+
+### Opción 2: Configuración Manual
+
+1. **Instalar y configurar MySQL manualmente**
+
+Crear una base de datos MySQL:
+```sql
+CREATE DATABASE dnd_character_manager CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'dnd_user'@'localhost' IDENTIFIED BY 'dnd_password';
+GRANT ALL PRIVILEGES ON dnd_character_manager.* TO 'dnd_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+2. **Configurar credenciales en `application.properties`**
 
 ```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/dnd_db
-spring.datasource.username=tu_usuario
-spring.datasource.password=tu_contraseña
+spring.datasource.url=jdbc:mysql://localhost:3306/dnd_character_manager?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+spring.datasource.username=dnd_user
+spring.datasource.password=dnd_password
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 ```
 
-3. **Compilar el proyecto**
+3. **Inicializar la base de datos** (Opcional - Hibernate lo hace automáticamente)
+
+Si prefieres usar el script SQL incluido:
 ```bash
-mvn clean install
+mysql -u dnd_user -p dnd_character_manager < init-db.sql
 ```
 
-4. **Ejecutar la aplicación**
+4. **Compilar y ejecutar**
 ```bash
+mvn clean install
 mvn spring-boot:run
 ```
 
-5. **Sincronizar datos iniciales** (Opcional pero recomendado)
+## 🐳 Docker
+
+El proyecto incluye configuración de Docker para facilitar el desarrollo:
+
+### Archivos Docker
+- `docker-compose.yml` - Configuración de MySQL
+- `Dockerfile` - Imagen de la aplicación (opcional)
+- `init-db.sql` - Script de inicialización de base de datos
+- `run.sh` - Script para iniciar MySQL y la aplicación
+
+### Comandos Docker útiles
+```bash
+# Iniciar solo MySQL
+docker compose up -d mysql-db
+
+# Ver logs de MySQL
+docker compose logs -f mysql-db
+
+# Detener MySQL
+docker compose stop mysql-db
+
+# Ejecutar script SQL en el contenedor
+docker exec -i dnd-mysql mysql -u dnd_user -pdnd_password dnd_character_manager < mi_script.sql
+```
+
+### Conectar con DBeaver o MySQL Workbench
+- **Host:** `localhost`
+- **Port:** `3306`
+- **Database:** `dnd_character_manager`
+- **Username:** `dnd_user`
+- **Password:** `dnd_password`
+
+Nota: En DBeaver, añade en "Driver properties":
+- `allowPublicKeyRetrieval` = `true`
+- `useSSL` = `false`
+
+## 📚 Documentación Adicional
+
+- [DOCKER.md](DOCKER.md) - Guía completa de uso con Docker
+- [init-db.sql](init-db.sql) - Script de base de datos con todas las tablas
+
+## 🔧 Sincronización de Datos
+
+### Sincronizar datos iniciales (Opcional pero recomendado)
 
 Una vez la aplicación esté corriendo, sincronizar todos los datos desde la D&D 5e API:
 
@@ -373,14 +455,15 @@ curl -X POST http://localhost:8080/api/characters/1/level-up \
 - 🚧 Sistema de inventario completo
 - 🚧 Sistema de combate
 - 🚧 Gestión de subclases
-- 🚧 Frontend web
+- 🚧 Aplicación móvil Android con Flutter
 
 ### 📋 Planificado
-- Frontend React o Angular
-- Sistema de autenticación y usuarios
+- Aplicación móvil Flutter para Android (gestión completa de personajes)
+- Sistema de autenticación (solo login, sin registro público)
+- Control de usuarios privado y limitado
 - Gestión de campañas
 - Sistema de dados virtuales
-- Compartir personajes entre jugadores
+- Compartir personajes entre jugadores seleccionados
 
 ## 👤 Autor
 

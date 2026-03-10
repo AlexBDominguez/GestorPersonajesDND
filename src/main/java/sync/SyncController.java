@@ -19,6 +19,7 @@ public class SyncController {
     private final DndClassSyncService dndClassSyncService;
     private final SpellSyncService spellSyncService;
     private final SubclassSyncService subclassSyncService;
+    private final ProficiencySyncService proficiencySyncService;
 
     public SyncController(RaceSyncService raceSyncService,
                           SpellSlotSyncService spellSlotSyncService,
@@ -26,7 +27,8 @@ public class SyncController {
                           BackgroundSyncService backgroundSyncService,
                           DndClassSyncService dndClassSyncService,
                           SpellSyncService spellSyncService,
-                          SubclassSyncService subclassSyncService
+                          SubclassSyncService subclassSyncService,
+                          ProficiencySyncService proficiencySyncService
                         ) {
         this.raceSyncService = raceSyncService;
         this.spellSlotSyncService = spellSlotSyncService;
@@ -35,6 +37,7 @@ public class SyncController {
         this.dndClassSyncService = dndClassSyncService;
         this.spellSyncService = spellSyncService;
         this.subclassSyncService = subclassSyncService;
+        this.proficiencySyncService = proficiencySyncService;
     }
 
     @PostMapping("/races")
@@ -79,33 +82,43 @@ public class SyncController {
         return ResponseEntity.ok("Subclasses synchronized successfully!");
     }
 
+    @PostMapping("/proficiencies")
+    public ResponseEntity<String> syncProficiencies() {
+        proficiencySyncService.syncProficiencies();
+        return ResponseEntity.ok("Proficiencies synchronized successfully!");
+    }
+
     @PostMapping("/all")
     public String syncAll() {
         System.out.println("=== STARTING FULL SYNCHRONIZATION ===");
         
         try {
-            System.out.println("\n1/5 - Syncing Skills...");
+            System.out.println("\n1/7 - Syncing Skills...");
             skillSyncService.syncSkills();
             ApiRateLimiter.waitLonger();
             
-            System.out.println("\n2/5 - Syncing Backgrounds...");
+            System.out.println("\n2/7 - Syncing Backgrounds...");
             backgroundSyncService.syncBackgrounds();
             ApiRateLimiter.waitLonger();
             
-            System.out.println("\n3/5 - Syncing Races...");
+            System.out.println("\n3/7 - Syncing Races...");
             raceSyncService.syncRaces();
             ApiRateLimiter.waitLonger();
             
-            System.out.println("\n4/5 - Syncing Classes...");
+            System.out.println("\n4/7 - Syncing Classes...");
             dndClassSyncService.syncClasses();
             ApiRateLimiter.waitLonger();
             
-            System.out.println("\n5/5 - Syncing Spells...");
+            System.out.println("\n5/7 - Syncing Spells...");
             spellSyncService.syncSpells();
             ApiRateLimiter.waitLonger();
 
-            System.out.println("\n6/5 - Syncing Subclasses...");
+            System.out.println("\n6/7 - Syncing Subclasses...");
             subclassSyncService.syncSubclasses();
+            ApiRateLimiter.waitLonger();
+
+            System.out.println("\n7/7 - Syncing Proficiencies...");
+            proficiencySyncService.syncProficiencies();
             ApiRateLimiter.waitLonger();
 
             System.out.println("\n=== FULL SYNCHRONIZATION COMPLETE ===");

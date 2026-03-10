@@ -77,7 +77,7 @@ public class BackgroundSyncService {
 
             //Personality traits
             List<String> personalityTraits = extractCharacteristics(detailed, "personality_traits");
-            List<String> ideals = extractCharacteristics(detailed, "ideals");
+             List<String> ideals = extractCharacteristics(detailed, "ideals");
             List<String> bonds = extractCharacteristics(detailed, "bonds");
             List<String> flaws = extractCharacteristics(detailed, "flaws");
 
