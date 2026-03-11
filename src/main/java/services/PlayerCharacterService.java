@@ -83,6 +83,32 @@ public class PlayerCharacterService {
         playerCharacter.setBackstory(dto.getBackstory());
         playerCharacter.setCurrentHP(dto.getCurrentHp());
         playerCharacter.setMaxHP(dto.getMaxHp());
+        playerCharacter.setAlignment(dto.getAlignment());
+        playerCharacter.setTemporaryHP(dto.getTemporaryHP());
+        playerCharacter.setDeathSaveSuccesses(dto.getDeathSaveSuccesses());
+        playerCharacter.setDeathSaveFailures(dto.getDeathSaveFailures());
+        playerCharacter.setHasInspiration(dto.isHasInspiration());
+        playerCharacter.setExperiencePoints(dto.getExperiencePoints());
+        playerCharacter.setSpeedModifier(dto.getSpeedModifier());
+        playerCharacter.setNaturalArmorBonus(dto.getNaturalArmorBonus());
+        playerCharacter.setInitiativeBonus(dto.getInitiativeBonus());
+
+        //Hit dice disponibles = nivel del personaje (se consume 1 por cada descanso corto)
+        playerCharacter.setAvailableHitDice(dto.getLevel());
+
+        //Campos descriptivos
+        playerCharacter.setAge(dto.getAge());
+        playerCharacter.setHeight(dto.getHeight());
+        playerCharacter.setWeight(dto.getWeight());
+        playerCharacter.setEyes(dto.getEyes());
+        playerCharacter.setSkin(dto.getSkin());
+        playerCharacter.setHair(dto.getHair());
+        playerCharacter.setAppearance(dto.getAppearance());
+        playerCharacter.setAlliesAndOrganizations(dto.getAlliesAndOrganizations());
+        playerCharacter.setAdditionalTreasure(dto.getAdditionalTreasure());
+        playerCharacter.setCharacterHistory(dto.getCharacterHistory());
+
+
 
         Race race = raceRepository.findById(dto.getRaceId())
                 .orElseThrow(() -> new RuntimeException("Race not found"));
@@ -184,6 +210,29 @@ public class PlayerCharacterService {
         dto.setIdeal(playerCharacter.getIdeals());
         dto.setBond(playerCharacter.getBonds());
         dto.setFlaw(playerCharacter.getFlaws());
+
+        dto.setAlignment(playerCharacter.getAlignment());
+        dto.setTemporaryHP(playerCharacter.getTemporaryHP());
+        dto.setDeathSaveSuccesses(playerCharacter.getDeathSaveSuccesses());
+        dto.setDeathSaveFailures(playerCharacter.getDeathSaveFailures());
+        dto.setHasInspiration(playerCharacter.isHasInspiration());
+        dto.setExperiencePoints(playerCharacter.getExperiencePoints());
+        dto.setSpeedModifier(playerCharacter.getSpeedModifier());
+        dto.setNaturalArmorBonus(playerCharacter.getNaturalArmorBonus());
+        dto.setInitiativeBonus(playerCharacter.getInitiativeBonus());
+        dto.setAvailableHitDice(playerCharacter.getAvailableHitDice());
+
+        // Campos descriptivos
+        dto.setAge(playerCharacter.getAge());
+        dto.setHeight(playerCharacter.getHeight());
+        dto.setWeight(playerCharacter.getWeight());
+        dto.setEyes(playerCharacter.getEyes());
+        dto.setSkin(playerCharacter.getSkin());
+        dto.setHair(playerCharacter.getHair());
+        dto.setAppearance(playerCharacter.getAppearance());
+        dto.setAlliesAndOrganizations(playerCharacter.getAlliesAndOrganizations());
+        dto.setAdditionalTreasure(playerCharacter.getAdditionalTreasure());
+        dto.setCharacterHistory(playerCharacter.getCharacterHistory());
 
         return dto;
     }
@@ -347,6 +396,311 @@ public class PlayerCharacterService {
 
         return character;
     }
+
+
+    // ========== COMBAT METHODS ==========
+
+    // DAÑO
+    @Transactional
+    public PlayerCharacterDto takeDamage(Long characterId, int damage) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+
+        // Primero se consume el HP temporal
+        if (character.getTemporaryHP() > 0) {
+            if (damage <= character.getTemporaryHP()) {
+                character.setTemporaryHP(character.getTemporaryHP() - damage);
+                damage = 0;
+            } else {
+                damage -= character.getTemporaryHP();
+                character.setTemporaryHP(0);
+            }
+        }
+
+        // Luego el HP actual
+        if (damage > 0) {
+            int newHP = Math.max(0, character.getCurrentHP() - damage);
+            character.setCurrentHP(newHP);
+
+            // Si llega a 0, resetear death saves
+            if (newHP == 0) {
+                character.setDeathSaveSuccesses(0);
+                character.setDeathSaveFailures(0);
+            }
+        }
+
+        characterRepository.save(character);
+        return toDto(character);
+    }
+
+    // CURACIÓN
+    @Transactional
+    public PlayerCharacterDto heal(Long characterId, int healing) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+
+        int newHP = Math.min(character.getMaxHP(), character.getCurrentHP() + healing);
+        character.setCurrentHP(newHP);
+
+        //Si se cura, reseatear death saves
+        if (newHP > 0) {
+            character.setDeathSaveSuccesses(0);
+            character.setDeathSaveFailures(0);
+        }
+        characterRepository.save(character);
+        return toDto(character);
+    }
+
+    // TEMPORAL HP
+    @Transactional
+    public PlayerCharacterDto setTemporaryHP(Long characterId, int tempHP) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+
+        // El HP temporal no se acumula, solo se reemplaza si es mayor
+        if (tempHP > character.getTemporaryHP()) {
+            character.setTemporaryHP(tempHP);
+        }
+
+        characterRepository.save(character);
+        return toDto(character);
+    }
+
+    @Transactional
+    public PlayerCharacterDto recordDeathSave(Long characterId, boolean success){
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+
+        if(character.getCurrentHP()>0){
+            throw new RuntimeException("Character is not unconscious and does not need death saves");
+        }
+
+        if(success){
+            character.setDeathSaveSuccesses(character.getDeathSaveSuccesses() +1 );
+
+            //3 éxitos = estabilizado, pero sigue inconsciente
+            if(character.getDeathSaveSuccesses() >= 3){
+                character.setDeathSaveSuccesses(0);
+                character.setDeathSaveFailures(0);
+                // No se recupera HP, solo se estabiliza
+           }        
+        }else{
+            character.setDeathSaveFailures(character.getDeathSaveFailures()+1);
+
+                //3 fallos = muerte
+                if(character.getDeathSaveFailures() >= 3){
+                    //Aquí se podría marcar al personaje como muerto
+                    //Por ahora solo dejamos los fallos registrados
+                }
+        }
+    
+            characterRepository.save(character);
+            return toDto(character);
+    }
+
+    // Reseteo de death saves (por ejemplo, tras un descanso largo)
+    @Transactional
+    public PlayerCharacterDto resetDeathSaves(Long characterId){
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+
+        character.setDeathSaveSuccesses(0);
+        character.setDeathSaveFailures(0);
+
+        characterRepository.save(character);
+        return toDto(character);
+    }
+
+    // Inspiración
+    @Transactional
+    public PlayerCharacterDto toggleInspiration(Long characterId) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+
+        character.setHasInspiration(!character.isHasInspiration());
+        characterRepository.save(character);
+        return toDto(character);
+    }
+
+    // Añadir XP
+    @Transactional
+        public PlayerCharacterDto addExperience(Long characterId, int xp) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+               .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+
+        character.setExperiencePoints(character.getExperiencePoints() + xp);
+
+        characterRepository.save(character);
+        return toDto(character);
+    }
+
+    // Gastar hit dice para curarse durante un descanso corto
+    @Transactional
+    public PlayerCharacterDto spendHitDice(Long characterId, int numberOfDice) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+        
+        if(character.getAvailableHitDice() < numberOfDice){
+            throw new RuntimeException("Not enough hit dice available");
+        }
+        character.setAvailableHitDice(character.getAvailableHitDice() - numberOfDice);
+        characterRepository.save(character);
+        return toDto(character);
+    }
+
+    @Transactional
+    public PlayerCharacterDto longRest(Long characterId) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+
+        // 1. Restaurar HP al máximo
+        character.setCurrentHP(character.getMaxHP());
+        
+        // 2. Restaurar HP temporal a 0 (se pierde durante el descanso)
+        character.setTemporaryHP(0);
+        
+        // 3. Restaurar hit dice (mínimo la mitad del nivel, redondeado hacia abajo)
+        int hitDiceToRestore = Math.max(1, character.getLevel() / 2);
+        int newHitDice = Math.min(character.getLevel(), 
+                                character.getAvailableHitDice() + hitDiceToRestore);
+        character.setAvailableHitDice(newHitDice);
+        
+        // 4. Resetear death saves
+        character.setDeathSaveSuccesses(0);
+        character.setDeathSaveFailures(0);
+        
+        // 5. Restaurar TODOS los spell slots
+        List<CharacterSpellSlot> spellSlots = slotRepository.findByCharacter(character);
+        for (CharacterSpellSlot slot : spellSlots) {
+            slot.setUsedSlots(0); // Resetear slots usados
+            slotRepository.save(slot);
+        }
+        
+        // 6. Resetear hechizos preparados (opcional, depende de la clase)
+        // Los spell slots se recuperan, pero la lista de hechizos preparados se puede cambiar
+        // Esto lo dejamos como está, el jugador puede cambiarlos manualmente
+        
+        // 7. Remover condiciones temporales que duren menos de 8 horas
+        // Esto lo manejamos con el CharacterConditionService si es necesario
+        // Por ahora, asumimos que las condiciones temporales se manejan manualmente
+        
+        characterRepository.save(character);
+        
+        System.out.println("Character " + character.getName() + " completed a long rest.");
+        System.out.println("- HP restored to " + character.getMaxHP());
+        System.out.println("- Hit dice restored: " + hitDiceToRestore + " (total: " + newHitDice + "/" + character.getLevel() + ")");
+        System.out.println("- All spell slots restored");
+        
+        return toDto(character);
+    }
+
+
+    @Transactional
+    public PlayerCharacterDto shortRest(Long characterId, int hitDiceToSpend, int hitDiceRoll) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+
+        if (hitDiceToSpend < 0) {
+            throw new RuntimeException("Cannot spend negative hit dice");
+        }
+        
+        if (hitDiceToSpend > character.getAvailableHitDice()) {
+            throw new RuntimeException("Not enough hit dice available. Available: " + 
+                                    character.getAvailableHitDice() + ", tried to spend: " + hitDiceToSpend);
+        }
+
+        // 1. Gastar hit dice y recuperar HP
+        if (hitDiceToSpend > 0) {
+            // hitDiceRoll = suma de las tiradas de dados + modificador CON por dado
+            int conModifier = character.calculateAbilityModifier("con");
+            int totalHealing = hitDiceRoll + (conModifier * hitDiceToSpend);
+            
+            // No se puede curar más allá del máximo
+            int newHP = Math.min(character.getMaxHP(), character.getCurrentHP() + totalHealing);
+            character.setCurrentHP(newHP);
+            
+            // Reducir hit dice disponibles
+            character.setAvailableHitDice(character.getAvailableHitDice() - hitDiceToSpend);
+            
+            System.out.println("Character spent " + hitDiceToSpend + " hit dice and recovered " + 
+                            (newHP - (newHP - totalHealing)) + " HP");
+        }
+        
+        // 2. Algunas clases recuperan habilidades en short rest
+        // (Warlock spell slots, Fighter Action Surge, Monk Ki points, etc.)
+        // Esto depende de la clase y se podría implementar con features específicas
+        
+        // Por ahora, verificamos si es un Warlock y restauramos sus spell slots
+        if (character.getDndClass() != null && 
+            character.getDndClass().getIndexName() != null && 
+            character.getDndClass().getIndexName().equalsIgnoreCase("warlock")) {
+            
+            // Los Warlocks recuperan TODOS sus spell slots en short rest
+            List<CharacterSpellSlot> spellSlots = slotRepository.findByCharacter(character);
+            for (CharacterSpellSlot slot : spellSlots) {
+                slot.setUsedSlots(0);
+                slotRepository.save(slot);
+            }
+            
+            System.out.println("Warlock spell slots restored (Pact Magic)");
+        }
+        
+        characterRepository.save(character);
+        
+        System.out.println("Character " + character.getName() + " completed a short rest.");
+        
+        return toDto(character);
+    }
+
+    @Transactional
+    public void recoverClassAbilities(Long characterId, String restType) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+
+        String className = character.getDndClass().getIndexName();
+        
+        if (restType.equalsIgnoreCase("short")) {
+            // Habilidades que se recuperan en short rest
+            switch (className.toLowerCase()) {
+                case "warlock":
+                    // Ya manejado en shortRest() - Spell slots
+                    break;
+                case "fighter":
+                    // Action Surge, Second Wind
+                    // Aquí podrías resetear contadores de usos
+                    break;
+                case "monk":
+                    // Ki points
+                    // character.setCurrentKiPoints(character.getMaxKiPoints());
+                    break;
+                case "bard":
+                    // Bardic Inspiration (recupera en short o long rest)
+                    break;
+                // ... otros casos
+            }
+        } else if (restType.equalsIgnoreCase("long")) {
+            // Todas las habilidades se recuperan en long rest
+            // Incluyendo las de short rest
+            recoverClassAbilities(characterId, "short");
+            
+            // Habilidades que SOLO se recuperan en long rest
+            switch (className.toLowerCase()) {
+                case "wizard":
+                    // Arcane Recovery (se usa en short rest, pero se recupera en long rest)
+                    break;
+                case "druid":
+                    // Wild Shape uses
+                    break;
+                case "sorcerer":
+                    // Sorcery Points
+                    break;
+                // ... otros casos
+            }
+        }
+    }
+
+
+
 
     public PlayerCharacterDto levelUpAndReturnDto(Long characterId) {
         PlayerCharacter character = levelUp(characterId);
@@ -538,29 +892,6 @@ public class PlayerCharacterService {
                 System.out.println("Added feature: " + feature.getName());
             }
         }
-    }
-
-    // ========== LONG REST ==========
-
-    @Transactional
-    public void longRest(Long characterId) {
-        PlayerCharacter character = characterRepository.findById(characterId)
-                .orElseThrow(() -> new RuntimeException("Character not found"));
-
-        // Recuperar todos los spell slots
-        List<CharacterSpellSlot> slots = slotRepository.findByCharacterId(characterId);
-
-        for (CharacterSpellSlot slot : slots) {
-            slot.setUsedSlots(0);
-        }
-
-        slotRepository.saveAll(slots);
-
-        // Recuperar HP al máximo
-        character.setCurrentHP(character.getMaxHP());
-        characterRepository.save(character);
-
-        System.out.println(character.getName() + " completed a long rest (HP and spell slots restored)");
     }
 
     // ========== SUBCLASS ==========
