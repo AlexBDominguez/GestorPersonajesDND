@@ -76,10 +76,126 @@ CREATE TABLE IF NOT EXISTS spells (
     `range` VARCHAR(255),
     duration VARCHAR(255),
     components VARCHAR(255),
-    description VARCHAR(2000),
+    description TEXT,
     INDEX idx_spell_level (level),
     INDEX idx_spell_name (name),
     INDEX idx_index_api (index_api)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: languages (Idiomas)
+-- ============================================
+CREATE TABLE IF NOT EXISTS languages (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    index_name VARCHAR(255) UNIQUE,
+    name VARCHAR(255),
+    script VARCHAR(255),
+    type VARCHAR(50),
+    description TEXT,
+    INDEX idx_languages_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: proficiencies (Competencias/Proficiencias)
+-- ============================================
+CREATE TABLE IF NOT EXISTS proficiencies (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    index_name VARCHAR(255) UNIQUE,
+    name VARCHAR(255),
+    type VARCHAR(100),
+    description TEXT,
+    INDEX idx_proficiencies_name (name),
+    INDEX idx_proficiencies_type (type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: damage_types (Tipos de Daño)
+-- ============================================
+CREATE TABLE IF NOT EXISTS damage_types (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    index_name VARCHAR(255) UNIQUE,
+    name VARCHAR(255),
+    description TEXT,
+    INDEX idx_damage_types_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: conditions (Condiciones)
+-- ============================================
+CREATE TABLE IF NOT EXISTS conditions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    index_name VARCHAR(255) UNIQUE,
+    name VARCHAR(255),
+    INDEX idx_conditions_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS condition_descriptions (
+    condition_id BIGINT NOT NULL,
+    description TEXT,
+    FOREIGN KEY (condition_id) REFERENCES conditions(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: feats (Talentos)
+-- ============================================
+CREATE TABLE IF NOT EXISTS feats (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    index_name VARCHAR(255) UNIQUE,
+    name VARCHAR(255),
+    description TEXT,
+    prerequisites TEXT,
+    INDEX idx_feats_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: subclasses (Subclases)
+-- ============================================
+CREATE TABLE IF NOT EXISTS subclasses (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    class_id BIGINT NOT NULL,
+    index_name VARCHAR(255) UNIQUE,
+    name VARCHAR(255),
+    description TEXT,
+    subclass_flavor TEXT,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    INDEX idx_subclasses_class (class_id),
+    INDEX idx_subclasses_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: subclass_features (Rasgos de Subclase)
+-- ============================================
+CREATE TABLE IF NOT EXISTS subclass_features (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    subclass_id BIGINT NOT NULL,
+    index_name VARCHAR(255),
+    name VARCHAR(255),
+    level INT NOT NULL,
+    description TEXT,
+    FOREIGN KEY (subclass_id) REFERENCES subclasses(id) ON DELETE CASCADE,
+    INDEX idx_subclass_features_level (subclass_id, level)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: active_effects (Efectos Activos)
+-- ============================================
+CREATE TABLE IF NOT EXISTS active_effects (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    index_name VARCHAR(255) UNIQUE,
+    name VARCHAR(255),
+    description TEXT,
+    modifier_value VARCHAR(255),
+    duration VARCHAR(255),
+    requires_concentration BOOLEAN NOT NULL DEFAULT FALSE,
+    source VARCHAR(255),
+    conditions TEXT,
+    INDEX idx_active_effects_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS effect_modifiers (
+    effect_id BIGINT NOT NULL,
+    modifier_type VARCHAR(100),
+    FOREIGN KEY (effect_id) REFERENCES active_effects(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -413,6 +529,128 @@ CREATE TABLE IF NOT EXISTS level_up_task (
     FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
     INDEX idx_levelup_char (character_id),
     INDEX idx_levelup_completed (completed)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: character_languages (Idiomas del Personaje)
+-- ============================================
+CREATE TABLE IF NOT EXISTS character_languages (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    language_id BIGINT NOT NULL,
+    FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
+    FOREIGN KEY (language_id) REFERENCES languages(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_character_language (character_id, language_id),
+    INDEX idx_character_languages (character_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: character_proficiencies (Proficiencias del Personaje)
+-- ============================================
+CREATE TABLE IF NOT EXISTS character_proficiencies (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    proficiency_id BIGINT NOT NULL,
+    FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
+    FOREIGN KEY (proficiency_id) REFERENCES proficiencies(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_character_proficiency (character_id, proficiency_id),
+    INDEX idx_character_proficiencies (character_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: character_feats (Talentos del Personaje)
+-- ============================================
+CREATE TABLE IF NOT EXISTS character_feats (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    feat_id BIGINT NOT NULL,
+    level_obtained INT NOT NULL,
+    FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
+    FOREIGN KEY (feat_id) REFERENCES feats(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_character_feat (character_id, feat_id),
+    INDEX idx_character_feats (character_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: character_conditions (Condiciones del Personaje)
+-- ============================================
+CREATE TABLE IF NOT EXISTS character_conditions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    condition_id BIGINT NOT NULL,
+    FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
+    FOREIGN KEY (condition_id) REFERENCES conditions(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_character_condition (character_id, condition_id),
+    INDEX idx_character_conditions (character_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: character_equipment (Equipo del Personaje)
+-- ============================================
+CREATE TABLE IF NOT EXISTS character_equipment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    item_id BIGINT NOT NULL,
+    equipped BOOLEAN NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
+    FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_character_equipment (character_id, item_id),
+    INDEX idx_character_equipment (character_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: character_active_effects (Efectos Activos del Personaje)
+-- ============================================
+CREATE TABLE IF NOT EXISTS character_active_effects (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    effect_id BIGINT NOT NULL,
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NULL,
+    FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
+    FOREIGN KEY (effect_id) REFERENCES active_effects(id) ON DELETE CASCADE,
+    INDEX idx_character_active_effects (character_id),
+    INDEX idx_character_active_effects_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: character_money (Dinero del Personaje - alternativa a coins)
+-- ============================================
+CREATE TABLE IF NOT EXISTS character_money (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    coin_type VARCHAR(50) NOT NULL,
+    amount INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_character_coin (character_id, coin_type),
+    INDEX idx_character_money (character_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: character_class_resources (Recursos de Clase del Personaje)
+-- ============================================
+CREATE TABLE IF NOT EXISTS character_class_resources (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    resource_name VARCHAR(255) NOT NULL,
+    max_value INT NOT NULL DEFAULT 0,
+    current_value INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
+    INDEX idx_character_class_resources (character_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: character_damage_relations (Relaciones de Daño del Personaje)
+-- ============================================
+CREATE TABLE IF NOT EXISTS character_damage_relations (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    character_id BIGINT NOT NULL,
+    damage_type_id BIGINT NOT NULL,
+    relation_type VARCHAR(50) NOT NULL,
+    FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
+    FOREIGN KEY (damage_type_id) REFERENCES damage_types(id) ON DELETE CASCADE,
+    UNIQUE KEY uq_character_damage (character_id, damage_type_id, relation_type),
+    INDEX idx_character_damage_relations (character_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
