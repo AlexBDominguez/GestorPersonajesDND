@@ -27,6 +27,8 @@ public class PlayerCharacterService {
     private final BackgroundRepository backgroundRepository;
     private final SubclassRepository subclassRepository;
     private final CharacterClassResourceService characterClassResourceService;
+    private final CharacterEquipmentRepository equipmentRepository;
+    private final CharacterActiveEffectRepository characterActiveEffectRepository;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -43,7 +45,9 @@ public class PlayerCharacterService {
             CharacterSkillService characterSkillService,
             BackgroundRepository backgroundRepository,
             SubclassRepository subclassRepository,
-            CharacterClassResourceService characterClassResourceService
+            CharacterClassResourceService characterClassResourceService,
+            CharacterEquipmentRepository equipmentRepository,
+            CharacterActiveEffectRepository characterActiveEffectRepository
         ) {
         this.characterRepository = characterRepository;
         this.raceRepository = raceRepository;
@@ -60,6 +64,8 @@ public class PlayerCharacterService {
         this.backgroundRepository = backgroundRepository;
         this.subclassRepository = subclassRepository;
         this.characterClassResourceService = characterClassResourceService;
+        this.equipmentRepository = equipmentRepository;
+        this.characterActiveEffectRepository = characterActiveEffectRepository;
     }
 
     // ========== CRUD BÁSICO ==========
@@ -183,8 +189,13 @@ public class PlayerCharacterService {
         dto.setBackstory(playerCharacter.getBackstory());
         dto.setCurrentHp(playerCharacter.getCurrentHP());
         dto.setMaxHp(playerCharacter.getMaxHP());
+
+        
         // Campos calculados automáticamente
-        dto.setArmorClass(playerCharacter.getArmorClass());
+        CharacterEquipment equipment = equipmentRepository.findByCharacter(playerCharacter).orElse(null);
+        List<CharacterActiveEffect> activeEffects = characterActiveEffectRepository.findByCharacterIdAndActive(
+        playerCharacter.getId(), true);
+        dto.setArmorClass(playerCharacter.getArmorClass(equipment, activeEffects));
         dto.setSpellSaveDC(playerCharacter.getSpellSaveDC());
         dto.setSpellAttackBonus(playerCharacter.getSpellAttackBonus());
         dto.setInitiativeModifier(playerCharacter.getInitiativeModifier());
@@ -574,7 +585,7 @@ public class PlayerCharacterService {
     }
 
     @Transactional
-public PlayerCharacterDto longRest(Long characterId) {
+    public PlayerCharacterDto longRest(Long characterId) {
     PlayerCharacter character = characterRepository.findById(characterId)
             .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
 

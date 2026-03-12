@@ -491,31 +491,86 @@ public class PlayerCharacter {
     }
 
 
-    /**
-    * Calcula la Armor Class (AC) del personaje
-    * Base: 10 + DEX modifier
-    * Puede añadirse bonificador de armadura natural (algunas razas/clases)
-    * Nota: No incluye armadura/escudo equipados (eso se gestiona con items) 
-    */
-
+        /**
+     * Calcula la Armor Class (AC) del personaje
+     * Considera armadura equipada, modificador DEX, bonificador natural y efectos activos
+     */
     @Transient
-    public int getArmorClass() {
+    public int getArmorClass(CharacterEquipment equipment, List<CharacterActiveEffect> activeEffects) {
         int baseAC = 10;
         int dexModifier = calculateAbilityModifier("dex");
-
-        //AC base = 10 + DEX
-        int ac = baseAC + dexModifier;
-
-        //Bonificador de armadura natural (algunas razas como lizardfolk, tortle, etc)
-        if(naturalArmorBonus != null) {
-            ac = Math.max(ac, naturalArmorBonus + dexModifier);
+        
+        // Si tiene armadura equipada
+        if (equipment != null && equipment.getArmor() != null) {
+            Item armor = equipment.getArmor();
+            Integer armorAC = armor.getArmorClass();
+            
+            if (armorAC != null) {
+                String armorType = armor.getArmorType();
+                
+                if ("Light".equalsIgnoreCase(armorType)) {
+                    baseAC = armorAC + dexModifier;
+                    
+                } else if ("Medium".equalsIgnoreCase(armorType)) {
+                    int maxDexBonus = armor.getMaxDexBonus() != null ? armor.getMaxDexBonus() : 2;
+                    baseAC = armorAC + Math.min(dexModifier, maxDexBonus);
+                    
+                } else if ("Heavy".equalsIgnoreCase(armorType)) {
+                    baseAC = armorAC;
+                }
+            }
+        } else {
+            // Sin armadura: 10 + DEX
+            baseAC = baseAC + dexModifier;
+            
+            // Bonificador de armadura natural (algunas razas)
+            if (naturalArmorBonus != null) {
+                baseAC = Math.max(baseAC, naturalArmorBonus + dexModifier);
+            }
         }
+        
+        // Escudo (+2 AC si está equipado)
+        if (equipment != null && equipment.getOffHand() != null) {
+            Item offHand = equipment.getOffHand();
+            if ("Shield".equalsIgnoreCase(offHand.getItemType())) {
+                baseAC += 2;
+            }
+        }
+        
+        // Bonificadores de efectos activos (ej: Shield of Faith, Shield spell, etc.)
+        if (activeEffects != null) {
+            for (CharacterActiveEffect effect : activeEffects) {
+                if (effect.isActive() && 
+                    effect.getEffect().getModifierTypes() != null && 
+                    effect.getEffect().getModifierTypes().contains(enumeration.EffectModifierType.AC)) {
+                    
+                    String modifierValue = effect.getEffect().getModifierValue();
+                    baseAC += parseModifier(modifierValue);
+                }
+            }
+        }
+        
+        return baseAC;
+    }
 
-        // TODO: Añadir AC de armadura equipada cuando se implemente inventario
-        // TODO: Añadir AC de escudo cuando se implemente inventario
-        // TODO: Considerar hechizos como Mage Armor, Shield of Faith, etc.
-
-        return ac;
+    /**
+     * Parsea un modificador en formato string (ej: "+2", "+5", etc.)
+     * Para efectos más complejos como "+1d4" se podría extender
+     */
+    @Transient
+    private int parseModifier(String modifierValue) {
+        if (modifierValue == null || modifierValue.isEmpty()) {
+            return 0;
+        }
+        
+        try {
+            // Remover el signo '+' si existe y parsear
+            return Integer.parseInt(modifierValue.replace("+", ""));
+        } catch (NumberFormatException e) {
+            // Si no es un número simple (ej: "+1d4"), devolver 0
+            // En el futuro se podría implementar un parser más complejo
+            return 0;
+        }
     }
 
     /**
