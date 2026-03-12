@@ -26,6 +26,7 @@ public class PlayerCharacterService {
     private final CharacterSkillService characterSkillService;
     private final BackgroundRepository backgroundRepository;
     private final SubclassRepository subclassRepository;
+    private final CharacterClassResourceService characterClassResourceService;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -41,7 +42,8 @@ public class PlayerCharacterService {
             PendingTaskRepository pendingTaskRepository,
             CharacterSkillService characterSkillService,
             BackgroundRepository backgroundRepository,
-            SubclassRepository subclassRepository
+            SubclassRepository subclassRepository,
+            CharacterClassResourceService characterClassResourceService
         ) {
         this.characterRepository = characterRepository;
         this.raceRepository = raceRepository;
@@ -57,6 +59,7 @@ public class PlayerCharacterService {
         this.characterSkillService = characterSkillService;
         this.backgroundRepository = backgroundRepository;
         this.subclassRepository = subclassRepository;
+        this.characterClassResourceService = characterClassResourceService;
     }
 
     // ========== CRUD BÁSICO ==========
@@ -107,7 +110,6 @@ public class PlayerCharacterService {
         playerCharacter.setAlliesAndOrganizations(dto.getAlliesAndOrganizations());
         playerCharacter.setAdditionalTreasure(dto.getAdditionalTreasure());
         playerCharacter.setCharacterHistory(dto.getCharacterHistory());
-
 
 
         Race race = raceRepository.findById(dto.getRaceId())
@@ -181,6 +183,29 @@ public class PlayerCharacterService {
         dto.setBackstory(playerCharacter.getBackstory());
         dto.setCurrentHp(playerCharacter.getCurrentHP());
         dto.setMaxHp(playerCharacter.getMaxHP());
+        // Campos calculados automáticamente
+        dto.setArmorClass(playerCharacter.getArmorClass());
+        dto.setSpellSaveDC(playerCharacter.getSpellSaveDC());
+        dto.setSpellAttackBonus(playerCharacter.getSpellAttackBonus());
+        dto.setInitiativeModifier(playerCharacter.getInitiativeModifier());
+        dto.setCurrentSpeed(playerCharacter.getCurrentSpeed());
+        dto.setMaxPreparedSpells(playerCharacter.getMaxPreparedSpells());
+        dto.setEncumberedThreshold(playerCharacter.getEncumberedThreshold());
+        dto.setHeavilyEncumberedThreshold(playerCharacter.getHeavilyEncumberedThreshold());
+        dto.setMeleeAttackBonus(playerCharacter.getMeleeAttackBonus());
+        dto.setRangedAttackBonus(playerCharacter.getRangedAttackBonus());
+        dto.setFinesseAttackBonus(playerCharacter.getFinesseAttackBonus());
+        dto.setExperienceToNextLevel(playerCharacter.getExperienceToNextLevel());
+        dto.setExperienceNeeded(playerCharacter.getExperienceNeeded());
+        dto.setDying(playerCharacter.isDying());
+        dto.setStable(playerCharacter.isStable());
+        dto.setDead(playerCharacter.isDead());
+        dto.setConscious(playerCharacter.isConscious());
+        // Passive skills (requieren consultar CharacterSkill)
+        List<CharacterSkill> characterSkills = characterSkillService.getCharacterSkills(playerCharacter);
+        dto.setPassivePerception(playerCharacter.getPassivePerception(characterSkills));
+        dto.setPassiveInvestigation(playerCharacter.getPassiveInvestigation(characterSkills));
+        dto.setPassiveInsight(playerCharacter.getPassiveInsight(characterSkills));
 
         if (playerCharacter.getRace() != null) {
             dto.setRaceId(playerCharacter.getRace().getId());
@@ -549,50 +574,50 @@ public class PlayerCharacterService {
     }
 
     @Transactional
-    public PlayerCharacterDto longRest(Long characterId) {
-        PlayerCharacter character = characterRepository.findById(characterId)
-                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+public PlayerCharacterDto longRest(Long characterId) {
+    PlayerCharacter character = characterRepository.findById(characterId)
+            .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
 
-        // 1. Restaurar HP al máximo
-        character.setCurrentHP(character.getMaxHP());
-        
-        // 2. Restaurar HP temporal a 0 (se pierde durante el descanso)
-        character.setTemporaryHP(0);
-        
-        // 3. Restaurar hit dice (mínimo la mitad del nivel, redondeado hacia abajo)
-        int hitDiceToRestore = Math.max(1, character.getLevel() / 2);
-        int newHitDice = Math.min(character.getLevel(), 
-                                character.getAvailableHitDice() + hitDiceToRestore);
-        character.setAvailableHitDice(newHitDice);
-        
-        // 4. Resetear death saves
-        character.setDeathSaveSuccesses(0);
-        character.setDeathSaveFailures(0);
-        
-        // 5. Restaurar TODOS los spell slots
-        List<CharacterSpellSlot> spellSlots = slotRepository.findByCharacter(character);
-        for (CharacterSpellSlot slot : spellSlots) {
-            slot.setUsedSlots(0); // Resetear slots usados
-            slotRepository.save(slot);
-        }
-        
-        // 6. Resetear hechizos preparados (opcional, depende de la clase)
-        // Los spell slots se recuperan, pero la lista de hechizos preparados se puede cambiar
-        // Esto lo dejamos como está, el jugador puede cambiarlos manualmente
-        
-        // 7. Remover condiciones temporales que duren menos de 8 horas
-        // Esto lo manejamos con el CharacterConditionService si es necesario
-        // Por ahora, asumimos que las condiciones temporales se manejan manualmente
-        
-        characterRepository.save(character);
-        
-        System.out.println("Character " + character.getName() + " completed a long rest.");
-        System.out.println("- HP restored to " + character.getMaxHP());
-        System.out.println("- Hit dice restored: " + hitDiceToRestore + " (total: " + newHitDice + "/" + character.getLevel() + ")");
-        System.out.println("- All spell slots restored");
-        
-        return toDto(character);
+    // 1. Restaurar HP al máximo
+    character.setCurrentHP(character.getMaxHP());
+    
+    // 2. Restaurar HP temporal a 0 (se pierde durante el descanso)
+    character.setTemporaryHP(0);
+    
+    // 3. Restaurar hit dice (mínimo la mitad del nivel, redondeado hacia abajo)
+    int hitDiceToRestore = Math.max(1, character.getLevel() / 2);
+    int newHitDice = Math.min(character.getLevel(), 
+                              character.getAvailableHitDice() + hitDiceToRestore);
+    character.setAvailableHitDice(newHitDice);
+    
+    // 4. Resetear death saves
+    character.setDeathSaveSuccesses(0);
+    character.setDeathSaveFailures(0);
+    
+    // 5. Restaurar TODOS los spell slots
+    List<CharacterSpellSlot> spellSlots = slotRepository.findByCharacter(character);
+    for (CharacterSpellSlot slot : spellSlots) {
+        slot.setUsedSlots(0);
+        slotRepository.save(slot);
     }
+    
+    // 6. Restaurar recursos de clase que se recuperan en LONG_REST
+    characterClassResourceService.recoverResources(characterId, "LONG_REST");
+    
+    // 7. Remover condiciones temporales que duren menos de 8 horas
+    // Esto lo manejamos con el CharacterConditionService si es necesario
+    // Por ahora, asumimos que las condiciones temporales se manejan manualmente
+    
+    characterRepository.save(character);
+    
+    System.out.println("Character " + character.getName() + " completed a long rest.");
+    System.out.println("- HP restored to " + character.getMaxHP());
+    System.out.println("- Hit dice restored: " + hitDiceToRestore + " (total: " + newHitDice + "/" + character.getLevel() + ")");
+    System.out.println("- All spell slots restored");
+    System.out.println("- All class resources restored");
+    
+    return toDto(character);
+}
 
 
     @Transactional
@@ -626,16 +651,11 @@ public class PlayerCharacterService {
                             (newHP - (newHP - totalHealing)) + " HP");
         }
         
-        // 2. Algunas clases recuperan habilidades en short rest
-        // (Warlock spell slots, Fighter Action Surge, Monk Ki points, etc.)
-        // Esto depende de la clase y se podría implementar con features específicas
-        
-        // Por ahora, verificamos si es un Warlock y restauramos sus spell slots
+            // 2. Restaurar spell slots de Warlock (Pact Magic)
         if (character.getDndClass() != null && 
             character.getDndClass().getIndexName() != null && 
             character.getDndClass().getIndexName().equalsIgnoreCase("warlock")) {
             
-            // Los Warlocks recuperan TODOS sus spell slots en short rest
             List<CharacterSpellSlot> spellSlots = slotRepository.findByCharacter(character);
             for (CharacterSpellSlot slot : spellSlots) {
                 slot.setUsedSlots(0);
@@ -645,6 +665,9 @@ public class PlayerCharacterService {
             System.out.println("Warlock spell slots restored (Pact Magic)");
         }
         
+        // 3. Restaurar recursos de clase que se recuperan en SHORT_REST
+        characterClassResourceService.recoverResources(characterId, "SHORT_REST");
+        
         characterRepository.save(character);
         
         System.out.println("Character " + character.getName() + " completed a short rest.");
@@ -652,55 +675,7 @@ public class PlayerCharacterService {
         return toDto(character);
     }
 
-    @Transactional
-    public void recoverClassAbilities(Long characterId, String restType) {
-        PlayerCharacter character = characterRepository.findById(characterId)
-                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
-
-        String className = character.getDndClass().getIndexName();
-        
-        if (restType.equalsIgnoreCase("short")) {
-            // Habilidades que se recuperan en short rest
-            switch (className.toLowerCase()) {
-                case "warlock":
-                    // Ya manejado en shortRest() - Spell slots
-                    break;
-                case "fighter":
-                    // Action Surge, Second Wind
-                    // Aquí podrías resetear contadores de usos
-                    break;
-                case "monk":
-                    // Ki points
-                    // character.setCurrentKiPoints(character.getMaxKiPoints());
-                    break;
-                case "bard":
-                    // Bardic Inspiration (recupera en short o long rest)
-                    break;
-                // ... otros casos
-            }
-        } else if (restType.equalsIgnoreCase("long")) {
-            // Todas las habilidades se recuperan en long rest
-            // Incluyendo las de short rest
-            recoverClassAbilities(characterId, "short");
-            
-            // Habilidades que SOLO se recuperan en long rest
-            switch (className.toLowerCase()) {
-                case "wizard":
-                    // Arcane Recovery (se usa en short rest, pero se recupera en long rest)
-                    break;
-                case "druid":
-                    // Wild Shape uses
-                    break;
-                case "sorcerer":
-                    // Sorcery Points
-                    break;
-                // ... otros casos
-            }
-        }
-    }
-
-
-
+    
 
     public PlayerCharacterDto levelUpAndReturnDto(Long characterId) {
         PlayerCharacter character = levelUp(characterId);

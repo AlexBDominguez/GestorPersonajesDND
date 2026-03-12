@@ -3,6 +3,7 @@ package entities;
 import jakarta.persistence.*;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,26 +41,7 @@ public class PlayerCharacter {
     private int goldPieces = 0;
     private int platinumPieces = 0;
 
-    //Métodos transient para calcular
-
-    @Transient
-    public int getCarryingCapacity() {
-        Integer str = abilityScores.get("str");
-        if (str == null) return 150;
-        return str * 15;
-    }
-
-    @Transient
-    public int getAttunementSlotUsed(){
-        //Lo calcularemos desde el servicio
-        return 0; //Placeholder
-    }
-
-    @Transient
-    public int getMaxAttunementSlots(){
-        return 3;
-    }
-        
+          
 
     //Características personales elegidas por el jugador
     @Column(columnDefinition = "TEXT")
@@ -91,31 +73,7 @@ public class PlayerCharacter {
     @OneToMany(mappedBy = "character", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CharacterSpell> characterSpells = new HashSet<>();
 
-
-    @Transient
-    public int calculateAbilityModifier(String abilityScore) {
-        Integer score = abilityScores.get(abilityScore);
-        if (score == null) return 0;
-        return (score - 10) / 2;
-    }
-
-    @Transient
-    public int getPassivePerception(){
-        //Buscar skill de Perception
-        //Deolver 10 + WIS mod
-        return 10 + calculateAbilityModifier("wis");        
-    }
-
-    @Transient
-    public int getPassiveInvestigation(){
-        return 10 + calculateAbilityModifier("int");
-    }
-
-    @Transient
-    public int getPassiveInsight(){
-        return 10 + calculateAbilityModifier("wis");
-    }
-
+    
     //Alineamiento
     private String alignment;
 
@@ -511,5 +469,375 @@ public class PlayerCharacter {
     }
 
 
+    // ========== MÉTODOS DE CÁLCULO AUTOMÁTICO ==========
+
+
+    @Transient
+    public int getAttunementSlotUsed(){
+        //Lo calcularemos desde el servicio
+        return 0; //Placeholder
+    }
+
+    @Transient
+    public int getMaxAttunementSlots(){
+        return 3;
+    }
+
+    @Transient
+    public int calculateAbilityModifier(String abilityScore) {
+        Integer score = abilityScores.get(abilityScore);
+        if (score == null) return 0;
+        return (score - 10) / 2;
+    }
+
+
+    /**
+    * Calcula la Armor Class (AC) del personaje
+    * Base: 10 + DEX modifier
+    * Puede añadirse bonificador de armadura natural (algunas razas/clases)
+    * Nota: No incluye armadura/escudo equipados (eso se gestiona con items) 
+    */
+
+    @Transient
+    public int getArmorClass() {
+        int baseAC = 10;
+        int dexModifier = calculateAbilityModifier("dex");
+
+        //AC base = 10 + DEX
+        int ac = baseAC + dexModifier;
+
+        //Bonificador de armadura natural (algunas razas como lizardfolk, tortle, etc)
+        if(naturalArmorBonus != null) {
+            ac = Math.max(ac, naturalArmorBonus + dexModifier);
+        }
+
+        // TODO: Añadir AC de armadura equipada cuando se implemente inventario
+        // TODO: Añadir AC de escudo cuando se implemente inventario
+        // TODO: Considerar hechizos como Mage Armor, Shield of Faith, etc.
+
+        return ac;
+    }
+
+    /**
+     * Calcula el Spell Save DC (dificultad para resistir los hechizos del personaje)
+     * Fórmula: 8 + proficiency bonus + spellcasting ability modifier
+     * Solo aplica si la clase tiene spellcasting
+     */
+
+    @Transient
+    public int getSpellSaveDC() {
+        if (dndClass == null || dndClass.getSpellcastingAbility() == null) {
+            return 0; // No es lanzador de hechizos
+
+        }
+        String spellcastingAbility = dndClass.getSpellcastingAbility();
+        int abilityModifier = calculateAbilityModifier(spellcastingAbility);
+
+        return 8 + proficiencyBonus + abilityModifier;
+    }
+
+    /**
+     * Calcula el bonificador de ataque para hechizos
+     * Fórmula: proficiency bonus + spellcasting ability modifier
+     * Solo aplica si la clase tiene spellcasting
+     */
+
+    @Transient
+    public int getSpellAttackBonus(){
+        if(dndClass == null || dndClass.getSpellcastingAbility() == null) {
+            return 0; // No es lanzador de hechizos
+        }
+
+        String spellcastingAbility = dndClass.getSpellcastingAbility();
+        int abilityModifier = calculateAbilityModifier(spellcastingAbility);
+
+        return proficiencyBonus + abilityModifier;
+    }
+
+    /**
+     * Calcula el modificador de iniciativa
+     * Base: DEX modifier + initiative bonus (de features, items, etc)
+     */
+    @Transient
+    public int getInitiativeModifier(){
+        int dexModifier = calculateAbilityModifier("dex");
+        return dexModifier + initiativeBonus;
+    }
+
+    /**
+     * Calcula la velocidad de movimiento actual
+     * Base: velocidad de la raza + modificadores
+     */
+    @Transient
+    public int getCurrentSpeed(){
+        if(race == null) {
+            return 30; // Velocidad base si no se ha seleccionado raza
+        }
+
+        int baseSpeed = race.getSpeed();
+        int totalSpeed = baseSpeed + speedModifier;
+
+        //no puede ser negativa
+        return Math.max(0, totalSpeed);
+    }
+
+    /**
+     * Calcula el bonificador de competencia según el nivel
+     * Se podría usar en lugar de guardar el valor en la BD
+     * Formula: 2 + ((nivel - 1) / 4)
+     */
+
+    @Transient
+    public int calculateProficiencyBonus() {
+        return 2 + ((level - 1) / 4);
+    }
+
+
+    /**
+     * Calcula el numero maximo de hechizos que puede tener preparados
+     * Formula: spellcasting ability modifier + nivel
+     * Minimo 1
+     * Solo para clases que preparan hechizos (Wizard, Cleric, Druid, Paladin)
+     */
+
+    @Transient
+    public int getMaxPreparedSpells(){
+        if(dndClass == null || dndClass.getSpellcastingAbility() == null) {
+            return 0; // No es lanzador de hechizos
+        }
+
+    // Algunas clases no preparan hechizos (Bard, Sorcerer, Warlock, Ranger conocen hechizos)
+    //Esto se podría refinar con un campo en DndClass
+        String spellcastingAbility = dndClass.getSpellcastingAbility();
+        int abilityModifier = calculateAbilityModifier(spellcastingAbility);
+
+        return Math.max(1, abilityModifier + level);
+    }
+
+    /**
+     * Calcula la capacidad de carga máxima
+     * Fórmula: STR × 15 (en libras)
+     */
+    @Transient
+    public int getCarryingCapacity() {
+        Integer str = abilityScores.get("str");
+        if (str == null) return 150; // Valor por defecto (STR 10)
+        return str * 15;
+    }
+
+    /**
+     * Calcula el peso que causa que el personaje esté Encumbered (sobrecargado)
+     * Velocidad reducida en 10 pies
+     * Fórmula: STR × 5
+     */
+    @Transient
+    public int getEncumberedThreshold() {
+        Integer str = abilityScores.get("str");
+        if (str == null) return 50;
+        return str * 5;
+    }
+
+    /**
+     * Calcula el peso que causa que el personaje esté Heavily Encumbered
+     * Velocidad reducida en 20 pies y desventaja en checks físicos
+     * Fórmula: STR × 10
+     */
+    @Transient
+    public int getHeavilyEncumberedThreshold() {
+        Integer str = abilityScores.get("str");
+        if (str == null) return 100;
+        return str * 10;
+    }
+
+    /**
+     * Calcula el bonificador de ataque cuerpo a cuerpo básico
+     * Normalmente usa STR, pero algunas armas pueden usar DEX (finesse)
+     * Fórmula: proficiency bonus + ability modifier (STR)
+     */
+
+    @Transient
+    public int getMeleeAttackBonus(){
+        int strModifier = calculateAbilityModifier("str");
+        return proficiencyBonus + strModifier;
+    }
+
+    /**
+    * Bonificador de ataque con armas Finesse (usando DEX)
+    * Fórmula: proficiency bonus + DEX modifier
+    */
+    @Transient
+    public int getFinesseAttackBonus() {
+        int dexModifier = calculateAbilityModifier("dex");
+        return proficiencyBonus + dexModifier;
+    }
+
+    /**
+     * Calcula el bonificador de ataque a distancia
+     * Fórmula: proficiency bonus + DEX modifier
+     */
+    @Transient
+    public int getRangedAttackBonus() {
+        int dexModifier = calculateAbilityModifier("dex");
+        return proficiencyBonus + dexModifier;
+    }
+
+    /**
+     * Calcula Passive Perception
+     * Fórmula: 10 + WIS modifier + (proficiency si tiene proficiencia en Perception)
+     */
+    @Transient
+    public int getPassivePerception(List<CharacterSkill> characterSkills) {
+        int wisModifier = calculateAbilityModifier("wis");
+        int bonus = 10 + wisModifier;
+        
+        // Verificar si tiene proficiencia en Perception
+        boolean hasProficiency = characterSkills.stream()
+                .anyMatch(cs -> cs.getSkill().getIndexName().equals("perception") && cs.isProficient());
+        
+        if (hasProficiency) {
+            bonus += proficiencyBonus;
+        }
+        
+        return bonus;
+    }
+
+    /**
+     * Calcula Passive Investigation
+     * Fórmula: 10 + INT modifier + (proficiency si tiene proficiencia en Investigation)
+     */
+    @Transient
+    public int getPassiveInvestigation(List<CharacterSkill> characterSkills) {
+        int intModifier = calculateAbilityModifier("int");
+        int bonus = 10 + intModifier;
+        
+        // Verificar si tiene proficiencia en Investigation
+        boolean hasProficiency = characterSkills.stream()
+                .anyMatch(cs -> cs.getSkill().getIndexName().equals("investigation") && cs.isProficient());
+        
+        if (hasProficiency) {
+            bonus += proficiencyBonus;
+        }
+        
+        return bonus;
+    }
+
+    /**
+     * Calcula Passive Insight
+     * Fórmula: 10 + WIS modifier + (proficiency si tiene proficiencia en Insight)
+     */
+    @Transient
+    public int getPassiveInsight(List<CharacterSkill> characterSkills) {
+        int wisModifier = calculateAbilityModifier("wis");
+        int bonus = 10 + wisModifier;
+        
+        // Verificar si tiene proficiencia en Insight
+        boolean hasProficiency = characterSkills.stream()
+                .anyMatch(cs -> cs.getSkill().getIndexName().equals("insight") && cs.isProficient());
+        
+        if (hasProficiency) {
+            bonus += proficiencyBonus;
+        }
+        
+        return bonus;
+    }
+
+    /**
+     * DC para Death Saves (siempre es 10 en D&D 5e)
+     */
+    @Transient
+    public int getDeathSaveDC() {
+    return 10;
+    }
+
+    /**
+     * Verifica si el persona está muriendo (a 0 HP pero no estabilizado)
+     */
+
+    @Transient
+    public boolean isDying() {
+        return currentHP == 0 && (deathSaveSuccesses < 3) && (deathSaveFailures < 3);
+    }
+
+    /**
+     * Verifica si el personaje está estabilizado (a 0 HP pero con 3 saves exitosos)
+     */
+    @Transient
+    public boolean isStable() {
+        return currentHP == 0 && deathSaveSuccesses >= 3;
+    }
+
+    /**
+     * Verifica si el personaje está muerto (3 death save failures)
+     */
+    @Transient
+    public boolean isDead() {
+        return deathSaveFailures >= 3;
+    }
+
+    /**
+     * Verifica si el personaje está consciente
+     */
+    @Transient
+    public boolean isConscious() {
+    return currentHP > 0;
+    }
+
+
+    /**
+     * Calcula la experiencia necesaria para el siguiente nivel
+     * Basado en la tabla de progresión de D&D 5e
+    */
+    @Transient
+    public int getExperienceToNextLevel() {
+        // Tabla oficial de D&D 5e
+        int[] xpTable = {
+            0,      // Nivel 1
+            300,    // Nivel 2
+            900,    // Nivel 3
+            2700,   // Nivel 4
+            6500,   // Nivel 5
+            14000,  // Nivel 6
+            23000,  // Nivel 7
+            34000,  // Nivel 8
+            48000,  // Nivel 9
+            64000,  // Nivel 10
+            85000,  // Nivel 11
+            100000, // Nivel 12
+            120000, // Nivel 13
+            140000, // Nivel 14
+            165000, // Nivel 15
+            195000, // Nivel 16
+            225000, // Nivel 17
+            265000, // Nivel 18
+            305000, // Nivel 19
+            355000  // Nivel 20
+        };
+        
+        if (level >= 20) {
+            return xpTable[19]; // Nivel máximo
+        }
+        
+        return xpTable[level]; // XP necesaria para el siguiente nivel
+    }
+
+    /**
+     * Calcula cuánta XP falta para el siguiente nivel
+     */
+    @Transient
+    public int getExperienceNeeded() {
+        return Math.max(0, getExperienceToNextLevel() - experiencePoints);
+    }
+
     
+
+
+
+
 }
+    
+
+
+
+
+    
+

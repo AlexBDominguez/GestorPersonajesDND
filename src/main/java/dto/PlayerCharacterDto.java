@@ -44,7 +44,29 @@ public class PlayerCharacterDto {
     private String alliesAndOrganizations;
     private String additionalTreasure;
     private String characterHistory;
+    private int armorClass;
+    private int spellSaveDC;
+    private int spellAttackBonus;
+    private int initiativeModifier;
+    private int currentSpeed;
+    private int maxPreparedSpells;
+    private int encumberedThreshold;
+    private int heavilyEncumberedThreshold;
+    private int meleeAttackBonus;
+    private int rangedAttackBonus;
+    private int finesseAttackBonus;
+    private int experienceToNextLevel;
+    private int experienceNeeded;
+    private boolean isDying;
+    private boolean isStable;
+    private boolean isDead;
+    private boolean isConscious;
+    private int passivePerception;
+    private int passiveInvestigation;
+    private int passiveInsight;
 
+
+    // Getters y setters
 
 
     public Long getId() {
@@ -373,6 +395,166 @@ public class PlayerCharacterDto {
 
     public void setCharacterHistory(String characterHistory) {
         this.characterHistory = characterHistory;
+    }
+
+    public int getArmorClass() {
+        return armorClass;
+    }
+
+    public void setArmorClass(int armorClass) {
+        this.armorClass = armorClass;
+    }
+
+    public int getSpellSaveDC() {
+        return spellSaveDC;
+    }
+
+    public void setSpellSaveDC(int spellSaveDC) {
+        this.spellSaveDC = spellSaveDC;
+    }
+
+    public int getSpellAttackBonus() {
+        return spellAttackBonus;
+    }
+
+    public void setSpellAttackBonus(int spellAttackBonus) {
+        this.spellAttackBonus = spellAttackBonus;
+    }
+
+    public int getInitiativeModifier() {
+        return initiativeModifier;
+    }
+
+    public void setInitiativeModifier(int initiativeModifier) {
+        this.initiativeModifier = initiativeModifier;
+    }
+
+    public int getCurrentSpeed() {
+        return currentSpeed;
+    }
+
+    public void setCurrentSpeed(int currentSpeed) {
+        this.currentSpeed = currentSpeed;
+    }
+
+    public int getMaxPreparedSpells() {
+        return maxPreparedSpells;
+    }
+
+    public void setMaxPreparedSpells(int maxPreparedSpells) {
+        this.maxPreparedSpells = maxPreparedSpells;
+    }
+
+    public int getEncumberedThreshold() {
+        return encumberedThreshold;
+    }
+
+    public void setEncumberedThreshold(int encumberedThreshold) {
+        this.encumberedThreshold = encumberedThreshold;
+    }
+
+    public int getHeavilyEncumberedThreshold() {
+        return heavilyEncumberedThreshold;
+    }
+
+    public void setHeavilyEncumberedThreshold(int heavilyEncumberedThreshold) {
+        this.heavilyEncumberedThreshold = heavilyEncumberedThreshold;
+    }
+
+    public int getMeleeAttackBonus() {
+        return meleeAttackBonus;
+    }
+
+    public void setMeleeAttackBonus(int meleeAttackBonus) {
+        this.meleeAttackBonus = meleeAttackBonus;
+    }
+
+    public int getRangedAttackBonus() {
+        return rangedAttackBonus;
+    }
+
+    public void setRangedAttackBonus(int rangedAttackBonus) {
+        this.rangedAttackBonus = rangedAttackBonus;
+    }
+
+    public int getFinesseAttackBonus() {
+        return finesseAttackBonus;
+    }
+
+    public void setFinesseAttackBonus(int finesseAttackBonus) {
+        this.finesseAttackBonus = finesseAttackBonus;
+    }
+
+    public int getExperienceToNextLevel() {
+        return experienceToNextLevel;
+    }
+
+    public void setExperienceToNextLevel(int experienceToNextLevel) {
+        this.experienceToNextLevel = experienceToNextLevel;
+    }
+
+    public int getExperienceNeeded() {
+        return experienceNeeded;
+    }
+
+    public void setExperienceNeeded(int experienceNeeded) {
+        this.experienceNeeded = experienceNeeded;
+    }
+
+    public boolean isDying() {
+        return isDying;
+    }
+
+    public void setDying(boolean isDying) {
+        this.isDying = isDying;
+    }
+
+    public boolean isStable() {
+        return isStable;
+    }
+
+    public void setStable(boolean isStable) {
+        this.isStable = isStable;
+    }
+
+    public boolean isDead() {
+        return isDead;
+    }
+
+    public void setDead(boolean isDead) {
+        this.isDead = isDead;
+    }
+
+    public boolean isConscious() {
+        return isConscious;
+    }
+
+    public void setConscious(boolean isConscious) {
+        this.isConscious = isConscious;
+    }
+
+    public int getPassivePerception() {
+        return passivePerception;
+    }
+
+    public void setPassivePerception(int passivePerception) {
+        this.passivePerception = passivePerception;
+    }
+
+    public int getPassiveInvestigation() {
+        return passiveInvestigation;
+    }
+
+    public void setPassiveInvestigation(int passiveInvestigation) {
+        this.passiveInvestigation = passiveInvestigation;
+    }
+
+    public int getPassiveInsight() {
+        return passiveInsight;
+    }
+
+    public void setPassiveInsight(int passiveInsight) {
+        this.passiveInsight = passiveInsight;
     }
 
     
