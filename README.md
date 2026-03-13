@@ -763,4 +763,3 @@ curl -X POST http://localhost:8080/api/characters/1/level-up \
 ## 👤 Autor
 
 Alexandre Barbeito
-

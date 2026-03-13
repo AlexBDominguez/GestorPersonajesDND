@@ -1,0 +1,7 @@
+include: package:flutter_lints/flutter.yaml
+
+# Additional rules for this project
+linter:
+  rules:
+    # Avoid print statements in production code
+    avoid_print: false

@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Base de datos MySQL - Compartible entre múltiples ordenadores
+  mysql-db:
+    image: mysql:8.0
+    container_name: dnd-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: dnd_character_manager
+      MYSQL_USER: ${MYSQL_USER:-dnd_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dnd_password}
+      # Permite conexiones remotas
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3306:3306"
+    volumes:
+      # Script de inicialización con todas las tablas
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      # Persistencia de datos (se guarda incluso si bajas el contenedor)
+      - mysql_data:/var/lib/mysql
+    networks:
+      - dnd-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Permite acceso desde otros contenedores y la red host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  dnd-network:
+    driver: bridge
