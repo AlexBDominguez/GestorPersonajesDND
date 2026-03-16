@@ -27,41 +27,16 @@ class DndApp extends StatelessWidget {
   }
 }
 
-class Root extends StatelessWidget {
-  const Root();
+class _Root extends StatelessWidget {
+  const _Root();
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AuthViewModel>();
 
-    if(!vm.isLoggedIn){
+    if(!vm.isLoggedIn) {
       return const LoginScreen();
     }
-
-    return const _PlaceHolderHome();
-  }
-}
-
-class _PlaceHolderHome extends StatelessWidget {
-  const _PlaceHolderHome();
-
-  @override
-  Widget build(BuildContext context) {
-    final vm = context.read<AuthViewModel>();
-
-    return Sacaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard (Placeholder)'),
-        actions: [
-          IconButton(
-            onPressed: () => vm.logout(),
-            icon: const Icon(Icons.logout),
-          )
-        ],
-      ),
-      body: const Center(
-        child: Text('Here it would be the list of user characters'),
-      ),
-    );
-  }
+    return const DashboardScreen();
+    }  
 }

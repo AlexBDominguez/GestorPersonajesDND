@@ -1,12 +1,18 @@
 # Gestor de Personajes DND
 
-Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot y MySQL.
+Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot, MySQL y Flutter.
 
-> **✅ Estado del Proyecto**: El backend está **100% completo** con todas las funcionalidades implementadas y operativas.
+> **✅ Estado del Proyecto**: El backend está **100% completo** con todas las funcionalidades implementadas y operativas. El frontend móvil está **en desarrollo activo**.
 
 ## 📋 Descripción
 
-Aplicación backend que permite crear y gestionar personajes de D&D 5e, incluyendo:
+Sistema completo para gestionar personajes de D&D 5e:
+
+- Backend REST API con Spring Boot que gestiona toda la lógica de negocio
+- Aplicación móvil Flutter para Android/iOS (en desarrollo)
+- Base de datos MySQL con todas las entidades del sistema D&D 5e
+
+### Funcionalidades del Backend
 
 - Gestión completa de personajes (atributos, puntos de vida, nivel, experiencia)
 - Sistema de clases, subclases, razas y backgrounds
@@ -25,7 +31,8 @@ Aplicación backend que permite crear y gestionar personajes de D&D 5e, incluyen
 
 ## 🛠️ Tecnologías
 
-- **Java 17**
+### Backend
+- **Java 21**
 - **Spring Boot 3.2.0**
 - **Spring Data JPA** - Persistencia de datos
 - **MySQL 8.0** - Base de datos relacional (ejecutándose en Docker)
@@ -34,16 +41,24 @@ Aplicación backend que permite crear y gestionar personajes de D&D 5e, incluyen
 - **Hibernate** - ORM (Object-Relational Mapping)
 - **Docker & Docker Compose** - Contenedorización de MySQL
 
+### Frontend
+- **Flutter 3.x** - Framework multiplataforma para Android/iOS
+- **Dart** - Lenguaje de programación
+- **Provider** - Gestión de estado
+- **HTTP** - Cliente HTTP para consumir la API REST
+
 ## ✨ Características Técnicas
 
-### Modelo de Datos
+### Backend
+
+#### Modelo de Datos
 - 37 entidades JPA con relaciones complejas (OneToMany, ManyToOne, OneToOne, ElementCollection)
 - Mapeo de atributos como Map y List
 - Métodos transient para cálculos en tiempo de ejecución
 - Cascadas y eliminación en cascada (orphanRemoval)
 - Relaciones bidireccionales con gestión automática
 
-### Integración Externa
+#### Integración Externa
 - Consumo de la **D&D 5e API** (https://www.dnd5eapi.co)
 - Rate Limiting inteligente con pausas entre peticiones
 - Sincronización automática de:
@@ -59,15 +74,36 @@ Aplicación backend que permite crear y gestionar personajes de D&D 5e, incluyen
   - Tipos de daño
   - Feats (dotes) del sistema
 
-### Lógica de Negocio
+#### Lógica de Negocio
 - Inicialización automática de habilidades y salvaciones al crear personaje
 - Aplicación automática de competencias de background
 - Cálculo dinámico de bonificadores (competencia + modificador de atributo)
 - Sistema de tareas pendientes para decisiones durante subida de nivel
 - Validaciones y gestión de errores
 
+### Frontend
+
+#### Arquitectura
+- Patrón MVVM (Model-View-ViewModel) con Provider
+- Separación clara entre lógica de presentación y lógica de negocio
+- Gestión reactiva de estado con ChangeNotifier
+- Inyección de dependencias con Provider
+
+#### Servicios
+- Cliente HTTP centralizado (ApiClient) para comunicación con el backend
+- Servicio de autenticación con gestión de tokens JWT
+- Servicio de personajes para operaciones CRUD
+- Almacenamiento seguro de tokens en el dispositivo
+
+#### Interfaz de Usuario
+- Material Design 3
+- Navegación automática basada en estado de autenticación
+- Manejo de estados de carga y errores
+- Feedback visual con SnackBars y loaders
+
 ## 📦 Estructura del Proyecto
 
+### Backend
 ```
 src/main/java/
 ├── controllers/        # Controladores REST API (25 controladores)
@@ -217,6 +253,36 @@ src/main/java/
     └── SyncController
 ```
 
+### Frontend (Flutter)
+```
+frontend/lib/
+├── models/            # Modelos de datos
+│   ├── auth/
+│   │   ├── auth_response.dart
+│   │   └── login_request.dart
+│   └── character/
+│       └── player_character_summary.dart
+├── services/          # Servicios de API y almacenamiento
+│   ├── auth/
+│   │   └── auth_service.dart
+│   ├── characters/
+│   │   └── character_service.dart
+│   ├── http/
+│   │   └── api_client.dart
+│   └── storage/
+│       └── token_storage.dart
+├── viewmodels/        # Lógica de presentación (MVVM)
+│   ├── auth/
+│   │   └── auth_viewmodel.dart
+│   └── characters/
+│       └── character_list_viewmodel.dart
+├── views/             # Pantallas y widgets
+│   └── screens/
+│       ├── dashboard_screen.dart
+│       └── login_screen.dart
+└── main.dart          # Punto de entrada de la aplicación
+```
+
 ## 🚀 Características Principales
 
 ### Gestión de Personajes
@@ -357,10 +423,18 @@ src/main/java/
 
 ## 📝 Requisitos Previos
 
-- **Java 17** o superior
+### Backend
+- **Java 21** o superior
 - **Maven 3.6+**
 - **Docker y Docker Compose** (para MySQL)
 - IDE compatible con Java (IntelliJ IDEA, Eclipse, VS Code)
+
+### Frontend (Opcional)
+- **Flutter 3.x** o superior
+- **Dart SDK 3.x**
+- **Android SDK** (para desarrollo Android)
+- **Xcode** (para desarrollo iOS, solo macOS)
+- IDE compatible con Flutter (VS Code, Android Studio, IntelliJ IDEA)
 
 ## ⚙️ Configuración
 
@@ -428,6 +502,37 @@ mysql -u dnd_user -p dnd_character_manager < init-db.sql
 ```bash
 mvn clean install
 mvn spring-boot:run
+```
+
+### Ejecutar el Frontend (Flutter)
+
+1. **Navegar al directorio del frontend**
+```bash
+cd frontend
+```
+
+2. **Instalar dependencias**
+```bash
+flutter pub get
+```
+
+3. **Configurar la URL del backend**
+
+Editar el archivo de configuración del API client para apuntar al backend (por defecto: `http://localhost:8080`).
+
+4. **Ejecutar la aplicación**
+```bash
+# En un emulador o dispositivo conectado
+flutter run
+
+# Especificar dispositivo
+flutter devices  # Ver dispositivos disponibles
+flutter run -d <device_id>
+```
+
+5. **Construir APK para Android (Opcional)**
+```bash
+flutter build apk --release
 ```
 
 ## 🐳 Docker
@@ -731,7 +836,7 @@ curl -X POST http://localhost:8080/api/characters/1/level-up \
 
 ## 🔄 Estado del Proyecto
 
-### Implementado y Operativo
+### Backend - Implementado y Operativo
 - Sistema completo de personajes con todos los atributos
 - Gestión de clases, subclases, razas y backgrounds
 - Sistema de habilidades y salvaciones
@@ -754,10 +859,21 @@ curl -X POST http://localhost:8080/api/characters/1/level-up \
 - Cálculos automáticos de CA, velocidad, iniciativa
 - Percepción pasiva, investigación e intuición
 
+### Frontend Mobile - En Desarrollo
+- Sistema de autenticación con login y gestión de tokens
+- Pantalla de dashboard con lista de personajes
+- Cliente HTTP para consumo de API REST
+- Arquitectura MVVM con Provider para gestión de estado
+- Modelos de datos (personajes, autenticación)
+- Servicios para personajes y autenticación
+- Almacenamiento persistente de tokens
+
 ### Planificado
-- Aplicación móvil Flutter para Android (gestión completa de personajes)
-- Sistema de autenticación (solo login, sin registro público)
-- Control de usuarios privado y limitado
+- Wizard de creación de personajes en la app móvil
+- Ficha digital completa del personaje
+- Gestión de hechizos e inventario desde la app
+- Sistema de dados y tiradas
+- Control de usuarios privado y limitado (backend)
 
 
 ## 👤 Autor
