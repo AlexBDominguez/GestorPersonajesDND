@@ -160,12 +160,14 @@
     - Result: SUCCESS - JDK 17.0.16 and JDK 21.0.10 detected.
     - Notes: Environment prepared for Java 17 baseline and Java 21 final validation.
   - **Deferred Work**: None
-  - **Commit**: <pending> - Step 1: Setup Environment - Compile: N/A
+  - **Commit**: ee8f88a - Step 1: Setup Environment - Compile: N/A
 
 - **Step 2: Setup Baseline**
-  - **Status**: 🔘 Not Started
+  - **Status**: ✅ Completed
   - **Changes Made**:
-    - None
+    - Executed baseline compile with Java 17.
+    - Executed baseline tests with Java 17.
+    - Captured baseline as 0 detected tests (no surefire reports generated).
   - **Review Code Changes**:
     - Sufficiency: ✅ All required changes present
     - Necessity: ✅ All changes necessary
@@ -173,12 +175,12 @@
       - Security Controls: ✅ Preserved
   - **Verification**:
     - Command: `mvn clean test-compile -q && mvn clean test -q`
-    - JDK: N/A
+    - JDK: /home/alexandre.barbeito/.jdk/jdk-17.0.16/bin
     - Build tool: /usr/share/maven/bin/mvn
-    - Result: Not run yet
-    - Notes: Pending execution
+    - Result: SUCCESS - Compilation succeeded and test phase completed without failures.
+    - Notes: No `target/surefire-reports` generated; baseline test count treated as 0.
   - **Deferred Work**: None
-  - **Commit**: N/A - Not started
+  - **Commit**: <pending> - Step 2: Setup Baseline - Compile: SUCCESS, Tests: 0/0 passed
 
 - **Step 3: Upgrade Build and Runtime Configuration to Java 21**
   - **Status**: 🔘 Not Started
