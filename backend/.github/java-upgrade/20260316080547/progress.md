@@ -180,12 +180,15 @@
     - Result: SUCCESS - Compilation succeeded and test phase completed without failures.
     - Notes: No `target/surefire-reports` generated; baseline test count treated as 0.
   - **Deferred Work**: None
-  - **Commit**: <pending> - Step 2: Setup Baseline - Compile: SUCCESS, Tests: 0/0 passed
+  - **Commit**: a313aca - Step 2: Setup Baseline - Compile: SUCCESS, Tests: 0/0 passed
 
 - **Step 3: Upgrade Build and Runtime Configuration to Java 21**
-  - **Status**: 🔘 Not Started
+  - **Status**: ✅ Completed
   - **Changes Made**:
-    - None
+    - Updated `pom.xml` compiler properties from Java 17 to 21.
+    - Updated Maven compiler plugin source/target from 17 to 21.
+    - Updated `Dockerfile` build image to `maven:3.9-eclipse-temurin-21`.
+    - Updated `Dockerfile` runtime image to `eclipse-temurin:21-jre-alpine`.
   - **Review Code Changes**:
     - Sufficiency: ✅ All required changes present
     - Necessity: ✅ All changes necessary
@@ -195,10 +198,10 @@
     - Command: `mvn clean test-compile -q`
     - JDK: /usr/lib/jvm/java-21-openjdk-amd64/bin
     - Build tool: /usr/share/maven/bin/mvn
-    - Result: Not run yet
-    - Notes: Pending execution
+    - Result: SUCCESS - Compilation succeeded for main and test code on Java 21.
+    - Notes: No functional or security configuration changes required.
   - **Deferred Work**: None
-  - **Commit**: N/A - Not started
+  - **Commit**: <pending> - Step 3: Upgrade Build and Runtime Configuration to Java 21 - Compile: SUCCESS
 
 - **Step 4: Final Validation**
   - **Status**: 🔘 Not Started
