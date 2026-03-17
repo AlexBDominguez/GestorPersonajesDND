@@ -1,4 +1,4 @@
-# Gestor de Personajes DND
+# DungeonScroll (nombre temporal)
 
 Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot, MySQL y Flutter.
 
