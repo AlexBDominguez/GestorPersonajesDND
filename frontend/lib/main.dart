@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 
 import 'viewmodels/auth/auth_viewmodel.dart';
 import 'views/screens/login_screen.dart';
+import 'views/screens/dashboard_screen.dart';
 
-void main() {
-  runApp(const DndApp());  
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const DndApp());
 }
 
 class DndApp extends StatelessWidget {
@@ -21,22 +23,15 @@ class DndApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
         ),
-        home: const _Root(),
+        home: Consumer<AuthViewModel>(
+          builder: (context, vm, child) {
+            if (!vm.isLoggedIn) {
+              return const LoginScreen();
+            }
+            return const DashboardScreen();
+          },
+        ),
       ),
     );
   }
-}
-
-class _Root extends StatelessWidget {
-  const _Root();
-
-  @override
-  Widget build(BuildContext context) {
-    final vm = context.watch<AuthViewModel>();
-
-    if(!vm.isLoggedIn) {
-      return const LoginScreen();
-    }
-    return const DashboardScreen();
-    }  
 }

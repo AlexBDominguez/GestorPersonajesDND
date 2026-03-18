@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:frontend/models/auth/login_request.dart';
-import 'package:frontend/services/auth/auth_service.dart';
-import 'package:frontend/services/auth/token_storage.dart';
+import 'package:gestor_personajes_dnd/models/auth/login_request.dart';
+import 'package:gestor_personajes_dnd/services/auth/auth_service.dart';
+import 'package:gestor_personajes_dnd/services/storage/token_storage.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService;
@@ -23,8 +23,16 @@ class AuthViewModel extends ChangeNotifier {
   bool get isLoggedIn => _isLoggedIn;
 
   Future<void> init() async {
-    final token = await _tokenStorage.getToken();
-    _isLoggedIn = token != null && token.isNotEmpty;
+    try {
+      final token = await _tokenStorage.getToken();
+      _isLoggedIn = token != null && token.isNotEmpty;
+    } catch (e) {
+      // Si hay error al leer el token, asumimos que no está logueado
+      _isLoggedIn = false;
+      if (kDebugMode) {
+        print('Error initializing auth: $e');
+      }
+    }
     notifyListeners();
   }
 
@@ -32,7 +40,7 @@ class AuthViewModel extends ChangeNotifier {
     required String username,
     required String password,
   }) async {
-    __setLoading(true);
+    _setLoading(true);
     _setErrorMessage(null);
 
     try{
@@ -63,6 +71,11 @@ class AuthViewModel extends ChangeNotifier {
 
   void _setLoading(bool value){
     _isLoading = value;
+    notifyListeners();
+  }
+
+  void _setErrorMessage(String? value) {
+    _errorMessage = value;
     notifyListeners();
   }
 }

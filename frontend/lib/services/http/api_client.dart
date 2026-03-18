@@ -1,15 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:frontend/config/api_config.dart';
-import 'package:frontend/services/storage/token_storage.dart';
+import 'package:gestor_personajes_dnd/config/api_config.dart';
+import 'package:gestor_personajes_dnd/services/storage/token_storage.dart';
 
 class ApiClient{
   final TokenStorage _tokenStorage;
 
   ApiClient({TokenStorage? tokenStorage})
-      : _tokenStorage = tokenSotrage ?? TokenStorage();
+      : _tokenStorage = tokenStorage ?? TokenStorage();
 
-  Futurez<Map<String, String>> _buildHeaders({bool jsonBody = true}) async {
+  Future<Map<String, String>> _buildHeaders({bool jsonBody = true}) async {
     final token = await _tokenStorage.getToken();
 
     final headers = <String, String>{};

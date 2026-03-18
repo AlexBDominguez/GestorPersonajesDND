@@ -9,11 +9,11 @@ class AuthResponse{
     required this.email,
   });
 
-  factory AuthResponse.fromJson(Map<String, dynamica> json) {
+  factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
-      token: json['token' as String],
-      username: json['username' as String],
-      email: json['email' as String],
+      token: json['token'] as String,
+      username: json['username'] as String,
+      email: json['email'] as String,
     );
   }
 }

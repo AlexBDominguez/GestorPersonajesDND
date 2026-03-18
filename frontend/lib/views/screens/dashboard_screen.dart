@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/viewmodels/auth/auth_viewmodel.dart';
-import 'package:frontend/viewmodels/characters/character_list_viewmodel.dart';
+import 'package:gestor_personajes_dnd/viewmodels/auth/auth_viewmodel.dart';
+import 'package:gestor_personajes_dnd/viewmodels/characters/character_list_viewmodel.dart';
 import 'package:provider/provider.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -10,7 +10,7 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => CharacterListViewModel()..load(),
-      child: const DashboardBody(),
+      child: const _DashboardBody(),
     );
   }
 }
@@ -63,7 +63,7 @@ class _DashboardBody extends StatelessWidget {
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final c = vm.characters[index];
-        return listTile(
+        return ListTile(
           title: Text(c.name),
           subtitle: Text('Level ${c.level}'),
           onTap: () {

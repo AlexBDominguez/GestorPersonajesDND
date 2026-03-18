@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:frontend/config/api_config.dart';
-import 'package:frontend/models/character/player_character_summary.dart';
-import 'package:frontend/services/http/api_client.dart';
+import 'package:gestor_personajes_dnd/config/api_config.dart';
+import 'package:gestor_personajes_dnd/models/character/player_character_summary.dart';
+import 'package:gestor_personajes_dnd/services/http/api_client.dart';
 
 class CharacterService {
   final ApiClient _api;
@@ -9,7 +9,7 @@ class CharacterService {
   CharacterService({ApiClient? apiClient}) : _api = apiClient ?? ApiClient();
 
   Future<List<PlayerCharacterSummary>> getMyCharacters() async {
-    final res = await _ api.get(ApiConfig.charactersPath);
+    final res = await _api.get(ApiConfig.charactersPath);
 
     if(res.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(res.body) as List<dynamic>;

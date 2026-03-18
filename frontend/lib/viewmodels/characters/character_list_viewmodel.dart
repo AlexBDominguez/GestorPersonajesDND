@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:frontend/models/character/player_character_summary.dart';
-import 'package:frontend/services/characters/character_service.dart';
+import 'package:gestor_personajes_dnd/models/character/player_character_summary.dart';
+import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
 
 class CharacterListViewModel extends ChangeNotifier {
   final CharacterService _service;
