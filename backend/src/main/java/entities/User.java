@@ -4,6 +4,9 @@ package entities;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import enumeration.Role;
+
 import java.util.ArrayList;
 
 @Entity
@@ -36,6 +39,10 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlayerCharacter> characters = new ArrayList<>();
 
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Role role = Role.USER;
+
 
     public User() {
     }
@@ -44,6 +51,7 @@ public class User {
         this.username = username;
         this.password = password;
         this.email = email;
+        this.role = Role.USER;
         this.createdAt = LocalDateTime.now();
     }
 
@@ -115,6 +123,13 @@ public class User {
     public void setCharacters(List<PlayerCharacter> characters) {
         this.characters = characters;
     }
-    
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
 
 }
