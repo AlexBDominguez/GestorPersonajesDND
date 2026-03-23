@@ -421,7 +421,7 @@ frontend/lib/
   - Reset de death saves
   - Eliminación de HP temporal
 
-## 📝 Requisitos Previos
+## Requisitos Previos
 
 ### Backend
 - **Java 21** o superior
@@ -436,7 +436,7 @@ frontend/lib/
 - **Xcode** (para desarrollo iOS, solo macOS)
 - IDE compatible con Flutter (VS Code, Android Studio, IntelliJ IDEA)
 
-## ⚙️ Configuración
+## Configuración
 
 ### Opción 1: Configuración Rápida con Docker (Recomendado)
 
@@ -535,7 +535,7 @@ flutter run -d <device_id>
 flutter build apk --release
 ```
 
-## 🐳 Docker
+## Docker
 
 El proyecto incluye configuración de Docker para facilitar el desarrollo:
 
@@ -571,7 +571,7 @@ Nota: En DBeaver, añade en "Driver properties":
 - `allowPublicKeyRetrieval` = `true`
 - `useSSL` = `false`
 
-## 📚 Documentación Adicional
+## Documentación Adicional
 
 - [DOCKER.md](DOCKER.md) - Guía completa de uso con Docker
 - [init-db.sql](init-db.sql) - Script de base de datos con todas las tablas
@@ -597,7 +597,7 @@ curl -X POST http://localhost:8080/api/sync/spells
 
 **Nota:** El endpoint `/sync/all` incluye rate limiting automático para evitar sobrecargar la API externa.
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Personajes
 - `GET /api/characters` - Listar todos los personajes
