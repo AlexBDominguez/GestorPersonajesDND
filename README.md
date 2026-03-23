@@ -2,9 +2,9 @@
 
 Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot, MySQL y Flutter.
 
-> **✅ Estado del Proyecto**: El backend está **100% completo** con todas las funcionalidades implementadas y operativas. El frontend móvil está **en desarrollo activo**.
+> **Estado del Proyecto**: El backend está **100% completo** con todas las funcionalidades implementadas y operativas. El frontend móvil está **en desarrollo activo**.
 
-## 📋 Descripción
+## Descripción
 
 Sistema completo para gestionar personajes de D&D 5e:
 
@@ -29,7 +29,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Sincronización de datos desde la D&D 5e API
 - Rate limiting para peticiones API
 
-## 🛠️ Tecnologías
+## Tecnologías
 
 ### Backend
 - **Java 21**
@@ -47,7 +47,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 - **Provider** - Gestión de estado
 - **HTTP** - Cliente HTTP para consumir la API REST
 
-## ✨ Características Técnicas
+## Características Técnicas
 
 ### Backend
 
@@ -101,7 +101,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Manejo de estados de carga y errores
 - Feedback visual con SnackBars y loaders
 
-## 📦 Estructura del Proyecto
+## Estructura del Proyecto
 
 ### Backend
 ```
@@ -283,7 +283,7 @@ frontend/lib/
 └── main.dart          # Punto de entrada de la aplicación
 ```
 
-## 🚀 Características Principales
+## Características Principales
 
 ### Gestión de Personajes
 - Crear, leer, actualizar y eliminar personajes
@@ -760,7 +760,7 @@ curl -X POST http://localhost:8080/api/sync/spells
 - `POST /api/sync/damage-types` - Sincronizar tipos de daño
 - `POST /api/sync/all` - Sincronización completa de todos los datos
 
-## 📘 Ejemplos de Uso
+## Ejemplos de Uso
 
 ### Crear un nuevo personaje
 
@@ -834,7 +834,7 @@ curl -X POST http://localhost:8080/api/characters/1/level-up \
   }'
 ```
 
-## 🔄 Estado del Proyecto
+## Estado del Proyecto
 
 ### Backend - Implementado y Operativo
 - Sistema completo de personajes con todos los atributos
