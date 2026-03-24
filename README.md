@@ -2,9 +2,9 @@
 
 Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot, MySQL y Flutter.
 
-> **✅ Estado del Proyecto**: El backend está **100% completo** con todas las funcionalidades implementadas y operativas. El frontend móvil está **en desarrollo activo**.
+> **Estado del Proyecto**: El backend está **100% completo** con todas las funcionalidades implementadas y operativas. El frontend móvil está **en desarrollo activo**.
 
-## 📋 Descripción
+## Descripción
 
 Sistema completo para gestionar personajes de D&D 5e:
 
@@ -29,7 +29,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Sincronización de datos desde la D&D 5e API
 - Rate limiting para peticiones API
 
-## 🛠️ Tecnologías
+## Tecnologías
 
 ### Backend
 - **Java 21**
@@ -47,7 +47,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 - **Provider** - Gestión de estado
 - **HTTP** - Cliente HTTP para consumir la API REST
 
-## ✨ Características Técnicas
+## Características Técnicas
 
 ### Backend
 
@@ -101,7 +101,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Manejo de estados de carga y errores
 - Feedback visual con SnackBars y loaders
 
-## 📦 Estructura del Proyecto
+## Estructura del Proyecto
 
 ### Backend
 ```
@@ -283,7 +283,7 @@ frontend/lib/
 └── main.dart          # Punto de entrada de la aplicación
 ```
 
-## 🚀 Características Principales
+## Características Principales
 
 ### Gestión de Personajes
 - Crear, leer, actualizar y eliminar personajes
@@ -421,7 +421,7 @@ frontend/lib/
   - Reset de death saves
   - Eliminación de HP temporal
 
-## 📝 Requisitos Previos
+## Requisitos Previos
 
 ### Backend
 - **Java 21** o superior
@@ -436,7 +436,7 @@ frontend/lib/
 - **Xcode** (para desarrollo iOS, solo macOS)
 - IDE compatible con Flutter (VS Code, Android Studio, IntelliJ IDEA)
 
-## ⚙️ Configuración
+## Configuración
 
 ### Opción 1: Configuración Rápida con Docker (Recomendado)
 
@@ -535,7 +535,7 @@ flutter run -d <device_id>
 flutter build apk --release
 ```
 
-## 🐳 Docker
+## Docker
 
 El proyecto incluye configuración de Docker para facilitar el desarrollo:
 
@@ -571,7 +571,7 @@ Nota: En DBeaver, añade en "Driver properties":
 - `allowPublicKeyRetrieval` = `true`
 - `useSSL` = `false`
 
-## 📚 Documentación Adicional
+## Documentación Adicional
 
 - [DOCKER.md](DOCKER.md) - Guía completa de uso con Docker
 - [init-db.sql](init-db.sql) - Script de base de datos con todas las tablas
@@ -597,7 +597,7 @@ curl -X POST http://localhost:8080/api/sync/spells
 
 **Nota:** El endpoint `/sync/all` incluye rate limiting automático para evitar sobrecargar la API externa.
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Personajes
 - `GET /api/characters` - Listar todos los personajes
@@ -760,7 +760,7 @@ curl -X POST http://localhost:8080/api/sync/spells
 - `POST /api/sync/damage-types` - Sincronizar tipos de daño
 - `POST /api/sync/all` - Sincronización completa de todos los datos
 
-## 📘 Ejemplos de Uso
+## Ejemplos de Uso
 
 ### Crear un nuevo personaje
 
@@ -834,7 +834,7 @@ curl -X POST http://localhost:8080/api/characters/1/level-up \
   }'
 ```
 
-## 🔄 Estado del Proyecto
+## Estado del Proyecto
 
 ### Backend - Implementado y Operativo
 - Sistema completo de personajes con todos los atributos
