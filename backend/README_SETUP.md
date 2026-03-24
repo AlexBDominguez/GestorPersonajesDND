@@ -45,24 +45,29 @@ backend/
 
 ## 🔄 Migración a Otro PC
 
-### Pasos Rápidos:
+⚠️ **IMPORTANTE**: Los archivos en `mysql-data/` tienen permisos especiales y **no se pueden copiar directamente**.
+
+### Método Recomendado: Backup SQL
 
 1. **En el PC actual:**
    ```bash
    cd backend
-   docker compose down
+   docker exec dnd-mysql mysqldump -u dnd_user -pdnd_password dnd_character_manager > backup_dnd.sql
+   # Copia el proyecto + backup_dnd.sql al nuevo PC
    ```
 
-2. **Copiar el proyecto completo** (incluyendo `mysql-data/`)
-
-3. **En el nuevo PC:**
+2. **En el nuevo PC:**
    ```bash
    cd backend
-   docker compose up -d
-   mvn spring-boot:run
+   docker compose up -d      # Arranca MySQL
+   sleep 10                   # Espera inicialización
+   docker exec -i dnd-mysql mysql -u dnd_user -pdnd_password dnd_character_manager < backup_dnd.sql
+   mvn spring-boot:run       # Arranca el backend
    ```
 
-**📖 Guía completa:** Lee `MIGRACION_BASE_DATOS.md` para instrucciones detalladas.
+✅ **¡Listo!** Todos los datos estarán disponibles.
+
+**📖 Guía completa:** Lee `MIGRACION_BASE_DATOS.md` para métodos alternativos y solución de problemas.
 
 ## 🛠️ Comandos Útiles
 

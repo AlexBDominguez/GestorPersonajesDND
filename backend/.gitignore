@@ -19,7 +19,8 @@ mysql_data/
 mysql-data/
 
 # Database backups
-*.sql
+*.sql.gz
+backups/
 
 # IDE
 .idea/

@@ -35,42 +35,148 @@ backend/mysql-data/
 
 ## 🚚 Pasos para Migrar a Otro PC
 
-### 1. En el PC Original (Origen)
+⚠️ **IMPORTANTE**: Los archivos en `mysql-data/` pertenecen al usuario MySQL (UID 999) y **no se pueden copiar directamente**. Usa uno de estos métodos:
 
-#### a) Detener los servicios
+### Método 1: Backup SQL (RECOMENDADO - Más simple y portable)
+
+#### En el PC Original:
+
 ```bash
 cd backend
+
+# 1. Asegúrate de que MySQL está corriendo
+docker compose up -d
+
+# 2. Crear backup SQL
+docker exec dnd-mysql mysqldump -u dnd_user -pdnd_password dnd_character_manager > backup_dnd.sql
+
+# 3. Verificar que el backup se creó (debería tener varios MB)
+ls -lh backup_dnd.sql
+```
+
+#### Copiar el proyecto:
+```bash
+# Copia todo el proyecto al nuevo PC (incluyendo backup_dnd.sql)
+# Puedes usar Git, USB, o cualquier método
+```
+
+#### En el PC Nuevo:
+
+```bash
+cd backend
+
+# 1. Arrancar MySQL (creará una base de datos vacía)
+docker compose up -d
+
+# 2. Esperar 10 segundos para que MySQL inicialice
+sleep 10
+
+# 3. Restaurar el backup
+docker exec -i dnd-mysql mysql -u dnd_user -pdnd_password dnd_character_manager < backup_dnd.sql
+
+# 4. Verificar que los datos se importaron
+docker exec dnd-mysql mysql -u dnd_user -pdnd_password dnd_character_manager -e "SELECT COUNT(*) FROM users;"
+
+# 5. Arrancar el backend
+mvn spring-boot:run
+```
+
+✅ **¡Listo!** Todos los datos están disponibles.
+
+---
+
+### Método 2: Copiar mysql-data/ con permisos (Más rápido, requiere sudo)
+
+#### En el PC Original:
+
+```bash
+cd backend
+
+# 1. Detener MySQL
 docker compose down
+
+# 2. Crear un archivo tar con todos los datos (conserva permisos)
+sudo tar -czf mysql-data-backup.tar.gz mysql-data/
+
+# 3. Cambiar el propietario del tar a tu usuario
+sudo chown $USER:$USER mysql-data-backup.tar.gz
+
+# 4. Verificar el tamaño (debería ser 50-200 MB)
+ls -lh mysql-data-backup.tar.gz
 ```
 
-#### b) Verificar que los datos existen
+#### Copiar el proyecto:
 ```bash
+# Copia el proyecto Y el archivo mysql-data-backup.tar.gz
+```
+
+#### En el PC Nuevo:
+
+```bash
+cd backend
+
+# 1. Extraer el backup (con sudo para mantener permisos)
+sudo tar -xzf mysql-data-backup.tar.gz
+
+# 2. Verificar que mysql-data/ existe
 ls -lh mysql-data/
-# Deberías ver archivos como: ibdata1, ib_logfile*, carpetas de bases de datos, etc.
+
+# 3. Arrancar MySQL (usará los datos existentes)
+docker compose up -d
+
+# 4. Verificar logs
+docker logs dnd-mysql
+
+# 5. Arrancar el backend
+mvn spring-boot:run
 ```
 
-#### c) Copiar el proyecto completo
-Tienes dos opciones:
+---
 
-**Opción 1: Usando Git (Recomendado)**
+### Método 3: Usar docker cp (Alternativa sin sudo)
+
+#### En el PC Original:
+
 ```bash
-# Asegúrate de que mysql-data/ está excluido del .gitignore
-cd ..
-git add .
-git commit -m "Preparando migración"
-git push
+cd backend
+
+# 1. MySQL debe estar corriendo
+docker compose up -d
+
+# 2. Copiar datos desde el contenedor
+docker cp dnd-mysql:/var/lib/mysql ./mysql-backup-export
+
+# 3. Crear tar del backup
+tar -czf mysql-backup.tar.gz mysql-backup-export/
+
+# 4. Limpiar
+rm -rf mysql-backup-export/
 ```
 
-**Opción 2: Copia directa (USB/Red)**
-```bash
-# Copia todo el proyecto a un USB o disco externo
-cp -r GestorPersonajesDND /ruta/al/usb/
-```
+#### En el PC Nuevo:
 
-⚠️ **IMPORTANTE**: La carpeta `mysql-data/` debe tener permisos correctos:
 ```bash
-# Cambiar propietario a tu usuario antes de copiar (opcional)
-sudo chown -R $USER:$USER mysql-data/
+cd backend
+
+# 1. Extraer backup
+tar -xzf mysql-backup.tar.gz
+
+# 2. Arrancar MySQL (base de datos vacía temporal)
+docker compose up -d
+sleep 10
+
+# 3. Detener MySQL
+docker compose down
+
+# 4. Reemplazar datos
+sudo rm -rf mysql-data/*
+sudo mv mysql-backup-export/* mysql-data/
+
+# 5. Corregir permisos
+sudo chown -R 999:999 mysql-data/
+
+# 6. Arrancar MySQL de nuevo
+docker compose up -d
 ```
 
 ### 2. En el PC Nuevo (Destino)
@@ -194,21 +300,24 @@ SELECT username, email, role, active FROM users;
 
 ## 📝 Notas Importantes
 
-1. **La carpeta `mysql-data/` NO está en Git** por razones de seguridad y tamaño. Debes copiarla manualmente o crear un backup.
+1. **Método Recomendado**: Usa el **Método 1 (Backup SQL)**. Es el más simple, portable y sin problemas de permisos.
 
-2. **Los datos son portátiles entre arquitecturas similares** (Linux→Linux, Mac→Mac), pero pueden tener problemas entre sistemas muy diferentes (Linux→Windows).
+2. **La carpeta `mysql-data/` tiene permisos especiales** (UID 999) y no se puede copiar directamente. Por eso usamos backups SQL o tar con sudo.
 
-3. **Alternativa: Backup SQL**
-   Si prefieres un método más universal:
+3. **Tamaño del backup**:
+   - Backup SQL: 10-50 MB (comprimido con texto)
+   - mysql-data tar: 50-200 MB (datos binarios)
+
+4. **Los backups SQL son portátiles entre arquitecturas** (Linux→Mac→Windows), mientras que mysql-data/ puede tener problemas entre sistemas diferentes.
+
+5. **Automatización**: Puedes crear un script para hacer backups automáticos:
    ```bash
-   # Crear backup
-   docker exec dnd-mysql mysqldump -u root -proot_password dnd_character_manager > backup.sql
-
-   # Restaurar en nuevo PC
-   docker exec -i dnd-mysql mysql -u root -proot_password dnd_character_manager < backup.sql
+   #!/bin/bash
+   # backup.sh
+   DATE=$(date +%Y%m%d_%H%M%S)
+   docker exec dnd-mysql mysqldump -u dnd_user -pdnd_password dnd_character_manager > "backup_${DATE}.sql"
+   echo "Backup creado: backup_${DATE}.sql"
    ```
-
-4. **Tamaño aproximado de mysql-data/**: 200-500 MB dependiendo de cuántos personajes tengas creados.
 
 ## 🎯 Checklist de Migración
 

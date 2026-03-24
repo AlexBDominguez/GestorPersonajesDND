@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'config/app_theme.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
 import 'views/screens/login_screen.dart';
 import 'views/screens/dashboard_screen.dart';
@@ -18,17 +19,18 @@ class DndApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => AuthViewModel()..init(),
       child: MaterialApp(
-        title: 'D&D App',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
+        title: 'DungeonScroll',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.darkTheme,  
         home: Consumer<AuthViewModel>(
           builder: (context, vm, child) {
-            if (!vm.isLoggedIn) {
-              return const LoginScreen();
+            // Splash mientras lee SharedPreferences
+            if (!vm.isLoggedIn && vm.isLoading == false && vm.errorMessage == null) {
+              // Sin token guardado → login
             }
-            return const DashboardScreen();
+            return vm.isLoggedIn
+                ? const DashboardScreen()
+                : const LoginScreen();
           },
         ),
       ),

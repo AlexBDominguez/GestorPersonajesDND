@@ -13,4 +13,10 @@ class ApiConfig {
 
   ///Characters
   static const String charactersPath = '$apiPrefix/characters';
+
+  // Reference Data (Wizard)
+  static const String racesPath = '$apiPrefix/races';
+  static const String classesPath = '$apiPrefix/classes';
+  static const String backgroundsPath = '$apiPrefix/backgrounds';  
+  
 }

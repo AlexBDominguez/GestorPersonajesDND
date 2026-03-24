@@ -18,8 +18,8 @@ services:
     volumes:
       # Script de inicialización con todas las tablas
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-      # Persistencia de datos (se guarda incluso si bajas el contenedor)
-      - mysql_data:/var/lib/mysql
+      # Persistencia de datos en carpeta local (portátil entre PCs)
+      - ./mysql-data:/var/lib/mysql
     networks:
       - dnd-network
     healthcheck:
@@ -30,10 +30,6 @@ services:
     # Permite acceso desde otros contenedores y la red host
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
-volumes:
-  mysql_data:
-    driver: local
 
 networks:
   dnd-network:
