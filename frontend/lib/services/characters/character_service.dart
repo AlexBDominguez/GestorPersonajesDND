@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:gestor_personajes_dnd/config/api_config.dart';
+import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character_summary.dart';
 import 'package:gestor_personajes_dnd/services/http/api_client.dart';
 
@@ -11,16 +12,26 @@ class CharacterService {
   // GET list
   Future<List<PlayerCharacterSummary>> getMyCharacters() async {
     final res = await _api.get(ApiConfig.charactersPath);
-
-    if(res.statusCode == 200){
-      final List<dynamic> jsonList = jsonDecode(res.body) as List<dynamic>;
-      return jsonList
-        .map((e) => PlayerCharacterSummary.fromJson(e as Map<String, dynamic>))
-        .toList();
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List)
+          .map((e) => PlayerCharacterSummary.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
 
     if(res.statusCode == 401) throw Exception ('Unauthorized');
-    throw Exception('Failed to load characters (${res.statusCode}): ${res.body}');
+    throw Exception('Failed to load characters (${res.statusCode})');
+  }
+
+  // GET single
+  Future<PlayerCharacter>getCharacterById(int id) async {
+    final res = await _api.get('${ApiConfig.charactersPath}/$id');
+    if (res.statusCode == 200) {
+      return PlayerCharacter.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+    }
+    if(res.statusCode == 401) throw Exception ('Unauthorized');
+    if(res.statusCode == 403) throw Exception ('Access denied');
+    if(res.statusCode == 404) throw Exception ('Character not found');
+    throw Exception('Failed to load character (${res.statusCode})');
   }
 
   // POST create
@@ -47,6 +58,6 @@ class CharacterService {
         jsonDecode(res.body) as Map<String, dynamic>);
     }
     if (res.statusCode == 401) throw Exception('Unauthorized');
-    throw Exception('Failed to create character (${res.statusCode}): ${res.body}');
+    throw Exception('Failed to create character (${res.statusCode})');
   }
 }

@@ -467,7 +467,7 @@ mvn spring-boot:run
 # Ejecuta la clase Main.java
 ```
 
-La aplicación estará disponible en `http://localhost:8080`
+La aplicación estará disponible en `http://localhost:8081`
 
 ### Opción 2: Configuración Manual
 
@@ -518,7 +518,7 @@ flutter pub get
 
 3. **Configurar la URL del backend**
 
-Editar el archivo de configuración del API client para apuntar al backend (por defecto: `http://localhost:8080`).
+Editar el archivo de configuración del API client para apuntar al backend (por defecto: `http://localhost:8081`).
 
 4. **Ejecutar la aplicación**
 ```bash
@@ -583,16 +583,16 @@ Nota: En DBeaver, añade en "Driver properties":
 Una vez la aplicación esté corriendo, sincronizar todos los datos desde la D&D 5e API:
 
 ```bash
-curl -X POST http://localhost:8080/api/sync/all
+curl -X POST http://localhost:8081/api/sync/all
 ```
 
 O sincronizar elementos individuales:
 ```bash
-curl -X POST http://localhost:8080/api/sync/skills
-curl -X POST http://localhost:8080/api/sync/backgrounds
-curl -X POST http://localhost:8080/api/sync/races
-curl -X POST http://localhost:8080/api/sync/classes
-curl -X POST http://localhost:8080/api/sync/spells
+curl -X POST http://localhost:8081/api/sync/skills
+curl -X POST http://localhost:8081/api/sync/backgrounds
+curl -X POST http://localhost:8081/api/sync/races
+curl -X POST http://localhost:8081/api/sync/classes
+curl -X POST http://localhost:8081/api/sync/spells
 ```
 
 **Nota:** El endpoint `/sync/all` incluye rate limiting automático para evitar sobrecargar la API externa.
@@ -765,7 +765,7 @@ curl -X POST http://localhost:8080/api/sync/spells
 ### Crear un nuevo personaje
 
 ```bash
-curl -X POST http://localhost:8080/api/characters \
+curl -X POST http://localhost:8081/api/characters \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Thorin Escudo de Roble",
@@ -793,7 +793,7 @@ curl -X POST http://localhost:8080/api/characters \
 ### Obtener habilidades de un personaje
 
 ```bash
-curl http://localhost:8080/api/characters/1/skills
+curl http://localhost:8081/api/characters/1/skills
 ```
 
 **Respuesta:**
@@ -822,7 +822,7 @@ curl http://localhost:8080/api/characters/1/skills
 ### Subir de nivel
 
 ```bash
-curl -X POST http://localhost:8080/api/characters/1/level-up \
+curl -X POST http://localhost:8081/api/characters/1/level-up \
   -H "Content-Type: application/json" \
   -d '{
     "hpIncrement": 8,
