@@ -48,7 +48,7 @@ public class SubclassService {
         Subclass subclass = new Subclass();
         subclass.setIndexName(dto.getIndexName());
         subclass.setName(dto.getName());
-        subclass.setSubclassFlavor(dto.getSubClassFlavor());
+        subclass.setSubclassFlavor(dto.getSubclassFlavor());
         subclass.setDescription(dto.getDescription());
         subclass.setSpellcastingAbility(dto.getSpellcastingAbility());
 
@@ -66,7 +66,7 @@ public class SubclassService {
         dto.setId(subclass.getId());
         dto.setIndexName(subclass.getIndexName());
         dto.setName(subclass.getName());
-        dto.setSubClassFlavor(subclass.getSubclassFlavor());
+        dto.setSubclassFlavor(subclass.getSubclassFlavor());
         dto.setDescription(subclass.getDescription());
         dto.setSpellcastingAbility(subclass.getSpellcastingAbility());
 
@@ -76,6 +76,5 @@ public class SubclassService {
         }
         return dto;
     }
-
     
 }

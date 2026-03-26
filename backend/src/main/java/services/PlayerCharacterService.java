@@ -8,6 +8,8 @@ import repositories.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import repositories.UserRepository;
+import entities.User;
 
 @Service
 public class PlayerCharacterService {
@@ -29,6 +31,7 @@ public class PlayerCharacterService {
     private final CharacterClassResourceService characterClassResourceService;
     private final CharacterEquipmentRepository equipmentRepository;
     private final CharacterActiveEffectRepository characterActiveEffectRepository;
+    private final UserRepository userRepository;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -47,12 +50,14 @@ public class PlayerCharacterService {
             SubclassRepository subclassRepository,
             CharacterClassResourceService characterClassResourceService,
             CharacterEquipmentRepository equipmentRepository,
-            CharacterActiveEffectRepository characterActiveEffectRepository
+            CharacterActiveEffectRepository characterActiveEffectRepository,
+            UserRepository userRepository
         ) {
         this.characterRepository = characterRepository;
         this.raceRepository = raceRepository;
         this.dndClassRepository = dndClassRepository;
         this.characterSpellRepository = characterSpellRepository;
+        this.userRepository = userRepository;
         this.spellRepository = spellRepository;
         this.spellSlotProgressionRepository = spellSlotProgressionRepository;
         this.slotRepository = slotRepository;
@@ -152,6 +157,14 @@ public class PlayerCharacterService {
         playerCharacter.setFlaws(dto.getFlaw());
 
         playerCharacter.setProficiencyBonus(2 + ((dto.getLevel() - 1) / 4));
+
+        if(dto.getUserId() != null) {
+            User user = userRepository.findById(dto.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + dto.getUserId()));
+            playerCharacter.setUser(user);
+        }else{
+            throw new RuntimeException("User ID is required to create a character");
+        }
 
         PlayerCharacter saved = characterRepository.save(playerCharacter);
 

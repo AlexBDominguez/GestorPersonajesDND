@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import services.PlayerCharacterService;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -59,7 +60,7 @@ public class PlayerCharacterController {
     }
 
     @PostMapping
-    public PlayerCharacterDto create(@RequestBody PlayerCharacterDto dto){
+    public PlayerCharacterDto create(@RequestBody PlayerCharacterDto dto, Principal principal){
         User user = getAuthenticatedUser();
         // Asignar automáticamente el personaje al usuario autenticado
         dto.setUserId(user.getId());

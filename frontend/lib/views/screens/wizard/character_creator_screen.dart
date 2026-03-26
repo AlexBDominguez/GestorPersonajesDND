@@ -14,7 +14,7 @@ class CharacterCreatorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => CharacterCreatorViewModel()..loadReferenceData(),
+      create: (_) => CharacterCreatorViewModel(),
       child: const _WizardBody(),
     );
   }
@@ -42,7 +42,7 @@ class _WizardBody extends StatelessWidget {
     final vm = context.watch<CharacterCreatorViewModel>();
 
     // Navigate back on success
-    if (vm.createSuccess) {
+    if (vm.saveSuccess) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pop(true); // true = refresh dashboard
       });
@@ -60,14 +60,21 @@ class _WizardBody extends StatelessWidget {
         children: [
           // ── Progress indicator ─────────────────────────────────
           _StepIndicator(
-              current: vm.currentStep, titles: _stepTitles, icons: _stepIcons),
+              current: vm.currentStepIndex, titles: _stepTitles, icons: _stepIcons),
           const Divider(height: 1),
 
           // ── Step content ───────────────────────────────────────
-          Expanded(child: _steps[vm.currentStep]),
+          Expanded(
+            child: Center(
+              child: Text(
+                'Step: ${vm.currentStep.name}',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+          ),
 
           // ── Error banner ───────────────────────────────────────
-          if (vm.createError != null)
+          if (vm.error != null)
             Container(
               width: double.infinity,
               color: AppTheme.accent.withOpacity(0.15),
@@ -77,7 +84,7 @@ class _WizardBody extends StatelessWidget {
                     color: AppTheme.accent, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(vm.createError!,
+                  child: Text(vm.error!,
                       style: GoogleFonts.lato(
                           color: AppTheme.accent, fontSize: 13)),
                 ),
@@ -201,7 +208,7 @@ class _NavButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLast = vm.currentStep == CharacterCreatorViewModel.totalSteps - 1;
+    final isLast = vm.currentStepIndex == vm.totalSteps - 1;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -211,7 +218,7 @@ class _NavButtons extends StatelessWidget {
       ),
       child: Row(children: [
         // Back
-        if (vm.currentStep > 0)
+        if (vm.currentStepIndex > 0)
           Expanded(
             child: OutlinedButton.icon(
               onPressed: vm.previousStep,
@@ -224,22 +231,22 @@ class _NavButtons extends StatelessWidget {
               ),
             ),
           ),
-        if (vm.currentStep > 0) const SizedBox(width: 12),
+        if (vm.currentStepIndex > 0) const SizedBox(width: 12),
 
         // Next / Create
         Expanded(
           flex: 2,
           child: ElevatedButton.icon(
-            onPressed: (vm.canProceed && !vm.isCreating)
+            onPressed: (vm.canProceedCurrentStep && !vm.isSaving)
                 ? () {
                     if (isLast) {
-                      vm.createCharacter();
+                      vm.submit();
                     } else {
                       vm.nextStep();
                     }
                   }
                 : null,
-            icon: vm.isCreating
+            icon: vm.isSaving
                 ? const SizedBox(
                     width: 16, height: 16,
                     child: CircularProgressIndicator(

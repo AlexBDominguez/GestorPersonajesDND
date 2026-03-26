@@ -3,6 +3,7 @@ package controllers;
 
 import dto.RaceDto;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import services.RaceService;
@@ -25,7 +26,7 @@ public class RaceController {
     }
 
     @GetMapping("/{id}")
-    public RaceDto getRaceById(Long id){
+    public RaceDto getRaceById(@PathVariable Long id){
         return raceService.getRace(id);
     }
 }

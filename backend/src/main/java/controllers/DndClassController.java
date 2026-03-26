@@ -1,6 +1,9 @@
 package controllers;
 
+import dto.ClassFeatureDto;
 import dto.DndClassDto;
+import dto.SubclassDto;
+
 import org.springframework.web.bind.annotation.*;
 import services.DndClassService;
 
@@ -29,6 +32,16 @@ public class DndClassController {
     @PostMapping
     public DndClassDto create(@RequestBody DndClassDto dto){
         return service.create(dto);
+    }
+
+    @GetMapping("/{id}/features")
+    public List<ClassFeatureDto> getClassFeatures(@PathVariable Long id){
+        return service.getFeaturesByClassId(id);
+    }
+
+    @GetMapping("/{id}/subclasses")
+    public List<SubclassDto> getSubclassesByClass(@PathVariable Long id){
+        return service.getSubclassesByClassId(id);
     }
 
 }

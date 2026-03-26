@@ -34,6 +34,26 @@ class WizardReferenceService {
     throw Exception('Failed to load classes (${res.statusCode})');    
   }
 
+  Future<List<ClassFeature>> getClassFeatures(int classId) async{
+    final res = await _api.get('${ApiConfig.classesPath}/$classId/features');
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List)
+          .map((e) => ClassFeature.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+      throw Exception('Failed to load features ($classId): ${res.statusCode}');
+  }
+
+  Future<List<SubclassOption>> getSubclasses(int classId) async {
+    final res = await _api.get('${ApiConfig.classesPath}/$classId/subclasses');
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List)
+          .map((e) => SubclassOption.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    throw Exception('Failed to load subclasses ($classId): ${res.statusCode}');
+  }
+
   Future<List<BackgroundOption>> getBackgrounds() async{
     final res = await _api.get(ApiConfig.backgroundsPath);
     if (res.statusCode == 200) {

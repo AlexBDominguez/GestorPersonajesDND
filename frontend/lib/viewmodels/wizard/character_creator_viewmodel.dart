@@ -5,6 +5,19 @@ import 'package:gestor_personajes_dnd/models/wizard/race_option.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
 import 'package:gestor_personajes_dnd/services/wizard/wizard_reference_service.dart';
 
+
+
+// - Enums
+enum WizardStep {preferences, dndClass, background, race, abilityScores}
+
+enum AbilityScoreMethod {standardArray, manual}
+
+// - Constante D&D
+const List<int> kStandardArray = [15, 14, 13, 12, 10, 8];
+const List<String> kAbilityNames = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
+
+
+// - ViewModel
 class CharacterCreatorViewModel extends ChangeNotifier {
   final WizardReferenceService _refService;
   final CharacterService       _charService;
@@ -15,173 +28,301 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   })  : _refService  = refService  ?? WizardReferenceService(),
         _charService = charService ?? CharacterService();
 
-  // ── Step control ────────────────────────────────────────────────
-  int _currentStep = 0;
-  int get currentStep => _currentStep;
-  static const int totalSteps = 4; // Race, Class, Scores, Background
+  //- Navegación
+  WizardStep _currentStep = WizardStep.preferences;
+  WizardStep get currentStep => _currentStep;
+  int get currentStepIndex => WizardStep.values.indexOf(_currentStep);
+  int get totalSteps => WizardStep.values.length;
+  bool get isFirstStep => _currentStep == WizardStep.values.first;
+  bool get isLastStep => _currentStep == WizardStep.values.last;
 
-  void goToStep(int step) {
+  void goToStep(WizardStep step){
     _currentStep = step;
     notifyListeners();
   }
 
-  void nextStep() {
-    if (_currentStep < totalSteps - 1) {
-      _currentStep++;
+  void nextStep(){
+    final idx = currentStepIndex;
+    if (idx < totalSteps -1){
+      _currentStep = WizardStep.values[idx + 1];
+      _loadStepData();
       notifyListeners();
     }
   }
 
-  void previousStep() {
-    if (_currentStep > 0) {
-      _currentStep--;
+  void previousStep(){
+    final idx = currentStepIndex;
+    if (idx > 0){
+      _currentStep = WizardStep.values[idx-1];
       notifyListeners();
     }
   }
 
-  // ── Reference data ───────────────────────────────────────────────
-  List<RaceOption>       races       = [];
-  List<ClassOption>      classes     = [];
-  List<BackgroundOption> backgrounds = [];
-  bool  _loadingRefs  = false;
-  String? _refsError;
+  //- Estado de carga / error
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
-  bool    get loadingRefs => _loadingRefs;
-  String? get refsError   => _refsError;
+  String? _error;
+  String? get error => _error;
 
-  Future<void> loadReferenceData() async {
-    _loadingRefs = true;
-    _refsError   = null;
-    notifyListeners();
-    try {
-      final results = await Future.wait([
-        _refService.getRaces(),
-        _refService.getClasses(),
-        _refService.getBackgrounds(),
-      ]);
-      races       = results[0] as List<RaceOption>;
-      classes     = results[1] as List<ClassOption>;
-      backgrounds = results[2] as List<BackgroundOption>;
-    } catch (e) {
-      _refsError = e.toString();
-    } finally {
-      _loadingRefs = false;
-      notifyListeners();
-    }
-  }
+  void _setLoading(bool v){ _isLoading = v; notifyListeners();}
+  void _setError(String? v) {_error = v; notifyListeners();}
 
-  // ── Step 1: Character name ───────────────────────────────────────
+  // - PASO 1: Preferencias
+  // ────────────────────────────────────────────────────────────
+
   String characterName = '';
+  bool useMilestone = true; // true = milestone, false = XP
+  bool useEncumbrance = false;
 
-  // ── Step 1: Race ────────────────────────────────────────────────
-  RaceOption? selectedRace;
-  void selectRace(RaceOption race) {
-    selectedRace = race;
-    notifyListeners();
-  }
+  void setName(String v) {characterName = v; notifyListeners();}
+  void setMilestone(bool v) {useMilestone = v; notifyListeners();}
+  void setEncumbrance(bool v) {useEncumbrance = v; notifyListeners();}
 
-  // ── Step 2: Class ────────────────────────────────────────────────
+  bool get preferencesValid => characterName.trim().isNotEmpty;
+
+  // PASO 2: Clase
+  // ────────────────────────────────────────────────────────────
+
+  List<ClassOption> classes = [];
   ClassOption? selectedClass;
-  void selectClass(ClassOption cls) {
-    selectedClass = cls;
+  List<ClassFeature> classFeatures = [];
+  List<SubclassOption> subclasses = [];
+  SubclassOption? selectedSubclass;
+  int selectedLevel = 1;
+
+  Future<void> loadClasses() async {
+    _setLoading(true);
+    _setError(null);
+    try{
+      classes = await _refService.getClasses();      
+    } catch(e) {
+      _setError('Error loading classes: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  void selectSubclass(SubclassOption s) {
+    selectedSubclass = s;
     notifyListeners();
   }
 
-  // ── Step 3: Ability Scores ───────────────────────────────────────
-  // Standard array: 15,14,13,12,10,8
-  static const List<int> standardArray = [15, 14, 13, 12, 10, 8];
-  static const List<String> abilityNames = [
-    'STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'
-  ];
+  void setLevel(int level) {
+    selectedLevel = level.clamp(1,20);
+    notifyListeners();
+  }
 
-  // Map: abilityName → assigned score (null = unassigned)
-  Map<String, int?> abilityAssignments = {
-    for (final a in abilityNames) a: null,
+  //Features del nivel actual y anteriores (acumuladas)
+  List<ClassFeature> get featuresUpToCurrentLevel =>
+    classFeatures.where((f) => f.level <= selectedLevel).toList();
+
+  int get calculatedHp{
+    final base = selectedClass?.hitDie ?? 8;
+    final conMod = abilityModifier('CON');
+    //Nivel 1: máximo. Niveles siguientes: media redondeada arriba + CON
+    if(selectedLevel == 1) return base + conMod;
+    return (base + conMod) + ((base ~/ 2 + 1 + conMod) * (selectedLevel - 1));  
+    }
+
+    bool get classValid => selectedClass != null;
+
+  // PASO 3: Background
+  // ────────────────────────────────────────────────────────────
+  List<BackgroundOption> backgrounds = [];
+  BackgroundOption? selectedBackground;
+
+  Future<void> loadBackgrounds() async {
+    _setLoading(true);
+    _setError(null);
+    try{
+      backgrounds = await _refService.getBackgrounds();
+    } catch(e){
+      _setError('Error loading backgrounds: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  void selectBackground(BackgroundOption b){
+    selectedBackground = b;
+    notifyListeners();
+  }
+
+  bool get backgroundValid => selectedBackground != null;
+
+
+  // PASO 4: Raza
+  // ────────────────────────────────────────────────────────────
+
+  List<RaceOption> races = [];
+  RaceOption? selectedRace;
+
+  Future<void> loadRaces() async{
+    _setLoading(true);
+    _setError(null);
+    try{
+      races = await _refService.getRaces();
+    } catch(e) {
+      _setError('Error loading races: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  void selectRace(RaceOption r) {
+    selectedRace = r;
+    notifyListeners();
+  }
+
+  bool get raceValid => selectedRace != null;
+
+  //PASO 5: Ability Scores
+  // ────────────────────────────────────────────────────────────
+  AbilityScoreMethod scoreMethod = AbilityScoreMethod.standardArray;
+
+  //Mapa: 'STR' -> valor asignado
+  final Map<String, int> abilityScores = {
+    for (final a in kAbilityNames) a: 10,
   };
 
-  // Which standard array values are still available
-  List<int> get availableScores {
-    final assigned = abilityAssignments.values.whereType<int>().toList();
-    final pool = List<int>.from(standardArray);
-    for (final v in assigned) {
-      pool.remove(v);
+  //Standard array: qué indice de kStandardArray está asignado a cada ability
+  //null = sin asignar todavía
+  final Map<String, int?> standardArrayAssignments = {
+    for (final a in kAbilityNames) a: null,
+  };
+
+  void setScoreMethod(AbilityScoreMethod m){
+    scoreMethod = m;
+    //Reset
+    for (final a in kAbilityNames){
+      abilityScores[a] = 10;
+      standardArrayAssignments[a] = null;
     }
-    return pool;
-  }
-
-  bool get allScoresAssigned =>
-      abilityAssignments.values.every((v) => v != null);
-
-  void assignScore(String ability, int? score) {
-    // If reassigning, free the previous value
-    abilityAssignments[ability] = score;
     notifyListeners();
   }
 
-  int abilityModifier(int score) => ((score - 10) / 2).floor();
-  String modifierLabel(int score) {
-    final mod = abilityModifier(score);
-    return mod >= 0 ? '+$mod' : '$mod';
-  }
-
-  // ��─ Step 4: Background ──────────────��───────────────────────────
-  BackgroundOption? selectedBackground;
-  void selectBackground(BackgroundOption bg) {
-    selectedBackground = bg;
+  /// Asigna un valor del standard array a una ability
+  void assignStandardArrayValue(String ability, int arrayIndex){
+    //Si ese índice ya estaba asignado a otra ability, lo libra
+    standardArrayAssignments.forEach((key, val){
+      if(val == arrayIndex) standardArrayAssignments[key] = null;
+    });
+    standardArrayAssignments[ability] = arrayIndex;
+    abilityScores[ability] = kStandardArray[arrayIndex];
     notifyListeners();
   }
 
-  // ── Validation ──────────────────────────────────────────────────
-  bool get step0Valid => characterName.trim().isNotEmpty && selectedRace != null;
-  bool get step1Valid => selectedClass != null;
-  bool get step2Valid => allScoresAssigned;
-  bool get step3Valid => selectedBackground != null;
+  ///Asigna un valor manual a una ability
+  void setManualScore(String ability, int value){
+    abilityScores[ability] = value.clamp(3, 20);
+    notifyListeners();
+  }
 
-  bool get canProceed {
+  /// Bonos raciales aplicados sobre los scores base
+  Map<String, int> get racialBonuses =>
+    selectedRace?.abilityBonuses ?? {};
+
+  /// Score final = base + bono racial
+  int finalScore(String ability) =>
+    (abilityScores[ability] ?? 10) + (racialBonuses[ability] ?? 0);
+
+  /// Modificador de la ability (score final)
+  int abilityModifier(String ability) => ((finalScore(ability) - 10) /2).floor();
+
+  bool get allArrayValuesAssigned =>
+    standardArrayAssignments.values.every((v) => v != null);
+
+  bool get abilityScoresValid => scoreMethod == AbilityScoreMethod.manual || allArrayValuesAssigned;
+
+  // Validación global y submit
+  bool get canFinish =>
+    preferencesValid &&
+    classValid &&
+    backgroundValid &&
+    raceValid &&
+    abilityScoresValid;
+
+    bool get canProceedCurrentStep {
     switch (_currentStep) {
-      case 0: return step0Valid;
-      case 1: return step1Valid;
-      case 2: return step2Valid;
-      case 3: return step3Valid;
-      default: return false;
+      case WizardStep.preferences:   return preferencesValid;
+      case WizardStep.dndClass:      return classValid;
+      case WizardStep.background:    return backgroundValid;
+      case WizardStep.race:          return raceValid;
+      case WizardStep.abilityScores: return abilityScoresValid;
     }
   }
 
-  // ── Create ──────────────────────────────────────────────────────
-  bool    _isCreating  = false;
-  String? _createError;
-  bool    _createSuccess = false;
+  bool _isSaving = false;
+  bool get isSaving => _isSaving;
+  bool _saveSuccess = false;
+  bool get saveSuccess => _saveSuccess;
 
-  bool    get isCreating    => _isCreating;
-  String? get createError   => _createError;
-  bool    get createSuccess => _createSuccess;
-
-  Future<void> createCharacter() async {
-    if (!step0Valid || !step1Valid || !step2Valid || !step3Valid) return;
-
-    _isCreating  = true;
-    _createError = null;
+  Future<void> submit() async {
+    if (!canFinish) return;
+    _isSaving = true;
+    _saveSuccess = false;
     notifyListeners();
-
     try {
-      final scores = <String, int>{
-        for (final e in abilityAssignments.entries)
-          if (e.value != null) e.key: e.value!,
-      };
-
       await _charService.createCharacter(
         name:         characterName.trim(),
         raceId:       selectedRace!.id,
         classId:      selectedClass!.id,
         backgroundId: selectedBackground!.id,
-        abilityScores: scores,
+        abilityScores: {
+          'STR': abilityScores['STR']!,
+          'DEX': abilityScores['DEX']!,
+          'CON': abilityScores['CON']!,
+          'INT': abilityScores['INT']!,
+          'WIS': abilityScores['WIS']!,
+          'CHA': abilityScores['CHA']!,
+        },
       );
-      _createSuccess = true;
+      _saveSuccess = true;
     } catch (e) {
-      _createError = e.toString().replaceFirst('Exception: ', '');
+      _setError('Error saving character: $e');
     } finally {
-      _isCreating = false;
+      _isSaving = false;
       notifyListeners();
+    }
+  }
+
+  Map<String, dynamic> _buildDto() {
+    return {
+      'name': characterName.trim(),
+      'level': selectedLevel,
+      'useMilestone': useMilestone,
+      'useEncumbrance': useEncumbrance,
+      'classId': selectedClass!.id,
+      'subclassId': selectedSubclass?.id,
+      'backgroundId': selectedBackground!.id,
+      'raceId': selectedRace!.id,
+      'strength':     abilityScores['STR'],
+      'dexterity':    abilityScores['DEX'],
+      'constitution': abilityScores['CON'],
+      'intelligence': abilityScores['INT'],
+      'wisdom':       abilityScores['WIS'],
+      'charisma':     abilityScores['CHA'],
+      'maxHp':        calculatedHp,
+      'currentHp':    calculatedHp,
+    };
+  }
+
+  // Carga automática al cambiar de paso
+
+  void _loadStepData() {
+    switch (_currentStep) {
+      case WizardStep.dndClass:
+        if (classes.isEmpty) loadClasses();
+        break;
+      case WizardStep.background:
+        if (backgrounds.isEmpty) loadBackgrounds();
+        break;
+      case WizardStep.race:
+        if (races.isEmpty) loadRaces();
+        break;
+      default:
+        break;
     }
   }
 }

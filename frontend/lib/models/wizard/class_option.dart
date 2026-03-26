@@ -1,19 +1,75 @@
-class ClassOption {
+class ClassFeature{
   final int id;
   final String name;
-  final int hitDie; //ej: 8 -> d8
+  final int level;
+  final String description;
+
+  const ClassFeature({
+    required this.id,
+    required this.name,
+    required this.level,
+    required this.description
+  });
+
+  factory ClassFeature.fromJson(Map<String, dynamic> j) => ClassFeature(
+    id: j['id'] as int,
+    name: j['name'] as String,
+    level: j['level'] as int,
+    description: j['description'] as String? ?? '',
+  );
+}
+
+class SubclassOption{
+  final int id;
+  final String indexName;
+  final String name;
+  final String flavor;
+  final String description;
+
+  const SubclassOption({
+    required this.id,
+    required this.indexName,
+    required this.name,
+    required this.flavor,
+    required this.description
+  });
+
+
+  factory SubclassOption.fromJson(Map<String, dynamic> j) => SubclassOption(
+    id: j['id'] as int,
+    indexName: j['indexName'] as String,
+    name: j['name'] as String,
+    flavor: j['subclassFlavor'] as String? ?? '',
+    description: j['description'] as String? ?? '',
+  );
+}
+
+class ClassOption {
+  final int id;
+  final String indexName;
+  final String name;
+  final int hitDie;
+  final String description;
+  final List<String> proficiencies;
 
   const ClassOption({
     required this.id,
+    required this.indexName,
     required this.name,
     required this.hitDie,
+    required this.description,
+    required this.proficiencies
   });
 
-  factory ClassOption.fromJson(Map<String, dynamic> json) => ClassOption(
-    id:     (json['id'] as num).toInt(),
-    name:   json['name'] as String,
-    hitDie: (json['hitDie'] as num?)?.toInt() ?? 6, 
+  factory ClassOption.fromJson(Map<String, dynamic> j) => ClassOption(
+    id: j['id'] as int,
+    indexName: j['indexName'] as String,
+    name: j['name'] as String,
+    hitDie: j['hitDie'] as int? ?? 6,
+    description: j['description'] as String? ?? '',
+        proficiencies: List<String>.from(j['proficiencies'] as List? ?? []),
   );
 
-  String get hitDieLabel => 'd$hitDie';
+  // HP al nivel 1: hitDie + CON modifier (se calcula en el ViewModel)
+  int hpAtLevel1(int conModifier)=> hitDie + conModifier;
 }

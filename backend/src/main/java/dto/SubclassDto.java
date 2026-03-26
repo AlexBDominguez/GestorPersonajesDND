@@ -6,11 +6,9 @@ public class SubclassDto {
     private String name;
     private Long classId;
     private String className;
-    private String subClassFlavor;
+    private String subclassFlavor;
     private String description;
     private String spellcastingAbility;
-
-
 
     
     public Long getId() {
@@ -43,11 +41,11 @@ public class SubclassDto {
     public void setClassName(String className) {
         this.className = className;
     }
-    public String getSubClassFlavor() {
-        return subClassFlavor;
+    public String getSubclassFlavor() {
+        return subclassFlavor;
     }
-    public void setSubClassFlavor(String subClassFlavor) {
-        this.subClassFlavor = subClassFlavor;
+    public void setSubclassFlavor(String subclassFlavor) {
+        this.subclassFlavor = subclassFlavor;
     }
     public String getDescription() {
         return description;
