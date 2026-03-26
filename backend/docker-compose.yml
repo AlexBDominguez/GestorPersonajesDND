@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Base de datos MySQL - Compartible entre múltiples ordenadores
   mysql-db:
     image: mysql:8.0
     container_name: dnd-mysql
@@ -11,14 +10,11 @@ services:
       MYSQL_DATABASE: dnd_character_manager
       MYSQL_USER: ${MYSQL_USER:-dnd_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dnd_password}
-      # Permite conexiones remotas
       MYSQL_ROOT_HOST: '%'
     ports:
       - "3306:3306"
     volumes:
-      # Script de inicialización con todas las tablas
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-      # Persistencia de datos en carpeta local (portátil entre PCs)
       - ./mysql-data:/var/lib/mysql
     networks:
       - dnd-network
@@ -27,9 +23,23 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # Permite acceso desde otros contenedores y la red host
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+
+  backend:
+    build: .
+    container_name: dnd-backend
+    restart: unless-stopped
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/dnd_character_manager?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-dnd_user}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-dnd_password}
+      SERVER_PORT: 8081
+    ports:
+      - "8081:8081"
+    networks:
+      - dnd-network
 
 networks:
   dnd-network:

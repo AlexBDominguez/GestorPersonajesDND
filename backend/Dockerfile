@@ -22,10 +22,7 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 # Exponer el puerto de la aplicación
-EXPOSE 8080
-
-# Variables de entorno por defecto (se pueden sobrescribir)
-ENV SPRING_PROFILES_ACTIVE=prod
+EXPOSE 8081
 
 # Ejecutar la aplicación
 ENTRYPOINT ["java", "-jar", "app.jar"]
