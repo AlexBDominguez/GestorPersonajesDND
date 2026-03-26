@@ -28,6 +28,8 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Sistema de descansos (cortos y largos)
 - Sincronización de datos desde la D&D 5e API
 - Rate limiting para peticiones API
+- Sistema de autenticación JWT con Spring Security
+- Gestión de usuarios del sistema
 
 ## Tecnologías
 
@@ -40,19 +42,22 @@ Sistema completo para gestionar personajes de D&D 5e:
 - **RestTemplate** - Cliente HTTP para integración con D&D 5e API
 - **Hibernate** - ORM (Object-Relational Mapping)
 - **Docker & Docker Compose** - Contenedorización de MySQL
+- **Spring Security** - Autenticación y autorización
+- **JWT (jjwt)** - Tokens de autenticación
 
 ### Frontend
 - **Flutter 3.x** - Framework multiplataforma para Android/iOS
 - **Dart** - Lenguaje de programación
 - **Provider** - Gestión de estado
 - **HTTP** - Cliente HTTP para consumir la API REST
+- **google_fonts** - Tipografía Cinzel y Lato
 
 ## Características Técnicas
 
 ### Backend
 
 #### Modelo de Datos
-- 37 entidades JPA con relaciones complejas (OneToMany, ManyToOne, OneToOne, ElementCollection)
+- 38 entidades JPA con relaciones complejas (OneToMany, ManyToOne, OneToOne, ElementCollection)
 - Mapeo de atributos como Map y List
 - Métodos transient para cálculos en tiempo de ejecución
 - Cascadas y eliminación en cascada (orphanRemoval)
@@ -97,6 +102,8 @@ Sistema completo para gestionar personajes de D&D 5e:
 
 #### Interfaz de Usuario
 - Material Design 3
+- Tema visual personalizado con paleta D&D (dark theme, dorado, carmesí)
+- Tipografía temática con Cinzel (títulos) y Lato (texto)
 - Navegación automática basada en estado de autenticación
 - Manejo de estados de carga y errores
 - Feedback visual con SnackBars y loaders
@@ -106,8 +113,9 @@ Sistema completo para gestionar personajes de D&D 5e:
 ### Backend
 ```
 src/main/java/
-├── controllers/        # Controladores REST API (25 controladores)
+├── controllers/        # Controladores REST API (27 controladores)
 │   ├── ActiveEffectController
+│   ├── AuthController
 │   ├── BackgroundController
 │   ├── CharacterActiveEffectController
 │   ├── CharacterClassResourceController
@@ -131,9 +139,11 @@ src/main/java/
 │   ├── ProficiencyController
 │   ├── RaceController
 │   ├── SpellController
-│   └── SubclassController
-├── dto/               # Data Transfer Objects (26 DTOs)
+│   ├── SubclassController
+│   └── UserController
+├── dto/               # Data Transfer Objects (30 DTOs)
 │   ├── ActiveEffectDto
+│   ├── AuthResponse
 │   ├── BackgroundDto
 │   ├── CharacterActiveEffectDto
 │   ├── CharacterClassResourceDto
@@ -148,18 +158,21 @@ src/main/java/
 │   ├── CharacterSavingThrowDto
 │   ├── CharacterSkillDto
 │   ├── ClassResourceDto
+│   ├── CreateUserRequest
 │   ├── ConditionDto
 │   ├── DamageTypeDto
 │   ├── DndClassDto
 │   ├── FeatDto
 │   ├── LanguageDto
 │   ├── LevelUpRequest
+│   ├── LoginRequest
 │   ├── PlayerCharacterDto
 │   ├── ProficiencyDto
 │   ├── RaceDto
 │   ├── SpellDto
-│   └── SubclassDto
-├── entities/          # Entidades JPA (37 entidades)
+│   ├── SubclassDto
+│   └── UserDto
+├── entities/          # Entidades JPA (38 entidades)
 │   ├── ActiveEffect
 │   ├── Background
 │   ├── CharacterActiveEffect
@@ -196,7 +209,8 @@ src/main/java/
 │   ├── Spell
 │   ├── SpellSlotProgression
 │   ├── Subclass
-│   └── SubclassFeature
+│   ├── SubclassFeature
+│   └── User
 ├── enumeration/       # Enumeraciones
 │   └── FeatureType
 ├── repositories/      # Repositorios JPA
@@ -235,6 +249,11 @@ src/main/java/
 │   ├── SpellService
 │   ├── SubclassFeatureService
 │   └── SubclassService
+├── security/          # Autenticación y autorización JWT
+│   ├── CustomUserDetailsService
+│   ├── JwtAuthenticationFilter
+│   ├── JwtUtil
+│   └── SecurityConfig
 └── sync/             # Servicios de sincronización (14 servicios)
     ├── ApiRateLimiter
     ├── BackgroundSyncService
@@ -256,12 +275,20 @@ src/main/java/
 ### Frontend (Flutter)
 ```
 frontend/lib/
+├── config/            # Configuración global
+│   ├── api_config.dart
+│   └── app_theme.dart
 ├── models/            # Modelos de datos
 │   ├── auth/
 │   │   ├── auth_response.dart
 │   │   └── login_request.dart
-│   └── character/
-│       └── player_character_summary.dart
+│   ├── character/
+│   │   ├── player_character_summary.dart
+│   │   └── player_character.dart
+│   └── wizard/
+│       ├── background_option.dart
+│       ├── class_option.dart
+│       └── race_option.dart
 ├── services/          # Servicios de API y almacenamiento
 │   ├── auth/
 │   │   └── auth_service.dart
@@ -269,17 +296,38 @@ frontend/lib/
 │   │   └── character_service.dart
 │   ├── http/
 │   │   └── api_client.dart
-│   └── storage/
-│       └── token_storage.dart
+│   ├── storage/
+│   │   └── token_storage.dart
+│   └── wizard/
+│       └── wizard_reference_service.dart
 ├── viewmodels/        # Lógica de presentación (MVVM)
 │   ├── auth/
 │   │   └── auth_viewmodel.dart
-│   └── characters/
-│       └── character_list_viewmodel.dart
+│   ├── characters/
+│   │   ├── character_list_viewmodel.dart
+│   │   └── character_sheet_viewmodel.dart
+│   └── wizard/
+│       └── character_creator_viewmodel.dart
 ├── views/             # Pantallas y widgets
-│   └── screens/
-│       ├── dashboard_screen.dart
-│       └── login_screen.dart
+│   ├── screens/
+│   │   ├── dashboard_screen.dart
+│   │   ├── login_screen.dart
+│   │   ├── sheet/
+│   │   │   ├── character_sheet_screen.dart
+│   │   │   └── tabs/
+│   │   │       ├── tab_combat.dart
+│   │   │       ├── tab_abilities.dart
+│   │   │       ├── tab_traits.dart
+│   │   │       └── tab_info.dart
+│   │   └── wizard/
+│   │       ├── character_creator_screen.dart
+│   │       └── steps/
+│   │           ├── step_race.dart
+│   │           ├── step_class.dart
+│   │           ├── step_ability_scores.dart
+│   │           └── step_background.dart
+│   └── widgets/
+│       └── character_card.dart
 └── main.dart          # Punto de entrada de la aplicación
 ```
 
@@ -576,6 +624,17 @@ Nota: En DBeaver, añade en "Driver properties":
 - [DOCKER.md](DOCKER.md) - Guía completa de uso con Docker
 - [init-db.sql](init-db.sql) - Script de base de datos con todas las tablas
 
+## API Endpoints de Autenticación y Usuarios
+
+### Autenticación
+- `POST /api/auth/login` - Iniciar sesión y obtener token JWT
+
+### Administración de Usuarios
+- `GET /api/admin/users` - Listar todos los usuarios
+- `GET /api/admin/users/{id}` - Obtener usuario por ID
+- `POST /api/admin/users` - Crear nuevo usuario
+- `DELETE /api/admin/users/{id}` - Eliminar usuario
+
 ## 🔧 Sincronización de Datos
 
 ### Sincronizar datos iniciales (Opcional pero recomendado)
@@ -858,6 +917,8 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 - Sistema de death saves y HP temporal
 - Cálculos automáticos de CA, velocidad, iniciativa
 - Percepción pasiva, investigación e intuición
+- Autenticación JWT con Spring Security
+- Gestión de usuarios del sistema (admin)
 
 ### Frontend Mobile - En Desarrollo
 - Sistema de autenticación con login y gestión de tokens
@@ -867,13 +928,17 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 - Modelos de datos (personajes, autenticación)
 - Servicios para personajes y autenticación
 - Almacenamiento persistente de tokens
+- Tema visual personalizado con paleta D&D (dark theme, Cinzel + Lato)
+- Configuración centralizada de API (ApiConfig)
+- Widget de tarjeta de personaje con barra de HP y estadísticas
+- Wizard de creación de personajes en 4 pasos (raza, clase, puntuaciones de habilidad, background)
+- Ficha digital del personaje con 4 pestañas (Combate, Habilidades, Rasgos, Información)
+- Modelo completo de personaje (PlayerCharacter) para la ficha
 
 ### Planificado
-- Wizard de creación de personajes en la app móvil
-- Ficha digital completa del personaje
 - Gestión de hechizos e inventario desde la app
 - Sistema de dados y tiradas
-- Control de usuarios privado y limitado (backend)
+- Vinculación de personajes a usuarios (privacidad por cuenta)
 
 
 ## 👤 Autor
