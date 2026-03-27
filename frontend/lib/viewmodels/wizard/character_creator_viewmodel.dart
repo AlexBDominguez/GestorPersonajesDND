@@ -103,6 +103,11 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     }
   }
 
+  void selectClass(ClassOption c) {
+    selectedClass = c;
+    notifyListeners();
+  }
+
   void selectSubclass(SubclassOption s) {
     selectedSubclass = s;
     notifyListeners();
@@ -219,6 +224,13 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Elimina la asignación del standard array para una ability
+  void clearStandardArrayAssignment(String ability) {
+    standardArrayAssignments[ability] = null;
+    abilityScores[ability] = 10;
+    notifyListeners();
+  }
+
   /// Bonos raciales aplicados sobre los scores base
   Map<String, int> get racialBonuses =>
     selectedRace?.abilityBonuses ?? {};
@@ -285,27 +297,6 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       _isSaving = false;
       notifyListeners();
     }
-  }
-
-  Map<String, dynamic> _buildDto() {
-    return {
-      'name': characterName.trim(),
-      'level': selectedLevel,
-      'useMilestone': useMilestone,
-      'useEncumbrance': useEncumbrance,
-      'classId': selectedClass!.id,
-      'subclassId': selectedSubclass?.id,
-      'backgroundId': selectedBackground!.id,
-      'raceId': selectedRace!.id,
-      'strength':     abilityScores['STR'],
-      'dexterity':    abilityScores['DEX'],
-      'constitution': abilityScores['CON'],
-      'intelligence': abilityScores['INT'],
-      'wisdom':       abilityScores['WIS'],
-      'charisma':     abilityScores['CHA'],
-      'maxHp':        calculatedHp,
-      'currentHp':    calculatedHp,
-    };
   }
 
   // Carga automática al cambiar de paso

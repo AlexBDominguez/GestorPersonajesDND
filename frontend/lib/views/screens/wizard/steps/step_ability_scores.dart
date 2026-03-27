@@ -13,135 +13,176 @@ class StepAbilityScores extends StatelessWidget {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Assign Ability Scores',
-              style: GoogleFonts.cinzel(
-                  color: AppTheme.primary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(
-            'Assign each value from the standard array to an ability.\nStandard array: 15, 14, 13, 12, 10, 8',
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const SizedBox(height: 4),
+        Text('Ability Scores', style: Theme.of(context).textTheme.displayMedium),
+        const SizedBox(height: 4),
+        Text(
+          'Assign each value from the standard array [15,14,13,12,10,8] to an ability.',
+          style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13),
+        ),
+        const SizedBox(height: 20),
+
+        // Valores disponibles (tachados si ya están usados)
+        Text('Available values:',
             style: GoogleFonts.lato(
-                color: AppTheme.textSecondary, fontSize: 12),
-          ),
-          const SizedBox(height: 16),
-
-          // Available pool
-          Wrap(
-            spacing: 8,
-            children: CharacterCreatorViewModel.standardArray.map((v) {
-              final used = !vm.availableScores.contains(v) ||
-                  vm.availableScores.where((s) => s == v).length <
-                      CharacterCreatorViewModel.standardArray
-                          .where((s) => s == v)
-                          .length;
-              return Chip(
-                label: Text('$v',
-                    style: GoogleFonts.cinzel(
-                        color: used
-                            ? AppTheme.textSecondary
-                            : AppTheme.background,
-                        fontWeight: FontWeight.bold)),
-                backgroundColor:
-                    used ? AppTheme.surfaceVariant : AppTheme.primary,
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 20),
-
-          // Assignment rows
-          ...CharacterCreatorViewModel.abilityNames.map((ability) {
-            final current = vm.abilityAssignments[ability];
-            final options = [
-              null,
-              ...vm.availableScores,
-              if (current != null) current,
-            ]..sort((a, b) {
-                if (a == null) return -1;
-                if (b == null) return 1;
-                return b.compareTo(a);
-              });
-            // Remove duplicates while preserving order
-            final unique = options.toSet().toList()
-              ..sort((a, b) {
-                if (a == null) return -1;
-                if (b == null) return 1;
-                return b.compareTo(a);
-              });
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(children: [
-                // Ability label
-                SizedBox(
-                  width: 50,
-                  child: Text(ability,
-                      style: GoogleFonts.cinzel(
-                          color: AppTheme.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold)),
+                color: AppTheme.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8, runSpacing: 8,
+          children: kStandardArray.map((val) {
+            // Un valor está usado si aparece en algún assignment
+            final isUsed = vm.standardArrayAssignments.values
+                .any((idx) => idx != null && kStandardArray[idx] == val);
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 48, height: 48,
+              decoration: BoxDecoration(
+                color: isUsed
+                    ? AppTheme.surfaceVariant.withOpacity(0.4)
+                    : AppTheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isUsed ? AppTheme.divider : AppTheme.primary,
+                  width: 1.5,
                 ),
-                const SizedBox(width: 8),
-                // Modifier display
-                SizedBox(
-                  width: 36,
-                  child: Text(
-                    current != null
-                        ? vm.modifierLabel(current)
-                        : '—',
+              ),
+              child: Center(
+                child: Text('$val',
+                    style: GoogleFonts.cinzel(
+                      color: isUsed ? AppTheme.textSecondary : AppTheme.primary,
+                      fontSize: 16, fontWeight: FontWeight.bold,
+                    )),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 24),
+
+        // Tabla de abilities
+        ...kAbilityNames.map((ability) {
+          final assignedIdx = vm.standardArrayAssignments[ability];
+
+          final racialBonus = vm.racialBonuses[ability] ?? 0;
+          final total = vm.finalScore(ability); // base + racial (o 10 si no asignado)
+          final mod = vm.abilityModifier(ability);
+          final modLabel = mod >= 0 ? '+$mod' : '$mod';
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: assignedIdx != null
+                    ? AppTheme.primary.withOpacity(0.5)
+                    : AppTheme.surfaceVariant,
+              ),
+            ),
+            child: Row(children: [
+              // Ability name
+              SizedBox(
+                width: 44,
+                child: Text(ability,
                     style: GoogleFonts.cinzel(
                         color: AppTheme.primary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
+                        fontSize: 14, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(width: 12),
+
+              // Dropdown — elige qué índice del array asignar
+              Expanded(
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int?>(
+                    value: assignedIdx,
+                    dropdownColor: AppTheme.surface,
+                    hint: Text('Choose',
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary, fontSize: 13)),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text('—',
+                            style: TextStyle(color: AppTheme.textSecondary)),
+                      ),
+                      ...List.generate(kStandardArray.length, (idx) {
+                        final val = kStandardArray[idx];
+                        // Disponible si no está asignado a OTRA ability
+                        final takenByOther = vm.standardArrayAssignments.entries
+                            .any((e) => e.key != ability && e.value == idx);
+                        return DropdownMenuItem<int?>(
+                          value: takenByOther ? null : idx,
+                          enabled: !takenByOther,
+                          child: Text('$val',
+                              style: GoogleFonts.lato(
+                                color: takenByOther
+                                    ? AppTheme.textSecondary
+                                    : AppTheme.textPrimary,
+                                fontSize: 14,
+                              )),
+                        );
+                      }),
+                    ],
+                    
+                    onChanged: (idx) {
+                      if (idx == null) {
+                          vm.clearStandardArrayAssignment(ability);
+                      } else {
+                        vm.assignStandardArrayValue(ability, idx);
+                      }
+                    },
                   ),
                 ),
+              ),
+
+              // Racial bonus badge
+              if (racialBonus != 0) ...[
                 const SizedBox(width: 8),
-                // Dropdown
-                Expanded(
-                  child: DropdownButtonFormField<int?>(
-                    initialValue: current,
-                    dropdownColor: AppTheme.surface,
+                Text('+$racialBonus',
                     style: GoogleFonts.lato(
-                        color: AppTheme.textPrimary, fontSize: 14),
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide:
-                            const BorderSide(color: AppTheme.surfaceVariant),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(
-                            color: AppTheme.primary, width: 2),
-                      ),
-                    ),
-                    hint: Text('Select',
-                        style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary)),
-                    items: unique.map((v) {
-                      return DropdownMenuItem<int?>(
-                        value: v,
-                        child: Text(v?.toString() ?? '— Unassign',
-                            style: GoogleFonts.lato(
-                                color: v == null
-                                    ? AppTheme.textSecondary
-                                    : AppTheme.textPrimary)),
-                      );
-                    }).toList(),
-                    onChanged: (v) => vm.assignScore(ability, v),
-                  ),
+                        color: AppTheme.primary,
+                        fontSize: 11, fontWeight: FontWeight.bold)),
+              ],
+
+              const SizedBox(width: 8),
+
+              // Total + modifier
+              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                Text(
+                  assignedIdx != null ? '$total' : '—',
+                  style: GoogleFonts.cinzel(
+                      color: assignedIdx != null
+                          ? AppTheme.textPrimary
+                          : AppTheme.textSecondary,
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  assignedIdx != null ? modLabel : '',
+                  style: GoogleFonts.lato(
+                      color: mod >= 0 ? AppTheme.primary : AppTheme.accent,
+                      fontSize: 12, fontWeight: FontWeight.bold),
                 ),
               ]),
-            );
-          }),
-        ],
-      ),
+            ]),
+          );
+        }),
+
+        if (vm.allArrayValuesAssigned)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Row(children: [
+              const Icon(Icons.check_circle, color: AppTheme.primary, size: 16),
+              const SizedBox(width: 6),
+              Text('All scores assigned!',
+                  style: GoogleFonts.lato(
+                      color: AppTheme.primary,
+                      fontSize: 13, fontWeight: FontWeight.bold)),
+            ]),
+          ),
+      ]),
     );
   }
 }

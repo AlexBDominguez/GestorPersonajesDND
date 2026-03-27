@@ -28,7 +28,7 @@ class StepBackground extends StatelessWidget {
                   color: AppTheme.textSecondary, fontSize: 12)),
           const SizedBox(height: 16),
 
-          if (vm.loadingRefs)
+          if (vm.isLoading)
             const Center(
                 child: CircularProgressIndicator(color: AppTheme.primary))
           else
@@ -92,8 +92,8 @@ class _BackgroundTile extends StatelessWidget {
                             : AppTheme.textPrimary,
                         fontSize: 13,
                         fontWeight: FontWeight.bold)),
-                if (bg.description != null && bg.description!.isNotEmpty)
-                  Text(bg.description!,
+                if (bg.description.isNotEmpty)
+                  Text(bg.description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.lato(

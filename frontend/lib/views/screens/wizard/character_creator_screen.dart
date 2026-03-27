@@ -7,6 +7,7 @@ import 'steps/step_race.dart';
 import 'steps/step_class.dart';
 import 'steps/step_ability_scores.dart';
 import 'steps/step_background.dart';
+import 'steps/step_preferences.dart';
 
 class CharacterCreatorScreen extends StatelessWidget {
   const CharacterCreatorScreen({super.key});
@@ -14,6 +15,7 @@ class CharacterCreatorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
+      // El ViewModel nuevo carga datos paso a paso via _loadStepData()
       create: (_) => CharacterCreatorViewModel(),
       child: const _WizardBody(),
     );
@@ -23,28 +25,32 @@ class CharacterCreatorScreen extends StatelessWidget {
 class _WizardBody extends StatelessWidget {
   const _WizardBody();
 
-  static const _stepTitles = ['Race', 'Class', 'Ability Scores', 'Background'];
-  static const _stepIcons  = [
-    Icons.shield_outlined,
+  static const _stepTitles = [
+    'Prefs', 'Class', 'Background', 'Race', 'Stats'
+  ];
+  static const _stepIcons = [
+    Icons.settings_outlined,
     Icons.auto_fix_high_outlined,
-    Icons.bar_chart,
     Icons.menu_book_outlined,
+    Icons.shield_outlined,
+    Icons.bar_chart,
   ];
   static const _steps = [
-    StepRace(),
+    StepPreferences(),
     StepClass(),
-    StepAbilityScores(),
     StepBackground(),
+    StepRace(),
+    StepAbilityScores(),
   ];
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<CharacterCreatorViewModel>();
 
-    // Navigate back on success
+    
     if (vm.saveSuccess) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pop(true); // true = refresh dashboard
+        Navigator.of(context).pop(true);
       });
     }
 
@@ -56,45 +62,37 @@ class _WizardBody extends StatelessWidget {
           onPressed: () => _confirmDiscard(context),
         ),
       ),
-      body: Column(
-        children: [
-          // ── Progress indicator ─────────────────────────────────
-          _StepIndicator(
-              current: vm.currentStepIndex, titles: _stepTitles, icons: _stepIcons),
-          const Divider(height: 1),
+      body: Column(children: [
+        // ── Progress indicator ─────────────────────────────────────
+        _StepIndicator(
+          current: vm.currentStepIndex, 
+          titles: _stepTitles,
+          icons: _stepIcons,
+        ),
+        const Divider(height: 1),
 
-          // ── Step content ───────────────────────────────────────
-          Expanded(
-            child: Center(
-              child: Text(
-                'Step: ${vm.currentStep.name}',
-                style: Theme.of(context).textTheme.titleLarge,
+        // ── Step content ───────────────────────────────────────────
+        Expanded(child: _steps[vm.currentStepIndex]),
+
+        // ── Error banner ───────────────────────────────────────────
+        if (vm.error != null) 
+          Container(
+            width: double.infinity,
+            color: AppTheme.accent.withOpacity(0.15),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(children: [
+              const Icon(Icons.error_outline, color: AppTheme.accent, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(vm.error!,
+                    style: GoogleFonts.lato(color: AppTheme.accent, fontSize: 13)),
               ),
-            ),
+            ]),
           ),
 
-          // ── Error banner ───────────────────────────────────────
-          if (vm.error != null)
-            Container(
-              width: double.infinity,
-              color: AppTheme.accent.withOpacity(0.15),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(children: [
-                const Icon(Icons.error_outline,
-                    color: AppTheme.accent, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(vm.error!,
-                      style: GoogleFonts.lato(
-                          color: AppTheme.accent, fontSize: 13)),
-                ),
-              ]),
-            ),
-
-          // ── Navigation buttons ────────────────────────────────
-          _NavButtons(vm: vm),
-        ],
-      ),
+        // ── Navigation buttons ─────────────────────────────────────
+        _NavButtons(vm: vm),
+      ]),
     );
   }
 
@@ -109,19 +107,19 @@ class _WizardBody extends StatelessWidget {
             style: GoogleFonts.lato(color: AppTheme.textPrimary)),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text('Keep editing',
-                  style: GoogleFonts.lato(color: AppTheme.textSecondary))),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Keep editing',
+                style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
-              child: const Text('Discard')),
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
+            child: const Text('Discard'),
+          ),
         ],
       ),
     );
-    if (confirm == true && context.mounted) {
-      Navigator.of(context).pop();
-    }
+    if (confirm == true && context.mounted) Navigator.of(context).pop();
   }
 }
 
@@ -131,9 +129,7 @@ class _StepIndicator extends StatelessWidget {
   final int current;
   final List<String> titles;
   final List<IconData> icons;
-
-  const _StepIndicator(
-      {required this.current, required this.titles, required this.icons});
+  const _StepIndicator({required this.current, required this.titles, required this.icons});
 
   @override
   Widget build(BuildContext context) {
@@ -142,16 +138,10 @@ class _StepIndicator extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: List.generate(titles.length, (i) {
-          final isDone   = i < current;
-          final isCurrent = i == current;
-          return _StepDot(
-              index: i,
-              title: titles[i],
-              icon: icons[i],
-              isDone: isDone,
-              isCurrent: isCurrent);
-        }),
+        children: List.generate(titles.length, (i) => _StepDot(
+          index: i, title: titles[i], icon: icons[i],
+          isDone: i < current, isCurrent: i == current,
+        )),
       ),
     );
   }
@@ -163,11 +153,8 @@ class _StepDot extends StatelessWidget {
   final IconData icon;
   final bool isDone;
   final bool isCurrent;
-
-  const _StepDot({
-    required this.index, required this.title, required this.icon,
-    required this.isDone, required this.isCurrent,
-  });
+  const _StepDot({required this.index, required this.title, required this.icon,
+      required this.isDone, required this.isCurrent});
 
   @override
   Widget build(BuildContext context) {
@@ -178,24 +165,18 @@ class _StepDot extends StatelessWidget {
         width: 36, height: 36,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: isCurrent
-              ? AppTheme.primary
-              : isDone
-                  ? AppTheme.primary.withOpacity(0.25)
-                  : AppTheme.background,
+          color: isCurrent ? AppTheme.primary
+              : isDone ? AppTheme.primary.withOpacity(0.25)
+              : AppTheme.background,
           border: Border.all(color: color, width: 2),
         ),
         child: Icon(isDone ? Icons.check : icon,
-            color: isCurrent ? AppTheme.background : color,
-            size: 18),
+            color: isCurrent ? AppTheme.background : color, size: 18),
       ),
       const SizedBox(height: 4),
-      Text(title,
-          style: GoogleFonts.lato(
-              color: color,
-              fontSize: 10,
-              fontWeight:
-                  isCurrent ? FontWeight.bold : FontWeight.normal)),
+      Text(title, style: GoogleFonts.lato(
+          color: color, fontSize: 10,
+          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal)),
     ]);
   }
 }
@@ -208,7 +189,7 @@ class _NavButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLast = vm.currentStepIndex == vm.totalSteps - 1;
+    final isLast = vm.isLastStep; 
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -217,8 +198,7 @@ class _NavButtons extends StatelessWidget {
         border: Border(top: BorderSide(color: AppTheme.divider)),
       ),
       child: Row(children: [
-        // Back
-        if (vm.currentStepIndex > 0)
+        if (!vm.isFirstStep) ...[ 
           Expanded(
             child: OutlinedButton.icon(
               onPressed: vm.previousStep,
@@ -231,31 +211,23 @@ class _NavButtons extends StatelessWidget {
               ),
             ),
           ),
-        if (vm.currentStepIndex > 0) const SizedBox(width: 12),
-
-        // Next / Create
+          const SizedBox(width: 12),
+        ],
         Expanded(
           flex: 2,
           child: ElevatedButton.icon(
+            
             onPressed: (vm.canProceedCurrentStep && !vm.isSaving)
-                ? () {
-                    if (isLast) {
-                      vm.submit();
-                    } else {
-                      vm.nextStep();
-                    }
-                  }
+                ? () => isLast ? vm.submit() : vm.nextStep()
                 : null,
             icon: vm.isSaving
-                ? const SizedBox(
-                    width: 16, height: 16,
+                ? const SizedBox(width: 16, height: 16,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: AppTheme.background))
                 : Icon(isLast ? Icons.check : Icons.arrow_forward, size: 16),
             label: Text(isLast ? 'Create Character' : 'Next'),
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
+                padding: const EdgeInsets.symmetric(vertical: 14)),
           ),
         ),
       ]),
