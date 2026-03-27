@@ -44,3 +44,6 @@ app.*.map.json
 /android/app/release
 
 # Web related
+
+# Project files
+Requisitos.md

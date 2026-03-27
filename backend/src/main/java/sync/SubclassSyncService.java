@@ -134,7 +134,7 @@ public class SubclassSyncService {
 
                     //Obtener detalles de la feature
                     String featureUrl = (String) featureRef.get("url");
-                    Map<String, Object> featureDetail = restTemplate.getForObject("https://www.dnd5api.co" + featureUrl, Map.class);
+                    Map<String, Object> featureDetail = restTemplate.getForObject("https://www.dnd5eapi.co" + featureUrl, Map.class);
 
                     SubclassFeature subclassFeature = new SubclassFeature();
                     subclassFeature.setSubclass(subclass);

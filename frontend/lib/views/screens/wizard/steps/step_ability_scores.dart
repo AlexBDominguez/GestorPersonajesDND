@@ -113,8 +113,11 @@ class StepAbilityScores extends StatelessWidget {
                         // Disponible si no está asignado a OTRA ability
                         final takenByOther = vm.standardArrayAssignments.entries
                             .any((e) => e.key != ability && e.value == idx);
+                        // Siempre usamos el idx real como value para evitar
+                        // valores null duplicados que causan Assertion Failed.
+                        // La deshabilitación visual la maneja `enabled`.
                         return DropdownMenuItem<int?>(
-                          value: takenByOther ? null : idx,
+                          value: idx,
                           enabled: !takenByOther,
                           child: Text('$val',
                               style: GoogleFonts.lato(

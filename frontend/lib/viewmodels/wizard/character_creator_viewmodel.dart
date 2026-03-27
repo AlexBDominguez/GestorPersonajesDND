@@ -103,8 +103,30 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> loadClassFeatures(int classId) async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      classFeatures = await _refService.getClassFeatures(classId);
+    } catch(e) {
+      _setError('Error loading class features: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   void selectClass(ClassOption c) {
     selectedClass = c;
+    notifyListeners();
+  }
+
+  void clearClass() {
+    selectedClass = null;
+    selectedSubclass = null;
+    selectedLevel = 1;
+    _hpRolls.clear();
+    classFeatures.clear();
+    subclasses.clear();
     notifyListeners();
   }
 
@@ -115,6 +137,17 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   void setLevel(int level) {
     selectedLevel = level.clamp(1,20);
+    notifyListeners();
+  }
+
+  // Tiradas de HP por nivel (nivel → tirada, sin incluir nivel 1)
+  final Map<int, int?> _hpRolls = {};
+  Map<int, int?> get hpRolls => Map.unmodifiable(_hpRolls);
+
+  void setHpRolls(Map<int, int?> rolls) {
+    _hpRolls
+      ..clear()
+      ..addAll(rolls);
     notifyListeners();
   }
 
