@@ -88,8 +88,11 @@ public class CharacterSkillService {
 
     @Transactional
 public void applySkillProficiencyByIndex(PlayerCharacter character, String skillIndex) {
-    Skill skill = skillRepository.findByIndexName(skillIndex)
-            .orElseThrow(() -> new RuntimeException("Skill not found: " + skillIndex));
+    // Background skill proficiencies arrive as e.g. "skill-insight" from the API,
+    // but the skills table stores index_name without the "skill-" prefix.
+    String normalizedIndex = skillIndex.startsWith("skill-") ? skillIndex.substring(6) : skillIndex;
+    Skill skill = skillRepository.findByIndexName(normalizedIndex)
+            .orElseThrow(() -> new RuntimeException("Skill not found: " + normalizedIndex));
 
     List<CharacterSkill> characterSkills = characterSkillRepository.findByCharacter(character);
 
