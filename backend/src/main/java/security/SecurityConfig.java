@@ -14,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -70,6 +71,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/sync/**").permitAll()
+                // Reference data (read-only game data) accessible to all
+                .requestMatchers(HttpMethod.GET, "/api/classes/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/races/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/backgrounds/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/spells/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/skills/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/subclasses/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )

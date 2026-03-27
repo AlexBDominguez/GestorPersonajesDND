@@ -5,25 +5,25 @@ import '../../../config/app_theme.dart';
 import '../../../models/wizard/class_option.dart';
 import '../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import 'class_options_screen.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 
-/// Mapa clase (indexName en minúsculas) → icono FontAwesome temático
 final Map<String, IconData> kClassIcons = {
-  'barbarian': FontAwesomeIcons.hammer,
-  'bard':       FontAwesomeIcons.guitar,
-  'cleric':     FontAwesomeIcons.cross,
-  'druid':      FontAwesomeIcons.leaf,
-  'fighter':    FontAwesomeIcons.shield,
-  'monk':       FontAwesomeIcons.handFist,
-  'paladin':    FontAwesomeIcons.shieldHalved,
-  'ranger':     FontAwesomeIcons.crosshairs,
-  'rogue':      FontAwesomeIcons.userNinja,
-  'sorcerer':   FontAwesomeIcons.fire,
-  'warlock':    FontAwesomeIcons.skull,
-  'wizard':     FontAwesomeIcons.wandMagicSparkles,
+  'barbarian': MdiIcons.axeBattle,          // Hacha de batalla (¡esto es un bárbaro!)
+  'bard':       MdiIcons.musicClefTreble,    
+  'cleric':     MdiIcons.cross,              // Cruz clásica (o 'clover' para algo místico)
+  'druid':      MdiIcons.leaf,               // Hoja natural
+  'fighter':    MdiIcons.sword,              // ¡LA ESPADA! (por fin)
+  'monk':       MdiIcons.yinYang,         
+  'paladin':    MdiIcons.shieldSword,        // Escudo y espada combinados
+  'ranger':     MdiIcons.bowArrow,           // Arco y flecha
+  'rogue':      MdiIcons.knifeMilitary,      // Una daga militar (mucho más "pícaro")
+  'sorcerer':   MdiIcons.fire,               // Poder innato de fuego
+  'warlock':    MdiIcons.skull,              // Calavera (pacto oscuro)
+  'wizard':     MdiIcons.autoFix,            // Varita mágica con destellos
 };
 
 IconData classIcon(String indexName) =>
-    kClassIcons[indexName.toLowerCase()] ?? FontAwesomeIcons.diceD6;
+    kClassIcons[indexName.toLowerCase()] ?? MdiIcons.diceD6;
 
 /// Pantalla de detalle de una clase. Muestra toda la información de la clase
 /// antes de que el usuario decida añadirla o cancelar.

@@ -46,10 +46,7 @@ class _DashboardBody extends StatelessWidget {
           final created = await Navigator.of(context).push<bool>(MaterialPageRoute(
             builder: (_) => const CharacterCreatorScreen()),
           );
-          if(created == true) vm.load(); // Recargar lista si se creó un personaje
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Soon: Create Character')),
-          );
+          if (created == true) vm.load(); // Recargar lista si se creó un personaje
         },
         backgroundColor: AppTheme.primary,
         foregroundColor: AppTheme.background,

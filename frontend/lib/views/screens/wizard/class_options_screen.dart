@@ -70,15 +70,15 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
   void _onConfirm() {
     widget.vm.setLevel(_level);
-    // Guardar tiradas de HP en el ViewModel
     widget.vm.setHpRolls({...?(_level > 1 ? _hpRolls : null)});
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    // Pop back to CharacterCreatorScreen (ClassDetailScreen was replaced by pushReplacement)
+    Navigator.of(context).pop();
   }
 
   void _onCancel() {
-    // Desseleccionar clase y volver a la lista
+    // Deselect class and return to the class list
     widget.vm.clearClass();
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    Navigator.of(context).pop();
   }
 
   @override
