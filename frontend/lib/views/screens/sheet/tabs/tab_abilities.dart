@@ -1,218 +1,250 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
+import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class TabAbilities extends StatelessWidget {
-  final PlayerCharacter c;
-  const TabAbilities({super.key, required this.c});
+  final PlayerCharacter character;
+  const TabAbilities({super.key, required this.character});
 
-  static const _abilities = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
-  static const _abilityNames = {
-    'STR': 'Strength',
-    'DEX': 'Dexterity',
-    'CON': 'Constitution',
-    'INT': 'Intelligence',
-    'WIS': 'Wisdom',
-    'CHA': 'Charisma',
-   };
-
-   @override
-   Widget build(BuildContext context) {
-    return ListView(
+  @override
+  Widget build(BuildContext context) {
+    final c = character;
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      children: [
-        //Ability Score Grid
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        
+        // 1.1 Ability Scores
+        // ────────────────────────────────
+        _SectionTitle('Ability Scores'),
+        const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 3,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
           childAspectRatio: 0.85,
-          children: _abilities.map((a){
-            final score = c.abilityScores[a] ?? 10;
-            final mod = c.modifier(a);
-            return _AbilityCard(
-              abbr: a,
-              name: _abilityNames[a]!,
-              score: score,
-              mod: mod,
-            );
-          }).toList(),
+          children: CharacterSheetViewModel.abilityNames
+              .map((a) => _AbilityCell(ability: a, character: c))
+              .toList(),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
 
-        // Passive Skills
-        _SectionCard(
-          title: 'Passive Skills',
-          child: Column(children: [
-            _PassiveRow('Passive Perception', c.passivePerception),
-            _PassiveRow('Passive Investigation', c.passiveInvestigation),
-            _PassiveRow('Passive Insight', c.passiveInsight),
-          ]),
-        ),
+        //1.2 Saving Throws
+        // ────────────────────────────────
+        _SectionTitle('Saving Throws'),
         const SizedBox(height: 12),
+        // 3 filas x 2 columnas
+        ...List.generate(3, (row){
+          final left = CharacterSheetViewModel.abilityNames[row * 2];
+          final right = CharacterSheetViewModel.abilityNames[row * 2 + 1];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(children: [
+              Expanded(child: _SavingThrowRow(ability: left, character: c)),
+              const SizedBox(width: 12),
+              Expanded(child: _SavingThrowRow(ability: right, character: c)),
+            ]),
+          );
+        }),
+        const SizedBox(height: 24),
 
-        // Spell Stats (only if relevant)
-        if (c.spellSaveDC > 8 || c.spellAttackBonus != 0)
-          _SectionCard(
-            title: 'Spellcasting',
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _LabelValue('Spell Save DC',
-                  '${c.spellSaveDC}'),
-                _LabelValue('Spell Attack Bonus',
-                  c.spellAttackBonus >= 0
-                    ? '+${c.spellAttackBonus}' : '${c.spellAttackBonus}'),
-                _LabelValue('Max Prepared Spells',
-                  '${c.maxPreparedSpells}'),
-              ],
+        // 1.3 Senses
+        // ────────────────────────────────
+        _SectionTitle('Senses'),
+        const SizedBox(height: 12),
+        _SenseRow(value: c.passivePerception, label: 'Passive Perception'),
+        _SenseRow(value: c.passiveInvestigation, label: 'Passive Investigation'),
+        _SenseRow(value: c.passiveInsight, label: 'Passive Insight'),
+        const SizedBox(height: 4),
+        //Darkvision racial (si raceName lo implica - TODO: campo desde backend)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            'Special senses will be shown here when the backend provides them',
+            style: GoogleFonts.lato(
+              color: AppTheme.textSecondary, fontSize: 11,
+                fontStyle: FontStyle.italic),
             ),
           ),
-      ],
-    );
-   }
-}
-
-class _AbilityCard extends StatelessWidget {
-  final String abbr;
-  final String name;
-  final int score;
-  final int mod;
-  const _AbilityCard(
-      {required this.abbr, required this.name, required this.score, required this.mod});
-  
-  @override
-  Widget build(BuildContext context) {
-    final modLabel = mod >= 0 ? '+$mod' : '$mod';
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.surfaceVariant),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(abbr,
-          style: GoogleFonts.cinzel(
-            color: AppTheme.primary,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5)),
-          const SizedBox(height: 4),
-          Text(modLabel,
-          style: GoogleFonts.cinzel(
-            color: AppTheme.textPrimary,
-            fontSize: 26,
-            fontWeight: FontWeight.bold)),
-          const SizedBox(height: 2),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppTheme.background,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppTheme.surfaceVariant),
-            ),
-            child: Text('$score',
-              style: GoogleFonts.lato(
-                color: AppTheme.textSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(height: 4),
-          Text(name,
-          style: GoogleFonts.lato(
-            color: AppTheme.textSecondary, fontSize: 9),
-            textAlign: TextAlign.center),
-        ],
-      ),
+          const SizedBox(height: 16),
+      ]),
     );
   }
 }
 
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final Widget child;
-  const _SectionCard({required this.title, required this.child});
+// Ability Cell
+class _AbilityCell extends StatelessWidget{
+  final String ability;
+  final PlayerCharacter character;
+  const _AbilityCell({required this.ability, required this.character});
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: AppTheme.surface,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: AppTheme.surfaceVariant),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title,
-          style: GoogleFonts.cinzel(
-          color: AppTheme.primary,
-          fontSize: 13,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1)),
-        const Divider(color: AppTheme.divider, height: 16),
-        child,
-      ],
-    ),
-  );
+  Widget build(BuildContext context){
+    final score = character.abilityScores[ability] ?? 10;
+    final mod = character.modifier(ability);
+    final modLbl = mod >= 0 ? '+$mod' : '$mod';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.surfaceVariant, width: 1.5),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(ability,
+            style: GoogleFonts.cinzel(
+              color: AppTheme.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1
+            )),
+          const SizexBox(height: 6),
+          //Score - rectángulo
+          Container(
+            width: 48, heigh: 34,
+            decoration: BoxDecoration(
+              color: AppTheme.background,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppTheme.primary.withOpacity(0.6)),
+            ),
+            child: Center(
+              child: Text('$score',
+                style: GoogleFonts.cinzel(
+                  color: AppTheme.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold
+                )),
+            ),
+          ),
+          const SizedBox(height: 6),
+          //Modifier - elipse
+          Container(
+            width: 38, height: 22,
+            decoration: BoxDecoration(
+              color: AppTheme.primary,withOpacity(0.18),
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(color: AppTheme.primary, width: 1),
+            ),
+            child: Center(
+              child: Text(modLbl,
+                style: GoogleFonts.lato(
+                  color: AppTheme.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold
+                )),
+            ),
+          ),
+        ]),
+    );
+  }
 }
 
-class _PassiveRow extends StatelessWidget {
-  final String label;
-  final int value;
-  const _PassiveRow(this.label, this.value);
+// Saving Throw row
+class _SavingThrowRow extends StatelessWidget{
+  final String ability;
+  final PlayerCharacter character;
+  const _SavingThrowRow({required this.ability, required this.character});
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label,
-            style: GoogleFonts.lato(
-                color: AppTheme.textPrimary, fontSize: 14)),
+  Widget build(BuildContext context){
+    final mod = character.modifier(ability);
+    final lbl = mod >= 0 ? '+$mod': '$mod';
+    // TODO: cuando el backend devuelva savingThrowProficiencies, usar este dato
+    const bool proficient = false;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.surfaceVariant),
+      ),
+      child: Row(children: [
+        // Proficiency dot
         Container(
-          width: 36, height: 36,
+          width: 12, height: 12,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppTheme.background,
-            border: Border.all(color: AppTheme.primary, width: 1.5),
-          ),
-          child: Center(
-            child: Text('$value',
-                style: GoogleFonts.cinzel(
-                    color: AppTheme.primary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold)),
+            color: proficient ? AppTheme.primary : Colors.transparent,
+            border: Border.all(
+                color: proficient
+                    ? AppTheme.primary
+                    : AppTheme.textSecondary,
+                width: 1.5),
           ),
         ),
-      ],
-    ),
-  );
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              CharacterSheetViewModel.abilityFull[ability] ?? ability,
+              style: GoogleFonts.lato(
+                color: AppTheme.textPrimary, fontSize: 12),
+              ),
+            ),
+            Text(lbl, style: GoogleFonts.cinzel(
+              color: AppTheme.primary,
+              fontSize: 13,
+              fontWeight: FontWeight.bold
+            )),
+      ]),
+    );
+  }
 }
 
-class _LabelValue extends StatelessWidget {
+class _SenseRow extends StatelessWidget {
+  final int value;
   final String label;
-  final String value;
-  const _LabelValue(this.label, this.value);
+  const _SenseRow({required this.value, required this.label});
 
   @override
-  Widget build(BuildContext context) => Column(children: [
-    Text(value,
-    style: GoogleFonts.cinzel(
-      color: AppTheme.textPrimary,
-      fontSize: 20,
-      fontWeight: FontWeight.bold)),
-    const SizedBox(height: 2),
-    Text(label,
-      style: GoogleFonts.lato(
-        color: AppTheme.textSecondary, fontSize: 10),
-        textAlign: TextAlign.center),      
+  Widget build(BuildContext context){
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.surfaceVariant),
+      ),
+      child: Row(children: [
+        SizedBox(
+          width: 36,
+          child: Text('$value',
+            style: GoogleFonts.cinzel(
+              color: AppTheme.primary,
+              fontSize: 16,
+              fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center),
+            ),
+            const SizedBox(width: 12),
+            Text(label,
+              style: GoogleFonts.lato(
+                color: AppTheme.textPrimary, fontSize: 13
+              )),
+      ]),
+    );
+  }
+}
+
+// Section title
+class _SectionTitle extends StatelessWidget{
+  final String title;
+  const _SectionTitle(this.title);
+
+  @override
+  Widget build(BuildContext context) => Row(children: [
+    Text(title,
+      style: GoogleFonts.cinzel(
+        color: AppTheme.primary,
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 1)),
+    const SizedBox(width: 10),
+    const Expanded(child: Divider(color: AppTheme.surfaceVariant))
   ]);
 }
