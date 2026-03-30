@@ -103,10 +103,10 @@ class _AbilityCell extends StatelessWidget{
               fontWeight: FontWeight.bold,
               letterSpacing: 1
             )),
-          const SizexBox(height: 6),
+          const SizedBox(height: 6),
           //Score - rectángulo
           Container(
-            width: 48, heigh: 34,
+            width: 48, height: 34,
             decoration: BoxDecoration(
               color: AppTheme.background,
               borderRadius: BorderRadius.circular(6),
@@ -126,7 +126,7 @@ class _AbilityCell extends StatelessWidget{
           Container(
             width: 38, height: 22,
             decoration: BoxDecoration(
-              color: AppTheme.primary,withOpacity(0.18),
+              color: AppTheme.primary.withOpacity(0.18),
               borderRadius: BorderRadius.circular(11),
               border: Border.all(color: AppTheme.primary, width: 1),
             ),

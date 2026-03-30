@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
+import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_abilities.dart';
+import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_skills.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -382,7 +384,7 @@ class _ManageHpSheetState extends State<_ManageHpSheet>{
               style: GoogleFonts.lato(color: AppTheme.accent, fontSize: 12)),
           ),
           ElevatedButton(
-            onPressed: vm.isSavingHP
+            onPressed: vm.isSavingHp
             ? null
             : () async {
               final dmg = int.tryParse(_damageCtrl.text) ?? 0;
@@ -401,7 +403,6 @@ class _ManageHpSheetState extends State<_ManageHpSheet>{
                 strokeWidth: 2, color: AppTheme.background))
             : const Text('Apply'),
               ),
-            )
       ]),
     );
   }
@@ -413,7 +414,7 @@ class _HpField extends StatelessWidget {
   final IconData icon;
   final Color color;
   const _HpField({required this.controller, required this.label,
-    required this.icon, required this.color})
+    required this.icon, required this.color});
 
   @override
   Widget build (BuildContext context){

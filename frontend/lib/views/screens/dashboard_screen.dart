@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gestor_personajes_dnd/views/screens/sheet/character_sheet_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/wizard/character_creator_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -140,13 +141,9 @@ class _DashboardBody extends StatelessWidget {
         return CharacterCard(
           character: character,
           onTap: () {
-            // TODO Fase 4: navegar a la ficha digital
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Opening character sheet of ${character.name}…'),
-                backgroundColor: AppTheme.surfaceVariant,
-              ),
-            );
+            Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => CharacterSheetScreen(characterId: character.id),
+            ));
           },
         );
       },

@@ -50,14 +50,36 @@ class CharacterService {
       'abilityScores': abilityScores,
       'level': 1
     };
-
     final res = await _api.post(ApiConfig.charactersPath, body: body);
-
-    if (res.statusCode == 200 || res.statusCode == 201){
+    if (res.statusCode == 200 || res.statusCode == 201) {
       return PlayerCharacterSummary.fromJson(
-        jsonDecode(res.body) as Map<String, dynamic>);
+          jsonDecode(res.body) as Map<String, dynamic>);
     }
     if (res.statusCode == 401) throw Exception('Unauthorized');
+    if (res.statusCode == 403) throw Exception('Access denied');
     throw Exception('Failed to create character (${res.statusCode})');
   }
+
+    //PATCH HP (damage, heal, tempHp)
+    Future<PlayerCharacter> patchHp({
+      required int id,
+      required int damage, 
+      required int heal,
+      required int tempHp
+    }) async {
+      final body ={
+        'damage': damage,
+        'heal': heal,
+        'temporaryHp': tempHp,
+      };
+      final res = await _api.put('${ApiConfig.charactersPath}/$id/hp', body: body);
+      if (res.statusCode == 200){
+        return PlayerCharacter.fromJson(
+          jsonDecode(res.body) as Map<String, dynamic>);        
+      }
+      if(res.statusCode == 401) throw Exception('Unauthorized');
+      if(res.statusCode == 403) throw Exception('Access denied');
+      throw Exception('Failed to update HP (${res.statusCode})');
+    }   
 }
+
