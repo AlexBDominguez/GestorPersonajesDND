@@ -4,19 +4,23 @@ import dto.PlayerCharacterDto;
 import entities.User;
 import repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import services.PlayerCharacterService;
 
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/characters")
-@CrossOrigin(origins = "*") // Permitir peticiones desde Flutter
+@CrossOrigin(origins = "*") // Permitir solicitudes desde cualquier origen (ajustar en producción)
 public class PlayerCharacterController {
 
     private final PlayerCharacterService playerCharacterService;
@@ -34,7 +38,18 @@ public class PlayerCharacterController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+    }
+
+    // ========== MÉTODO AUXILIAR PARA VERIFICAR PERMISOS ==========
+    private void verifyCharacterOwnership(Long characterId){
+        User user = getAuthenticatedUser();
+        PlayerCharacterDto character = playerCharacterService.getById(characterId);
+        //Objects.equals() es null-safe.
+        //Me daba problemas de caché de Long
+        if(!Objects.equals(character.getUserId(), user.getId())){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have permission to access this character");
+        }
     }
 
     // ========== ENDPOINTS DE GESTIÓN DE PERSONAJES ==========
@@ -48,15 +63,8 @@ public class PlayerCharacterController {
 
     @GetMapping("/{id}")
     public PlayerCharacterDto getById(@PathVariable Long id){
-        User user = getAuthenticatedUser();
-        PlayerCharacterDto character = playerCharacterService.getById(id);
-        
-        // Verificar que el personaje pertenece al usuario autenticado
-        if (!character.getUserId().equals(user.getId())) {
-            throw new RuntimeException("No tienes permiso para acceder a este personaje");
-        }
-        
-        return character;
+        verifyCharacterOwnership(id);
+        return playerCharacterService.getById(id);
     }
 
     @PostMapping
@@ -237,16 +245,5 @@ public class PlayerCharacterController {
         }
         
         return ResponseEntity.ok(playerCharacterService.shortRest(id, hitDiceToSpend, hitDiceRoll));
-    }
-
-    // ========== MÉTODO AUXILIAR PARA VERIFICAR PERMISOS ==========
-    
-    private void verifyCharacterOwnership(Long characterId) {
-        User user = getAuthenticatedUser();
-        PlayerCharacterDto character = playerCharacterService.getById(characterId);
-        
-        if (!character.getUserId().equals(user.getId())) {
-            throw new RuntimeException("No tienes permiso para modificar este personaje");
-        }
-    }
+    }    
 }

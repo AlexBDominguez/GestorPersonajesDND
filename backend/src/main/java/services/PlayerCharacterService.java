@@ -81,6 +81,7 @@ public class PlayerCharacterService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public PlayerCharacterDto getById(Long id) {
         PlayerCharacter playerCharacter = characterRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("PlayerCharacter not found with ID: " + id));
@@ -202,6 +203,7 @@ public class PlayerCharacterService {
         dto.setBackstory(playerCharacter.getBackstory());
         dto.setCurrentHp(playerCharacter.getCurrentHP());
         dto.setMaxHp(playerCharacter.getMaxHP());
+        dto.setUserId(playerCharacter.getUser() != null ? playerCharacter.getUser().getId():null);
 
         
         // Campos calculados automáticamente
@@ -936,6 +938,7 @@ public class PlayerCharacterService {
 
 
     // En PlayerCharacterService.java
+    @Transactional
     public List<PlayerCharacterDto> getCharactersByUserId(Long userId) {
         return characterRepository.findByUserId(userId)
                 .stream()
