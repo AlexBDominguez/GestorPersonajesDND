@@ -147,7 +147,7 @@ src/main/java/
 │   ├── SpellController
 │   ├── SubclassController
 │   └── UserController
-├── dto/               # Data Transfer Objects (31 DTOs)
+├── dto/               # Data Transfer Objects (32 DTOs)
 │   ├── ActiveEffectDto
 │   ├── AuthResponse
 │   ├── BackgroundDto
@@ -163,6 +163,7 @@ src/main/java/
 │   ├── CharacterProficiencyDto
 │   ├── CharacterSavingThrowDto
 │   ├── CharacterSkillDto
+│   ├── ClassFeatureDto
 │   ├── ClassResourceDto
 │   ├── CreateUserRequest
 │   ├── ConditionDto
@@ -218,18 +219,55 @@ src/main/java/
 │   ├── Subclass
 │   ├── SubclassFeature
 │   └── User
-├── enumeration/       # Enumeraciones
-│   └── FeatureType
-├── repositories/      # Repositorios JPA
+├── enumeration/       # Enumeraciones (9 enumeraciones)
+│   ├── ArmorType
+│   ├── DamageRelationType
+│   ├── EffectModifierType
+│   ├── FeatureType
+│   ├── ItemType
+│   ├── ProficiencyType
+│   ├── Role
+│   ├── SimpleDamageType
+│   └── WeaponProperty
+├── repositories/      # Repositorios JPA (37 repositorios)
+│   ├── ActiveEffectRepository
 │   ├── BackgroundRepository
-│   ├── CharacterSkillRepository
+│   ├── CharacterActiveEffectRepository
+│   ├── CharacterClassResourceRepository
+│   ├── CharacterConditionRepository
+│   ├── CharacterDamageRelationRepository
+│   ├── CharacterEquipmentRepository
+│   ├── CharacterFeatRepository
+│   ├── CharacterFeatureRepository
+│   ├── CharacterInventoryRepository
+│   ├── CharacterLanguageRepository
+│   ├── CharacterMoneyRepository
+│   ├── CharacterProficiencyRepository
 │   ├── CharacterSavingThrowRepository
+│   ├── CharacterSkillRepository
+│   ├── CharacterSpellRepository
+│   ├── CharacterSpellSlotRepository
+│   ├── ClassFeatureRepository
+│   ├── ClassLevelFeatureRepository
+│   ├── ClassLevelProgressionRepository
+│   ├── ClassResourceRepository
+│   ├── ConditionRepository
+│   ├── DamageTypeRepository
 │   ├── DndClassRepository
+│   ├── FeatRepository
+│   ├── ItemRepository
+│   ├── LanguageRepository
+│   ├── PendingTaskRepository
 │   ├── PlayerCharacterRepository
+│   ├── ProficiencyRepository
+│   ├── RaceRepository
 │   ├── SkillRepository
 │   ├── SpellRepository
-│   └── ...
-├── services/          # Lógica de negocio (26 servicios)
+│   ├── SpellSlotProgressionRepository
+│   ├── SubclassFeatureRepository
+│   ├── SubclassRepository
+│   └── UserRepository
+├── services/          # Lógica de negocio (27 servicios)
 │   ├── ActiveEffectService
 │   ├── BackgroundService
 │   ├── CharacterActiveEffectService
@@ -255,7 +293,8 @@ src/main/java/
 │   ├── RaceService
 │   ├── SpellService
 │   ├── SubclassFeatureService
-│   └── SubclassService
+│   ├── SubclassService
+│   └── UserService
 ├── security/          # Autenticación y autorización JWT
 │   ├── CustomUserDetailsService
 │   ├── JwtAuthenticationFilter
@@ -324,15 +363,20 @@ frontend/lib/
 │   │   │   ├── character_sheet_screen.dart
 │   │   │   └── tabs/
 │   │   │       ├── tab_abilities.dart
+│   │   │       ├── tab_combat.dart
+│   │   │       ├── tab_inventory.dart
 │   │   │       ├── tab_skills.dart
 │   │   │       └── tab_spells.dart
 │   │   └── wizard/
 │   │       ├── character_creator_screen.dart
+│   │       ├── class_detail_screen.dart
+│   │       ├── class_options_screen.dart
 │   │       └── steps/
 │   │           ├── step_race.dart
 │   │           ├── step_class.dart
 │   │           ├── step_ability_scores.dart
-│   │           └── step_background.dart
+│   │           ├── step_background.dart
+│   │           └── step_preferences.dart
 │   └── widgets/
 │       └── character_card.dart
 └── main.dart          # Punto de entrada de la aplicación
