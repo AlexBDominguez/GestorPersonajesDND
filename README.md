@@ -315,10 +315,7 @@ frontend/lib/
 │   │   ├── sheet/
 │   │   │   ├── character_sheet_screen.dart
 │   │   │   └── tabs/
-│   │   │       ├── tab_combat.dart
-│   │   │       ├── tab_abilities.dart
-│   │   │       ├── tab_traits.dart
-│   │   │       └── tab_info.dart
+│   │   │       
 │   │   └── wizard/
 │   │       ├── character_creator_screen.dart
 │   │       └── steps/
@@ -932,12 +929,10 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 - Configuración centralizada de API (ApiConfig)
 - Widget de tarjeta de personaje con barra de HP y estadísticas
 - Wizard de creación de personajes en 4 pasos (raza, clase, puntuaciones de habilidad, background)
-- Ficha digital del personaje con 4 pestañas (Combate, Habilidades, Rasgos, Información)
 - Modelo completo de personaje (PlayerCharacter) para la ficha
 
 ### Planificado
 - Gestión de hechizos e inventario desde la app
-- Sistema de dados y tiradas
 - Vinculación de personajes a usuarios (privacidad por cuenta)
 
 
