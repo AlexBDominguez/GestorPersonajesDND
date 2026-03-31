@@ -401,7 +401,7 @@ class _BottomButtons extends StatelessWidget {
             onPressed: onAdd,
             style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14)),
-            child: Text('Add Class',
+            child: Text('Choose Class',
                 style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
           ),
         ),

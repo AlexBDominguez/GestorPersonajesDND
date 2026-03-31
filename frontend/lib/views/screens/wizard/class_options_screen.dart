@@ -71,12 +71,10 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
   void _onConfirm() {
     widget.vm.setLevel(_level);
     widget.vm.setHpRolls({...?(_level > 1 ? _hpRolls : null)});
-    // Pop back to CharacterCreatorScreen (ClassDetailScreen was replaced by pushReplacement)
     Navigator.of(context).pop();
   }
 
   void _onCancel() {
-    // Deselect class and return to the class list
     widget.vm.clearClass();
     Navigator.of(context).pop();
   }
@@ -88,7 +86,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: Text('Configure ${cls.name}',
+        title: Text('Customize ${cls.name}',
             style: GoogleFonts.cinzel(
                 color: AppTheme.primary, fontWeight: FontWeight.bold)),
         leading: IconButton(
@@ -544,7 +542,7 @@ class _BottomButtons extends StatelessWidget {
             onPressed: canConfirm ? onConfirm : null,
             style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14)),
-            child: Text('Add',
+            child: Text('Add Class',
                 style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
           ),
         ),
