@@ -1,5 +1,6 @@
 package dto;
 
+import java.util.List;
 import java.util.Map;
 
 public class PlayerCharacterDto {
@@ -65,6 +66,7 @@ public class PlayerCharacterDto {
     private int passiveInvestigation;
     private int passiveInsight;
     private Long userId;
+    private List<SpellSlotDto> spellSlots;
     
 
 
@@ -565,12 +567,14 @@ public class PlayerCharacterDto {
 
     public void setUserId(Long userId) {
         this.userId = userId;
-
-        
     }
 
-    
+    public List<SpellSlotDto> getSpellSlots() {
+        return spellSlots;
+    }
 
-   
+    public void setSpellSlots(List<SpellSlotDto> spellSlots) {
+        this.spellSlots = spellSlots;
+    }
 
 }

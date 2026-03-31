@@ -2,14 +2,14 @@
 
 Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot, MySQL y Flutter.
 
-> **Estado del Proyecto**: El backend está **100% completo** con todas las funcionalidades implementadas y operativas. El frontend móvil está **en desarrollo activo**.
+> Estado del Proyecto: El backend está completo con todas las funcionalidades implementadas y operativas. El frontend está en desarrollo activo, con el flujo de creación de personajes y la ficha de personaje interactiva ya implementados.
 
 ## Descripción
 
 Sistema completo para gestionar personajes de D&D 5e:
 
 - Backend REST API con Spring Boot que gestiona toda la lógica de negocio
-- Aplicación móvil Flutter para Android/iOS (en desarrollo)
+- Aplicación Flutter multiplataforma (web, Android, iOS) para gestionar personajes
 - Base de datos MySQL con todas las entidades del sistema D&D 5e
 
 ### Funcionalidades del Backend
@@ -51,6 +51,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 - **Provider** - Gestión de estado
 - **HTTP** - Cliente HTTP para consumir la API REST
 - **google_fonts** - Tipografía Cinzel y Lato
+- **font_awesome_flutter** - Iconografía temática
 
 ## Características Técnicas
 
@@ -107,6 +108,11 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Navegación automática basada en estado de autenticación
 - Manejo de estados de carga y errores
 - Feedback visual con SnackBars y loaders
+- Ficha de personaje interactiva con tabs navegables por swipe
+- Header fijo con AC, Initiative y HP interactivo (modal Manage HP)
+- Tab Abilities con grid de atributos, saving throws y senses
+- Tab Skills con tabla completa de las 18 habilidades
+- Tab Spells con filtro por nivel, modificadores y slots reales desde backend
 
 ## Estructura del Proyecto
 
@@ -141,7 +147,7 @@ src/main/java/
 │   ├── SpellController
 │   ├── SubclassController
 │   └── UserController
-├── dto/               # Data Transfer Objects (30 DTOs)
+├── dto/               # Data Transfer Objects (31 DTOs)
 │   ├── ActiveEffectDto
 │   ├── AuthResponse
 │   ├── BackgroundDto
@@ -170,6 +176,7 @@ src/main/java/
 │   ├── ProficiencyDto
 │   ├── RaceDto
 │   ├── SpellDto
+│   ├── SpellSlotDto
 │   ├── SubclassDto
 │   └── UserDto
 ├── entities/          # Entidades JPA (38 entidades)
@@ -284,7 +291,8 @@ frontend/lib/
 │   │   └── login_request.dart
 │   ├── character/
 │   │   ├── player_character_summary.dart
-│   │   └── player_character.dart
+│   │   ├── player_character.dart
+│   │   └── spell_slot.dart
 │   └── wizard/
 │       ├── background_option.dart
 │       ├── class_option.dart
@@ -315,7 +323,9 @@ frontend/lib/
 │   │   ├── sheet/
 │   │   │   ├── character_sheet_screen.dart
 │   │   │   └── tabs/
-│   │   │       
+│   │   │       ├── tab_abilities.dart
+│   │   │       ├── tab_skills.dart
+│   │   │       └── tab_spells.dart
 │   │   └── wizard/
 │   │       ├── character_creator_screen.dart
 │   │       └── steps/

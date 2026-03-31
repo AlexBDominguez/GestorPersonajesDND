@@ -1,3 +1,5 @@
+import 'package:gestor_personajes_dnd/models/character/spell_slot.dart';
+
 class PlayerCharacter{
   final int id;
   final String name;
@@ -52,6 +54,7 @@ class PlayerCharacter{
   final String? eyes;
   final String? skin;
   final String? hair;
+  final List<SpellSlot> spellSlots;
 
 
   const PlayerCharacter({
@@ -108,6 +111,7 @@ class PlayerCharacter{
     this.eyes,
     this.skin,
     this.hair,
+    this.spellSlots = const [],
   });
 
   factory PlayerCharacter.fromJson(Map<String, dynamic> j) {
@@ -170,6 +174,9 @@ class PlayerCharacter{
       eyes:                j['eyes'] as String?,
       skin:                j['skin'] as String?,
       hair:                j['hair'] as String?,
+      spellSlots:          (j['spellSlots'] as List<dynamic>? ?? [])
+                               .map((e) => SpellSlot.fromJson(e as Map<String, dynamic>))
+                               .toList(),
     );
   }
 

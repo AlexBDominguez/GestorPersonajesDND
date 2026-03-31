@@ -3,7 +3,10 @@ import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_abilities.dart';
+import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_combat.dart';
+import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_inventory.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_skills.dart';
+import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_spells.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -114,9 +117,9 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
               children: [
                 TabAbilities(character: c),
                 TabSkills(character: c, vm: vm),
-                _ComingSoonTab(label: 'Combat'),
-                _ComingSoonTab(label: 'Inventory'),
-                _ComingSoonTab(label: 'Spells'),
+                TabCombat(character: c, vm: vm),
+                TabInventory(character: c),
+                TabSpells(character: c, vm: vm),
               ],
             ),
           ),

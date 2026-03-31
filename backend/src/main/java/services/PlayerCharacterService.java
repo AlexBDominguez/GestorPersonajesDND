@@ -1,6 +1,7 @@
 package services;
 
 import dto.PlayerCharacterDto;
+import dto.SpellSlotDto;
 import entities.*;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -8,6 +9,7 @@ import repositories.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 import repositories.UserRepository;
 import entities.User;
 
@@ -284,6 +286,15 @@ public class PlayerCharacterService {
         dto.setAlliesAndOrganizations(playerCharacter.getAlliesAndOrganizations());
         dto.setAdditionalTreasure(playerCharacter.getAdditionalTreasure());
         dto.setCharacterHistory(playerCharacter.getCharacterHistory());
+
+        // Spell slots
+        List<CharacterSpellSlot> slots = slotRepository.findByCharacterId(playerCharacter.getId());
+        List<SpellSlotDto> slotDtos = slots.stream()
+                .filter(s -> s.getMaxSlots() > 0)
+                .sorted((a, b) -> Integer.compare(a.getSpellLevel(), b.getSpellLevel()))
+                .map(s -> new SpellSlotDto(s.getSpellLevel(), s.getMaxSlots(), s.getUsedSlots()))
+                .collect(Collectors.toList());
+        dto.setSpellSlots(slotDtos);
 
         return dto;
     }
