@@ -41,6 +41,8 @@ class CharacterService {
     required int classId,
     required int backgroundId,
     required Map<String, int> abilityScores,
+    int level = 1,
+    int? subclassId,
   }) async {
     final body = {
       'name': name,
@@ -48,7 +50,8 @@ class CharacterService {
       'dndClassId': classId,
       'backgroundId': backgroundId,
       'abilityScores': abilityScores,
-      'level': 1
+      'level': level,
+      if (subclassId != null) 'subclassId': subclassId,
     };
     final res = await _api.post(ApiConfig.charactersPath, body: body);
     if (res.statusCode == 200 || res.statusCode == 201) {

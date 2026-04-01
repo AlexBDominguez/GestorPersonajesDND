@@ -498,7 +498,11 @@ public class PlayerCharacter {
 
     @Transient
     public int calculateAbilityModifier(String abilityScore) {
+        if (abilityScores == null || abilityScore == null) return 0;
+        // Buscar insensible a mayúsculas/minúsculas para compatibilidad con datos existentes
         Integer score = abilityScores.get(abilityScore);
+        if (score == null) score = abilityScores.get(abilityScore.toLowerCase());
+        if (score == null) score = abilityScores.get(abilityScore.toUpperCase());
         if (score == null) return 0;
         return (score - 10) / 2;
     }

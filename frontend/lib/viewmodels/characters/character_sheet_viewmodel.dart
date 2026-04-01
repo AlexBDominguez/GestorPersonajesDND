@@ -102,7 +102,20 @@ class CharacterSheetViewModel extends ChangeNotifier {
 
   int skillBonus(String skill) {
     if (character == null) return 0;
+    final skillData = character!.skills.where((s) => s.skillName == skill).firstOrNull;
+    if (skillData != null) return skillData.bonus;
+    // Fallback: ability modifier only (no proficiency info available)
     return character!.modifier(skillAbility(skill));
+  }
+
+  bool skillProficient(String skill) {
+    if (character == null) return false;
+    return character!.skills.where((s) => s.skillName == skill).firstOrNull?.proficient ?? false;
+  }
+
+  bool skillExpertise(String skill) {
+    if (character == null) return false;
+    return character!.skills.where((s) => s.skillName == skill).firstOrNull?.expertise ?? false;
   }
 
   String signedInt(int v) => v >= 0 ? '+$v' : '$v';

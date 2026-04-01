@@ -1,3 +1,4 @@
+import 'package:gestor_personajes_dnd/models/character/character_skill.dart';
 import 'package:gestor_personajes_dnd/models/character/spell_slot.dart';
 
 class PlayerCharacter{
@@ -55,6 +56,7 @@ class PlayerCharacter{
   final String? skin;
   final String? hair;
   final List<SpellSlot> spellSlots;
+  final List<CharacterSkill> skills;
 
 
   const PlayerCharacter({
@@ -112,13 +114,14 @@ class PlayerCharacter{
     this.skin,
     this.hair,
     this.spellSlots = const [],
+    this.skills = const [],
   });
 
   factory PlayerCharacter.fromJson(Map<String, dynamic> j) {
-    // abilityScores comes as Map<String,dynamic> → cast values to int
+    // abilityScores: normalize keys to uppercase for consistent modifier() lookups
     final rawScores = j['abilityScores'] as Map<String, dynamic>? ?? {};
     final scores = rawScores.map(
-        (k, v) => MapEntry(k, (v as num).toInt()));
+        (k, v) => MapEntry(k.toUpperCase(), (v as num).toInt()));
 
     return PlayerCharacter(
       id:                  (j['id'] as num).toInt(),
@@ -176,6 +179,9 @@ class PlayerCharacter{
       hair:                j['hair'] as String?,
       spellSlots:          (j['spellSlots'] as List<dynamic>? ?? [])
                                .map((e) => SpellSlot.fromJson(e as Map<String, dynamic>))
+                               .toList(),
+      skills:              (j['skills'] as List<dynamic>? ?? [])
+                               .map((e) => CharacterSkill.fromJson(e as Map<String, dynamic>))
                                .toList(),
     );
   }

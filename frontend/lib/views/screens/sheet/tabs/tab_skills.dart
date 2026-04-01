@@ -54,25 +54,25 @@ class TabSkills extends StatelessWidget{
             final ability = vm.skillAbility(skill);
             final bonus = vm.skillBonus(skill);
             final bonusLbl = bonus >= 0 ? '+$bonus' : '$bonus';
-            //TODO: cuando backend devuelva proficiencies, marcar el dot
-            const proficient = false;
+            final proficient = vm.skillProficient(skill);
+            final expertise = vm.skillExpertise(skill);
 
             return Container(
               color: AppTheme.background,
               padding: const EdgeInsets.symmetric(
                 horizontal: 16, vertical: 10),
               child: Row(children: [
-                //Proficiency dot
+                //Proficiency dot (filled = proficient, double ring = expertise)
               Container(
                 width: 14, height: 14,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: proficient ? AppTheme.primary : Colors.transparent,
                   border: Border.all(
-                    color: proficient
+                    color: (proficient || expertise)
                       ? AppTheme.primary
                       : AppTheme.textSecondary,
-                    width: 1.5),
+                    width: expertise ? 2.5 : 1.5),
                   ),
                 ),
                 const SizedBox(width: 10),

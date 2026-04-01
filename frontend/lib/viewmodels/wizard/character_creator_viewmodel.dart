@@ -304,6 +304,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   bool get saveSuccess => _saveSuccess;
 
   Future<void> submit() async {
+    if (_isSaving) return; // guard contra doble click
     if (!canFinish) return;
     _isSaving = true;
     _saveSuccess = false;
@@ -313,14 +314,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         name:         characterName.trim(),
         raceId:       selectedRace!.id,
         classId:      selectedClass!.id,
-        backgroundId: selectedBackground!.id,
-        abilityScores: {
-          'STR': abilityScores['STR']!,
-          'DEX': abilityScores['DEX']!,
-          'CON': abilityScores['CON']!,
-          'INT': abilityScores['INT']!,
-          'WIS': abilityScores['WIS']!,
-          'CHA': abilityScores['CHA']!,
+        backgroundId: selectedBackground!.id,        level:        selectedLevel,
+        subclassId:   selectedSubclass?.id,        abilityScores: {
+          'str': abilityScores['STR']!,
+          'dex': abilityScores['DEX']!,
+          'con': abilityScores['CON']!,
+          'int': abilityScores['INT']!,
+          'wis': abilityScores['WIS']!,
+          'cha': abilityScores['CHA']!,
         },
       );
       _saveSuccess = true;

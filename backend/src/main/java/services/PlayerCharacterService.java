@@ -2,14 +2,17 @@ package services;
 
 import dto.PlayerCharacterDto;
 import dto.SpellSlotDto;
+import dto.CharacterSkillDto;
 import entities.*;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import repositories.*;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import repositories.UserRepository;
 import entities.User;
 
@@ -96,6 +99,12 @@ public class PlayerCharacterService {
 
         playerCharacter.setName(dto.getName());
         playerCharacter.setLevel(dto.getLevel());
+        // Normalizar claves de ability scores a minúsculas para coincidir con la lógica interna de la entidad
+        if (dto.getAbilityScores() != null) {
+            Map<String, Integer> normalized = new HashMap<>();
+            dto.getAbilityScores().forEach((k, v) -> normalized.put(k.toLowerCase(), v));
+            dto.setAbilityScores(normalized);
+        }
         playerCharacter.setAbilityScores(dto.getAbilityScores());
         playerCharacter.setBackstory(dto.getBackstory());
         playerCharacter.setCurrentHP(dto.getCurrentHp());
@@ -134,6 +143,24 @@ public class PlayerCharacterService {
                 .orElseThrow(() -> new RuntimeException("DndClass not found"));
         playerCharacter.setDndClass(dndClass);
 
+        //Solo calcular si el DTO no trae HP válido
+        if (dto.getMaxHp() <= 0 ) {
+            //Calcular HP inicial escalado al nivel: nivel 1 = dado máximo + conMod; niveles adicionales = media (hitDie/2+1) + conMod
+            int conScore = dto.getAbilityScores() != null
+                    ? dto.getAbilityScores().getOrDefault("con", 10)
+                    : 10;
+            int conMod = (conScore - 10) / 2;
+            int level = playerCharacter.getLevel() > 0 ? playerCharacter.getLevel() : 1;
+            int hitDie = dndClass.getHitDie();
+            int calcHp = (hitDie + conMod) + ((hitDie / 2 + 1 + conMod) * (level - 1));
+            int startingHp = Math.max(level, calcHp);
+            playerCharacter.setMaxHP(startingHp);
+            playerCharacter.setCurrentHP(startingHp);
+        }else{
+            playerCharacter.setMaxHP(dto.getMaxHp());
+            playerCharacter.setCurrentHP(dto.getCurrentHp() >0 ? dto.getCurrentHp() : dto.getMaxHp());
+        }
+
         if(dto.getBackgroundId()!= null) {
             Background background = backgroundRepository.findById(dto.getBackgroundId())
                     .orElseThrow(() -> new RuntimeException("Background not found"));
@@ -169,6 +196,16 @@ public class PlayerCharacterService {
             throw new RuntimeException("User ID is required to create a character");
         }
 
+        //Aplicar bonos raciales a los ability scores
+        if(race.getAbilityBonuses() != null && !race.getAbilityBonuses().isEmpty()){
+            Map<String, Integer> scores = new HashMap<>(playerCharacter.getAbilityScores());
+            race.getAbilityBonuses().forEach((ability, bonus) -> {
+                //Los bonos de raza también están en minúsculas en la BD
+                scores.merge(ability, bonus, Integer::sum);
+            });
+            playerCharacter.setAbilityScores(scores);
+        }
+
         PlayerCharacter saved = characterRepository.save(playerCharacter);
 
         //Inicializar skills y saving throws
@@ -200,7 +237,12 @@ public class PlayerCharacterService {
         dto.setId(playerCharacter.getId());
         dto.setName(playerCharacter.getName());
         dto.setLevel(playerCharacter.getLevel());
-        dto.setAbilityScores(playerCharacter.getAbilityScores());
+        // Normalizar claves a minúsculas para consistencia en el cliente
+        if (playerCharacter.getAbilityScores() != null) {
+            Map<String, Integer> normalized = new HashMap<>();
+            playerCharacter.getAbilityScores().forEach((k, v) -> normalized.put(k.toLowerCase(), v));
+            dto.setAbilityScores(normalized);
+        }
         dto.setProficiencyBonus(playerCharacter.getProficiencyBonus());
         dto.setBackstory(playerCharacter.getBackstory());
         dto.setCurrentHp(playerCharacter.getCurrentHP());
@@ -234,6 +276,20 @@ public class PlayerCharacterService {
         dto.setPassivePerception(playerCharacter.getPassivePerception(characterSkills));
         dto.setPassiveInvestigation(playerCharacter.getPassiveInvestigation(characterSkills));
         dto.setPassiveInsight(playerCharacter.getPassiveInsight(characterSkills));
+
+        // Skills con proficiencia y bonus calculado
+        List<CharacterSkillDto> skillDtos = new ArrayList<>();
+        for (CharacterSkill cs : characterSkills) {
+            CharacterSkillDto skillDto = new CharacterSkillDto();
+            skillDto.setId(cs.getId());
+            skillDto.setSkillName(cs.getSkill().getName());
+            skillDto.setAbilityScore(cs.getSkill().getAbilityScore());
+            skillDto.setProficient(cs.isProficient());
+            skillDto.setExpertise(cs.isExpertise());
+            skillDto.setBonus(cs.getBonus());
+            skillDtos.add(skillDto);
+        }
+        dto.setSkills(skillDtos);
 
         if (playerCharacter.getRace() != null) {
             dto.setRaceId(playerCharacter.getRace().getId());
@@ -965,7 +1021,12 @@ public class PlayerCharacterService {
         dto.setLevel(character.getLevel());
         dto.setCurrentHp(character.getCurrentHP());
         dto.setMaxHp(character.getMaxHP());
-        dto.setAbilityScores(character.getAbilityScores());
+        // Normalizar claves a minúsculas para consistencia en el cliente
+        if (character.getAbilityScores() != null) {
+            Map<String, Integer> normalizedScores = new HashMap<>();
+            character.getAbilityScores().forEach((k, v) -> normalizedScores.put(k.toLowerCase(), v));
+            dto.setAbilityScores(normalizedScores);
+        }
         dto.setExperiencePoints(character.getExperiencePoints());
         dto.setProficiencyBonus(character.getProficiencyBonus());
         dto.setAlignment(character.getAlignment());

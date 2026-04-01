@@ -180,7 +180,7 @@ class _BackgroundDetail extends StatelessWidget {
           const SizedBox(height: 6),
           Wrap(
             spacing: 6, runSpacing: 6,
-            children: bg.skillProficiencies.map((s) => _Chip(s)).toList(),
+            children: bg.skillProficiencies.map((s) => _Chip(_formatProficiency(s))).toList(),
           ),
         ],
 
@@ -191,7 +191,7 @@ class _BackgroundDetail extends StatelessWidget {
           const SizedBox(height: 6),
           Wrap(
             spacing: 6, runSpacing: 6,
-            children: bg.toolProficiencies.map((s) => _Chip(s)).toList(),
+            children: bg.toolProficiencies.map((s) => _Chip(_formatProficiency(s))).toList(),
           ),
         ],
 
@@ -291,6 +291,13 @@ class _DetailSubtitle extends StatelessWidget {
           color: AppTheme.textSecondary,
           fontSize: 11,
           fontWeight: FontWeight.bold));
+}
+
+String _formatProficiency(String raw) {
+  // Strip known prefixes like "skill-", "tool-"
+  final stripped = raw.replaceFirst(RegExp(r'^(skill|tool)-'), '');
+  // Replace remaining hyphens with spaces and capitalise each word
+  return stripped.split('-').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
 }
 
 class _Chip extends StatelessWidget {

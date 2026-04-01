@@ -67,6 +67,7 @@ public class PlayerCharacterDto {
     private int passiveInsight;
     private Long userId;
     private List<SpellSlotDto> spellSlots;
+    private List<CharacterSkillDto> skills;
     
 
 
@@ -575,6 +576,14 @@ public class PlayerCharacterDto {
 
     public void setSpellSlots(List<SpellSlotDto> spellSlots) {
         this.spellSlots = spellSlots;
+    }
+
+    public List<CharacterSkillDto> getSkills() {
+        return skills;
+    }
+
+    public void setSkills(List<CharacterSkillDto> skills) {
+        this.skills = skills;
     }
 
 }
