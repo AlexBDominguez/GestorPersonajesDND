@@ -6,21 +6,16 @@ import '../../models/character/player_character_summary.dart';
 class CharacterCard extends StatelessWidget {
   final PlayerCharacterSummary character;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const CharacterCard({
     super.key,
     required this.character,
     required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
   });
-
-  // Calcula color de la barra de HP
-  Color _hpColor() {
-    if (character.maxHp == 0) return AppTheme.textSecondary;
-    final ratio = character.currentHp / character.maxHp;
-    if (ratio > 0.6) return const Color(0xFF2D6A4F);   // verde
-    if (ratio > 0.3) return const Color(0xFFC8A45A);   // dorado
-    return AppTheme.accent;                              // rojo
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,170 +31,83 @@ class CharacterCard extends StatelessWidget {
             BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 3)),
           ],
         ),
-        child: Column(
-          children: [
-            //Cabecera dorada
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(children: [
+            //Avatar
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: const BoxDecoration(
-                color: AppTheme.surfaceVariant,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(11)),
+              width: 48, height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppTheme.primary, width: 2),
+                color: AppTheme.background,
               ),
-              child: Row(
-                children: [
-                  // Icono de clase/personaje
-                  Container(
-                    width: 44, height: 44,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.primary, width: 2),
-                      color: AppTheme.background,
-                    ),
-                    child: const Icon(Icons.person, color: AppTheme.primary, size: 26),
-                  ),
-                  const SizedBox(width: 12),
-                  // Nombre y subtítulo
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          character.name,
-                          style: GoogleFonts.cinzel(
-                            color: AppTheme.primary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _subtitle(),
-                          style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Badge de nivel
-                  _LevelBadge(level: character.level),
-                ],
-              ),
+              child: const Icon(Icons.person,
+                color: AppTheme.primary, size: 26),
             ),
+            const SizedBox(width: 14),
 
-            //Cuerpo
-            Padding(
-              padding: const EdgeInsets.all(16),
+            // Nombre + subtítulo
+            Expanded(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Estadísticas rápidas
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _StatChip(icon: Icons.shield_outlined,
-                          label: 'AC', value: '${character.armorClass}'),
-                      _StatChip(icon: Icons.favorite_outline,
-                          label: 'HP',
-                          value: '${character.currentHp}/${character.maxHp}'),
-                      if (character.hasInspiration)
-                        _StatChip(icon: Icons.star,
-                            label: 'Inspiration', value: '✦',
-                            valueColor: AppTheme.primary),
-                      if (character.alignment != null)
-                        _StatChip(icon: Icons.balance_outlined,
-                            label: 'Alignment',
-                            value: _shortAlignment(character.alignment!)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Barra de HP
-                  if (character.maxHp > 0) ...[
-                    Row(
-                      children: [
-                        Text('HP', style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary, fontSize: 11)),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: (character.currentHp / character.maxHp)
-                                  .clamp(0.0, 1.0),
-                              backgroundColor: AppTheme.background,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(_hpColor()),
-                              minHeight: 8,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${character.currentHp}/${character.maxHp}',
-                          style: GoogleFonts.lato(
-                              color: AppTheme.textSecondary, fontSize: 11),
-                        ),
-                      ],
+                  //Fila: nombre + badge de nivel
+                  Row(children: [
+                    Flexible(
+                      child: Text(
+                        character.name,
+                        style: GoogleFonts.cinzel(
+                          color: AppTheme.textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ],
-                ],
-              ),
-            ),
-
-            //Footer: XP 
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: AppTheme.divider)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'XP: ${character.experiencePoints}',
-                    style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 12),
-                  ),
-                  Row(
-                    children: [
-                      Text('Ver ficha',
-                          style: GoogleFonts.lato(
-                              color: AppTheme.primary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right,
-                          color: AppTheme.primary, size: 16),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+                    const SizedBox(width: 8),
+                    _LevelBadge(level: character.level),
+                  ]),
+                  const SizedBox(height: 2),
+                  //Raza (o subrace si la hubiese)
+                  if(character.raceName != null) 
+                    Text(
+                      character.raceName!,
+                      style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12),
+                        ),
+                        const SizedBox(height: 1),
+                        //Clase | Subclase
+                        if (character.dndClassName != null)
+                          Text(
+                            _classLine(),
+                            style: GoogleFonts.lato(
+                              color: AppTheme.textSecondary,
+                              fontSize: 12),
+                            ),
+                  ]),
+          ),
+          // Menú 3 puntos
+          _MoreMenuButton(
+              character: character,
+              onEdit: onEdit,
+              onDelete: onDelete,
+          ),
+          ]),
         ),
       ),
     );
   }
 
-  String _subtitle() {
+  String _classLine() {
     final parts = <String>[];
-    if (character.raceName != null) parts.add(character.raceName!);
     if (character.dndClassName != null) parts.add(character.dndClassName!);
-    return parts.isEmpty ? 'Aventurero' : parts.join(' · ');
+    //subclassName no está en el summary aún - se puede añadir después
+    return parts.join(' | ');
   }
+}  
 
-  String _shortAlignment(String alignment) {
-    // Abreviatura del alineamiento (ej: "Lawful Good" → "LG")
-    return alignment
-        .split(' ')
-        .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
-        .join();
-  }
-}
-
-// Widgets auxiliares privados
+// Level Badge
 
 class _LevelBadge extends StatelessWidget {
   final int level;
@@ -214,7 +122,7 @@ class _LevelBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        'Nv $level',
+        'Lvl $level',
         style: GoogleFonts.cinzel(
           color: AppTheme.background,
           fontSize: 11,
@@ -225,34 +133,104 @@ class _LevelBadge extends StatelessWidget {
   }
 }
 
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color? valueColor;
+// Menú de los 3 puntos (editar, eliminar)
 
-  const _StatChip({
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.valueColor,
+class _MoreMenuButton extends StatelessWidget {
+  final PlayerCharacterSummary character;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _MoreMenuButton({
+    required this.character,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: AppTheme.primary, size: 18),
-        const SizedBox(height: 2),
-        Text(value,
-            style: GoogleFonts.cinzel(
-                color: valueColor ?? AppTheme.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.bold)),
-        Text(label,
-            style: GoogleFonts.lato(
-                color: AppTheme.textSecondary, fontSize: 10)),
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert, color: AppTheme.textSecondary),
+      color: AppTheme.surfaceVariant,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: const BorderSide(color: AppTheme.surfaceVariant)),
+      onSelected: (value) {
+        if (value == 'edit') onEdit();
+        if (value == 'delete') _confirmDelete(context);
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: 'edit',
+          child: Row(children: [
+            const Icon(Icons.edit_outlined,
+                color: AppTheme.primary, size: 18),
+            const SizedBox(width: 10),
+            Text('Edit',
+                style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+          ]),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'delete',
+          child: Row(children: [
+            const Icon(Icons.delete_outline, color: AppTheme.accent, size: 18),
+            const SizedBox(width: 10),
+            Text('Delete',
+                style: GoogleFonts.lato(color: AppTheme.accent)),
+          ]),
+        ),
       ],
+    );
+  }
+
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (_) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Delete Character?',
+            style: GoogleFonts.cinzel(
+                color: AppTheme.accent,
+                fontSize: 17, fontWeight: FontWeight.bold)),
+        content: RichText(
+          text: TextSpan(
+            style: GoogleFonts.lato(
+                color: AppTheme.textSecondary, fontSize: 14),
+            children: [
+              const TextSpan(text: 'Are you sure you want to delete '),
+              TextSpan(
+                  text: character.name,
+                  style: GoogleFonts.cinzel(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.bold)),
+              const TextSpan(text: '?\n\nAll data will be lost.'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel',
+                style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8))),
+            onPressed: () {
+              Navigator.pop(context); // cierra el dialog
+              onDelete();             // ejecuta el callback
+            },
+            child: Text('Delete',
+                style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 }

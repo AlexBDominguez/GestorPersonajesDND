@@ -5,7 +5,11 @@ import dto.SpellSlotDto;
 import dto.CharacterSkillDto;
 import entities.*;
 import jakarta.transaction.Transactional;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import repositories.*;
 
 import java.util.ArrayList;
@@ -178,7 +182,7 @@ public class PlayerCharacterService {
             playerCharacter.setSubclass(subclass);
         }
 
-        // Map individual DTO fields to entity text fields
+        // Mapear campos de personalidad a un solo campo de texto con separador (ej. salto de línea)
         String personalityTraits = (dto.getPersonalityTrait1() != null ? dto.getPersonalityTrait1() : "") +
                                   (dto.getPersonalityTrait2() != null ? "\n" + dto.getPersonalityTrait2() : "");
         playerCharacter.setPersonalityTraits(personalityTraits.trim());
@@ -219,6 +223,14 @@ public class PlayerCharacterService {
         generateSpellSlots(saved);
         
         return toDto(saved);
+    }
+
+    @Transactional
+    public void delete(Long id){
+        PlayerCharacter character = characterRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Character not found with ID: " + id));                
+        characterRepository.delete(character);
     }
 
     private void applyBackgroundProficiencies(PlayerCharacter character) {

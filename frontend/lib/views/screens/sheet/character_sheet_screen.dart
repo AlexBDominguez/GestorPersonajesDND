@@ -142,12 +142,18 @@ class _SheetHeader extends StatelessWidget{
 
   return Container(
     color: AppTheme.surface,
-    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+    padding: const EdgeInsets.fromLTRB(4, 8, 12, 8),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.center, children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new,
+            color: AppTheme.primary, size: 20),
+          tooltip: 'Back to characters',
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         //Izquierda: AC + Initiative
         SizedBox(
-          width: 72,
+          width: 66,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center, children: [
               _StatPill(label: 'AC', value: '${c.armorClass}'),
@@ -156,42 +162,37 @@ class _SheetHeader extends StatelessWidget{
             ]),
         ),
 
-        //Centro: nombre + subtítulo
+        /// Centro: avatar + nombre + subtítulo
         Expanded(
           child: Column(children: [
-            // Placeholder avatar
             Container(
-              width: 52, height: 52,
+              width: 48, height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppTheme.surfaceVariant,
                 border: Border.all(color: AppTheme.primary, width: 2),
               ),
               child: const Icon(Icons.person,
-                  color: AppTheme.primary, size: 28),
+                  color: AppTheme.primary, size: 26),
             ),
-            const SizedBox(height: 4),
-            Text(
-              c.name,
-              style: GoogleFonts.cinzel(
-                  color: AppTheme.primary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-            ),
-            Text(
-              _subtitle(c),
-              style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary, fontSize: 11),
-              textAlign: TextAlign.center,
-            ),
+            const SizedBox(height: 3),
+            Text(c.name,
+                style: GoogleFonts.cinzel(
+                    color: AppTheme.primary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis),
+            Text(_subtitle(c),
+                style: GoogleFonts.lato(
+                    color: AppTheme.textSecondary, fontSize: 10),
+                textAlign: TextAlign.center),
           ]),
         ),
 
         //Derecha: HP pulsable
         SizedBox(
-          width: 72,
+          width: 68,
           child: GestureDetector(
             onTap: () => _showManageHpModal(context),
             child: Column(children: [

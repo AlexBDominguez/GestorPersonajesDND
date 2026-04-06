@@ -80,20 +80,6 @@ class _TabSpellsState extends State<TabSpells> {
     ]);
   }
 
-  int _maxSpellLevelForLevel(int charLevel) {
-    // Mantenido como fallback pero ya no se usa — los niveles reales
-    // vienen de c.spellSlots (datos del backend).
-    if (charLevel >= 17) return 9;
-    if (charLevel >= 15) return 8;
-    if (charLevel >= 13) return 7;
-    if (charLevel >= 11) return 6;
-    if (charLevel >= 9)  return 5;
-    if (charLevel >= 7)  return 4;
-    if (charLevel >= 5)  return 3;
-    if (charLevel >= 3)  return 2;
-    if (charLevel >= 1)  return 1;
-    return 0;
-  }
 }
 
 // Spells modifier bar

@@ -83,6 +83,17 @@ class CharacterService {
       if(res.statusCode == 401) throw Exception('Unauthorized');
       if(res.statusCode == 403) throw Exception('Access denied');
       throw Exception('Failed to update HP (${res.statusCode})');
+    }
+
+    Future<void> deleteCharacter(int id) async {
+      final res = await _api.delete('${ApiConfig.charactersPath}/$id');
+      if (res.statusCode == 200 || res.statusCode == 204) {
+        return;
+      }
+      if(res.statusCode == 401) throw Exception('Unauthorized');
+      if(res.statusCode == 403) throw Exception('Access denied');
+      if(res.statusCode == 404) throw Exception('Character not found');
+      throw Exception('Failed to delete character (${res.statusCode})');
     }   
 }
 

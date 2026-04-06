@@ -29,4 +29,15 @@ class CharacterListViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> deleteCharacter(int id) async {
+    try {
+      await _service.deleteCharacter(id);
+      _characters.removeWhere((c) => c.id == id);
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+    }
+  }
 }

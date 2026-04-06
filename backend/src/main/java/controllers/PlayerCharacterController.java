@@ -245,5 +245,12 @@ public class PlayerCharacterController {
         }
         
         return ResponseEntity.ok(playerCharacterService.shortRest(id, hitDiceToSpend, hitDiceRoll));
-    }    
+    }   
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id){
+        verifyCharacterOwnership(id);
+        playerCharacterService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }
