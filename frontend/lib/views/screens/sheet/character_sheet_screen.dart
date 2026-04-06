@@ -36,8 +36,8 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
       Tab(text: 'Abilities'),
       Tab(text: 'Skills'),
       Tab(text: 'Combat'),
-      Tab(text: 'Inventory'),
       Tab(text: 'Spells'),
+      Tab(text: 'Inventory'),
     ];
 
     @override
@@ -89,7 +89,10 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
     return Scaffold(
       body: SafeArea(
         child: Column(children: [
-          // Header fijo
+          // Barra de navegación
+          _NavBar(character: c),
+          const Divider(height: 1, color: AppTheme.surfaceVariant),
+          // Stats header (sin nombre ni avatar)
           _SheetHeader(character: c, vm: vm),
 
           //Tab bar
@@ -118,8 +121,9 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
                 TabAbilities(character: c),
                 TabSkills(character: c, vm: vm),
                 TabCombat(character: c, vm: vm),
-                TabInventory(character: c),
                 TabSpells(character: c, vm: vm),
+                TabInventory(character: c),
+                
               ],
             ),
           ),
@@ -129,7 +133,75 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
   }
 }
 
-// Header
+// Barra de navegación
+class _NavBar extends StatelessWidget {
+  final PlayerCharacter character;
+  const _NavBar({required this.character});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppTheme.surface,
+      padding: const EdgeInsets.fromLTRB(4, 6, 10, 6),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new,
+              color: AppTheme.primary, size: 20),
+            tooltip: 'Back',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    character.name,
+                    style: GoogleFonts.cinzel(
+                      color: AppTheme.primary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Text(
+                  _subtitle(),
+                  style: GoogleFonts.lato(
+                    color: AppTheme.textSecondary, fontSize: 11),
+                  overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Avatar
+          Container(
+            width: 52, height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppTheme.surfaceVariant,
+              border: Border.all(color: AppTheme.primary, width: 2),
+            ),
+            child: const Icon(Icons.person, color: AppTheme.primary, size: 30),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _subtitle() {
+    final parts = [
+      if (character.raceName != null) character.raceName!,
+      if (character.dndClassName != null) character.dndClassName!,
+      'Lvl ${character.level}',
+    ];
+    return parts.join(' · ');
+  }
+}
+
+// Stats header (AC, Init, Speed, Prof, HP)
 class _SheetHeader extends StatelessWidget{
   final PlayerCharacter character;
   final CharacterSheetViewModel vm;
@@ -139,107 +211,59 @@ class _SheetHeader extends StatelessWidget{
   Widget build(BuildContext context){
     final c = character;
     final initLabel = vm.signedInt(c.initiativeModifier);
+    final profLabel = vm.signedInt(c.proficiencyBonus);
 
-  return Container(
-    color: AppTheme.surface,
-    padding: const EdgeInsets.fromLTRB(4, 8, 12, 8),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.center, children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-            color: AppTheme.primary, size: 20),
-          tooltip: 'Back to characters',
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        //Izquierda: AC + Initiative
-        SizedBox(
-          width: 66,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center, children: [
-              _StatPill(label: 'AC', value: '${c.armorClass}'),
-              const SizedBox(height: 6),
-              _StatPill(label: 'Init', value: initLabel),
-            ]),
-        ),
-
-        /// Centro: avatar + nombre + subtítulo
-        Expanded(
-          child: Column(children: [
-            Container(
-              width: 48, height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.surfaceVariant,
-                border: Border.all(color: AppTheme.primary, width: 2),
-              ),
-              child: const Icon(Icons.person,
-                  color: AppTheme.primary, size: 26),
-            ),
-            const SizedBox(height: 3),
-            Text(c.name,
-                style: GoogleFonts.cinzel(
-                    color: AppTheme.primary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis),
-            Text(_subtitle(c),
-                style: GoogleFonts.lato(
-                    color: AppTheme.textSecondary, fontSize: 10),
-                textAlign: TextAlign.center),
-          ]),
-        ),
-
-        //Derecha: HP pulsable
-        SizedBox(
-          width: 68,
-          child: GestureDetector(
+    return Container(
+      color: AppTheme.surface,
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // AC en escudo
+          _ShieldAC(ac: c.armorClass),
+          _StatPill(label: 'Init', value: initLabel),
+          _StatPill(label: 'Speed', value: '${c.currentSpeed}'),
+          _StatPill(label: 'Prof', value: profLabel),
+          // HP tappable
+          GestureDetector(
             onTap: () => _showManageHpModal(context),
             child: Column(children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
                   color: _hpColor(c).withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: _hpColor(c), width: 1.5),
                 ),
                 child: Column(children: [
                   Text(
                     '${c.currentHp}/${c.maxHp}',
                     style: GoogleFonts.cinzel(
-                      color: _hpColor(c),
-                      fontSize: 13,
+                      color: _hpColor(c), fontSize: 13,
                       fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                    ),
-                    if(c.temporaryHp > 0)
-                      Text('+${c.temporaryHp} tmp',
-                        style: GoogleFonts.lato(
-                          color: Colors.lightBlueAccent,
-                          fontSize: 9)),
+                    textAlign: TextAlign.center),
+                  if (c.temporaryHp > 0)
+                    Text('+${c.temporaryHp} tmp',
+                      style: GoogleFonts.lato(
+                        color: Colors.lightBlueAccent, fontSize: 9)),
                 ]),
-                ),
+              ),
               const SizedBox(height: 2),
-              Text('HP',
-                style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary, fontSize: 10)),
-                const Icon(Icons.touch_app, color: AppTheme.textSecondary, size: 12),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('HP',
+                  style: GoogleFonts.lato(
+                    color: AppTheme.textSecondary, fontSize: 9,
+                    letterSpacing: 1)),
+                const SizedBox(width: 2),
+                const Icon(Icons.touch_app, color: AppTheme.textSecondary, size: 11),
+              ]),
             ]),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
-  String _subtitle(PlayerCharacter c) {
-    final parts = [
-      if (c.raceName != null) c.raceName!,
-      if (c.dndClassName != null) c.dndClassName!,
-      'Lvl ${c.level}',
-    ];
-    return parts.join(' · ');
-  }
-
   Color _hpColor(PlayerCharacter c) {
     if(c.currentHp <= 0) return AppTheme.accent;
     final pct = c.hpPercent;
@@ -262,6 +286,67 @@ class _SheetHeader extends StatelessWidget{
       ),
     );
   }
+}
+
+class _ShieldAC extends StatelessWidget {
+  final int ac;
+  const _ShieldAC({required this.ac});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      SizedBox(
+        width: 42, height: 50,
+        child: CustomPaint(
+          painter: _ShieldPainter(),
+          child: Align(
+            alignment: const Alignment(0, -0.1),
+            child: Text('$ac',
+              style: GoogleFonts.cinzel(
+                color: AppTheme.primary,
+                fontSize: 15,
+                fontWeight: FontWeight.bold)),
+          ),
+        ),
+      ),
+      const SizedBox(height: 2),
+      Text('AC',
+        style: GoogleFonts.lato(
+          color: AppTheme.textSecondary, fontSize: 9,
+          letterSpacing: 1)),
+    ]);
+  }
+}
+
+class _ShieldPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final path = Path()
+      ..moveTo(w * 0.08, 0)
+      ..lineTo(w * 0.92, 0)
+      ..quadraticBezierTo(w, 0, w, h * 0.1)
+      ..lineTo(w, h * 0.58)
+      ..quadraticBezierTo(w * 0.75, h * 0.88, w * 0.5, h)
+      ..quadraticBezierTo(w * 0.25, h * 0.88, 0, h * 0.58)
+      ..lineTo(0, h * 0.1)
+      ..quadraticBezierTo(0, 0, w * 0.08, 0)
+      ..close();
+    canvas.drawPath(path,
+      Paint()
+        ..color = AppTheme.surfaceVariant
+        ..style = PaintingStyle.fill);
+    canvas.drawPath(path,
+      Paint()
+        ..color = AppTheme.primary
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..strokeJoin = StrokeJoin.round);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ShieldPainter old) => false;
 }
 
 class _StatPill extends StatelessWidget {
@@ -443,23 +528,4 @@ class _HpField extends StatelessWidget {
         ),
       );    
   }
-}
-
-// Placeholder Tabs
-class _ComingSoonTab extends StatelessWidget {
-  final String label;
-  const _ComingSoonTab({required this.label});
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Icon(Icons.construction,
-      color: AppTheme.surfaceVariant, size: 48),
-      const SizedBox(height: 12),
-      Text('$label - Coming soon',
-      style: GoogleFonts.cinzel(
-        color: AppTheme.textSecondary, fontSize: 14
-      )),
-    ]),
-  );
 }
