@@ -7,17 +7,16 @@ import 'package:gestor_personajes_dnd/services/wizard/wizard_reference_service.d
 
 
 
-// - Enums
+// - Enums ---------------------
 enum WizardStep {preferences, dndClass, background, race, abilityScores}
-
 enum AbilityScoreMethod {standardArray, manual}
 
-// - Constante D&D
+// - Constante D&D ------------------
 const List<int> kStandardArray = [15, 14, 13, 12, 10, 8];
 const List<String> kAbilityNames = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 
 
-// - ViewModel
+// - ViewModel -------------------
 class CharacterCreatorViewModel extends ChangeNotifier {
   final WizardReferenceService _refService;
   final CharacterService       _charService;
@@ -28,7 +27,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   })  : _refService  = refService  ?? WizardReferenceService(),
         _charService = charService ?? CharacterService();
 
-  //- Navegación
+  //- Navegación ------------------
   WizardStep _currentStep = WizardStep.preferences;
   WizardStep get currentStep => _currentStep;
   int get currentStepIndex => WizardStep.values.indexOf(_currentStep);
@@ -36,8 +35,30 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   bool get isFirstStep => _currentStep == WizardStep.values.first;
   bool get isLastStep => _currentStep == WizardStep.values.last;
 
-  void goToStep(WizardStep step){
-    _currentStep = step;
+  // Pasos que tienen cambios pero no están completos → muestra ⚠️
+  // Solo se añade cuando el usuario modifica datos, no al navegar
+  final Set<WizardStep> _dirtySteps = {};
+  void _markDirty(WizardStep step) => _dirtySteps.add(step);
+
+  // Devuelve si un paso concreto está 100% válido (tick)
+  bool isStepCompleted(WizardStep step){
+    switch(step){
+      case WizardStep.preferences: return preferencesValid;
+      case WizardStep.dndClass: return classValid;
+      case WizardStep.background: return backgroundValid;
+      case WizardStep.race: return raceValid;
+      case WizardStep.abilityScores: return abilityScoresValid;
+    }
+  }
+
+  // Con cambios parciales pero incompleto → muestra ⚠️
+  bool isStepPartial(WizardStep step) =>
+    _dirtySteps.contains(step) && !isStepCompleted(step);
+
+  // Navega a cualquier paso libremente (sin restricciones)
+  void goToStep(WizardStep target){
+    _currentStep = target;
+    _loadStepData();
     notifyListeners();
   }
 
@@ -65,6 +86,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
+  void clearError() {_error = null; notifyListeners();}
   void _setLoading(bool v){ _isLoading = v; notifyListeners();}
   void _setError(String? v) {_error = v; notifyListeners();}
 
@@ -75,9 +97,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   bool useMilestone = true; // true = milestone, false = XP
   bool useEncumbrance = false;
 
-  void setName(String v) {characterName = v; notifyListeners();}
-  void setMilestone(bool v) {useMilestone = v; notifyListeners();}
-  void setEncumbrance(bool v) {useEncumbrance = v; notifyListeners();}
+  void setName(String v) {characterName = v; _markDirty(WizardStep.preferences); notifyListeners();}
+  void setMilestone(bool v) {useMilestone = v; _markDirty(WizardStep.preferences); notifyListeners();}
+  void setEncumbrance(bool v) {useEncumbrance = v; _markDirty(WizardStep.preferences); notifyListeners();}
 
   bool get preferencesValid => characterName.trim().isNotEmpty;
 
@@ -116,7 +138,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void selectClass(ClassOption c) {
-    selectedClass = c;
+    selectedClass = c; _markDirty(WizardStep.dndClass);
     notifyListeners();
   }
 
@@ -127,16 +149,17 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _hpRolls.clear();
     classFeatures.clear();
     subclasses.clear();
+    _markDirty(WizardStep.dndClass);
     notifyListeners();
   }
 
   void selectSubclass(SubclassOption s) {
-    selectedSubclass = s;
+    selectedSubclass = s; _markDirty(WizardStep.dndClass);
     notifyListeners();
   }
 
   void setLevel(int level) {
-    selectedLevel = level.clamp(1,20);
+    selectedLevel = level.clamp(1,20); _markDirty(WizardStep.dndClass);
     notifyListeners();
   }
 
@@ -183,9 +206,32 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void selectBackground(BackgroundOption b){
-    selectedBackground = b;
+    selectedBackground = b; _markDirty(WizardStep.background);
     notifyListeners();
   }
+
+  // Características físicas y personales (persistentes entre tabs)
+  String hair        = '';
+  String eyes        = '';
+  String skin        = '';
+  String age         = '';
+  String height      = '';
+  String weight      = '';
+  String personality = '';
+  String ideals      = '';
+  String bonds       = '';
+  String flaws       = '';
+
+  void setHair(String v)        { hair        = v; _markDirty(WizardStep.background); notifyListeners(); }
+  void setEyes(String v)        { eyes        = v; _markDirty(WizardStep.background); notifyListeners(); }
+  void setSkin(String v)        { skin        = v; _markDirty(WizardStep.background); notifyListeners(); }
+  void setAge(String v)         { age         = v; _markDirty(WizardStep.background); notifyListeners(); }
+  void setHeight(String v)      { height      = v; _markDirty(WizardStep.background); notifyListeners(); }
+  void setWeight(String v)      { weight      = v; _markDirty(WizardStep.background); notifyListeners(); }
+  void setPersonality(String v) { personality = v; _markDirty(WizardStep.background); notifyListeners(); }
+  void setIdeals(String v)      { ideals      = v; _markDirty(WizardStep.background); notifyListeners(); }
+  void setBonds(String v)       { bonds       = v; _markDirty(WizardStep.background); notifyListeners(); }
+  void setFlaws(String v)       { flaws       = v; _markDirty(WizardStep.background); notifyListeners(); }
 
   bool get backgroundValid => selectedBackground != null;
 
@@ -209,7 +255,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void selectRace(RaceOption r) {
-    selectedRace = r;
+    selectedRace = r; _markDirty(WizardStep.race);
     notifyListeners();
   }
 
@@ -237,6 +283,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       abilityScores[a] = 10;
       standardArrayAssignments[a] = null;
     }
+    _markDirty(WizardStep.abilityScores);
     notifyListeners();
   }
 
@@ -248,12 +295,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     });
     standardArrayAssignments[ability] = arrayIndex;
     abilityScores[ability] = kStandardArray[arrayIndex];
+    _markDirty(WizardStep.abilityScores);
     notifyListeners();
   }
 
   ///Asigna un valor manual a una ability
   void setManualScore(String ability, int value){
     abilityScores[ability] = value.clamp(3, 20);
+    _markDirty(WizardStep.abilityScores);
     notifyListeners();
   }
 
@@ -261,6 +310,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   void clearStandardArrayAssignment(String ability) {
     standardArrayAssignments[ability] = null;
     abilityScores[ability] = 10;
+    _markDirty(WizardStep.abilityScores);
     notifyListeners();
   }
 
@@ -280,7 +330,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   bool get abilityScoresValid => scoreMethod == AbilityScoreMethod.manual || allArrayValuesAssigned;
 
-  // Validación global y submit
+  // Validación global
   bool get canFinish =>
     preferencesValid &&
     classValid &&
@@ -288,34 +338,31 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     raceValid &&
     abilityScoresValid;
 
-    bool get canProceedCurrentStep {
-    switch (_currentStep) {
-      case WizardStep.preferences:   return preferencesValid;
-      case WizardStep.dndClass:      return classValid;
-      case WizardStep.background:    return backgroundValid;
-      case WizardStep.race:          return raceValid;
-      case WizardStep.abilityScores: return abilityScoresValid;
-    }
-  }
+  bool get canProceedCurrentStep => isStepCompleted(_currentStep);  
 
+  //Submit
   bool _isSaving = false;
   bool get isSaving => _isSaving;
-  bool _saveSuccess = false;
-  bool get saveSuccess => _saveSuccess;
+
+  int? _createdCharacterId;
+  int? get createdCharacterId => _createdCharacterId;
 
   Future<void> submit() async {
     if (_isSaving) return; // guard contra doble click
     if (!canFinish) return;
     _isSaving = true;
-    _saveSuccess = false;
+    _createdCharacterId = null;
+    _error = null;
     notifyListeners();
     try {
-      await _charService.createCharacter(
+      final result = await _charService.createCharacter(
         name:         characterName.trim(),
         raceId:       selectedRace!.id,
         classId:      selectedClass!.id,
-        backgroundId: selectedBackground!.id,        level:        selectedLevel,
-        subclassId:   selectedSubclass?.id,        abilityScores: {
+        backgroundId: selectedBackground!.id,        
+        level:        selectedLevel,        
+        subclassId:   selectedSubclass?.id,
+        abilityScores: {
           'str': abilityScores['STR']!,
           'dex': abilityScores['DEX']!,
           'con': abilityScores['CON']!,
@@ -324,7 +371,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
           'cha': abilityScores['CHA']!,
         },
       );
-      _saveSuccess = true;
+      _createdCharacterId = result.id;
     } catch (e) {
       _setError('Error saving character: $e');
     } finally {

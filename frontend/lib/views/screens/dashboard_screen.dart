@@ -142,7 +142,8 @@ class _DashboardBody extends StatelessWidget {
           character: character,
           onTap: () async {
             await Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => CharacterSheetScreen(characterId: character.id),
+              builder: (_) => 
+              CharacterSheetScreen(characterId: character.id),
             ));
             vm.load();
           },
@@ -153,7 +154,25 @@ class _DashboardBody extends StatelessWidget {
               backgroundColor: AppTheme.surfaceVariant,
             ));
           },
-          onDelete: () => vm.deleteCharacter(character.id),
+          onDelete: () async{
+            final name = character.name; //guardar antes de borrar
+            await vm.deleteCharacter(character.id);
+            if(context.mounted){
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    '$name has been deleted',
+                    style: GoogleFonts.lato(color: Colors.white),
+                  ),
+                  backgroundColor: AppTheme.accent,
+                  duration: const Duration(seconds: 3),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+                ),
+              );              
+            }
+          },
         );
       },
   );

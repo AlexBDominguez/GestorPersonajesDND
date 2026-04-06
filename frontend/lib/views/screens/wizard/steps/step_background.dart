@@ -26,6 +26,35 @@ class _StepBackgroundState extends State<StepBackground> {
   final _flawsCtrl      = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Rellenar controllers con los valores guardados en el viewmodel
+    final vm = context.read<CharacterCreatorViewModel>();
+    _hairCtrl.text        = vm.hair;
+    _eyesCtrl.text        = vm.eyes;
+    _skinCtrl.text        = vm.skin;
+    _ageCtrl.text         = vm.age;
+    _heightCtrl.text      = vm.height;
+    _weightCtrl.text      = vm.weight;
+    _personalityCtrl.text = vm.personality;
+    _idealsCtrl.text      = vm.ideals;
+    _bondsCtrl.text       = vm.bonds;
+    _flawsCtrl.text       = vm.flaws;
+
+    // Persistir cambios en el viewmodel al escribir
+    _hairCtrl.addListener(()        => vm.setHair(_hairCtrl.text));
+    _eyesCtrl.addListener(()        => vm.setEyes(_eyesCtrl.text));
+    _skinCtrl.addListener(()        => vm.setSkin(_skinCtrl.text));
+    _ageCtrl.addListener(()         => vm.setAge(_ageCtrl.text));
+    _heightCtrl.addListener(()      => vm.setHeight(_heightCtrl.text));
+    _weightCtrl.addListener(()      => vm.setWeight(_weightCtrl.text));
+    _personalityCtrl.addListener(() => vm.setPersonality(_personalityCtrl.text));
+    _idealsCtrl.addListener(()      => vm.setIdeals(_idealsCtrl.text));
+    _bondsCtrl.addListener(()       => vm.setBonds(_bondsCtrl.text));
+    _flawsCtrl.addListener(()       => vm.setFlaws(_flawsCtrl.text));
+  }
+
+  @override
   void dispose() {
     _hairCtrl.dispose();
     _eyesCtrl.dispose();

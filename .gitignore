@@ -38,6 +38,7 @@ build/
 ### Mac OS ###
 .DS_Store
 CharacterSheet_Requirements.md
+ArreglosRequirements.md
 
 # IntelliJ IDEA
 .idea/
