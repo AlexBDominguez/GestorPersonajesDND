@@ -2,6 +2,7 @@ package services;
 
 import dto.PlayerCharacterDto;
 import dto.SpellSlotDto;
+import dto.CharacterSavingThrowDto;
 import dto.CharacterSkillDto;
 import entities.*;
 import jakarta.transaction.Transactional;
@@ -182,10 +183,7 @@ public class PlayerCharacterService {
             playerCharacter.setSubclass(subclass);
         }
 
-        // Mapear campos de personalidad a un solo campo de texto con separador (ej. salto de línea)
-        String personalityTraits = (dto.getPersonalityTrait1() != null ? dto.getPersonalityTrait1() : "") +
-                                  (dto.getPersonalityTrait2() != null ? "\n" + dto.getPersonalityTrait2() : "");
-        playerCharacter.setPersonalityTraits(personalityTraits.trim());
+        playerCharacter.setPersonalityTraits(dto.getPersonalityTrait() != null ? dto.getPersonalityTrait().trim() : null);
         playerCharacter.setIdeals(dto.getIdeal());
         playerCharacter.setBonds(dto.getBond());
         playerCharacter.setFlaws(dto.getFlaw());
@@ -283,6 +281,7 @@ public class PlayerCharacterService {
         dto.setStable(playerCharacter.isStable());
         dto.setDead(playerCharacter.isDead());
         dto.setConscious(playerCharacter.isConscious());
+
         // Passive skills (requieren consultar CharacterSkill)
         List<CharacterSkill> characterSkills = characterSkillService.getCharacterSkills(playerCharacter);
         dto.setPassivePerception(playerCharacter.getPassivePerception(characterSkills));
@@ -302,6 +301,22 @@ public class PlayerCharacterService {
             skillDtos.add(skillDto);
         }
         dto.setSkills(skillDtos);
+
+        //Saving throws con proficiencia y bonus calculado
+        List<CharacterSavingThrow> savingThrows =
+                characterSkillService.getCharacterSavingThrows(playerCharacter);
+        List<CharacterSavingThrowDto> savingThrowDtos = new ArrayList<>();
+        for (CharacterSavingThrow st: savingThrows){
+            CharacterSavingThrowDto stDto = new CharacterSavingThrowDto();
+            stDto.setId(st.getId());
+            stDto.setAbilityScore(st.getAbilityScore());
+            stDto.setProficient(st.isProficient());
+            int abilityMod = playerCharacter.calculateAbilityModifier(st.getAbilityScore());
+            int profBonus = st.isProficient() ? playerCharacter.getProficiencyBonus() : 0;
+            stDto.setBonus(abilityMod + profBonus);
+            savingThrowDtos.add(stDto);
+        }
+        dto.setSavingThrows(savingThrowDtos);
 
         if (playerCharacter.getRace() != null) {
             dto.setRaceId(playerCharacter.getRace().getId());
@@ -323,11 +338,7 @@ public class PlayerCharacterService {
             dto.setSubclassName(playerCharacter.getSubclass().getName());
         }
 
-        // Map entity text fields to individual DTO fields
-        String[] traits = playerCharacter.getPersonalityTraits() != null ? 
-                         playerCharacter.getPersonalityTraits().split("\n", 2) : new String[]{null, null};
-        dto.setPersonalityTrait1(traits.length > 0 ? traits[0] : null);
-        dto.setPersonalityTrait2(traits.length > 1 ? traits[1] : null);
+        dto.setPersonalityTrait(playerCharacter.getPersonalityTraits());
         dto.setIdeal(playerCharacter.getIdeals());
         dto.setBond(playerCharacter.getBonds());
         dto.setFlaw(playerCharacter.getFlaws());

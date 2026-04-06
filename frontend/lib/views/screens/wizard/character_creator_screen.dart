@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../config/app_theme.dart';
 import '../../../viewmodels/wizard/character_creator_viewmodel.dart';
-import '../sheet/character_sheet_screen.dart';
 import 'steps/step_race.dart';
 import 'steps/step_class.dart';
 import 'steps/step_ability_scores.dart';
@@ -48,16 +47,10 @@ class _WizardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.watch<CharacterCreatorViewModel>();
 
-    //Cuando se crea con éxito, navegar a la ficha
+    //Cuando se crea con éxito, volver al dashboard con el ID del personaje
     if (vm.createdCharacterId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Reemplazamos el wizard por la ficha (no volvemos al dashboard con pop)
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => CharacterSheetScreen(
-                characterId: vm.createdCharacterId!),
-          ),
-        );
+        Navigator.of(context).pop(vm.createdCharacterId);
       });
     }
 

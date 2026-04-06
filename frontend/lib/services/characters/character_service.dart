@@ -43,6 +43,16 @@ class CharacterService {
     required Map<String, int> abilityScores,
     int level = 1,
     int? subclassId,
+    String? personalityTrait,
+    String? ideal,
+    String? bond,
+    String? flaw,
+    String? hair,
+    String? eyes,
+    String? skin,
+    String? age,
+    String? height,
+    String? weight,
   }) async {
     final body = {
       'name': name,
@@ -52,6 +62,16 @@ class CharacterService {
       'abilityScores': abilityScores,
       'level': level,
       if (subclassId != null) 'subclassId': subclassId,
+      if (personalityTrait != null && personalityTrait.isNotEmpty) 'personalityTrait': personalityTrait,
+      if (ideal != null && ideal.isNotEmpty) 'ideal': ideal,
+      if (bond != null && bond.isNotEmpty) 'bond': bond,
+      if (flaw != null && flaw.isNotEmpty) 'flaw': flaw,
+      if (hair != null && hair.isNotEmpty) 'hair': hair,
+      if (eyes != null && eyes.isNotEmpty) 'eyes': eyes,
+      if (skin != null && skin.isNotEmpty) 'skin': skin,
+      if (age != null && age.isNotEmpty) 'age': age,
+      if (height != null && height.isNotEmpty) 'height': height,
+      if (weight != null && weight.isNotEmpty) 'weight': weight,
     };
     final res = await _api.post(ApiConfig.charactersPath, body: body);
     if (res.statusCode == 200 || res.statusCode == 201) {

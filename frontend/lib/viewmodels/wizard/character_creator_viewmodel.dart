@@ -370,6 +370,16 @@ class CharacterCreatorViewModel extends ChangeNotifier {
           'wis': abilityScores['WIS']!,
           'cha': abilityScores['CHA']!,
         },
+        personalityTrait: personality.isNotEmpty ? personality : null,
+        ideal:  ideals.isNotEmpty  ? ideals  : null,
+        bond:   bonds.isNotEmpty   ? bonds   : null,
+        flaw:   flaws.isNotEmpty   ? flaws   : null,
+        hair:   hair.isNotEmpty    ? hair    : null,
+        eyes:   eyes.isNotEmpty    ? eyes    : null,
+        skin:   skin.isNotEmpty    ? skin    : null,
+        age:    age.isNotEmpty     ? age     : null,
+        height: height.isNotEmpty  ? height  : null,
+        weight: weight.isNotEmpty  ? weight  : null,
       );
       _createdCharacterId = result.id;
     } catch (e) {

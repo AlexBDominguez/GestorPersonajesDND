@@ -63,8 +63,15 @@ public class CharacterSkillService {
         return characterSkillRepository.findByCharacter(character);
     }
 
+    @Transactional
     public List<CharacterSavingThrow> getCharacterSavingThrows(PlayerCharacter character){
-        return characterSavingThrowRepository.findByCharacter(character);
+        List<CharacterSavingThrow> existing = characterSavingThrowRepository.findByCharacter(character);
+        if (existing.isEmpty()) {
+            // Personaje creado antes de que se implementaran las saving throws: inicializar ahora
+            initializeSavingThrows(character);
+            return characterSavingThrowRepository.findByCharacter(character);
+        }
+        return existing;
     }
 
     @Transactional

@@ -152,17 +152,24 @@ class _SavingThrowRow extends StatelessWidget{
 
   @override
   Widget build(BuildContext context){
-    final mod = character.modifier(ability);
-    final lbl = mod >= 0 ? '+$mod': '$mod';
-    // TODO: cuando el backend devuelva savingThrowProficiencies, usar este dato
-    const bool proficient = false;
+    final savingThrow = character.savingThrows
+        .where((st) => st.abilityScore.toUpperCase() == ability)
+        .firstOrNull;
+
+    final bonus = savingThrow?.bonus ?? character.modifier(ability);
+    final proficient = savingThrow?.proficient ?? false;
+    final lbl = bonus >= 0 ? '+$bonus' : '$bonus';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.surfaceVariant),
+        border: Border.all(
+          color: proficient
+              ? AppTheme.primary.withOpacity(0.5)
+              : AppTheme.surfaceVariant,
+        ),
       ),
       child: Row(children: [
         // Proficiency dot
@@ -183,13 +190,14 @@ class _SavingThrowRow extends StatelessWidget{
             child: Text(
               CharacterSheetViewModel.abilityFull[ability] ?? ability,
               style: GoogleFonts.lato(
-                color: AppTheme.textPrimary, fontSize: 12),
+                color: proficient ? AppTheme.textPrimary : AppTheme.textSecondary,
+                fontSize: 12),
               ),
             ),
             Text(lbl, style: GoogleFonts.cinzel(
-              color: AppTheme.primary,
+              color: proficient ? AppTheme.primary : AppTheme.textSecondary,
               fontSize: 13,
-              fontWeight: FontWeight.bold
+              fontWeight: proficient ? FontWeight.bold : FontWeight.normal,
             )),
       ]),
     );

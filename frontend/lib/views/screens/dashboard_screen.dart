@@ -44,10 +44,19 @@ class _DashboardBody extends StatelessWidget {
       // ── FAB: crear personaje ─────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          final created = await Navigator.of(context).push<bool>(MaterialPageRoute(
+          final newId = await Navigator.of(context).push<int>(MaterialPageRoute(
             builder: (_) => const CharacterCreatorScreen()),
           );
-          if (created == true) vm.load(); // Recargar lista si se creó un personaje
+          if (newId != null) {
+            // Recargamos la lista y abrimos la ficha del personaje recién creado
+            await vm.load();
+            if (context.mounted) {
+              await Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => CharacterSheetScreen(characterId: newId),
+              ));
+              vm.load(); // por si cambia HP u otros datos en la ficha
+            }
+          }
         },
         backgroundColor: AppTheme.primary,
         foregroundColor: AppTheme.background,
@@ -178,58 +187,4 @@ class _DashboardBody extends StatelessWidget {
   );
 }
        
-
-  void _confirmDelete(BuildContext context, CharacterListViewModel vm,
-    int characterId, String characterName) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black54,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Delete "$characterName"?',
-          style: GoogleFonts.cinzel(
-            color: AppTheme.accent,
-            fontSize: 18,
-            fontWeight: FontWeight.bold)),
-        content: RichText(
-          text: TextSpan(
-            style: GoogleFonts.lato(
-              color: AppTheme.textPrimary, fontSize: 14),
-            children: [
-              const TextSpan(text: 'Are you sure you want to delete '),
-              TextSpan(
-                text: characterName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primary),
-                ),
-                const TextSpan(text: '? All data will be lost.'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
-              style: GoogleFonts.lato(color: AppTheme.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await vm.deleteCharacter(characterId);              
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.accent,
-              foregroundColor: Colors.white,
-            ),
-            child: Text('Delete',
-              style: GoogleFonts.cinzel(
-                fontWeight: FontWeight.bold)),
-
-          )
-        ]
-      ),
-    );
-  }
 }

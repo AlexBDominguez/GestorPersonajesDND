@@ -18,8 +18,7 @@ public class PlayerCharacterDto {
     private String backstory;
     private Long backgroundId;
     private String backgroundName;
-    private String personalityTrait1;
-    private String personalityTrait2;
+    private String personalityTrait;
     private String ideal;
     private String bond;
     private String flaw;
@@ -68,6 +67,7 @@ public class PlayerCharacterDto {
     private Long userId;
     private List<SpellSlotDto> spellSlots;
     private List<CharacterSkillDto> skills;
+    private List<CharacterSavingThrowDto> savingThrows;
     
 
 
@@ -186,20 +186,12 @@ public class PlayerCharacterDto {
         this.backgroundName = backgroundName;
     }
 
-    public String getPersonalityTrait1() {
-        return personalityTrait1;
+    public String getPersonalityTrait() {
+        return personalityTrait;
     }
 
-    public void setPersonalityTrait1(String personalityTrait1) {
-        this.personalityTrait1 = personalityTrait1;
-    }
-
-    public String getPersonalityTrait2() {
-        return personalityTrait2;
-    }
-
-    public void setPersonalityTrait2(String personalityTrait2) {
-        this.personalityTrait2 = personalityTrait2;
+    public void setPersonalityTrait(String personalityTrait) {
+        this.personalityTrait = personalityTrait;
     }
 
     public String getIdeal() {
@@ -584,6 +576,13 @@ public class PlayerCharacterDto {
 
     public void setSkills(List<CharacterSkillDto> skills) {
         this.skills = skills;
+    }
+
+    public List<CharacterSavingThrowDto> getSavingThrows() {
+        return savingThrows;
+    }
+    public void setSavingThrows(List<CharacterSavingThrowDto> savingThrows) {
+        this.savingThrows = savingThrows;
     }
 
 }

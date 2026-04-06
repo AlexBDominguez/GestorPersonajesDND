@@ -55,7 +55,9 @@ public class CharacterSkillController {
             dto.setId(st.getId());
             dto.setAbilityScore(st.getAbilityScore());
             dto.setProficient(st.isProficient());
-            dto.setBonus(st.getBonus());
+            int abilityMod = character.calculateAbilityModifier(st.getAbilityScore());
+            int profBonus = st.isProficient() ? character.getProficiencyBonus() : 0;
+            dto.setBonus(abilityMod + profBonus);
             return dto;
         }).collect(Collectors.toList());
     }

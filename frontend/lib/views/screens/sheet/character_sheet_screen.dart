@@ -9,6 +9,7 @@ import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_skills.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_spells.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_info.dart';
 
 class CharacterSheetScreen extends StatelessWidget {
   final int characterId;
@@ -38,6 +39,7 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
       Tab(text: 'Combat'),
       Tab(text: 'Spells'),
       Tab(text: 'Inventory'),
+      Tab(text: 'Info'),
     ];
 
     @override
@@ -123,7 +125,7 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
                 TabCombat(character: c, vm: vm),
                 TabSpells(character: c, vm: vm),
                 TabInventory(character: c),
-                
+                TabInfo(character: c),                
               ],
             ),
           ),

@@ -1,5 +1,6 @@
 import 'package:gestor_personajes_dnd/models/character/character_skill.dart';
 import 'package:gestor_personajes_dnd/models/character/spell_slot.dart';
+import 'package:gestor_personajes_dnd/models/character/character_saving_throw.dart';
 
 class PlayerCharacter{
   final int id;
@@ -39,8 +40,7 @@ class PlayerCharacter{
   final String? alignment;
   final String? subclassName;
   final String? backgroundName;
-  final String? personalityTrait1;
-  final String? personalityTrait2;
+  final String? personalityTrait;
   final String? ideal;
   final String? bond;
   final String? flaw;
@@ -57,6 +57,7 @@ class PlayerCharacter{
   final String? hair;
   final List<SpellSlot> spellSlots;
   final List<CharacterSkill> skills;
+  final List<CharacterSavingThrow> savingThrows;
 
 
   const PlayerCharacter({
@@ -97,8 +98,7 @@ class PlayerCharacter{
     this.alignment,
     this.subclassName,
     this.backgroundName,
-    this.personalityTrait1,
-    this.personalityTrait2,
+    this.personalityTrait,
     this.ideal,
     this.bond,
     this.flaw,
@@ -115,6 +115,7 @@ class PlayerCharacter{
     this.hair,
     this.spellSlots = const [],
     this.skills = const [],
+    this.savingThrows = const [],
   });
 
   factory PlayerCharacter.fromJson(Map<String, dynamic> j) {
@@ -161,8 +162,7 @@ class PlayerCharacter{
       alignment:           j['alignment'] as String?,
       subclassName:        j['subclassName'] as String?,
       backgroundName:      j['backgroundName'] as String?,
-      personalityTrait1:   j['personalityTrait1'] as String?,
-      personalityTrait2:   j['personalityTrait2'] as String?,
+      personalityTrait:    j['personalityTrait'] as String?,
       ideal:               j['ideal'] as String?,
       bond:                j['bond'] as String?,
       flaw:                j['flaw'] as String?,
@@ -183,6 +183,9 @@ class PlayerCharacter{
       skills:              (j['skills'] as List<dynamic>? ?? [])
                                .map((e) => CharacterSkill.fromJson(e as Map<String, dynamic>))
                                .toList(),
+      savingThrows:        (j['savingThrows'] as List<dynamic>? ?? [])
+                                .map((e) => CharacterSavingThrow.fromJson(e as Map<String, dynamic>))
+                                .toList(),
     );
   }
 

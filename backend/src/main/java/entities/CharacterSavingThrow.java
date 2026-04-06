@@ -7,7 +7,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "character_saving_throws")
@@ -34,7 +33,6 @@ public class CharacterSavingThrow {
     }
 
     //Método para calcular el bonus total
-    @Transient
     public int getBonus(){
         if(character == null || abilityScore == null) return 0;
 
