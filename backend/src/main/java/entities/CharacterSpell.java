@@ -1,5 +1,6 @@
 package entities;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,6 +29,10 @@ public class CharacterSpell {
     private boolean learned;
     private int timesCast;
 
+    //Origen del hechizo: "CLASS", "SUBCLASS", "RACE", "FEAT"
+    @Column(name = "spell_source", length = 20)
+    private String spellSource;
+
     public CharacterSpell() {}
 
     public CharacterSpell(PlayerCharacter character, Spell spell){
@@ -36,6 +41,17 @@ public class CharacterSpell {
         this.learned = true;
         this.prepared = true;
         this.timesCast = 0;
+        this.spellSource = "CLASS"; //Por defecto para compatibilidad con código existente
+    }
+
+    //Constructor con fuente explicita
+    public CharacterSpell(PlayerCharacter character, Spell spell, String spellSource){
+        this.character = character;
+        this.spell = spell;
+        this.learned = true;
+        this.prepared = true;
+        this.timesCast = 0;
+        this.spellSource = spellSource;
     }
 
     public Long getId() {
@@ -86,7 +102,13 @@ public class CharacterSpell {
         this.timesCast = timesCast;
     }
 
-    //Getters and Setters
+    public String getSpellSource() {
+        return spellSource;
+    }
+
+    public void setSpellSource(String spellSource) {
+        this.spellSource = spellSource;
+    }
 
     
     

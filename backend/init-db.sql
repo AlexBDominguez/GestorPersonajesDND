@@ -99,6 +99,29 @@ CREATE TABLE IF NOT EXISTS spells (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
+-- Tabla: race_spells (Hechizos otorgados por Raza)
+-- ============================================
+CREATE TABLE IF NOT EXISTS race_spells (
+    race_id BIGINT NOT NULL,
+    spell_id BIGINT NOT NULL,
+    PRIMARY KEY (race_id, spell_id),
+    FOREIGN KEY (race_id) REFERENCES race(id) ON DELETE CASCADE,
+    FOREIGN KEY (spell_id) REFERENCES spells(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: feat_spells (Hechizos otorgados por Feat)
+-- ============================================
+CREATE TABLE IF NOT EXISTS feat_spells (
+    feat_id BIGINT NOT NULL,
+    spell_id BIGINT NOT NULL,
+    PRIMARY KEY (feat_id, spell_id),
+    FOREIGN KEY (feat_id) REFERENCES feats(id) ON DELETE CASCADE,
+    FOREIGN KEY (spell_id) REFERENCES spells(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ============================================
 -- Tabla: languages (Idiomas)
 -- ============================================
 CREATE TABLE IF NOT EXISTS languages (
@@ -409,6 +432,11 @@ CREATE TABLE IF NOT EXISTS character_spells (
     INDEX idx_character_spells_char (character_id),
     INDEX idx_character_spells_spell (spell_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Columna spell_source en character_spells
+-- (si el script se ejecuta sobre una BD existente)
+ALTER TABLE character_spells 
+    ADD COLUMN IF NOT EXISTS spell_source VARCHAR(20) DEFAULT 'CLASS';
 
 -- ============================================
 -- Tabla: character_spell_slots (Espacios de Hechizo del Personaje)
@@ -772,6 +800,7 @@ LEFT JOIN race r ON c.race_id = r.id
 LEFT JOIN classes cl ON c.class_id = cl.id
 LEFT JOIN backgrounds b ON c.background_id = b.id;
 
+/*
 -- Vista: Hechizos de personajes con detalles
 CREATE OR REPLACE VIEW v_character_spells_detail AS
 SELECT 
@@ -781,8 +810,25 @@ SELECT
     s.level AS spell_level,
     s.school,
     cs.prepared,
-    cs.learned,
     cs.times_cast
+FROM character_spells cs
+JOIN characters c ON cs.character_id = c.id
+JOIN spells s ON cs.spell_id = s.id;
+
+*/
+
+CREATE OR REPLACE VIEW v_character_spells_detail AS
+SELECT 
+    cs.id,
+    c.name AS character_name,
+    s.name AS spell_name,
+    s.level AS spell_level,
+    s.school,
+    s.casting_time,
+    cs.prepared,
+    cs.learned,
+    cs.times_cast,
+    cs.spell_source
 FROM character_spells cs
 JOIN characters c ON cs.character_id = c.id
 JOIN spells s ON cs.spell_id = s.id;

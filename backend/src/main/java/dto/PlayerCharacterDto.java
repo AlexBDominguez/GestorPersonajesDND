@@ -65,6 +65,7 @@ public class PlayerCharacterDto {
     private int passiveInvestigation;
     private int passiveInsight;
     private Long userId;
+    private List<CharacterSpellSummaryDto> characterSpells;
     private List<SpellSlotDto> spellSlots;
     private List<CharacterSkillDto> skills;
     private List<CharacterSavingThrowDto> savingThrows;
@@ -584,5 +585,13 @@ public class PlayerCharacterDto {
     public void setSavingThrows(List<CharacterSavingThrowDto> savingThrows) {
         this.savingThrows = savingThrows;
     }
+
+        public List<CharacterSpellSummaryDto> getCharacterSpells() {
+            return characterSpells;
+        }
+
+        public void setCharacterSpells(List<CharacterSpellSummaryDto> characterSpells) {
+            this.characterSpells = characterSpells;
+        }
 
 }

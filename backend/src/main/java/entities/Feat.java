@@ -10,6 +10,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -34,6 +36,16 @@ public class Feat {
     @CollectionTable(name = "feat_prerequisites", joinColumns = @JoinColumn(name = "feat_id"))  
     @Column(name = "prerequisite", columnDefinition = "TEXT")
     private List<String> prerequisites;
+
+    //Hechizos que otorga el feat automáticamente (ej: Magic Initiate)
+    //Nota: algunos feats permiten elegir - eso se gestiona en el wizard
+    @ManyToMany
+    @JoinTable(
+        name = "feat_spells",
+        joinColumns = @JoinColumn(name = "feat_id"),
+        inverseJoinColumns = @JoinColumn(name = "spell_id")
+    )
+    private List<Spell> grantedSpells;
 
 
     public Feat() {}
@@ -88,7 +100,12 @@ public class Feat {
         this.prerequisites = prerequisites;
     }
 
-    
+    public List<Spell> getGrantedSpells() {
+        return grantedSpells;
+    }
 
+    public void setGrantedSpells(List<Spell> grantedSpells) {
+        this.grantedSpells = grantedSpells;
+    }
 
 }

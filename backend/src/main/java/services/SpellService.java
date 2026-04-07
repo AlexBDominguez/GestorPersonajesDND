@@ -27,4 +27,16 @@ public class SpellService {
     public List<Spell> searchByName(String name) {
         return spellRepository.findByNameContainingIgnoreCase(name);
     }
+
+    public List<Spell> getSpellsByCastingTime(String castingTime){
+        return
+            spellRepository.findByCastingTimeContainingIgnoreCase(castingTime);
+    }
+
+    public List<Spell> getAvailableSpells(Long classId, Long subclassId, Integer maxLevel){
+        if(maxLevel != null){
+            return spellRepository.findByLevelLessThanEqual(maxLevel);
+        }
+        return spellRepository.findAll();
+    }
 }

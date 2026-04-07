@@ -2,6 +2,7 @@ package entities;
 
 import jakarta.persistence.*;
 
+import java.util.List;
 import java.util.Map;
 
 @Entity
@@ -22,6 +23,15 @@ public class Race {
     @MapKeyColumn(name = "ability")
     @Column(name = "bonus")
     private Map<String, Integer> abilityBonuses;
+
+    // Hechizos que otorga la raza automáticamente (ej: High Elf -> Prestidigitation)
+    @ManyToMany
+    @JoinTable(
+            name = "race_spells",
+            joinColumns = @JoinColumn(name = "race_id"),
+            inverseJoinColumns = @JoinColumn(name = "spell_id")
+    )
+    private List<Spell> grantedSpells;
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -83,5 +93,13 @@ public class Race {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public List<Spell> getGrantedSpells() {
+        return grantedSpells;
+    }
+
+    public void setGrantedSpells(List<Spell> grantedSpells) {
+        this.grantedSpells = grantedSpells;
     }
 }

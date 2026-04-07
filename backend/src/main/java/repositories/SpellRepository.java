@@ -12,4 +12,8 @@ public interface SpellRepository extends JpaRepository<Spell, Long> {
     List<Spell> findByLevel(int level);
 
     List<Spell> findByNameContainingIgnoreCase(String name);
+
+    List<Spell> findByLevelLessThanEqual(int maxLevel);
+
+    List<Spell> findByCastingTimeContainingIgnoreCase(String castingTime);
 }

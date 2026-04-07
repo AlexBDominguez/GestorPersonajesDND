@@ -185,19 +185,19 @@ class _SavingThrowRow extends StatelessWidget {
                 width: 1.5),
           ),
         ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              CharacterSheetViewModel.abilityFull[ability] ?? ability,
-              style: GoogleFonts.lato(
-                color: proficient ? AppTheme.textPrimary : AppTheme.textSecondary,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            CharacterSheetViewModel.abilityFull[ability] ?? ability,
+            style: GoogleFonts.lato(
+              color: proficient ? AppTheme.textPrimary : AppTheme.textSecondary,
                 fontSize: 12),
-              ),
-            ),
+          ),
+        ),
             Text(lbl, style: GoogleFonts.cinzel(
-              color: proficient ? AppTheme.primary : AppTheme.textSecondary,
-              fontSize: 13,
-              fontWeight: proficient ? FontWeight.bold : FontWeight.normal,
+            color: proficient ? AppTheme.primary : AppTheme.textSecondary,
+            fontSize: 13,
+            fontWeight: proficient ? FontWeight.bold : FontWeight.normal,
             )),
       ]),
     );

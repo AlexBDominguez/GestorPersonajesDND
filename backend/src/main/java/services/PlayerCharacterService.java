@@ -4,8 +4,10 @@ import dto.PlayerCharacterDto;
 import dto.SpellSlotDto;
 import dto.CharacterSavingThrowDto;
 import dto.CharacterSkillDto;
+import dto.CharacterSpellSummaryDto;
 import entities.*;
 import jakarta.transaction.Transactional;
+import dto.CharacterSpellSummaryDto;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -18,8 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import repositories.UserRepository;
-import entities.User;
 
 @Service
 public class PlayerCharacterService {
@@ -218,6 +218,8 @@ public class PlayerCharacterService {
             applyBackgroundProficiencies(saved);
         }
 
+        applyRaceSpells(saved);
+
         generateSpellSlots(saved);
         
         return toDto(saved);
@@ -318,6 +320,29 @@ public class PlayerCharacterService {
         }
         dto.setSavingThrows(savingThrowDtos);
 
+        //Hechizos del personaje con detalle completo
+        List<CharacterSpell> characterSpells =
+            characterSpellRepository.findByCharacter(playerCharacter);
+        List<CharacterSpellSummaryDto> spellDtos = new ArrayList<>();
+        for(CharacterSpell characterSpell: characterSpells){
+            Spell s = characterSpell.getSpell();
+            CharacterSpellSummaryDto spellDto = new CharacterSpellSummaryDto();
+            spellDto.setId(s.getId());
+            spellDto.setName(s.getName());
+            spellDto.setLevel(s.getLevel());
+            spellDto.setSchool(s.getSchool());
+            spellDto.setCastingTime(s.getCastingTime());
+            spellDto.setRange(s.getRange());
+            spellDto.setDuration(s.getDuration());
+            spellDto.setComponents(s.getComponents());
+            spellDto.setDescription(s.getDescription());
+            spellDto.setPrepared(characterSpell.isPrepared());
+            spellDto.setLearned(characterSpell.isLearned());
+            spellDto.setSpellSource(characterSpell.getSpellSource());
+            spellDtos.add(spellDto);
+        }
+        dto.setCharacterSpells(spellDtos);
+
         if (playerCharacter.getRace() != null) {
             dto.setRaceId(playerCharacter.getRace().getId());
             dto.setRaceName(playerCharacter.getRace().getName());
@@ -382,13 +407,22 @@ public class PlayerCharacterService {
 
     @Transactional
     public void addSpellToCharacter(Long characterId, Long spellId) {
+        addSpellToCharacter(characterId, spellId, "CLASS");
+    }
+
+    @Transactional
+    public void addSpellToCharacter(Long characterId, Long spellId, String source) {
         PlayerCharacter character = characterRepository.findById(characterId)
                 .orElseThrow(() -> new RuntimeException("Character not found"));
-
         Spell spell = spellRepository.findById(spellId)
                 .orElseThrow(() -> new RuntimeException("Spell not found"));
 
-        CharacterSpell characterSpell = new CharacterSpell(character, spell);
+        // Evitar duplicados
+        if (characterSpellRepository.findByCharacterIdAndSpellId(characterId, spellId).isPresent()) {
+            return;
+        }
+
+        CharacterSpell characterSpell = new CharacterSpell(character, spell, source);
         characterSpellRepository.save(characterSpell);
     }
 
@@ -1075,5 +1109,23 @@ public class PlayerCharacterService {
         }
         
         return dto;
+    }
+
+    private void applyRaceSpells(PlayerCharacter character){
+        Race race = character.getRace();
+        if(race == null || race.getGrantedSpells() == null || race.getGrantedSpells().isEmpty()){
+            return;
+        }
+        for (Spell spell: race.getGrantedSpells()){
+            //Evitar duplicados por si se llama más de una vez
+            boolean alreadyHas = characterSpellRepository
+                    .findByCharacterIdAndSpellId(character.getId(), spell.getId())
+                    .isPresent();
+            if(!alreadyHas){
+                CharacterSpell characterSpell = new CharacterSpell(character, spell, "RACE");
+                characterSpellRepository.save(characterSpell);
+                System.out.println("Granted racial spell: " + spell.getName() + " to: " + character.getName());
+            }
+        }
     }
 }
