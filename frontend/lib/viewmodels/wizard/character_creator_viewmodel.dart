@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/models/wizard/background_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/race_option.dart';
+import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
 import 'package:gestor_personajes_dnd/services/wizard/wizard_reference_service.dart';
 
 
 
 // - Enums ---------------------
-enum WizardStep {preferences, dndClass, background, race, abilityScores}
+enum WizardStep {preferences, dndClass, background, race, abilityScores, spells}
 enum AbilityScoreMethod {standardArray, manual}
 
 // - Constante D&D ------------------
@@ -30,12 +31,41 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   //- Navegación ------------------
   WizardStep _currentStep = WizardStep.preferences;
   WizardStep get currentStep => _currentStep;
-  int get currentStepIndex => WizardStep.values.indexOf(_currentStep);
-  int get totalSteps => WizardStep.values.length;
-  bool get isFirstStep => _currentStep == WizardStep.values.first;
-  bool get isLastStep => _currentStep == WizardStep.values.last;
 
-  // Pasos que tienen cambios pero no están completos → muestra ⚠️
+  //Los pasos visibles dependen de si el personaje tiene spells
+
+  List<WizardStep> get activeSteps {
+    final steps = [
+      WizardStep.preferences,
+      WizardStep.dndClass,
+      WizardStep.background,
+      WizardStep.race,
+      WizardStep.abilityScores,
+    ];
+    if(isSpellcaster) steps.add(WizardStep.spells);
+    return steps;
+  }
+
+  int get currentStepIndex => activeSteps.indexOf(_currentStep);
+  int get totalSteps => activeSteps.length;
+  bool get isFirstStep => _currentStep == activeSteps.first;
+  bool get isLastStep => _currentStep == activeSteps.last;
+
+  //Detecta si el personaje es spellcaster (clase o subclase con spellCastingAbility)
+  bool get isSpellcaster =>
+    (selectedClass?.spellCastingAbility != null &&
+      selectedClass!.spellCastingAbility!.isNotEmpty) ||
+    (selectedSubclass?.spellCastingAbility != null &&
+      selectedSubclass!.spellCastingAbility!.isNotEmpty);
+
+  //Nivel máximo de spell que puede aprender según nivel del personaje
+  //Regla simplificada: ceil (characterLevel / 2), maximo 9
+  int get maxSpellLevel => isSpellcaster
+    ? ((selectedLevel / 2).ceil()).clamp(1, 9)
+    : 0;
+
+
+  // Pasos que tienen cambios pero no están completos -> muestra ⚠️
   // Solo se añade cuando el usuario modifica datos, no al navegar
   final Set<WizardStep> _dirtySteps = {};
   void _markDirty(WizardStep step) => _dirtySteps.add(step);
@@ -48,6 +78,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       case WizardStep.background: return backgroundValid;
       case WizardStep.race: return raceValid;
       case WizardStep.abilityScores: return abilityScoresValid;
+      case WizardStep.spells: return spellsValid;
     }
   }
 
@@ -57,6 +88,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   // Navega a cualquier paso libremente (sin restricciones)
   void goToStep(WizardStep target){
+    if(!activeSteps.contains(target)) return;
     _currentStep = target;
     _loadStepData();
     notifyListeners();
@@ -65,7 +97,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   void nextStep(){
     final idx = currentStepIndex;
     if (idx < totalSteps -1){
-      _currentStep = WizardStep.values[idx + 1];
+      _currentStep = activeSteps[idx + 1];
       _loadStepData();
       notifyListeners();
     }
@@ -74,7 +106,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   void previousStep(){
     final idx = currentStepIndex;
     if (idx > 0){
-      _currentStep = WizardStep.values[idx-1];
+      _currentStep = activeSteps[idx-1];
+      _loadStepData();
       notifyListeners();
     }
   }
@@ -138,7 +171,11 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void selectClass(ClassOption c) {
-    selectedClass = c; _markDirty(WizardStep.dndClass);
+    selectedClass = c;
+    //Si cambia la clase, limpiar spells seleccionados
+    selectedSpellIds.clear();
+    availableSpells.clear();
+    _markDirty(WizardStep.dndClass);
     notifyListeners();
   }
 
@@ -149,17 +186,23 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _hpRolls.clear();
     classFeatures.clear();
     subclasses.clear();
+    selectedSpellIds.clear();
+    availableSpells.clear();
     _markDirty(WizardStep.dndClass);
     notifyListeners();
   }
 
   void selectSubclass(SubclassOption s) {
-    selectedSubclass = s; _markDirty(WizardStep.dndClass);
+    selectedSubclass = s;
+    selectedSpellIds.clear();
+    availableSpells.clear();
+    _markDirty(WizardStep.dndClass);
     notifyListeners();
   }
 
   void setLevel(int level) {
-    selectedLevel = level.clamp(1,20); _markDirty(WizardStep.dndClass);
+    selectedLevel = level.clamp(1,20);
+    _markDirty(WizardStep.dndClass);
     notifyListeners();
   }
 
@@ -206,7 +249,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void selectBackground(BackgroundOption b){
-    selectedBackground = b; _markDirty(WizardStep.background);
+    selectedBackground = b;
+    _markDirty(WizardStep.background);
     notifyListeners();
   }
 
@@ -255,7 +299,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void selectRace(RaceOption r) {
-    selectedRace = r; _markDirty(WizardStep.race);
+    selectedRace = r; 
+    _markDirty(WizardStep.race);
     notifyListeners();
   }
 
@@ -330,7 +375,52 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   bool get abilityScoresValid => scoreMethod == AbilityScoreMethod.manual || allArrayValuesAssigned;
 
+
+//PASO 6: Spells (dinámico - solo si isSpellcaster)
+// ────────────────────────────────────────────────────────────
+
+  List<SpellOption> availableSpells = [];
+  final Set<int> selectedSpellIds = {};
+
+  //El paso de spells es válido si:
+  // - No es spellcaster: siempre válido (el paso no aparece)
+  // - Es spellcaster: válido aunque no haya elegido ninguno (es opcional)
+  bool get spellsValid => true;
+
+  List<SpellOption> get selectedSpells =>
+    availableSpells.where((s) => selectedSpellIds.contains(s.id)).toList();
+
+  void toggleSpell(int spellId){
+    if (selectedSpellIds.contains(spellId)){
+      selectedSpellIds.remove(spellId);
+    } else {
+      selectedSpellIds.add(spellId);
+    }
+    _markDirty(WizardStep.spells);
+    notifyListeners();
+  }
+
+  Future<void> loadAvailableSpells() async {
+    _setLoading(true);
+    _setError(null);
+    try {
+      availableSpells = await _refService.getAvailableSpells(
+        classId: selectedClass?.id,
+        subclassId: selectedSubclass?.id,
+        maxLevel: maxSpellLevel,
+      );
+    } catch(e) {
+      _setError('Error loading spells: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+
+
   // Validación global
+  // ────────────────────────────────────────────────────────────
+
   bool get canFinish =>
     preferencesValid &&
     classValid &&
@@ -341,8 +431,13 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   bool get canProceedCurrentStep => isStepCompleted(_currentStep);  
 
   //Submit
+  // ────────────────────────────────────────────────────────────
+
   bool _isSaving = false;
   bool get isSaving => _isSaving;
+
+  bool _saveSuccess = false;
+  bool get saveSuccess => _saveSuccess;
 
   int? _createdCharacterId;
   int? get createdCharacterId => _createdCharacterId;
@@ -360,8 +455,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         raceId:       selectedRace!.id,
         classId:      selectedClass!.id,
         backgroundId: selectedBackground!.id,        
-        level:        selectedLevel,        
+        level:        selectedLevel,           
         subclassId:   selectedSubclass?.id,
+        spellIds:    selectedSpellIds.toList(),     
         abilityScores: {
           'str': abilityScores['STR']!,
           'dex': abilityScores['DEX']!,
@@ -382,6 +478,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         weight: weight.isNotEmpty  ? weight  : null,
       );
       _createdCharacterId = result.id;
+      _saveSuccess = true;
     } catch (e) {
       _setError('Error saving character: $e');
     } finally {
@@ -402,6 +499,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         break;
       case WizardStep.race:
         if (races.isEmpty) loadRaces();
+        break;
+      case WizardStep.spells:
+        if (availableSpells.isEmpty) loadAvailableSpells();
         break;
       default:
         break;

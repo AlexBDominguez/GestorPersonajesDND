@@ -53,6 +53,7 @@ class CharacterService {
     String? age,
     String? height,
     String? weight,
+    List<int>? spellIds,
   }) async {
     final body = {
       'name': name,
@@ -72,6 +73,7 @@ class CharacterService {
       if (age != null && age.isNotEmpty) 'age': age,
       if (height != null && height.isNotEmpty) 'height': height,
       if (weight != null && weight.isNotEmpty) 'weight': weight,
+      if (spellIds != null && spellIds.isNotEmpty) 'spellIds': spellIds,
     };
     final res = await _api.post(ApiConfig.charactersPath, body: body);
     if (res.statusCode == 200 || res.statusCode == 201) {

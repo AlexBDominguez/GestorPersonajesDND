@@ -66,6 +66,7 @@ public class PlayerCharacterDto {
     private int passiveInsight;
     private Long userId;
     private List<CharacterSpellSummaryDto> characterSpells;
+    private List<Long> spellIds; //Ids de spells seleccionados en el wizard
     private List<SpellSlotDto> spellSlots;
     private List<CharacterSkillDto> skills;
     private List<CharacterSavingThrowDto> savingThrows;
@@ -586,12 +587,22 @@ public class PlayerCharacterDto {
         this.savingThrows = savingThrows;
     }
 
-        public List<CharacterSpellSummaryDto> getCharacterSpells() {
-            return characterSpells;
-        }
+    public List<CharacterSpellSummaryDto> getCharacterSpells() {
+        return characterSpells;
+    }
 
-        public void setCharacterSpells(List<CharacterSpellSummaryDto> characterSpells) {
-            this.characterSpells = characterSpells;
-        }
+    public void setCharacterSpells(List<CharacterSpellSummaryDto> characterSpells) {
+        this.characterSpells = characterSpells;
+    }
+
+    public List<Long> getSpellIds() {
+        return spellIds;
+    }
+
+    public void setSpellIds(List<Long> spellIds) {
+        this.spellIds = spellIds;
+    }
+
+
 
 }

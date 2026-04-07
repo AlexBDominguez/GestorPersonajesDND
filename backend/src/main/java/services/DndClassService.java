@@ -78,6 +78,7 @@ public class DndClassService {
         dto.setHitDie(dndClass.getHitDie());
         dto.setProficiencies(dndClass.getProficiencies());
         dto.setDescription(dndClass.getDescription());
+        dto.setSpellcastingAbility(dndClass.getSpellcastingAbility());
         return dto;
     }
 

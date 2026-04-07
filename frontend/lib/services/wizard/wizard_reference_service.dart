@@ -1,9 +1,9 @@
-
 import 'dart:convert';
 import 'package:gestor_personajes_dnd/config/api_config.dart';
 import 'package:gestor_personajes_dnd/models/wizard/race_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/background_option.dart';
+import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/services/http/api_client.dart';
 
 
@@ -62,5 +62,29 @@ class WizardReferenceService {
           .toList();
     }
     throw Exception('Failed to load backgrounds (${res.statusCode})');
+  }
+
+  //Hechizos disponibles para el wizard
+  //maxLevel = nivel máximo de spell que puede aprender según clase/nivel del personaje
+  Future<List<SpellOption>> getAvailableSpells({
+    int? classId,
+    int? subclassId,
+    int? maxLevel,
+  })async {
+    final params = <String, String>{};
+    if (classId != null) params['classId'] = '$classId';
+    if (subclassId != null) params['subclassId'] = '$subclassId';
+    if (maxLevel != null) params['maxLevel'] = '$maxLevel';
+
+    final query = params.isNotEmpty
+        ? '?' + params.entries.map((e) => '${e.key}=${e.value}').join('&')
+        : '';
+    final res = await _api.get('/api/spells/available$query');
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List)
+          .map((e) => SpellOption.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    throw Exception('Failed to load spells (${res.statusCode})');
   }
 }

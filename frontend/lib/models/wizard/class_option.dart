@@ -25,13 +25,15 @@ class SubclassOption{
   final String name;
   final String flavor;
   final String description;
+  final String? spellCastingAbility;
 
   const SubclassOption({
     required this.id,
     required this.indexName,
     required this.name,
     required this.flavor,
-    required this.description
+    required this.description,
+    this.spellCastingAbility,
   });
 
 
@@ -41,6 +43,7 @@ class SubclassOption{
     name: j['name'] as String,
     flavor: j['subclassFlavor'] as String? ?? '',
     description: j['description'] as String? ?? '',
+    spellCastingAbility: j['spellcastingAbility'] as String?,
   );
 }
 
@@ -51,6 +54,7 @@ class ClassOption {
   final int hitDie;
   final String description;
   final List<String> proficiencies;
+  final String? spellCastingAbility;
 
   const ClassOption({
     required this.id,
@@ -58,7 +62,8 @@ class ClassOption {
     required this.name,
     required this.hitDie,
     required this.description,
-    required this.proficiencies
+    required this.proficiencies,
+    this.spellCastingAbility,
   });
 
   factory ClassOption.fromJson(Map<String, dynamic> j) => ClassOption(
@@ -67,7 +72,8 @@ class ClassOption {
     name: j['name'] as String,
     hitDie: j['hitDie'] as int? ?? 6,
     description: j['description'] as String? ?? '',
-        proficiencies: List<String>.from(j['proficiencies'] as List? ?? []),
+    proficiencies: List<String>.from(j['proficiencies'] as List? ?? []),
+    spellCastingAbility: j['spellcastingAbility'] as String?,
   );
 
   // HP al nivel 1: hitDie + CON modifier (se calcula en el ViewModel)

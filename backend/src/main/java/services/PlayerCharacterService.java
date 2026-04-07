@@ -220,6 +220,12 @@ public class PlayerCharacterService {
 
         applyRaceSpells(saved);
 
+        if (dto.getSpellIds() != null){
+            for (Long spellId : dto.getSpellIds()){
+                addSpellToCharacter(saved.getId(), spellId, "CLASS");
+            }
+        }
+
         generateSpellSlots(saved);
         
         return toDto(saved);

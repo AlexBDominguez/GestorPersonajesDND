@@ -8,6 +8,7 @@ import 'steps/step_class.dart';
 import 'steps/step_ability_scores.dart';
 import 'steps/step_background.dart';
 import 'steps/step_preferences.dart';
+import 'steps/step_spells.dart';
 
 class CharacterCreatorScreen extends StatelessWidget {
   const CharacterCreatorScreen({super.key});
@@ -24,35 +25,39 @@ class CharacterCreatorScreen extends StatelessWidget {
 class _WizardBody extends StatelessWidget {
   const _WizardBody();
 
-  static const _stepTitles = [
-    'Prefs', 'Class', 'Background', 'Race', 'Stats',
-  ];
-  static const _stepIcons = [
-    Icons.settings_outlined, // Prefs -> settings icon
-    Icons.security_outlined, // Class -> shield icon
-    Icons.menu_book_outlined, // Background -> book icon
-    Icons.emoji_people_outlined, // Race -> person icon
-    Icons.bar_chart, // Stats -> bar chart icon
-    //Icons.fix_high_outlined, // Spells -> magic wand icon (no se usa por ahora)
-  ];
-  static const _stepWidgets = [
-    StepPreferences(),
-    StepClass(),
-    StepBackground(),
-    StepRace(),
-    StepAbilityScores(),
-  ];
+  // Metadatos por paso: título e icono
+  static const _meta = <WizardStep, ({String title, IconData icon})>{
+    WizardStep.preferences:   (title: 'Prefs',      icon: Icons.settings_outlined),
+    WizardStep.dndClass:      (title: 'Class',       icon: Icons.security_outlined),
+    WizardStep.background:    (title: 'Background',  icon: Icons.menu_book_outlined),
+    WizardStep.race:          (title: 'Race',        icon: Icons.emoji_people_outlined),
+    WizardStep.abilityScores: (title: 'Stats',       icon: Icons.bar_chart),
+    WizardStep.spells:        (title: 'Spells',      icon: Icons.auto_fix_high_outlined),
+  };
+
+  Widget _stepWidget(WizardStep step) {
+    switch (step) {
+      case WizardStep.preferences:   return const StepPreferences();
+      case WizardStep.dndClass:      return const StepClass();
+      case WizardStep.background:    return const StepBackground();
+      case WizardStep.race:          return const StepRace();
+      case WizardStep.abilityScores: return const StepAbilityScores();
+      case WizardStep.spells:        return const StepSpells();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<CharacterCreatorViewModel>();
 
-    //Cuando se crea con éxito, volver al dashboard con el ID del personaje
-    if (vm.createdCharacterId != null) {
+    // Cuando se crea con éxito, volver al dashboard
+    if (vm.saveSuccess) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pop(vm.createdCharacterId);
+        Navigator.of(context).pop(true);
       });
     }
+
+    final activeSteps = vm.activeSteps;
 
     return Scaffold(
       appBar: AppBar(
@@ -63,40 +68,35 @@ class _WizardBody extends StatelessWidget {
         ),
       ),
       body: Column(children: [
-        // Step indicator (pulsable)
+        // Step indicator (pulsable, dinámico)
         _StepIndicator(
-          steps:    WizardStep.values,
-          titles:   _stepTitles,
-          icons:    _stepIcons,
-          current:  vm.currentStepIndex,
+          steps:       activeSteps,
+          current:     vm.currentStepIndex,
+          meta:        _meta,
           isCompleted: (step) => vm.isStepCompleted(step),
           isPartial:   (step) => vm.isStepPartial(step),
-          onTap: (step) => vm.goToStep(step),
+          onTap:       (step) => vm.goToStep(step),
         ),
         const Divider(height: 1),
 
         // Step content
-        Expanded(child: _stepWidgets[vm.currentStepIndex]),
+        Expanded(child: _stepWidget(vm.currentStep)),
 
         // Error banner
         if (vm.error != null)
           Container(
             width: double.infinity,
             color: AppTheme.accent.withOpacity(0.15),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(children: [
-              const Icon(Icons.error_outline,
-                  color: AppTheme.accent, size: 18),
+              const Icon(Icons.error_outline, color: AppTheme.accent, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(vm.error!,
-                    style: GoogleFonts.lato(
-                        color: AppTheme.accent, fontSize: 13)),
+                    style: GoogleFonts.lato(color: AppTheme.accent, fontSize: 13)),
               ),
               IconButton(
-                icon: const Icon(Icons.close,
-                    color: AppTheme.accent, size: 16),
+                icon: const Icon(Icons.close, color: AppTheme.accent, size: 16),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 onPressed: vm.clearError,
@@ -115,8 +115,7 @@ class _WizardBody extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Discard character?',
             style: GoogleFonts.cinzel(color: AppTheme.primary)),
         content: Text('Your progress will be lost.',
@@ -125,13 +124,11 @@ class _WizardBody extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text('Keep editing',
-                style: GoogleFonts.lato(
-                    color: AppTheme.textSecondary)),
+                style: GoogleFonts.lato(color: AppTheme.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accent),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
             child: const Text('Discard'),
           ),
         ],
@@ -141,22 +138,20 @@ class _WizardBody extends StatelessWidget {
   }
 }
 
-// Step indicator
+// ── Step Indicator ────────────────────────────────────────────────────────────
 
 class _StepIndicator extends StatelessWidget {
   final List<WizardStep> steps;
-  final List<String> titles;
-  final List<IconData> icons;
   final int current;
+  final Map<WizardStep, ({String title, IconData icon})> meta;
   final bool Function(WizardStep) isCompleted;
   final bool Function(WizardStep) isPartial;
   final void Function(WizardStep) onTap;
 
   const _StepIndicator({
     required this.steps,
-    required this.titles,
-    required this.icons,
     required this.current,
+    required this.meta,
     required this.isCompleted,
     required this.isPartial,
     required this.onTap,
@@ -171,16 +166,12 @@ class _StepIndicator extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: List.generate(steps.length, (i) {
           final step = steps[i];
-          final done = isCompleted(step);
-          final partial = isPartial(step);
-          final isCurrent = i == current;
-
           return _StepDot(
-            title:     titles[i],
-            icon:      icons[i],
-            isDone:    done,
-            isPartial: partial,
-            isCurrent: isCurrent,
+            title:     meta[step]!.title,
+            icon:      meta[step]!.icon,
+            isDone:    isCompleted(step),
+            isPartial: isPartial(step),
+            isCurrent: i == current,
             onTap:     () => onTap(step),
           );
         }),
@@ -188,6 +179,8 @@ class _StepIndicator extends StatelessWidget {
     );
   }
 }
+
+// ── Step Dot ──────────────────────────────────────────────────────────────────
 
 class _StepDot extends StatelessWidget {
   final String title;
@@ -208,7 +201,6 @@ class _StepDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // isCurrent tiene prioridad máxima: siempre muestra el icono original
     final Color dotColor;
     final Color borderColor;
     final Color bgColor;
@@ -222,14 +214,12 @@ class _StepDot extends StatelessWidget {
       dotIcon     = icon;
       labelColor  = AppTheme.primary;
     } else if (isDone) {
-      // Tick original: fondo semi-transparente, check en dorado
       dotColor    = AppTheme.primary;
       borderColor = AppTheme.primary;
       bgColor     = AppTheme.primary.withOpacity(0.25);
       dotIcon     = Icons.check;
       labelColor  = AppTheme.primary;
     } else if (isPartial) {
-      // Warning solo cuando hay cambios sin completar Y no es la tab actual
       dotColor    = Colors.amber;
       borderColor = Colors.amber;
       bgColor     = Colors.amber.withOpacity(0.15);
@@ -261,13 +251,14 @@ class _StepDot extends StatelessWidget {
           style: GoogleFonts.lato(
             color: labelColor,
             fontSize: 10,
-            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal)),
+            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+          )),
       ]),
     );
   }
 }
 
-// Navigation buttons
+// ── Nav Buttons ───────────────────────────────────────────────────────────────
 
 class _NavButtons extends StatelessWidget {
   final CharacterCreatorViewModel vm;
@@ -275,12 +266,10 @@ class _NavButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLast = vm.isLastStep;
+    final isLast     = vm.isLastStep;
     final canProceed = vm.canProceedCurrentStep && !vm.isSaving;
 
-    // Estilo base compartido por Back y Next 
-    final sharedShape = RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10));
+    final sharedShape   = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
     const sharedPadding = EdgeInsets.symmetric(vertical: 14);
 
     return Container(
@@ -308,11 +297,10 @@ class _NavButtons extends StatelessWidget {
           const SizedBox(width: 12),
         ],
 
-        // Next / Create Character 
+        // Next / Create Character
         Expanded(
           flex: 2,
           child: Tooltip(
-            // Tooltip solo visible cuando está deshabilitado 
             message: canProceed ? '' : 'Some steps are incomplete',
             child: ElevatedButton.icon(
               onPressed: canProceed
@@ -322,19 +310,14 @@ class _NavButtons extends StatelessWidget {
                   ? const SizedBox(
                       width: 16, height: 16,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppTheme.background))
-                  : Icon(isLast ? Icons.check : Icons.arrow_forward,
-                      size: 16),
-              label: Text(isLast ? 'Create Character' : 'Next'),
+                          strokeWidth: 2, color: AppTheme.background))
+                  : Icon(isLast ? Icons.check : Icons.arrow_forward, size: 16),
+              label: Text(vm.isSaving ? 'Creating…' : isLast ? 'Create Character' : 'Next'),
               style: ElevatedButton.styleFrom(
                 shape: sharedShape,
                 padding: sharedPadding,
-                // Deshabilitado más visible
-                disabledBackgroundColor:
-                    AppTheme.surfaceVariant,
-                disabledForegroundColor:
-                    AppTheme.textSecondary,
+                disabledBackgroundColor: AppTheme.surfaceVariant,
+                disabledForegroundColor: AppTheme.textSecondary,
               ),
             ),
           ),

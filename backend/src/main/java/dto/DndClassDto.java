@@ -10,6 +10,7 @@ public class DndClassDto {
     private int hitDie;
     private List<String> proficiencies;
     private String description;
+    private String spellcastingAbility;
 
     public Long getId() {
         return id;
@@ -57,5 +58,13 @@ public class DndClassDto {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getSpellcastingAbility() {
+        return spellcastingAbility;
+    }
+
+    public void setSpellcastingAbility(String spellcastingAbility) {
+        this.spellcastingAbility = spellcastingAbility;
     }
 }
