@@ -145,8 +145,8 @@ class _AbilityCell extends StatelessWidget{
 }
 
 // Saving Throw row
-class _SavingThrowRow extends StatelessWidget{
-  final String ability;
+class _SavingThrowRow extends StatelessWidget {
+  final String ability;           // "STR", "DEX", etc. (uppercase)
   final PlayerCharacter character;
   const _SavingThrowRow({required this.ability, required this.character});
 
