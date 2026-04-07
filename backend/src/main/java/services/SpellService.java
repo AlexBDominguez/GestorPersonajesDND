@@ -34,7 +34,13 @@ public class SpellService {
     }
 
     public List<Spell> getAvailableSpells(Long classId, Long subclassId, Integer maxLevel){
-        if(maxLevel != null){
+        if (classId != null && maxLevel != null) {
+            return spellRepository.findByDndClassesIdAndLevelLessThanEqual(classId, maxLevel);
+        }
+        if (classId != null) {
+            return spellRepository.findByDndClassesId(classId);
+        }
+        if (maxLevel != null) {
             return spellRepository.findByLevelLessThanEqual(maxLevel);
         }
         return spellRepository.findAll();

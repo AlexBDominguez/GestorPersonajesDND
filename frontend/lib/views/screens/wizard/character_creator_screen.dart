@@ -163,16 +163,19 @@ class _StepIndicator extends StatelessWidget {
       color: AppTheme.surface,
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: List.generate(steps.length, (i) {
           final step = steps[i];
-          return _StepDot(
-            title:     meta[step]!.title,
-            icon:      meta[step]!.icon,
-            isDone:    isCompleted(step),
-            isPartial: isPartial(step),
-            isCurrent: i == current,
-            onTap:     () => onTap(step),
+          return Expanded(
+            child: Center(
+              child: _StepDot(
+                title:     meta[step]!.title,
+                icon:      meta[step]!.icon,
+                isDone:    isCompleted(step),
+                isPartial: isPartial(step),
+                isCurrent: i == current,
+                onTap:     () => onTap(step),
+              ),
+            ),
           );
         }),
       ),

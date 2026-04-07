@@ -80,6 +80,12 @@ public class SyncController {
         return "Classes synced";
     }
 
+    @PostMapping("/class-spells")
+    public ResponseEntity<String> syncClassSpells() {
+        dndClassSyncService.syncClassSpells();
+        return ResponseEntity.ok("Class spells synchronized!");
+    }
+
     @PostMapping("/spells")
     public String syncSpells(){
         spellSyncService.syncSpells();

@@ -16,4 +16,9 @@ public interface SpellRepository extends JpaRepository<Spell, Long> {
     List<Spell> findByLevelLessThanEqual(int maxLevel);
 
     List<Spell> findByCastingTimeContainingIgnoreCase(String castingTime);
+
+    // Filtered by class (via ManyToMany in DndClass)
+    List<Spell> findByDndClassesId(Long classId);
+
+    List<Spell> findByDndClassesIdAndLevelLessThanEqual(Long classId, int maxLevel);
 }

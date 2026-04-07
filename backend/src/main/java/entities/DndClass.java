@@ -1,7 +1,9 @@
 package entities;
 
 import jakarta.persistence.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "classes")
@@ -37,6 +39,14 @@ public class DndClass {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @ManyToMany
+    @JoinTable(
+        name = "class_spells",
+        joinColumns = @JoinColumn(name = "class_id"),
+        inverseJoinColumns = @JoinColumn(name = "spell_id")
+    )
+    private Set<Spell> spells = new HashSet<>();
 
     public DndClass(){
 
@@ -96,6 +106,14 @@ public class DndClass {
 
     public void setSavingThrows(List<String> savingThrows) {
         this.savingThrows = savingThrows;
+    }
+
+    public Set<Spell> getSpells() {
+        return spells;
+    }
+
+    public void setSpells(Set<Spell> spells) {
+        this.spells = spells;
     }
     
 }

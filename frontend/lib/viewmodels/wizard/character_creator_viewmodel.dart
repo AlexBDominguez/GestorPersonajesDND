@@ -188,6 +188,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     subclasses.clear();
     selectedSpellIds.clear();
     availableSpells.clear();
+    _spellsStepVisited = false;
     _markDirty(WizardStep.dndClass);
     notifyListeners();
   }
@@ -381,11 +382,11 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   List<SpellOption> availableSpells = [];
   final Set<int> selectedSpellIds = {};
+  // Se marca true la primera vez que el usuario llega al paso de spells
+  bool _spellsStepVisited = false;
 
-  //El paso de spells es válido si:
-  // - No es spellcaster: siempre válido (el paso no aparece)
-  // - Es spellcaster: válido aunque no haya elegido ninguno (es opcional)
-  bool get spellsValid => true;
+  //El paso de spells es válido sólo si el usuario lo ha visitado
+  bool get spellsValid => _spellsStepVisited;
 
   List<SpellOption> get selectedSpells =>
     availableSpells.where((s) => selectedSpellIds.contains(s.id)).toList();
@@ -501,6 +502,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         if (races.isEmpty) loadRaces();
         break;
       case WizardStep.spells:
+        _spellsStepVisited = true;
         if (availableSpells.isEmpty) loadAvailableSpells();
         break;
       default:

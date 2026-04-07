@@ -33,6 +33,9 @@ public class Spell {
 
     @OneToMany(mappedBy = "spell")
     private Set<CharacterSpell> characterSpells = new HashSet<>();
+
+    @ManyToMany(mappedBy = "spells")
+    private Set<DndClass> dndClasses = new HashSet<>();
     
 
     // Constructors

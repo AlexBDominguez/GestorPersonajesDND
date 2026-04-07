@@ -4,6 +4,7 @@ import entities.ClassFeature;
 import entities.ClassLevelFeature;
 import entities.ClassLevelProgression;
 import entities.DndClass;
+import entities.Spell;
 import entities.SpellSlotProgression;
 import enumeration.FeatureType;
 import jakarta.transaction.Transactional;
@@ -14,17 +15,21 @@ import repositories.ClassFeatureRepository;
 import repositories.ClassLevelFeatureRepository;
 import repositories.ClassLevelProgressionRepository;
 import repositories.DndClassRepository;
+import repositories.SpellRepository;
 import repositories.SpellSlotProgressionRepository;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class DndClassSyncService {
 
     private final RestTemplate restTemplate;
     private final DndClassRepository repository;
+    private final SpellRepository spellRepository;
     private final SpellSlotProgressionRepository slotProgressionRepository;
     private final ClassFeatureRepository classFeatureRepository;
     private final ClassLevelProgressionRepository classLevelProgressionRepository;
@@ -34,12 +39,14 @@ public class DndClassSyncService {
 
     public DndClassSyncService(RestTemplate restTemplate, 
                                 DndClassRepository repository,
+                                SpellRepository spellRepository,
                                 SpellSlotProgressionRepository slotProgressionRepository,
                                 ClassFeatureRepository classFeatureRepository,
                                 ClassLevelProgressionRepository classLevelProgressionRepository,
                                 ClassLevelFeatureRepository classLevelFeatureRepository) {
         this.restTemplate = restTemplate;
         this.repository = repository;
+        this.spellRepository = spellRepository;
         this.slotProgressionRepository = slotProgressionRepository;
         this.classFeatureRepository = classFeatureRepository;
         this.classLevelProgressionRepository = classLevelProgressionRepository;
@@ -448,5 +455,45 @@ public class DndClassSyncService {
     private int getRangerSpellsKnown(int level) {
         int[] table = {0, 0, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11};
         return level >= 0 && level < table.length ? table[level] : 0;
+    }
+
+    // Sincroniza la lista de hechizos disponibles para cada clase spellcaster
+    @Transactional
+    public void syncClassSpells() {
+        System.out.println("=== Starting class-spell synchronization ===");
+
+        List<DndClass> classes = repository.findAll();
+        for (DndClass dndClass : classes) {
+            if (dndClass.getSpellcastingAbility() == null) {
+                System.out.println("Skipping non-spellcaster: " + dndClass.getName());
+                continue;
+            }
+
+            String url = "https://www.dnd5eapi.co/api/classes/" + dndClass.getIndexName() + "/spells";
+            ApiRateLimiter.waitBetweenRequests();
+
+            try {
+                Map response = restTemplate.getForObject(url, Map.class);
+                if (response == null) continue;
+
+                List<Map<String, Object>> results =
+                    (List<Map<String, Object>>) response.get("results");
+                if (results == null) continue;
+
+                Set<Spell> classSpells = new HashSet<>();
+                for (Map<String, Object> spellRef : results) {
+                    String spellIndex = (String) spellRef.get("index");
+                    spellRepository.findByIndexApi(spellIndex).ifPresent(classSpells::add);
+                }
+
+                dndClass.setSpells(classSpells);
+                repository.save(dndClass);
+                System.out.println("✓ Synced " + classSpells.size() + " spells for " + dndClass.getName());
+            } catch (Exception e) {
+                System.err.println("Failed to sync spells for " + dndClass.getName() + ": " + e.getMessage());
+            }
+        }
+
+        System.out.println("=== Class-spell sync completed! ===");
     }
 }

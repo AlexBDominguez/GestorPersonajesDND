@@ -83,7 +83,7 @@ class _StepSpellsState extends State<StepSpells> {
 
           //BUscador -------------
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: TextField(
               controller: _searchCtrl,
               onChanged: (_) => setState(() {}),
@@ -105,10 +105,10 @@ class _StepSpellsState extends State<StepSpells> {
 
           //Filtro por nivel -------------
           SizedBox(
-            height: 44,
+            height: 36,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               itemCount: sortedLevels.length,
               separatorBuilder: (_, __) => const SizedBox(width: 6),
               itemBuilder: (_, i) {
