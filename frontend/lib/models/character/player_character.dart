@@ -1,6 +1,7 @@
 import 'package:gestor_personajes_dnd/models/character/character_skill.dart';
 import 'package:gestor_personajes_dnd/models/character/spell_slot.dart';
 import 'package:gestor_personajes_dnd/models/character/character_saving_throw.dart';
+import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 
 class PlayerCharacter{
   final int id;
@@ -58,7 +59,7 @@ class PlayerCharacter{
   final List<SpellSlot> spellSlots;
   final List<CharacterSkill> skills;
   final List<CharacterSavingThrow> savingThrows;
-
+  final List<CharacterSpell> characterSpells;
 
   const PlayerCharacter({
     required this.id,
@@ -116,6 +117,7 @@ class PlayerCharacter{
     this.spellSlots = const [],
     this.skills = const [],
     this.savingThrows = const [],
+    this.characterSpells = const [],
   });
 
   factory PlayerCharacter.fromJson(Map<String, dynamic> j) {
@@ -186,6 +188,9 @@ class PlayerCharacter{
       savingThrows:        (j['savingThrows'] as List<dynamic>? ?? [])
                                 .map((e) => CharacterSavingThrow.fromJson(e as Map<String, dynamic>))
                                 .toList(),
+      characterSpells:     (j['characterSpells'] as List<dynamic>? ?? [])
+                               .map((e) => CharacterSpell.fromJson(e as Map<String, dynamic>))
+                               .toList(),
     );
   }
 

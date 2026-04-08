@@ -50,10 +50,10 @@ class _WizardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.watch<CharacterCreatorViewModel>();
 
-    // Cuando se crea con éxito, volver al dashboard
+    // Cuando se crea con éxito, volver al dashboard con el ID del personaje
     if (vm.saveSuccess) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pop(true);
+        Navigator.of(context).pop(vm.createdCharacterId);
       });
     }
 

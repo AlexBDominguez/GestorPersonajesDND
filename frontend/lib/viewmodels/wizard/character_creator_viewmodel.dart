@@ -64,6 +64,103 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     ? ((selectedLevel / 2).ceil()).clamp(1, 9)
     : 0;
 
+  // Límite de selección de hechizos ------------
+  // Cantrips conocidos según clase y nivel (tablas PHB exactas 2014)
+  int get maxCantrips {
+    if (!isSpellcaster) return 0;
+    final level = selectedLevel;
+    final className = selectedClass?.name.toLowerCase() ?? '';
+
+    if (className.contains('wizard')) {
+      const table = [0, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5];
+      return table[level.clamp(0, 20)];
+    }
+    if (className.contains('sorcerer')) {
+      const table = [0, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6];
+      return table[level.clamp(0, 20)];
+    }
+    if (className.contains('bard')) {
+      const table = [0, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4];
+      return table[level.clamp(0, 20)];
+    }
+    if (className.contains('cleric')) {
+      const table = [0, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5];
+      return table[level.clamp(0, 20)];
+    }
+    if (className.contains('druid')) {
+      const table = [0, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4];
+      return table[level.clamp(0, 20)];
+    }
+    if (className.contains('warlock')) {
+      const table = [0, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4];
+      return table[level.clamp(0, 20)];
+    }
+    
+    // Eldritch Knight / Arcane Trickster: Empiezan con 2, suben a 3 al nivel 10
+    if (selectedSubclass?.spellCastingAbility != null) {
+      return level >= 10 ? 3 : 2;
+    }
+    
+    return 0; 
+  }
+
+  // Spells conocidos/preparados según clase y nivel
+  int get maxSpellsKnown {
+    if (!isSpellcaster) return 0;
+    final level = selectedLevel;
+    final className = selectedClass?.name.toLowerCase() ?? '';
+
+    // 1. Clases de "Conocidos" (Tablas fijas)
+    if (className.contains('sorcerer')) {
+      const table = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12, 13, 13, 14, 14, 15, 15, 15, 15];
+      return table[level.clamp(0, 20)];
+    }
+    if (className.contains('bard')) {
+      // Incluye Secretos Mágicos en niveles 10, 14 y 18
+      const table = [0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 15, 16, 18, 19, 19, 20, 22, 22, 22];
+      return table[level.clamp(0, 20)];
+    }
+    if (className.contains('warlock')) {
+      const table = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15];
+      return table[level.clamp(0, 20)];
+    }
+    if (className.contains('ranger')) {
+      if (level < 2) return 0; // No tienen hechizos a nivel 1
+      const table = [0, 0, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11];
+      return table[level.clamp(0, 20)];
+    }
+
+    // 2. Clases de "Preparación" (Modificador + Nivel)
+    if (className.contains('wizard')) {
+      return (abilityModifier('INT') + level).clamp(1, 99);
+    }
+    if (className.contains('cleric') || className.contains('druid')) {
+      return (abilityModifier('WIS') + level).clamp(1, 99);
+    }
+    if (className.contains('paladin')) {
+      if (level < 2) return 0; // No preparan hechizos a nivel 1
+      // Half-caster: Nivel/2 (abajo) + Modificador
+      return ((level / 2).floor() + abilityModifier('CHA')).clamp(1, 99);
+    }
+
+    // 3. Subclases (Eldritch Knight / Arcane Trickster)
+    if (selectedSubclass?.spellCastingAbility != null) {
+      const table = [0, 0, 0, 3, 4, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10, 10, 11, 11, 11, 12, 13];
+      return table[level.clamp(0, 20)];
+    }
+
+    return 0;
+  }
+
+  // Cuántos cantrips y spells lleva seleccionados
+  int get selectedCantripCount =>
+      availableSpells.where((s) => selectedSpellIds.contains(s.id) && s.isCantrip).length;
+  int get selectedSpellCount =>
+      availableSpells.where((s) => selectedSpellIds.contains(s.id) && !s.isCantrip).length;
+
+  bool get cantripLimitReached => selectedCantripCount >= maxCantrips;
+  bool get spellLimitReached => selectedSpellCount >= maxSpellsKnown;
+
 
   // Pasos que tienen cambios pero no están completos -> muestra ⚠️
   // Solo se añade cuando el usuario modifica datos, no al navegar

@@ -224,9 +224,9 @@ class _SheetHeader extends StatelessWidget{
         children: [
           // AC en escudo
           _ShieldAC(ac: c.armorClass),
-          _StatPill(label: 'Init', value: initLabel),
+          _StatPill(label: 'Initiative', value: initLabel),
           _StatPill(label: 'Speed', value: '${c.currentSpeed}'),
-          _StatPill(label: 'Prof', value: profLabel),
+          _StatPill(label: 'Proficiency', value: profLabel),
           // HP tappable
           GestureDetector(
             onTap: () => _showManageHpModal(context),

@@ -55,8 +55,9 @@ class AuthViewModel extends ChangeNotifier {
       );
 
       _isLoggedIn = true;
-    }catch (e){
-      _setErrorMessage(e.toString());
+    } catch (e) {
+      final msg = e.toString();
+      _setErrorMessage(msg.startsWith('Exception: ') ? msg.substring(11) : msg);
       _isLoggedIn = false;
     }finally {
       _setLoading(false);
