@@ -116,6 +116,59 @@ class CharacterService {
       if(res.statusCode == 403) throw Exception('Access denied');
       if(res.statusCode == 404) throw Exception('Character not found');
       throw Exception('Failed to delete character (${res.statusCode})');
-    }   
+    }
+
+
+    // PATCH toggle prepare/unprepare spell
+    Future<void> togglePrepareSpell({
+      required int characterId,
+      required int spellId,
+    }) async {
+      final res = await _api.patch(
+        '${ApiConfig.charactersPath}/$characterId/spells/$spellId/prepare',
+      );
+      if (res.statusCode == 204) return;
+      if (res.statusCode == 400) throw Exception('res.body');
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      if (res.statusCode == 404) throw Exception('Spell not found on character');
+      
+      throw Exception('Failed to toggle prepare (${res.statusCode})');
+    }
+
+    // DELETE spell del personaje
+    Future<void>removeSpell({
+      required int characterId,
+      required int spellId,
+    }) async {
+      final res = await _api.delete(
+        '${ApiConfig.charactersPath}/$characterId/spells/$spellId',
+      );
+      if (res.statusCode == 204) return;
+      if (res.statusCode == 400) throw Exception('res.body');
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      if (res.statusCode == 404) throw Exception('Spell not found on character');
+      
+      throw Exception('Failed to remove spell (${res.statusCode})');
+    }
+
+    //POST usar un slot por nivel (botón CAST sin spellId)
+    Future<void> useSpellSlot({
+      required int characterId,
+      required int level,
+    }) async {
+      if (level == 0) return; //cantrips no usan slots
+      final res = await _api.post(
+        '${ApiConfig.charactersPath}/$characterId/spell-slots/$level/use',
+      );
+      if (res.statusCode == 204) return;
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      if (res.statusCode == 404) throw Exception('No slots for level $level');
+      if (res.statusCode == 409) throw Exception('No slots available for level $level');
+
+      throw Exception('Failed to use spell slot (${res.statusCode})');
+    }
 }
 

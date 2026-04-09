@@ -10,9 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
 import services.PlayerCharacterService;
-
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
@@ -96,13 +94,24 @@ public class PlayerCharacterController {
     }
 
     @PostMapping("/{characterId}/spells/{spellId}/prepare")
-    public void prepareSpell(
+    public ResponseEntity<Void> togglePrepareSpell(
         @PathVariable Long characterId,
         @PathVariable Long spellId) {
 
-        verifyCharacterOwnership(characterId);
-        playerCharacterService.prepareSpell(characterId, spellId);
-    }
+            verifyCharacterOwnership(characterId);
+            playerCharacterService.togglePrepareSpell(characterId, spellId);
+            return ResponseEntity.noContent().build();
+        }
+
+    @DeleteMapping("/{characterId}/spells/{spellId}")
+    public ResponseEntity<Void> removeSpellFromCharacter(
+        @PathVariable Long characterId,
+        @PathVariable Long spellId) {
+            verifyCharacterOwnership(characterId);
+            playerCharacterService.removeSpellFromCharacter(characterId, spellId);
+            return ResponseEntity.noContent().build();
+        }    
+    
 
     @PostMapping("/{characterId}/spells/{spellId}/cast")
     public void castSpell(
@@ -112,6 +121,15 @@ public class PlayerCharacterController {
         verifyCharacterOwnership(characterId);
         playerCharacterService.castSpell(characterId, spellId);
     }
+
+    @PostMapping("/{characterId}/spell-slots/{level}/use")
+    public ResponseEntity<Void> useSpellSlot(
+        @PathVariable Long characterId,
+        @PathVariable int level) {
+            verifyCharacterOwnership(characterId);
+            playerCharacterService.useSpellSlot(characterId, level);
+            return ResponseEntity.noContent().build();
+        }            
 
     @PostMapping("/{id}/level-up")
     public ResponseEntity<String> levelUp(@PathVariable Long id){

@@ -49,4 +49,12 @@ class ApiClient{
   Future<http.Response> delete(String path) async {
     return http.delete(_uri(path), headers: await _buildHeaders());
   }
+
+  Future<http.Response> patch(String path, {Object? body}) async {
+    return http.patch(
+      _uri(path),
+      headers: await _buildHeaders(),
+      body: body == null ? null : jsonEncode(body),
+    );
+  }
 }

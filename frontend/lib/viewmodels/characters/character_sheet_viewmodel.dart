@@ -68,16 +68,56 @@ class CharacterSheetViewModel extends ChangeNotifier {
   int availableSlots(int level) => (maxSlots(level) -
       usedSlots(level)).clamp(0,99);
 
-  //Consume un slot del nivel dado. Devuelve false si no hay slots disponibles
-  bool castSpell(int level) {
-    if (level == 0) return true; // cantrips no consumen slots
-    final available = availableSlots(level);
-    if (available <= 0) return false;
+  // Consume un slot del nivel dado y lo persiste en el backend
+  // Devuelve false si no hay slots disponibles.
+  Future<bool> castSpell(int level) async {
+    if (level == 0) return true; //cantrips: siempre disponibles, sin llamada
+    if (availableSlots(level) <= 0) return false;
+
+    //Optimistic update = es decir:
+    //actualizar el estado local antes de la respuesta del backend para una UI más fluida
     _usedSlots[level] = usedSlots(level) + 1;
     notifyListeners();
-    //TODO: persistir al backend con PATCH /characters/{id}/spellSlots
+    try{
+      await _service.useSpellSlot(
+        characterId: characterId, 
+        level: level);
+    } catch (_) {
+      //Rollback si el backend falla
+      _usedSlots[level] = usedSlots(level) - 1;
+      notifyListeners();
+      return false;
+    }
     return true;
   }
+
+    //Toggle prepare y recarga la ficha para reflejar el cambio
+    Future<void> togglePrepareSpell(int spellId) async{
+      try {
+        await _service.togglePrepareSpell(
+          characterId: characterId, 
+          spellId: spellId,
+          );
+          await load(); //recargar para sincronizar
+      } catch (e) {
+        _errorMessage = e.toString().replaceFirst('Exception', '');
+        notifyListeners();
+      }
+    }
+
+    // Eliminar spell y recargar
+    Future<void> removeSpell(int spellId) async {
+      try {
+        await _service.removeSpell(
+          characterId: characterId, 
+          spellId: spellId,
+          );
+          await load();
+      } catch (e) {
+        _errorMessage = e.toString().replaceFirst('Exception', '');
+        notifyListeners();
+      }      
+    }
 
   //Restaura todos los slots (Short/Long Rest)
   void restoreAllSlots(){

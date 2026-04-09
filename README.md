@@ -1,4 +1,4 @@
-# DungeonScroll (nombre temporal)
+# DungeonScroll 
 
 Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot, MySQL y Flutter.
 
@@ -877,26 +877,28 @@ curl -X POST http://localhost:8081/api/sync/spells
 ```bash
 curl -X POST http://localhost:8081/api/characters \
   -H "Content-Type: application/json" \
+  curl -X POST http://localhost:8081/api/characters \
+  -H "Content-Type: application/json" \
   -d '{
-    "name": "Thorin Escudo de Roble",
+    "name": "Cloud Strife",
     "level": 1,
-    "raceId": 3,
-    "dndClassId": 2,
-    "backgroundId": 5,
+    "raceId": 1,
+    "dndClassId": 1,
+    "backgroundId": 3,
     "abilityScores": {
-      "str": 16,
-      "dex": 12,
-      "con": 15,
-      "int": 8,
-      "wis": 13,
+      "str": 18,
+      "dex": 14,
+      "con": 17,
+      "int": 15,
+      "wis": 11,
       "cha": 10
     },
-    "maxHp": 12,
-    "currentHp": 12,
-    "personalityTrait1": "Siempre busco la manera más directa de hacer las cosas",
-    "ideal": "Honor. Si deshonro a mí mismo, deshonro a todo mi clan",
-    "bond": "Debo limpiar el nombre de mi familia",
-    "flaw": "Tengo problemas para confiar en los miembros de otras razas"
+    "maxHp": 13,
+    "currentHp": 13,
+    "personalityTrait1": "Actúo frío y distante, pero me importa más de lo que aparento",
+    "ideal": "Identidad. Quiero descubrir quién soy realmente",
+    "bond": "Mis compañeros son mi verdadera fuerza",
+    "flaw": "Dudo de mí mismo y de mis recuerdos"
   }'
 ```
 

@@ -12,6 +12,10 @@ class CharacterSpell {
   final bool prepared;
   final bool learned;
   final String? spellSource; // "CLASS", "SUBCLASS", "RACE", "FEAT"
+  final String? attackType;  // "ranged", "melee", or null (save)
+  final String? dcType;      // "DEX", "CON", etc. or null (attack)
+  final String? damageType;  // "Fire", "Cold", etc.
+  final String? damageBase;  // "8d6", "1d10", etc.
 
 
   const CharacterSpell({
@@ -28,6 +32,10 @@ class CharacterSpell {
     required this.prepared,
     required this.learned,
     this.spellSource,
+    this.attackType,
+    this.dcType,
+    this.damageType,
+    this.damageBase,
   });
 
   bool get isCantrip => level == 0;
@@ -57,5 +65,9 @@ class CharacterSpell {
     prepared: j['prepared'] as bool? ?? false,
     learned: j['learned'] as bool? ?? false,
     spellSource: j['spellSource'] as String?,
+    attackType: j['attackType'] as String?,
+    dcType: j['dcType'] as String?,
+    damageType: j['damageType'] as String?,
+    damageBase: j['damageBase'] as String?,
   );
 }

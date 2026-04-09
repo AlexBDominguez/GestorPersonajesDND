@@ -30,6 +30,13 @@ public class Spell {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    // Extended combat data (from dnd5eapi)
+    private String attackType;   // "ranged", "melee", or null (save-based)
+    private String dcType;       // "DEX", "CON", etc., or null (attack-based)
+    private String damageType;   // "Fire", "Cold", etc.
+    private String damageBase;   // base damage: "8d6", "1d10", etc.
+    private boolean extendedDataSynced = false;
+
 
     @OneToMany(mappedBy = "spell")
     private Set<CharacterSpell> characterSpells = new HashSet<>();
@@ -137,4 +144,19 @@ public class Spell {
         public void setDescription(String description) {
             this.description = description;
         }
+
+        public String getAttackType() { return attackType; }
+        public void setAttackType(String attackType) { this.attackType = attackType; }
+
+        public String getDcType() { return dcType; }
+        public void setDcType(String dcType) { this.dcType = dcType; }
+
+        public String getDamageType() { return damageType; }
+        public void setDamageType(String damageType) { this.damageType = damageType; }
+
+        public String getDamageBase() { return damageBase; }
+        public void setDamageBase(String damageBase) { this.damageBase = damageBase; }
+
+        public boolean isExtendedDataSynced() { return extendedDataSynced; }
+        public void setExtendedDataSynced(boolean extendedDataSynced) { this.extendedDataSynced = extendedDataSynced; }
 }

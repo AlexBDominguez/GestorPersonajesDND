@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
-import 'package:gestor_personajes_dnd/models/character/spell_slot.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+// Column widths shared between level header and spell rows
+const double _kHitDcW  = 62.0;
+const double _kDmgW    = 80.0;
+const double _kColGap  =  8.0;
+const double _kCastPad = 10.0;
+const double _kCastW   = 54.0;
 
 class TabSpells extends StatelessWidget{
   final PlayerCharacter character;
@@ -79,9 +85,6 @@ class _SpellStatsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = character;
-    final abilityShort = vm.spellcastingAbility;
-    final abilityFull  = CharacterSheetViewModel.abilityFull[abilityShort] ?? abilityShort;
-    final abilityMod   = c.modifier(abilityShort);
 
     return Container(
       color: AppTheme.surfaceVariant.withOpacity(0.4),
@@ -90,27 +93,18 @@ class _SpellStatsHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _StatPill(
-            top: abilityShort,
-            mid: vm.signedInt(abilityMod),
-            bottom: abilityFull,
+            label: 'SAVE DC',
+            value: '${c.spellSaveDC}',
           ),
           _VertDivider(),
           _StatPill(
-            top: 'SAVE DC',
-            mid: '${c.spellSaveDC}',
-            bottom: 'Difficulty',
+            label: 'ATTACK',
+            value: vm.signedInt(c.spellAttackBonus),
           ),
           _VertDivider(),
           _StatPill(
-            top: 'ATTACK',
-            mid: vm.signedInt(c.spellAttackBonus),
-            bottom: 'Spell Attack',
-          ),
-          _VertDivider(),
-          _StatPill(
-            top: 'PREPARED',
-            mid: '${c.characterSpells.where((s) => s.prepared && !s.isCantrip).length}/${c.maxPreparedSpells}',
-            bottom: 'Spells',
+            label: 'PREPARED',
+            value: '${c.characterSpells.where((s) => s.prepared && !s.isCantrip).length}/${c.maxPreparedSpells}',
           ),
         ],
       ),
@@ -119,30 +113,26 @@ class _SpellStatsHeader extends StatelessWidget {
 }
 
 class _StatPill extends StatelessWidget {
-  final String top;
-  final String mid;
-  final String bottom;
-  const _StatPill({required this.top, required this.mid, required this.bottom});
+  final String label;
+  final String value;
+  const _StatPill({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(top,
+          Text(value,
+              style: GoogleFonts.cinzel(
+                  color: AppTheme.primary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
+          Text(label,
               style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
                   fontSize: 9,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5)),
-          const SizedBox(height: 2),
-          Text(mid,
-              style: GoogleFonts.cinzel(
-                  color: AppTheme.primary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold)),
-          Text(bottom,
-              style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary, fontSize: 9)),
         ],
       );
 }
@@ -190,32 +180,39 @@ class _SpellLevelSection extends StatelessWidget {
                 color: AppTheme.primary,
                 fontSize: 13,
                 fontWeight: FontWeight.bold)),
-        const SizedBox(width: 8),
-        const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
         if (!isCantrip && maxSl > 0) ...[
           const SizedBox(width: 8),
           _SlotTracker(used: usedSl, max: maxSl),
         ],
+        const SizedBox(width: 8),
+        const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
+        if (!isCantrip) ...[
+          const SizedBox(width: _kColGap),
+          SizedBox(
+            width: _kHitDcW,
+            child: Text('HIT / DC',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.lato(
+                    color: AppTheme.textSecondary,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5)),
+          ),
+          const SizedBox(width: _kColGap),
+          SizedBox(
+            width: _kDmgW,
+            child: Text('DAMAGE',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.lato(
+                    color: AppTheme.textSecondary,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5)),
+          ),
+          const SizedBox(width: _kCastPad + _kCastW),
+        ],
       ]),
       const SizedBox(height: 6),
-
-      // B. Fila de etiquetas
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Row(children: [
-          _LabelCell('NAME', flex: 3),
-          const SizedBox(width: 6),
-          _LabelCell('TIME', flex: 1),
-          const SizedBox(width: 6),
-          _LabelCell('RANGE', flex: 1),
-          const SizedBox(width: 6),
-          _LabelCell('HIT/DC', flex: 1),
-          const SizedBox(width: 6),
-          _LabelCell('EFFECT', flex: 2),
-          const SizedBox(width: 52), //espacio para el botón CAST
-        ]),
-      ),
-      const Divider (height: 8, color: AppTheme.divider),
 
       // C. Filas de hechizos
       ...spells.map((spell) => _SpellRow(
@@ -253,25 +250,6 @@ class _SlotTracker extends StatelessWidget {
 }
 
 
-// - Label Cell
-
-class _LabelCell extends StatelessWidget {
-  final String text;
-  final int flex;
-  const _LabelCell(this.text, {required this.flex});
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-    flex: flex,
-    child: Text(text,
-        style: GoogleFonts.lato(
-            color: AppTheme.textSecondary,
-            fontSize: 9,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5)),
-  );
-}
-
 // - Spell Row
 class _SpellRow extends StatelessWidget {
   final CharacterSpell spell;
@@ -283,50 +261,40 @@ class _SpellRow extends StatelessWidget {
     required this.level,
   });
 
-  // Extrae abreviatura de casting time:
-  // "1 action" -> "1A", "1 bonus action" -> "1BA", "1 reaction" -> "1R", etc.
-  String _shortTime(String? ct){
-    if (ct == null) return '--';
+  String _shortTime(String? ct) {
+    if (ct == null) return '';
     final l = ct.toLowerCase();
-    if (l.contains('bonus')) return 'BA';
-    if (l.contains('reaction')) return 'R';
-    if (l.contains('1 action') || l == 'action') return '1A';
-    if(l.contains('minute')) {
+    if (l.contains('bonus')) return 'Bonus';
+    if (l.contains('reaction')) return 'Reaction';
+    if (l.contains('1 action') || l == 'action') return 'Action';
+    if (l.contains('minute')) {
       final m = RegExp(r'(\d+)').firstMatch(l)?.group(1) ?? '1';
-      return '${m}M';
+      return '${m}m';
     }
-    return ct.length > 3 ? ct.substring(0, 3) : ct;
+    return ct;
   }
 
-  // Extrae rango corto: "30 feet" -> "30 ft"
   String _shortRange(String? r) {
-    if (r == null) return '--';
+    if (r == null) return '';
     return r.replaceAll(' feet', 'ft').replaceAll(' foot', 'ft');
   }
 
-    // Hit/DC: si tiene attack bonus lo muestra, si no "--"
   String _hitDc(CharacterSpell s) {
-    // Por ahora mostramos DC si tiene save, o el ataque si no
-    // Cuando tengamos más datos del spell podemos refinar esto
-    return '--';
+    if (s.attackType != null && s.attackType!.isNotEmpty) {
+      return vm.signedInt(vm.character?.spellAttackBonus ?? 0);
+    }
+    if (s.dcType != null && s.dcType!.isNotEmpty) {
+      return '${s.dcType} DC ${vm.character?.spellSaveDC ?? 0}';
+    }
+    return '';
   }
 
-  //Effect: usamos la escuela como resumen
-  String _effect(CharacterSpell s) {
-    final school = s.school;
-    if(school == null) return '--';
-    //Abreviatura de la escuela
-    const abrr = {
-      'Abjuration': 'Protect',
-      'Conjuration': 'Summon',
-      'Divination': 'Info',
-      'Enchantment': 'Charm',
-      'Evocation': 'Damage',
-      'Illusion': 'Trick',
-      'Necromancy': 'Necro',
-      'Transmutation': 'Transform',
-    };
-    return abrr[school] ?? school;
+  String _damage(CharacterSpell s) {
+    final base = s.damageBase;
+    final type = s.damageType;
+    if (base == null || base.isEmpty) return '';
+    if (type == null || type.isEmpty) return base;
+    return '$base $type';
   }
 
   @override
@@ -338,105 +306,86 @@ class _SpellRow extends StatelessWidget {
     return InkWell(
       onTap: () => _showDetail(context),
       borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-
-              //Nombre
-              Expanded(
-                flex: 3,
-                child: Row(children: [
-                  //Dot de prepared
-                  if (!isCantrip)
-                  Icon(
-                    spell.prepared ? Icons.bookmark : Icons.bookmark_border,
-                    size: 11,
-                    color: spell.prepared
-                        ? AppTheme.primary
-                        : AppTheme.divider,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Color(0xFF2A2A4A), width: 0.5),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Name + stats (fills available space)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    spell.name,
+                    style: GoogleFonts.lato(
+                      color: canCast ? AppTheme.textPrimary : AppTheme.textSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                if (!isCantrip) const SizedBox(width: 4),
-                Expanded(
-                  child: Text(spell.name,
-                      style: GoogleFonts.lato(
-                        color: AppTheme.textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600),
-                        overflow: TextOverflow.ellipsis),
-                      ),
-                ]),
+                  const SizedBox(height: 4),
+                  _StatsLine(
+                    time: _shortTime(spell.castingTime),
+                    range: _shortRange(spell.range),
+                    school: spell.school,
+                  ),
+                ],
               ),
-              const SizedBox(width: 6),
-              //Time
-              Expanded(
-                flex: 1,
-                child: Text(_shortTime(spell.castingTime),
-                    style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary, fontSize: 11)),
-              ),
-              const SizedBox(width: 6),
-              //Range
-              Expanded(
-                flex: 1,
-                child: Text(_shortRange(spell.range),
-                    style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary, fontSize: 11)),
-              ),
-              const SizedBox(width: 6),
-              //Hit/DC
-              Expanded(
-                flex: 1,
-                child: Text(_hitDc(spell),
-                    style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary, fontSize: 11)),
-              ),
-              const SizedBox(width: 6),
-              // Effect
-              Expanded(
-               flex: 2,
-                child: Text(_effect(spell),
-                style: GoogleFonts.lato(
-                    color: AppTheme.textSecondary, fontSize: 11),
-                overflow: TextOverflow.ellipsis),
-              ),
-              
-              //Botón Cast
+            ),
+            // Aligned data columns + CAST button for leveled spells
+            if (!isCantrip) ...[
+              const SizedBox(width: _kColGap),
               SizedBox(
-                width: 52,
-                child: OutlinedButton(
-                  onPressed: canCast
-                      ? () {
-                        final ok = vm.castSpell(level);
-                        if (!ok) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('No spell slots available for level $level'),
-                            backgroundColor: AppTheme.accent,
-                            duration: const Duration(seconds: 2),
-                          ));
-                        }
-                      }
-                      : null,
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    minimumSize: const Size(44, 26),
-                    foregroundColor: AppTheme.primary,
-                    disabledForegroundColor: AppTheme.divider,
-                    side: BorderSide(
-                      color: canCast ? AppTheme.primary : AppTheme.divider,
-                      width: 1,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+                width: _kHitDcW,
+                child: Text(
+                  _hitDc(spell),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.lato(
+                    color: const Color(0xFFC8A45A),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                   ),
-                  child: Text('CAST',
-                      style: GoogleFonts.cinzel(
-                        fontSize: 9, fontWeight: FontWeight.bold)),
                 ),
-              ),              
-            ]),
+              ),
+              const SizedBox(width: _kColGap),
+              SizedBox(
+                width: _kDmgW,
+                child: Text(
+                  _damage(spell),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.lato(
+                    color: const Color(0xFFCB7A48),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: _kCastPad),
+              _CastButton(
+                canCast: canCast,
+                onCast: () async {
+                  final ok = await vm.castSpell(level);
+                  if (!ok && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('No spell slots available for level $level'),
+                      backgroundColor: AppTheme.accent,
+                      duration: const Duration(seconds: 2),
+                    ));
+                  }
+                },
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -508,6 +457,88 @@ class _SpellRow extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Stat chips second line ───────────────────────────────────────────────────
+class _StatsLine extends StatelessWidget {
+  final String time;
+  final String range;
+  final String? school;
+  const _StatsLine({
+    required this.time,
+    required this.range,
+    this.school,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const Color _sep = Color(0xFF3A3A5A);
+    const Color _dim = Color(0xFF9E9282);
+
+    final spans = <InlineSpan>[];
+
+    void add(String v, Color color) {
+      if (v.isEmpty) return;
+      if (spans.isNotEmpty) {
+        spans.add(const TextSpan(
+          text: '  ·  ',
+          style: TextStyle(color: _sep, fontSize: 11, height: 1.4),
+        ));
+      }
+      spans.add(TextSpan(
+        text: v,
+        style: TextStyle(color: color, fontSize: 11, height: 1.4,
+            fontFamily: 'Lato'),
+      ));
+    }
+
+    add(time, _dim);
+    add(range, _dim);
+
+    if (spans.isEmpty) {
+      spans.add(TextSpan(
+        text: school ?? '—',
+        style: const TextStyle(color: _dim, fontSize: 11, height: 1.4,
+            fontFamily: 'Lato'),
+      ));
+    }
+
+    return RichText(
+      overflow: TextOverflow.ellipsis,
+      text: TextSpan(children: spans),
+    );
+  }
+}
+
+// ── Cast button ───────────────────────────────────────────────────────────────
+class _CastButton extends StatelessWidget {
+  final bool canCast;
+  final Future<void> Function() onCast;
+  const _CastButton({required this.canCast, required this.onCast});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 54,
+    height: 32,
+    child: OutlinedButton(
+      onPressed: canCast ? () => onCast() : null,
+      style: OutlinedButton.styleFrom(
+        padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        foregroundColor: AppTheme.primary,
+        disabledForegroundColor: AppTheme.divider,
+        side: BorderSide(
+          color: canCast ? AppTheme.primary : AppTheme.divider,
+          width: 1,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6),
+        ),
+      ),
+      child: Text('CAST',
+          style: GoogleFonts.cinzel(fontSize: 9, fontWeight: FontWeight.bold)),
+    ),
+  );
 }
 
 // - Manage Spells Screen
@@ -638,23 +669,43 @@ class _MySpellsTab extends StatelessWidget {
       itemCount: spells.length,
       separatorBuilder: (_, __) => const SizedBox(height: 6),
       itemBuilder: (_, i) => _ManageSpellTile(
-        spell: spells[i],
-        alwaysPrepared: alwaysPrepared,
-        onDelete: () {
-          // TODO: llamar al backend DELETE /characters/{id}/spells/{spellId}
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Delete spell — coming soon'),
-              backgroundColor: AppTheme.surfaceVariant));
-        },
-        onTogglePrepare: (_) {
-          // TODO: llamar al backend PATCH /characters/{id}/spells/{spellId}/prepare
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Toggle prepare — coming soon'),
-              backgroundColor: AppTheme.surfaceVariant));
-        },
-      ),
-    );
-  }
+      spell: spells[i],
+      alwaysPrepared: alwaysPrepared,
+      onDelete: () async {
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: AppTheme.surface,
+            title: Text('Remove spell?',
+                style: GoogleFonts.cinzel(color: AppTheme.primary)),
+            content: Text(
+                'Remove "${spells[i].name}" from your spellbook?',
+                style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text('Cancel',
+                    style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
+                child: const Text('Remove'),
+              ),
+            ],
+          ),
+        );
+        if (confirm == true) {
+          await vm.removeSpell(spells[i].spellId);
+          if (context.mounted) Navigator.of(context).pop(); // cerrar manage screen
+        }
+      },
+      onTogglePrepare: (_) async {
+        await vm.togglePrepareSpell(spells[i].spellId);
+      },
+    ),
+  );        
+  }   
 }
 
 class _ManageSpellTile extends StatelessWidget {

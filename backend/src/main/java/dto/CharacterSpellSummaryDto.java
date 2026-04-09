@@ -13,6 +13,10 @@ public class CharacterSpellSummaryDto {
     private boolean prepared;
     private boolean learned;
     private String spellSource; //"CLASS", "SUBCLASS", "RACE", "FEAT"
+    private String attackType;
+    private String dcType;
+    private String damageType;
+    private String damageBase;
 
     public CharacterSpellSummaryDto() {}
 
@@ -111,5 +115,17 @@ public class CharacterSpellSummaryDto {
     public void setSpellSource(String spellSource) {
         this.spellSource = spellSource;
     }
+
+    public String getAttackType() { return attackType; }
+    public void setAttackType(String attackType) { this.attackType = attackType; }
+
+    public String getDcType() { return dcType; }
+    public void setDcType(String dcType) { this.dcType = dcType; }
+
+    public String getDamageType() { return damageType; }
+    public void setDamageType(String damageType) { this.damageType = damageType; }
+
+    public String getDamageBase() { return damageBase; }
+    public void setDamageBase(String damageBase) { this.damageBase = damageBase; }
     
 }

@@ -345,6 +345,10 @@ public class PlayerCharacterService {
             spellDto.setPrepared(characterSpell.isPrepared());
             spellDto.setLearned(characterSpell.isLearned());
             spellDto.setSpellSource(characterSpell.getSpellSource());
+            spellDto.setAttackType(s.getAttackType());
+            spellDto.setDcType(s.getDcType());
+            spellDto.setDamageType(s.getDamageType());
+            spellDto.setDamageBase(s.getDamageBase());
             spellDtos.add(spellDto);
         }
         dto.setCharacterSpells(spellDtos);
@@ -444,14 +448,57 @@ public class PlayerCharacterService {
         characterSpellRepository.save(characterSpell);
     }
 
+    //Toggle Prepare
     @Transactional
-    public void prepareSpell(Long characterId, Long spellId) {
+    public void togglePrepareSpell(Long characterId, Long spellId) {
         CharacterSpell characterSpell = characterSpellRepository
                 .findByCharacterIdAndSpellId(characterId, spellId)
-                .orElseThrow(() -> new RuntimeException("Spell not learned"));
+                .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Spell not found on this character"
+                ));
 
-        characterSpell.setPrepared(true);
-        characterSpellRepository.save(characterSpell);
+            //Los cantrips(nivel 0) no se pueden preparar/despreparar
+            if(characterSpell.getSpell().getLevel() == 0){
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Cantrips are always available and cannot be prepared/unprepared");                
+            }
+            characterSpell.setPrepared(!characterSpell.isPrepared());
+            characterSpellRepository.save(characterSpell);
+    }
+
+    // Eliminar spell del personaje
+    @Transactional
+    public void removeSpellFromCharacter(Long characterId, Long spellId) {
+      CharacterSpell characterSpell = characterSpellRepository
+                .findByCharacterIdAndSpellId(characterId, spellId)
+                .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Spell not found on this character"));  
+        //No permitir borrar spells otorgados por raza (source = RACE)
+        if ("RACE".equalsIgnoreCase(characterSpell.getSpellSource())){
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Racial spells cannot be removed");                
+        }
+        characterSpellRepository.delete(characterSpell);
+    }
+
+
+    //Usar un slot por nivel (para el botón CAST de la tab sin spellId)
+    @Transactional
+    public void useSpellSlot(Long characterId, int level){
+        if (level == 0) return; //cantrips: sin coste
+
+        CharacterSpellSlot slot = slotRepository
+                .findByCharacterIdAndSpellLevel(characterId, level)
+                .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "No spell slots for level " + level
+                ));
+
+                if (slot.getUsedSlots() >= slot.getMaxSlots()) {
+                    throw new ResponseStatusException(
+                        HttpStatus.CONFLICT, "No spell slots available for level " + level);
+                }
+                slot.setUsedSlots(slot.getUsedSlots() + 1);
+                slotRepository.save(slot);
     }
 
     @Transactional
@@ -1134,4 +1181,5 @@ public class PlayerCharacterService {
             }
         }
     }
+
 }
