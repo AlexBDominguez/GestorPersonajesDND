@@ -45,9 +45,9 @@ class CharacterSpell {
 
   factory CharacterSpell.fromJson(Map<String, dynamic> j) => CharacterSpell(
     id: (j['id'] as num).toInt(),
-    spellId: (j['spellId'] as num).toInt(),
+    spellId: (j['spellId'] as num?)?.toInt() ?? (j['id'] as num).toInt(),
     name: j['name'] as String? ?? '',
-    level: (j['level'] as num).toInt() ?? 0,
+    level: (j['level'] as num?)?.toInt() ?? 0,
     school: j['school'] as String?,
     castingTime: j['castingTime'] as String?,
     range: j['range'] as String?,

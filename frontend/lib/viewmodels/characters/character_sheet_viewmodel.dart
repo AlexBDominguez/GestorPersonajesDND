@@ -35,12 +35,75 @@ class CharacterSheetViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       character = await _service.getCharacterById(characterId);
+      //inicializar el estado local de spell slots desde el modelo
+      _initSpellSlots();
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception', '');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  //Spell Slots (estado local mutable)
+  //Mapa nivel -> slots usados (copia mutable del backend para UI reactiva)
+  final Map<int, int> _usedSlots = {};
+
+  void _initSpellSlots() {
+    _usedSlots.clear();
+    for (final slot in character?.spellSlots ?? []) {
+      _usedSlots[slot.spellLevel] = slot.usedSlots;
+    }
+  }
+
+  int usedSlots(int level) => _usedSlots[level] ?? 0;
+
+  int maxSlots(int level) {
+    return character?.spellSlots
+        .where((s) => s.spellLevel == level)
+        .firstOrNull
+        ?.maxSlots ?? 0;
+  }
+
+  int availableSlots(int level) => (maxSlots(level) -
+      usedSlots(level)).clamp(0,99);
+
+  //Consume un slot del nivel dado. Devuelve false si no hay slots disponibles
+  bool castSpell(int level) {
+    if (level == 0) return true; // cantrips no consumen slots
+    final available = availableSlots(level);
+    if (available <= 0) return false;
+    _usedSlots[level] = usedSlots(level) + 1;
+    notifyListeners();
+    //TODO: persistir al backend con PATCH /characters/{id}/spellSlots
+    return true;
+  }
+
+  //Restaura todos los slots (Short/Long Rest)
+  void restoreAllSlots(){
+    for (final slot in character?.spellSlots ?? []) {
+      _usedSlots[slot.spellLevel] = 0;
+    }
+    notifyListeners();
+  }
+
+  //Spellcasting ability del personaje (para el header de la tab)
+  String get spellcastingAbility {
+    //Lee desde el dndClassName del personaje
+    final cls = character?.dndClassName?.toLowerCase() ?? '';
+    if (cls.contains('wizard') || cls.contains('eldritch knight')) return 'INT';
+    if (cls.contains('cleric') || cls.contains('druid') ||
+        cls.contains('ranger') || cls.contains('monk')) return 'WIS';
+    if (cls.contains('bard') || cls.contains('paladin') ||
+        cls.contains('sorcerer') || cls.contains('warlock')) return 'CHA';
+    return 'INT'; // fallback
+  }
+
+  //Clases de "siempre preparados" (no necesitan switch)
+  bool get alwaysPreparedClass {
+    final cls = character?.dndClassName?.toLowerCase() ?? '';
+    return cls.contains('bard') || cls.contains('sorcerer') ||
+        cls.contains('warlock') || cls.contains('ranger');
   }
 
   // Manage HP

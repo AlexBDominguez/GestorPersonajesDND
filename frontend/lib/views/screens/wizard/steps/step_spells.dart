@@ -113,49 +113,53 @@ class _StepSpellsState extends State<StepSpells> {
         ),
       ),
 
-      // ── Filtro por nivel ─────────────────────────────────────────
-      SizedBox(
-        height: 36,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-          itemCount: sortedLevels.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 6),
-          itemBuilder: (_, i) {
-            final lvl = sortedLevels[i];
+      // ── Filtro por nivel (mejor en wrap/grid que en scroll)
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Wrap(
+          spacing: 8,      // Espacio horizontal entre botones
+          runSpacing: 8,   // Espacio vertical entre filas
+          children: sortedLevels.map((lvl) {
             final label = lvl == -1
                 ? 'All'
                 : lvl == 0
                     ? 'Cantrips'
                     : 'Lv $lvl';
             final selected = _filterLevel == lvl;
+            
             return GestureDetector(
               onTap: () => setState(() => _filterLevel = lvl),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color:
-                      selected ? AppTheme.primary : AppTheme.surfaceVariant,
-                  borderRadius: BorderRadius.circular(20),
+                  color: selected ? AppTheme.primary : AppTheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(12), // Un poco más cuadrado/moderno
                   border: Border.all(
-                      color:
-                          selected ? AppTheme.primary : AppTheme.divider),
+                    color: selected ? AppTheme.primary : AppTheme.divider,
+                  ),
+                  boxShadow: selected ? [
+                    BoxShadow(
+                      color: AppTheme.primary.withOpacity(0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    )
+                  ] : null,
                 ),
-                child: Text(label,
-                    style: GoogleFonts.cinzel(
-                        color: selected
-                            ? AppTheme.background
-                            : AppTheme.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold)),
+                child: Text(
+                  label,
+                  style: GoogleFonts.cinzel(
+                    color: selected ? Colors.white : AppTheme.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             );
-          },
+          }).toList(),
         ),
       ),
-      const SizedBox(height: 4),
+      const SizedBox(height: 8),
       const Divider(height: 1),
 
       // ── Lista de hechizos ────────────────────────────────────────
@@ -454,27 +458,23 @@ class _Tag extends StatelessWidget {
 
 class _LvTag extends StatelessWidget {
   final String label;
-  final bool isCantrip;
+  final bool isCantrip;  
   const _LvTag({required this.label, required this.isCantrip});
 
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: isCantrip
-              ? AppTheme.primary.withOpacity(0.15)
-              : AppTheme.accent.withOpacity(0.15),
+          color: AppTheme.primary.withOpacity(0.15),
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: isCantrip
-                ? AppTheme.primary.withOpacity(0.4)
-                : AppTheme.accent.withOpacity(0.4),
+            color: AppTheme.primary.withOpacity(0.4),
             width: 0.8,
           ),
         ),
         child: Text(label,
             style: GoogleFonts.cinzel(
-                color: isCantrip ? AppTheme.primary : AppTheme.accent,
+                color: AppTheme.primary,
                 fontSize: 9,
                 fontWeight: FontWeight.bold)),
       );

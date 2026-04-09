@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
+import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -87,15 +88,17 @@ class TabCombat extends StatelessWidget {
           ]),
         ),
 
-        //Note
-        Text('Weapon and spell attacks will appear here once inventory is implemented',
-          style: GoogleFonts.lato(
-            color: AppTheme.textSecondary, fontSize: 11,
-              fontStyle: FontStyle.italic),
-        ),
+        //3.7 Quick Spells (cantrips + action/bonus action spells)
+        if (c.characterSpells.isNotEmpty)...[
+          const SizedBox(height: 24),
+          _SectionTitle('Quick Spells'),
+          const SizedBox(height: 10),
+          _QuickSpellsList(spells: c.characterSpells),
+        ],
         const SizedBox(height: 16),
-      ]),
-    );
+        ]),
+      );      
+        
   }
 }
 
@@ -307,6 +310,99 @@ class _SectionTitle extends StatelessWidget{
         const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
       ]);    
 }
+
+class _QuickSpellsList extends StatelessWidget {
+  final List<CharacterSpell> spells;
+  const _QuickSpellsList({required this.spells});
+
+  @override
+  Widget build(BuildContext context) {
+    // Cantrips primero, luego spells preparados ordenados por nivel
+    final cantrips  = spells.where((s) => s.isCantrip).toList();
+    final prepared  = spells.where((s) => !s.isCantrip && s.prepared).toList()
+      ..sort((a, b) => a.level.compareTo(b.level));
+    final combined  = [...cantrips, ...prepared];
+
+    if (combined.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppTheme.surfaceVariant),
+        ),
+        child: Text('No cantrips or prepared spells.',
+            style: GoogleFonts.lato(
+                color: AppTheme.textSecondary,
+                fontSize: 12,
+                fontStyle: FontStyle.italic)),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.surfaceVariant),
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: combined.length,
+        separatorBuilder: (_, __) =>
+            const Divider(height: 1, color: AppTheme.divider),
+        itemBuilder: (_, i) {
+          final s = combined[i];
+          return Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(children: [
+              // Nivel badge
+              Container(
+                width: 28, height: 28,
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Center(
+                  child: Text(
+                    s.isCantrip ? '∞' : '${s.level}',
+                    style: GoogleFonts.cinzel(
+                        color: AppTheme.primary,
+                        fontSize: s.isCantrip ? 14 : 12,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(s.name,
+                          style: GoogleFonts.cinzel(
+                              color: AppTheme.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold)),
+                      if (s.castingTime != null)
+                        Text(s.castingTime!,
+                            style: GoogleFonts.lato(
+                                color: AppTheme.textSecondary,
+                                fontSize: 11)),
+                    ]),
+              ),
+              if (s.school != null)
+                Text(s.school!,
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary, fontSize: 11)),
+            ]),
+          );
+        },
+      ),
+    );
+  }
+}
+
 
 
 
