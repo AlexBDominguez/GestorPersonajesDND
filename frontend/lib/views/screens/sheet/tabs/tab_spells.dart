@@ -183,7 +183,7 @@ class _SpellLevelSection extends StatelessWidget {
                 fontWeight: FontWeight.bold)),
         if (!isCantrip && maxSl > 0) ...[
           const SizedBox(width: 8),
-          _SlotTracker(used: usedSl, max: maxSl),
+          _SlotTracker(used: usedSl, max: maxSl, level: level, vm: vm),
         ],
         const SizedBox(width: 8),
         const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
@@ -226,27 +226,42 @@ class _SpellLevelSection extends StatelessWidget {
   }
 }
 
-// Slot Tracker
+// Slot Tracker (interactivo: si haces tap cambia de lleno (usado) a vacío (disponible))
 class _SlotTracker extends StatelessWidget {
   final int used;
   final int max;
-  const _SlotTracker({required this.used, required this.max});
+  final int level;
+  final CharacterSheetViewModel vm;
+  const _SlotTracker({
+    required this.used,
+    required this.max,
+    required this.level,
+    required this.vm,
+  });
 
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
-    children: List.generate(max, (i) => Padding(
-      padding: const EdgeInsets.only(left: 3),
-      child: Icon(
-        i < used
-          ? Icons.check_box
-          : Icons.check_box_outline_blank,
-        color: i < used
-          ? AppTheme.accent
-          : AppTheme.textSecondary,
-        size: 16,
-      ),
-    )),
+    children: List.generate(max, (i) {
+      final isFull = i < used;
+      return GestureDetector(
+        onTap: () async {
+          if (isFull) {
+            await vm.restoreSpellSlot(level);
+          } else {
+            await vm.castSpell(level);
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.only(left: 3),
+          child: Icon(
+            isFull ? Icons.check_box : Icons.check_box_outline_blank,
+            color: isFull ? AppTheme.accent : AppTheme.textSecondary,
+            size: 16,
+          ),
+        ),
+      );
+    }),
   );
 }
 
@@ -398,63 +413,135 @@ class _SpellRow extends StatelessWidget {
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.6,
-        maxChildSize: 0.92,
-        builder: (_, ctrl) => SingleChildScrollView(
-          controller: ctrl,
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                    color: AppTheme.surfaceVariant,
-                    borderRadius: BorderRadius.circular(2)),
-              ),
+      builder: (_) => ListenableBuilder(
+        listenable: vm,
+        builder: (ctx, __) {
+          final maxSl2 = vm.maxSlots(spell.level);
+          final usedSl2 = vm.usedSlots(spell.level);
+          final hasSlots2 = vm.availableSlots(spell.level) > 0;
+          final canCast2 = spell.isCantrip || hasSlots2;
+          return DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.6,
+            maxChildSize: 0.92,
+            builder: (_, ctrl) => SingleChildScrollView(
+              controller: ctrl,
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Center(
+                  child: Container(
+                    width: 40, height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                        color: AppTheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                // Title + CAST button
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(spell.name,
+                          style: GoogleFonts.cinzel(
+                              color: AppTheme.primary,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${spell.levelLabel}'
+                        '${spell.school != null ? ' · ${spell.school}' : ''}'
+                        ' · ${spell.sourceLabel}',
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary, fontSize: 13),
+                      ),
+                    ]),
+                  ),
+                  if (!spell.isCantrip) ...[
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: 72, height: 38,
+                      child: OutlinedButton(
+                        onPressed: canCast2 ? () async {
+                          final ok = await vm.castSpell(spell.level);
+                          if (!ok && ctx.mounted) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                              content: Text('No slots for level ${spell.level}'),
+                              backgroundColor: AppTheme.accent,
+                              duration: const Duration(seconds: 2)));
+                          }
+                        } : null,
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          foregroundColor: AppTheme.primary,
+                          disabledForegroundColor: AppTheme.divider,
+                          side: BorderSide(color: canCast2 ? AppTheme.primary : AppTheme.divider),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                        child: Text('CAST', style: GoogleFonts.cinzel(
+                            fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ]),
+                // Interactive slot tracker
+                if (!spell.isCantrip && maxSl2 > 0) ...[
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Text('Slots Lv.${spell.level}',
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.4)),
+                    const SizedBox(width: 10),
+                    ...List.generate(maxSl2, (i) {
+                      final isFull = i < usedSl2;
+                      return GestureDetector(
+                        onTap: () async {
+                          if (isFull) {
+                            await vm.restoreSpellSlot(spell.level);
+                          } else {
+                            await vm.castSpell(spell.level);
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: Icon(
+                            isFull ? Icons.check_box : Icons.check_box_outline_blank,
+                            color: isFull ? AppTheme.accent : AppTheme.textSecondary,
+                            size: 20)),
+                      );
+                    }),
+                  ]),
+                ],
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 8),
+                if (spell.castingTime != null)
+                  _DetailRow('Casting Time', spell.castingTime!),
+                if (spell.range != null)
+                  _DetailRow('Range', spell.range!),
+                if (spell.duration != null)
+                  _DetailRow('Duration', spell.duration!),
+                if (spell.components != null)
+                  _DetailRow('Components', spell.components!),
+                if (!spell.isCantrip)
+                  _DetailRow('Status', spell.prepared ? 'Prepared ✓' : 'Learned'),
+                if (spell.description != null && spell.description!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text('Description',
+                      style: GoogleFonts.cinzel(
+                          color: AppTheme.textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(spell.description!,
+                      style: GoogleFonts.lato(
+                          color: AppTheme.textPrimary, fontSize: 13, height: 1.6)),
+                ],
+              ]),
             ),
-            Text(spell.name,
-                style: GoogleFonts.cinzel(
-                    color: AppTheme.primary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(
-              '${spell.levelLabel}'
-              '${spell.school != null ? ' · ${spell.school}' : ''}'
-              ' · ${spell.sourceLabel}',
-              style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 8),
-            if (spell.castingTime != null)
-              _DetailRow('Casting Time', spell.castingTime!),
-            if (spell.range != null)
-              _DetailRow('Range', spell.range!),
-            if (spell.duration != null)
-              _DetailRow('Duration', spell.duration!),
-            if (spell.components != null)
-              _DetailRow('Components', spell.components!),
-            if (!spell.isCantrip)
-              _DetailRow('Status', spell.prepared ? 'Prepared ✓' : 'Learned'),
-            if (spell.description != null && spell.description!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text('Description',
-                  style: GoogleFonts.cinzel(
-                      color: AppTheme.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text(spell.description!,
-                  style: GoogleFonts.lato(
-                      color: AppTheme.textPrimary, fontSize: 13, height: 1.6)),
-            ],
-          ]),
-        ),
+          );
+        },
       ),
     );
   }

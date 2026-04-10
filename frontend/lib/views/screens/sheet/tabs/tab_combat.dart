@@ -2,106 +2,98 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
+import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-//Anchos compartidos con tab_spells
+// Shared column widths (keep in sync with tab_spells.dart)
 const double _kHitDcW = 62.0;
 const double _kDmgW   = 80.0;
-const double _kColGap = 8.0;
+const double _kColGap =  8.0;
 
-class TabCombat extends StatelessWidget {
+// ── Tab Combat ────────────────────────────────────────────────────────────────
+
+class TabCombat extends StatefulWidget {
   final PlayerCharacter character;
   final CharacterSheetViewModel vm;
   const TabCombat({super.key, required this.character, required this.vm});
 
   @override
+  State<TabCombat> createState() => _TabCombatState();
+}
+
+class _TabCombatState extends State<TabCombat> {
+  @override
   Widget build(BuildContext context) {
-    final c = character;
+    return ListenableBuilder(
+      listenable: widget.vm,
+      builder: (context, _) => _buildContent(context),
+    );
+  }
 
-    //Spells por tipo de casting time
-    final actionSpells = c.characterSpells.where(_isAction).toList();
-    final bonusActionSpells = c.characterSpells.where(_isBonusAction).toList();
-    final reactionSpells = c.characterSpells.where(_isReaction).toList();
+  Widget _buildContent(BuildContext context) {
+    final c  = widget.character;
+    final vm = widget.vm;
 
-    //Cantrips que se lanzan como action (van en la tabla de Actions)
-    final actionCantrips = actionSpells.where((s) => s.isCantrip).toList();
-    final actionLeveled = actionSpells.where((s) => !s.isCantrip && s.prepared).toList();
-    final combatSpells = [...actionCantrips, ...actionLeveled]..sort((a, b) => a.level.compareTo(b.level));
-
-    final bonusSpells = bonusActionSpells
-        .where((s) => s.isCantrip || s.prepared)
-        .toList()
-      ..sort((a, b) => a.level.compareTo(b.level));
-
-    final reactionSpellsFiltered = reactionSpells
-        .where((s) => s.isCantrip || s.prepared)
+    final actionSpells = c.characterSpells
+        .where((s) => _isAction(s) && (s.isCantrip || s.prepared))
+        .toList()..sort((a, b) => a.level.compareTo(b.level));
+    final bonusSpells = c.characterSpells
+        .where((s) => _isBonus(s) && (s.isCantrip || s.prepared))
+        .toList()..sort((a, b) => a.level.compareTo(b.level));
+    final reactionSpells = c.characterSpells
+        .where((s) => _isReaction(s) && (s.isCantrip || s.prepared))
         .toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 32),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // --ACTIONS--
+        // ── 1. Standard Actions card (always visible, at top) ────────────────
+        _StandardActionsCard(),
+        const SizedBox(height: 16),
+
+        // ── 2. Actions ───────────────────────────────────────────────────────
         _SectionTitle('Actions'),
         const SizedBox(height: 8),
-
-        //Tabla de hechizos de acción
-        if (combatSpells.isNotEmpty) ...[
-          _AttackTable(spells: combatSpells, vm: vm),
-          const SizedBox(height: 10),
+        if (actionSpells.isNotEmpty) ...[
+          _SpellAttackTable(spells: actionSpells, vm: vm),
+          const SizedBox(height: 8),
         ],
+        _ClassFeaturesSection(vm: vm),
+        const SizedBox(height: 16),
 
-        //Card colapsable de acciones estándar
-        _ActionsCard(
-          title: 'Standard Actions',
-          actions: kStandardActions,
-          context: context,
-        ),
-        const SizedBox(height: 20),
-
-        // --BONUS ACTIONS--
+        // ── 3. Bonus Actions ─────────────────────────────────────────────────
         _SectionTitle('Bonus Actions'),
         const SizedBox(height: 8),
-
         if (bonusSpells.isNotEmpty) ...[
-          _AttackTable(spells: bonusSpells, vm: vm),
-          const SizedBox(height: 10),
+          _SpellAttackTable(spells: bonusSpells, vm: vm),
+          const SizedBox(height: 8),
         ],
+        _StaticSection(actions: kBonusActions),
+        const SizedBox(height: 16),
 
-        _ActionsCard(
-          title: 'Bonus Actions',
-          actions: kBonusActions,
-          context: context,
-        ),
-        const SizedBox(height: 20),
-
-        //--REACTIONS--
+        // ── 4. Reactions ─────────────────────────────────────────────────────
         _SectionTitle('Reactions'),
         const SizedBox(height: 8),
-
-        if (reactionSpellsFiltered.isNotEmpty) ...[
-          _AttackTable(spells: reactionSpellsFiltered, vm: vm),
-          const SizedBox(height: 10),
+        if (reactionSpells.isNotEmpty) ...[
+          _SpellAttackTable(spells: reactionSpells, vm: vm),
+          const SizedBox(height: 8),
         ],
-
-        _ActionsCard(
-          title: 'Reactions',
-          actions: kReactions,
-          context: context,
-        ),
+        _StaticSection(actions: kReactions),
         const SizedBox(height: 20),
 
-        // --DEATH SAVES--
-        if(!c.isConscious || c.isDying || c.currentHp == 0) ...[
+        // ── 5. Death Saves (conditional) ─────────────────────────────────────
+        if (!c.isConscious || c.isDying || c.currentHp == 0) ...[
           _SectionTitle('Death Saving Throws'),
           const SizedBox(height: 8),
           _DeathSavesRow(
             successes: c.deathSaveSuccesses,
-            failures: c.deathSaveFailures),
+            failures: c.deathSaveFailures,
+          ),
           const SizedBox(height: 20),
         ],
 
-        // --HIT DICE + SPEED--
+        // ── 6. Hit Dice & Speed ───────────────────────────────────────────────
         _SectionTitle('Hit Dice & Speed'),
         const SizedBox(height: 8),
         Container(
@@ -110,51 +102,82 @@ class TabCombat extends StatelessWidget {
             color: AppTheme.surface,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: AppTheme.surfaceVariant),
-        ),
-        child: Row(children: [
-          const Icon(Icons.casino_outlined,
-            color: AppTheme.primary, size: 20),
-          const SizedBox(width: 10),
-          Text('Hit Dice: ',
-            style: GoogleFonts.lato(
-              color: AppTheme.textSecondary, fontSize: 13)),
-          Text('${c.availableHitDice}',
-            style: GoogleFonts.cinzel(
-              color: AppTheme.primary,
-              fontSize: 16,
-              fontWeight: FontWeight.bold)),
-          const Spacer(),
-          const Icon(Icons.directions_run,
-            color: AppTheme.textSecondary, size: 16),
-          const SizedBox(width: 4),
-          Text('${c.currentSpeed} ft',
-            style: GoogleFonts.lato(
-              color: AppTheme.textSecondary, fontSize: 13)),
-        ]),
+          ),
+          child: Row(children: [
+            const Icon(Icons.casino_outlined, color: AppTheme.primary, size: 20),
+            const SizedBox(width: 10),
+            Text('Hit Dice: ',
+                style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+            Text('${c.availableHitDice}',
+                style: GoogleFonts.cinzel(
+                    color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold)),
+            const Spacer(),
+            const Icon(Icons.directions_run, color: AppTheme.textSecondary, size: 16),
+            const SizedBox(width: 4),
+            Text('${c.currentSpeed} ft',
+                style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+          ]),
         ),
       ]),
     );
   }
-   
-  bool _isAction(CharacterSpell s) {
+
+  static bool _isAction(CharacterSpell s) {
     final ct = s.castingTime?.toLowerCase() ?? '';
     return ct.contains('1 action') || ct == 'action';
   }
 
-  bool _isBonusAction(CharacterSpell s) =>
-    s.castingTime?.toLowerCase().contains('bonus') ?? false;
+  static bool _isBonus(CharacterSpell s) =>
+      s.castingTime?.toLowerCase().contains('bonus') ?? false;
 
-  bool _isReaction(CharacterSpell s) =>
-    s.castingTime?.toLowerCase().contains('reaction') ?? false;
+  static bool _isReaction(CharacterSpell s) =>
+      s.castingTime?.toLowerCase().contains('reaction') ?? false;
 }
 
-// ── Attack Table 
-// ──────────────────────────────────────────────────────────────
+// ── Standard Actions card (navigates to full-screen list) ─────────────────────
 
-class _AttackTable extends StatelessWidget {
+class _StandardActionsCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => _ActionListScreen(
+              title: 'Standard Actions', actions: kStandardActions),
+        )),
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppTheme.primary.withOpacity(0.35)),
+          ),
+          child: Row(children: [
+            const Icon(Icons.list_alt_outlined,
+                color: AppTheme.primary, size: 18),
+            const SizedBox(width: 10),
+            Text('Standard Actions',
+                style: GoogleFonts.cinzel(
+                    color: AppTheme.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold)),
+            const Spacer(),
+            Text('${kStandardActions.length} actions',
+                style:
+                    GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11)),
+            const SizedBox(width: 6),
+            const Icon(Icons.chevron_right,
+                color: AppTheme.textSecondary, size: 18),
+          ]),
+        ),
+      );
+}
+
+// ── Spell Attack Table (no CAST button, no per-row slot tracker) ──────────────
+
+class _SpellAttackTable extends StatelessWidget {
   final List<CharacterSpell> spells;
   final CharacterSheetViewModel vm;
-  const _AttackTable({required this.spells, required this.vm});
+  const _SpellAttackTable({required this.spells, required this.vm});
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +188,6 @@ class _AttackTable extends StatelessWidget {
         border: Border.all(color: AppTheme.surfaceVariant),
       ),
       child: Column(children: [
-        //Cabecera de columnas
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: const BoxDecoration(
@@ -176,12 +198,11 @@ class _AttackTable extends StatelessWidget {
             const Expanded(
               flex: 3,
               child: Text('NAME',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5
-                )),
+                  style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5)),
             ),
             SizedBox(
               width: _kHitDcW,
@@ -206,34 +227,33 @@ class _AttackTable extends StatelessWidget {
             ),
           ]),
         ),
-        // Filas
-        ...spells.map((s) => _AttackRow(spell: s, vm: vm)),
+        ...spells.map((s) => _SpellRow(spell: s, vm: vm)),
       ]),
     );
   }
 }
 
-class _AttackRow extends StatelessWidget {
+// ── Spell row (tap → detail sheet) ────────────────────────────────────────────
+
+class _SpellRow extends StatelessWidget {
   final CharacterSpell spell;
   final CharacterSheetViewModel vm;
-  const _AttackRow({required this.spell, required this.vm});
+  const _SpellRow({required this.spell, required this.vm});
 
   String _hitDc() {
-    if (spell.attackType != null && spell.attackType!.isNotEmpty) {
+    if (spell.attackType != null && spell.attackType!.isNotEmpty)
       return vm.signedInt(vm.character?.spellAttackBonus ?? 0);
-    }
-    if (spell.dcType != null && spell.dcType!.isNotEmpty) {
+    if (spell.dcType != null && spell.dcType!.isNotEmpty)
       return '${spell.dcType} ${vm.character?.spellSaveDC ?? 0}';
-    }
     return '—';
   }
 
   String _damage() {
-    final base = spell.damageBase;
-    final type = spell.damageType;
-    if (base == null || base.isEmpty) return '—';
-    if (type == null || type.isEmpty) return base;
-    return '$base $type';
+    final b = spell.damageBase;
+    final t = spell.damageType;
+    if (b == null || b.isEmpty) return '—';
+    if (t == null || t.isEmpty) return b;
+    return '$b $t';
   }
 
   String _range() {
@@ -244,271 +264,386 @@ class _AttackRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isCantrip   = spell.isCantrip;
-    final hasSlots    = vm.availableSlots(spell.level) > 0;
-    final canCast     = isCantrip || hasSlots;
-    final maxSl       = vm.maxSlots(spell.level);
+    final hasSlots = vm.availableSlots(spell.level) > 0;
+    final canCast  = spell.isCantrip || hasSlots;
 
     return InkWell(
-      onTap: () => _showDetail(context),
+      onTap: () => showModalBottomSheet(
+        context: context,
+        backgroundColor: AppTheme.surface,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (_) => _SpellDetailSheet(spell: spell, vm: vm),
+      ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
         decoration: const BoxDecoration(
           border: Border(
-              bottom: BorderSide(color: Color(0xFF2A2A4A), width: 0.5)),
-        ),
+              bottom: BorderSide(color: Color(0xFF2A2A4A), width: 0.5))),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          Expanded(
+            flex: 3,
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(spell.name,
+                      style: GoogleFonts.lato(
+                          color: canCast
+                              ? AppTheme.textPrimary
+                              : AppTheme.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis),
+                  Text(_range(),
+                      style: GoogleFonts.lato(
+                          color: AppTheme.textSecondary, fontSize: 10)),
+                ]),
+          ),
+          SizedBox(
+            width: _kHitDcW,
+            child: Text(_hitDc(),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.lato(
+                    color: const Color(0xFFC8A45A),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600)),
+          ),
+          const SizedBox(width: _kColGap),
+          SizedBox(
+            width: _kDmgW,
+            child: Text(_damage(),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.lato(
+                    color: const Color(0xFFCB7A48),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600)),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── Spell Detail Sheet ─────────────────────────────────────────────────────────
+
+class _SpellDetailSheet extends StatelessWidget {
+  final CharacterSpell spell;
+  final CharacterSheetViewModel vm;
+  const _SpellDetailSheet({required this.spell, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: vm,
+      builder: (context, _) => _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    final isCantrip = spell.isCantrip;
+    final level     = spell.level;
+    final maxSl     = vm.maxSlots(level);
+    final usedSl    = vm.usedSlots(level);
+    final hasSlots  = vm.availableSlots(level) > 0;
+    final canCast   = isCantrip || hasSlots;
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.6,
+      maxChildSize: 0.92,
+      builder: (_, ctrl) => SingleChildScrollView(
+        controller: ctrl,
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-            // Nombre + rango
+          // Handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                  color: AppTheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(2)),
+            ),
+          ),
+
+          // Title row + CAST button
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Expanded(
-              flex: 3,
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(spell.name,
-                        style: GoogleFonts.lato(
-                            color: canCast
-                                ? AppTheme.textPrimary
-                                : AppTheme.textSecondary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600),
-                        overflow: TextOverflow.ellipsis),
-                    Text(_range(),
-                        style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary, fontSize: 10)),
+                        style: GoogleFonts.cinzel(
+                            color: AppTheme.primary,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${spell.levelLabel}'
+                      '${spell.school != null ? ' · ${spell.school}' : ''}',
+                      style: GoogleFonts.lato(
+                          color: AppTheme.textSecondary, fontSize: 13),
+                    ),
                   ]),
             ),
-            // Hit/DC
-            SizedBox(
-              width: _kHitDcW,
-              child: Text(_hitDc(),
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.lato(
-                      color: const Color(0xFFC8A45A),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600)),
-            ),
-            const SizedBox(width: _kColGap),
-            // Damage
-            SizedBox(
-              width: _kDmgW,
-              child: Text(_damage(),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.lato(
-                      color: const Color(0xFFCB7A48),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600)),
-            ),
-          ]),
-          //Slot tracker + botón Cast (solo para leveled spells)
-          if (!isCantrip && maxSl > 0) ...[
-            const SizedBox(height: 6),
-            Row(children: [
-              //Slot squares
-              ...List.generate(maxSl, (i) => GestureDetector(
-                onTap: () async {
-                  final used = vm.usedSlots(spell.level);
-                  // Tap en cuadrado lleno -> no hace nada (solo Cast/reset)
-
-                  if(i> used){
-                    final ok = await vm.castSpell(spell.level);
-                    if(!ok && context.mounted){
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('No slots available for level ${spell.level}'),
-                        backgroundColor: AppTheme.accent,
-                        duration: const Duration(seconds: 2),
-                      ));
-                    }
-                  }
-                },
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Icon(
-                    i < vm.usedSlots(spell.level)
-                      ? Icons.check_box
-                      : Icons.check_box_outline_blank,
-                    color: i < vm.usedSlots(spell.level)
-                      ? AppTheme.accent
-                      : AppTheme.textSecondary,
-                    size: 16,
-                  ),
-                ),
-              )),
-              const Spacer(),
-              //Botón CAST
+            if (!isCantrip) ...[
+              const SizedBox(width: 12),
               SizedBox(
-                width: 54,
-                height: 26,
+                width: 72,
+                height: 38,
                 child: OutlinedButton(
                   onPressed: canCast
-                    ? () async {
-                      final ok = await vm.castSpell(spell.level);
-                      if (!ok && context.mounted) {
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(SnackBar(
-                          content: Text(
-                            'No slots for level ${spell.level}'),
-                          backgroundColor: AppTheme.accent,
-                          duration: const Duration(seconds: 2),
-                        ));
-                      }
-                    }
-                    : null,
+                      ? () async {
+                          final ok = await vm.castSpell(level);
+                          if (!ok && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text('No slots for level $level'),
+                              backgroundColor: AppTheme.accent,
+                              duration: const Duration(seconds: 2),
+                            ));
+                          }
+                        }
+                      : null,
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     foregroundColor: AppTheme.primary,
                     disabledForegroundColor: AppTheme.divider,
                     side: BorderSide(
-                      color: canCast ? AppTheme.primary : AppTheme.divider),
+                        color: canCast ? AppTheme.primary : AppTheme.divider),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6)),
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   child: Text('CAST',
-                    style: GoogleFonts.cinzel(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold)),
+                      style: GoogleFonts.cinzel(
+                          fontSize: 11, fontWeight: FontWeight.bold)),
                 ),
               ),
+            ],
+          ]),
+
+          // Interactive slot tracker
+          if (!isCantrip && maxSl > 0) ...[
+            const SizedBox(height: 12),
+            Row(children: [
+              Text('Slots Lv.$level',
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.4)),
+              const SizedBox(width: 10),
+              ...List.generate(maxSl, (i) {
+                final isFull = i < usedSl;
+                return GestureDetector(
+                  onTap: () async {
+                    if (isFull) {
+                      await vm.restoreSpellSlot(level);
+                    } else {
+                      await vm.castSpell(level);
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Icon(
+                      isFull
+                          ? Icons.check_box
+                          : Icons.check_box_outline_blank,
+                      color: isFull ? AppTheme.accent : AppTheme.textSecondary,
+                      size: 20),
+                  ),
+                );
+              }),
             ]),
+          ],
+
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+          if (spell.castingTime != null)
+            _DetailRow('Casting Time', spell.castingTime!),
+          if (spell.range != null) _DetailRow('Range', spell.range!),
+          if (spell.duration != null) _DetailRow('Duration', spell.duration!),
+          if (spell.components != null)
+            _DetailRow('Components', spell.components!),
+          if (!isCantrip)
+            _DetailRow('Status', spell.prepared ? 'Prepared ✓' : 'Learned'),
+          if (spell.description != null && spell.description!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text('Description',
+                style: GoogleFonts.cinzel(
+                    color: AppTheme.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            Text(spell.description!,
+                style: GoogleFonts.lato(
+                    color: AppTheme.textPrimary, fontSize: 13, height: 1.6)),
           ],
         ]),
       ),
     );
   }
+}
 
-  void _showDetail(BuildContext context) {
-    showModalBottomSheet(
-      context: context, 
-      backgroundColor: AppTheme.surface,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.55,
-        maxChildSize: 0.92,
-        builder: (_, ctrl) => SingleChildScrollView(
-          controller: ctrl,
-          padding: const EdgeInsets.fromLTRB(20, 9, 20, 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40, height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceVariant,
-                    borderRadius: BorderRadius.circular(2)),
-                ),
-              ),
-              Text(spell.name,
-                style: GoogleFonts.cinzel(
-                  color: AppTheme.primary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text(
-                '${spell.levelLabel}'
-                '${spell.school != null ? ' (${spell.school})' : ''}',
-                style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary,
-                  fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 8),
-              if (spell.castingTime != null)
-                _DetailRow('Casting Time', spell.castingTime!),
-              if (spell.range != null)
-                _DetailRow('Range', spell.range!),
-              if (spell.duration != null)
-                _DetailRow('Duration', spell.duration!),
-              if (spell.components != null)
-                _DetailRow('Components', spell.components!),
-              if (spell.description != null && spell.description!.isNotEmpty) ... [
-                const SizedBox(height: 12),
-                Text('Description',
-                  style: GoogleFonts.cinzel(
-                    color: AppTheme.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold)),
-                const SizedBox(height: 6),
-                Text(spell.description!,
-                  style: GoogleFonts.lato(
-                    color: AppTheme.textPrimary,
-                    fontSize: 13,
-                    height: 1.6)),
-              ],
-            ]),
+// ── Class Features Section (from API, grouped with use tracking) ──────────────
+
+class _ClassFeaturesSection extends StatelessWidget {
+  final CharacterSheetViewModel vm;
+  const _ClassFeaturesSection({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    if (vm.isLoadingFeatures) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppTheme.primary),
           ),
         ),
       );
+    }
+
+    final features = vm.classFeatures;
+    if (features.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      children: features.map((f) => _FeatureTile(feature: f, vm: vm)).toList(),
+    );
   }
 }
 
-// Actions Card (colapsable -> pantalla de detalle)
-// ──────────────────────────────────────────────────────────────
-
-
-class _ActionsCard extends StatelessWidget {
-  final String title;
-  final List<_ActionEntry> actions;
-  final BuildContext context;
-  const _ActionsCard({
-    required this.title,
-    required this.actions,
-    required this.context,
-  });
+class _FeatureTile extends StatelessWidget {
+  final ClassFeature feature;
+  final CharacterSheetViewModel vm;
+  const _FeatureTile({required this.feature, required this.vm});
 
   @override
-  Widget build(BuildContext ctx) {
-    return InkWell(
-      onTap: () => Navigator.of(ctx).push(MaterialPageRoute(
-        builder: (_) => _ActionsDetailScreen(
-          title: title,
-          actions: actions),        
-      )),
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppTheme.surfaceVariant),
-          ),
-          child: Row(children: [
-            const Icon(Icons.list_alt_outlined,
-              color: AppTheme.primary, size: 18),
-            const SizedBox(width: 10),
-            Text(title,
-              style: GoogleFonts.cinzel(
-                color: AppTheme.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.bold)),
-            const Spacer(),
-            Text('${actions.length} actions',
-              style: GoogleFonts.lato(
-                color: AppTheme.textSecondary, fontSize: 11)),
-            const SizedBox(width: 6),
-            const Icon(Icons.chevron_right,
-              color: AppTheme.textSecondary, size: 18),
+  Widget build(BuildContext context) {
+    final isConsumable = vm.isConsumableFeature(feature);
+    final maxUses      = vm.featureMaxUses(feature);
+    final remaining    = vm.featureUsesRemaining(feature);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.surfaceVariant),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+          title: Row(children: [
+            Expanded(
+              child: Text(feature.name,
+                  style: GoogleFonts.cinzel(
+                      color: AppTheme.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold)),
+            ),
+            if (isConsumable) ...[
+              const SizedBox(width: 8),
+              ...List.generate(maxUses, (i) {
+                final isUsed = i >= remaining;
+                return GestureDetector(
+                  onTap: () {
+                    if (isUsed) {
+                      vm.restoreFeature(feature);
+                    } else {
+                      vm.useFeature(feature);
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 3),
+                    child: Icon(
+                        isUsed
+                            ? Icons.check_box
+                            : Icons.check_box_outline_blank,
+                        color: isUsed ? AppTheme.accent : AppTheme.textSecondary,
+                        size: 18)),
+                );
+              }),
+            ],
           ]),
+          subtitle: Text('Level ${feature.level}',
+              style:
+                  GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 10)),
+          iconColor: AppTheme.textSecondary,
+          collapsedIconColor: AppTheme.textSecondary,
+          children: [
+            Text(feature.description,
+                style: GoogleFonts.lato(
+                    color: AppTheme.textSecondary, fontSize: 12, height: 1.5)),
+          ],
         ),
-      );    
+      ),
+    );
   }
 }
 
-//Actions Detail Screen
-// ──────────────────────────────────────────────────────────────
+// ── Static section (inline expandable list: bonus actions / reactions) ─────────
 
-class _ActionsDetailScreen extends StatelessWidget {
+class _StaticSection extends StatelessWidget {
+  final List<_ActionEntry> actions;
+  const _StaticSection({required this.actions});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: actions
+          .map((a) => Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.surfaceVariant),
+                ),
+                child: Theme(
+                  data: Theme.of(context)
+                      .copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                    childrenPadding:
+                        const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                    title: Text(a.name,
+                        style: GoogleFonts.cinzel(
+                            color: AppTheme.textPrimary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold)),
+                    iconColor: AppTheme.textSecondary,
+                    collapsedIconColor: AppTheme.textSecondary,
+                    children: [
+                      Text(a.desc,
+                          style: GoogleFonts.lato(
+                              color: AppTheme.textSecondary,
+                              fontSize: 12,
+                              height: 1.5)),
+                    ],
+                  ),
+                ),
+              ))
+          .toList(),
+    );
+  }
+}
+
+// ── Full-screen action list (Standard Actions) ─────────────────────────────────
+
+class _ActionListScreen extends StatelessWidget {
   final String title;
   final List<_ActionEntry> actions;
-  const _ActionsDetailScreen(
-      {super.key, required this.title, required this.actions});
+  const _ActionListScreen(
+      {required this.title, required this.actions});
 
   @override
   Widget build(BuildContext context) {
@@ -529,35 +664,33 @@ class _ActionsDetailScreen extends StatelessWidget {
           final a = actions[i];
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 4),
-                    width: 7, height: 7,
-                    decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppTheme.primary),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(a.name,
-                              style: GoogleFonts.cinzel(
-                                  color: AppTheme.textPrimary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 4),
-                          Text(a.desc,
-                              style: GoogleFonts.lato(
-                                  color: AppTheme.textSecondary,
-                                  fontSize: 12,
-                                  height: 1.5)),
-                        ]),
-                  ),
-                ]),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                width: 7,
+                height: 7,
+                decoration: const BoxDecoration(
+                    shape: BoxShape.circle, color: AppTheme.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(a.name,
+                          style: GoogleFonts.cinzel(
+                              color: AppTheme.textPrimary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Text(a.desc,
+                          style: GoogleFonts.lato(
+                              color: AppTheme.textSecondary,
+                              fontSize: 12,
+                              height: 1.5)),
+                    ]),
+              ),
+            ]),
           );
         },
       ),
@@ -565,8 +698,7 @@ class _ActionsDetailScreen extends StatelessWidget {
   }
 }
 
-//Static Action Data
-// ──────────────────────────────────────────────────────────────
+// ── Static data ────────────────────────────────────────────────────────────────
 
 class _ActionEntry {
   final String name;
@@ -580,7 +712,7 @@ const kStandardActions = [
   _ActionEntry(name: 'Dash',
       desc: 'You gain extra movement equal to your speed for the current turn.'),
   _ActionEntry(name: 'Disengage',
-      desc: 'Your movement doesn\'t provoke opportunity attacks for the rest of the turn.'),
+      desc: "Your movement doesn't provoke opportunity attacks for the rest of the turn."),
   _ActionEntry(name: 'Dodge',
       desc: 'Until the start of your next turn, attacks against you have disadvantage and you have advantage on Dex saves.'),
   _ActionEntry(name: 'Grapple',
@@ -592,7 +724,7 @@ const kStandardActions = [
   _ActionEntry(name: 'Improvise',
       desc: 'Do something not covered by other actions. The DM decides the outcome.'),
   _ActionEntry(name: 'Influence',
-      desc: 'Make a Persuasion, Deception, or Intimidation check to sway a creature\'s attitude.'),
+      desc: "Make a Persuasion, Deception, or Intimidation check to sway a creature's attitude."),
   _ActionEntry(name: 'Magic',
       desc: 'Cast a spell with a casting time of 1 action, or use a magic item.'),
   _ActionEntry(name: 'Ready',
@@ -609,9 +741,9 @@ const kStandardActions = [
 
 const kBonusActions = [
   _ActionEntry(name: 'Off-Hand Attack',
-      desc: 'When you take the Attack action with a light melee weapon, you can use a bonus action to attack with a different light melee weapon in your other hand. No ability modifier to damage unless it\'s negative.'),
+      desc: "When you take the Attack action with a light melee weapon, you can use a bonus action to attack with a different light melee weapon. No ability modifier to damage unless it's negative."),
   _ActionEntry(name: 'Bonus Action Spell',
-      desc: 'Cast a spell with a casting time of 1 Bonus Action. You can\'t cast another non-cantrip spell on the same turn.'),
+      desc: "Cast a spell with a casting time of 1 Bonus Action. You can't cast another non-cantrip spell on the same turn."),
   _ActionEntry(name: 'Second Wind (Fighter)',
       desc: 'Regain 1d10 + Fighter level HP. Usable once per short or long rest.'),
   _ActionEntry(name: 'Cunning Action (Rogue)',
@@ -633,8 +765,7 @@ const kReactions = [
       desc: 'When an attacker you can see hits you, halve the attack\'s damage.'),
 ];
 
-// Section Title
-// ──────────────────────────────────────────────────────────────
+// ── Section title ──────────────────────────────────────────────────────────────
 
 class _SectionTitle extends StatelessWidget {
   final String title;
@@ -642,20 +773,19 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(children: [
-    Text(title,
-        style: GoogleFonts.cinzel(
-            color: AppTheme.primary,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1
-        )),
+        Text(title,
+            style: GoogleFonts.cinzel(
+                color: AppTheme.primary,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1)),
         const SizedBox(width: 10),
         const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
-  ]);
+      ]);
 }
 
-//Death Saves
-// ──────────────────────────────────────────────────────────────
+// ── Death Saves ────────────────────────────────────────────────────────────────
+
 class _DeathSavesRow extends StatelessWidget {
   final int successes;
   final int failures;
@@ -672,62 +802,57 @@ class _DeathSavesRow extends StatelessWidget {
       ),
       child: Row(children: [
         Expanded(
-          child: Column(children: [
-        Text('Successes',
-          style: GoogleFonts.lato(
-            color: AppTheme.primary,
-            fontSize: 11,
-            fontWeight: FontWeight.bold)),
-        const SizedBox(height: 6),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(3, (i) => _SaveDot(
-            filled: i < successes,
-            color: AppTheme.primary))),
-          ])),
-          Container(width: 1, height: 40, color: AppTheme.divider),
+            child: Column(children: [
+          Text('Successes',
+              style: GoogleFonts.lato(
+                  color: AppTheme.primary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                  3, (i) => _SaveDot(filled: i < successes, color: AppTheme.primary))),
+        ])),
+        Container(width: 1, height: 40, color: AppTheme.divider),
         Expanded(
-          child: Column(children: [
-        Text('Failures',
-          style: GoogleFonts.lato(
-            color: AppTheme.accent,
-            fontSize: 11,
-            fontWeight: FontWeight.bold)),
-        const SizedBox(height: 6),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            3,
-            (i) => _SaveDot(
-              filled: i < failures, color: AppTheme.accent))),
+            child: Column(children: [
+          Text('Failures',
+              style: GoogleFonts.lato(
+                  color: AppTheme.accent,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                  3, (i) => _SaveDot(filled: i < failures, color: AppTheme.accent))),
         ])),
       ]),
     );
- }
+  }
 }
 
-// Save Dot
-// ──────────────────────────────────────────────────────────────
-class _SaveDot extends StatelessWidget{
+class _SaveDot extends StatelessWidget {
   final bool filled;
   final Color color;
   const _SaveDot({required this.filled, required this.color});
 
   @override
   Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.symmetric(horizontal: 4),
-    width: 18,
-    height: 18,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: filled ? color : Colors.transparent,
-      border: Border.all(color: color, width: 2),
-  ),
-  );
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        width: 18,
+        height: 18,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: filled ? color : Colors.transparent,
+          border: Border.all(color: color, width: 2),
+        ),
+      );
 }
 
-//Detail Row
-// ──────────────────────────────────────────────────────────────
+// ── Detail Row ─────────────────────────────────────────────────────────────────
+
 class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
@@ -735,24 +860,21 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      SizedBox(
-        width: 110,
-        child: Text('$label:',
-          style: GoogleFonts.lato(
-            color: AppTheme.textSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.bold)),
-      ),
-      Expanded(
-        child: Text(value,
-          style: GoogleFonts.lato(
-            color: AppTheme.textPrimary,
-            fontSize: 12)),
-      ),
-    ]),
-  );
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          SizedBox(
+            width: 110,
+            child: Text('$label:',
+                style: GoogleFonts.lato(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold)),
+          ),
+          Expanded(
+            child: Text(value,
+                style: GoogleFonts.lato(
+                    color: AppTheme.textPrimary, fontSize: 12)),
+          ),
+        ]),
+      );
 }
-
-

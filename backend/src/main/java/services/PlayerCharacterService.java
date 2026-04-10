@@ -501,6 +501,20 @@ public class PlayerCharacterService {
                 slotRepository.save(slot);
     }
 
+    public void restoreSpellSlot(Long characterId, int level) {
+        if (level == 0) return;
+
+        CharacterSpellSlot slot = slotRepository
+                .findByCharacterIdAndSpellLevel(characterId, level)
+                .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "No spell slots for level " + level
+                ));
+
+        if (slot.getUsedSlots() <= 0) return; // ya en 0, no hacer nada
+        slot.setUsedSlots(slot.getUsedSlots() - 1);
+        slotRepository.save(slot);
+    }
+
     @Transactional
     public void castSpell(Long characterId, Long spellId) {
         CharacterSpell characterSpell = characterSpellRepository

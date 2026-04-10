@@ -167,8 +167,23 @@ class CharacterService {
       if (res.statusCode == 403) throw Exception('Access denied');
       if (res.statusCode == 404) throw Exception('No slots for level $level');
       if (res.statusCode == 409) throw Exception('No slots available for level $level');
-
       throw Exception('Failed to use spell slot (${res.statusCode})');
+    }
+
+    //POST restaurar (deshacer) un slot usado por nivel
+    Future<void> restoreSpellSlot({
+      required int characterId,
+      required int level,
+    }) async {
+      if (level == 0) return;
+      final res = await _api.post(
+        '${ApiConfig.charactersPath}/$characterId/spell-slots/$level/restore',
+      );
+      if (res.statusCode == 204) return;
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      if (res.statusCode == 404) throw Exception('No slots for level $level');
+      throw Exception('Failed to restore spell slot (${res.statusCode})');
     }
 }
 

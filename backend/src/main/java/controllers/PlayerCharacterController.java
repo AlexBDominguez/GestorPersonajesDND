@@ -131,6 +131,15 @@ public class PlayerCharacterController {
             return ResponseEntity.noContent().build();
         }            
 
+    @PostMapping("/{characterId}/spell-slots/{level}/restore")
+    public ResponseEntity<Void> restoreSpellSlot(
+        @PathVariable Long characterId,
+        @PathVariable int level) {
+            verifyCharacterOwnership(characterId);
+            playerCharacterService.restoreSpellSlot(characterId, level);
+            return ResponseEntity.noContent().build();
+        }
+
     @PostMapping("/{id}/level-up")
     public ResponseEntity<String> levelUp(@PathVariable Long id){
         verifyCharacterOwnership(id);
