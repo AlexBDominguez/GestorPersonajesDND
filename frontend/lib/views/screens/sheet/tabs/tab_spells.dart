@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
+import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -635,7 +636,10 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
                 alwaysPrepared: widget.vm.alwaysPreparedClass,
               ),
               // Tab 2: Aprender nuevos (coming soon — placeholder)
-              _LearnNewTab(),
+              _LearnNewTab(
+                vm: widget.vm,
+                query: _query,
+          ),
             ],
           ),
         ),
@@ -808,30 +812,298 @@ class _ManageSpellTile extends StatelessWidget {
 
 // ── Tab: Learn New ────────────────────────────────────────────────────────────
 
-class _LearnNewTab extends StatelessWidget {
+class _LearnNewTab extends StatefulWidget {
+  final CharacterSheetViewModel vm;
+  final String query;
+  const _LearnNewTab({required this.vm, required this.query});
+
   @override
-  Widget build(BuildContext context) => Center(
+  State<_LearnNewTab> createState() => _LearnNewTabState();
+}
+
+class _LearnNewTabState extends State<_LearnNewTab> {
+  // Carga al entrar en la tab por primera vez
+  @override
+  void initState() {
+    super.initState();
+    if (widget.vm.availableSpells.isEmpty) {
+      widget.vm.loadAvailableSpells();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.vm,
+      builder: (context, _) => _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    final vm = widget.vm;
+
+    // Filtra por el query del buscador global + excluye ya conocidos opcionalmente
+    final q = widget.query.toLowerCase();
+    final filtered = vm.availableSpells.where((s) {
+      return q.isEmpty ||
+          s.name.toLowerCase().contains(q) ||
+          (s.school?.toLowerCase().contains(q) ?? false);
+    }).toList();
+
+    // Agrupa por nivel para mostrar igual que la tab principal
+    final Map<int, List<SpellOption>> byLevel = {};
+    for (final s in filtered) {
+      byLevel.putIfAbsent(s.level, () => []).add(s);
+    }
+    final sortedLevels = byLevel.keys.toList()..sort();
+
+    if (vm.isLoadingSpells) {
+      return const Center(child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(color: AppTheme.primary),
+          SizedBox(height: 14),
+          Text('Loading spells…',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+        ],
+      ));
+    }
+
+    if (vm.spellsError != null) {
+      return Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(24),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.auto_fix_high,
-                color: AppTheme.surfaceVariant, size: 48),
+            const Icon(Icons.error_outline, color: AppTheme.accent, size: 40),
+            const SizedBox(height: 12),
+            Text(vm.spellsError!,
+                style: GoogleFonts.lato(
+                    color: AppTheme.textSecondary, fontSize: 13),
+                textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            Text('Learn New Spells',
-                style: GoogleFonts.cinzel(
-                    color: AppTheme.textSecondary, fontSize: 14)),
-            const SizedBox(height: 8),
-            Text(
-              'This feature is coming soon.\nYou will be able to browse and learn new spells here.',
-              style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary,
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic),
-              textAlign: TextAlign.center,
+            OutlinedButton.icon(
+              onPressed: vm.loadAvailableSpells,
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Retry'),
+              style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.primary,
+                  side: const BorderSide(color: AppTheme.primary)),
             ),
           ]),
         ),
       );
+    }
+
+    if (filtered.isEmpty) {
+      return Center(
+        child: Text(
+          q.isEmpty ? 'No spells available for this class.' : 'No results for "$q".',
+          style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+      itemCount: sortedLevels.length,
+      itemBuilder: (_, i) {
+        final level     = sortedLevels[i];
+        final spells    = byLevel[level]!;
+        final _ord      = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'];
+        final levelName = level == 0
+            ? 'Cantrips'
+            : (level - 1 < _ord.length ? '${_ord[level - 1]} Level' : 'Level $level');
+
+        return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Cabecera de nivel
+              Padding(
+                padding: const EdgeInsets.only(top: 12, bottom: 6),
+                child: Row(children: [
+                  Text(levelName,
+                      style: GoogleFonts.cinzel(
+                          color: AppTheme.primary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                      child: Divider(color: AppTheme.surfaceVariant)),
+                ]),
+              ),
+              // Tiles de spells
+              ...spells.map((spell) => _LearnSpellTile(
+                    spell: spell,
+                    isKnown: vm.knownSpellIds.contains(spell.id),
+                    onLearn: () => _confirmLearn(context, spell, vm),
+                  )),
+            ]);
+      },
+    );
+  }
+
+  Future<void> _confirmLearn(
+      BuildContext context, SpellOption spell, CharacterSheetViewModel vm) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Learn spell?',
+            style: GoogleFonts.cinzel(color: AppTheme.primary)),
+        content: Column(mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(spell.name,
+              style: GoogleFonts.cinzel(
+                  color: AppTheme.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(
+            '${spell.isCantrip ? 'Cantrip' : 'Level ${spell.level}'}'
+            '${spell.school != null ? ' · ${spell.school}' : ''}',
+            style: GoogleFonts.lato(
+                color: AppTheme.textSecondary, fontSize: 12),
+          ),
+          if (spell.description != null && spell.description!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              spell.description!.length > 160
+                  ? '${spell.description!.substring(0, 160)}…'
+                  : spell.description!,
+              style: GoogleFonts.lato(
+                  color: AppTheme.textSecondary, fontSize: 12, height: 1.5),
+            ),
+          ],
+        ]),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel',
+                style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(context, true),
+            icon: const Icon(Icons.add, size: 14),
+            label: const Text('Learn'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      await vm.learnSpell(spell.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('"${spell.name}" added to your spellbook!'),
+          backgroundColor: AppTheme.primary.withOpacity(0.9),
+          duration: const Duration(seconds: 2),
+        ));
+      }
+    }
+  }
+}
+
+// ── Learn Spell Tile ──────────────────────────────────────────────────────────
+
+class _LearnSpellTile extends StatelessWidget {
+  final SpellOption spell;
+  final bool isKnown;
+  final VoidCallback onLearn;
+  const _LearnSpellTile({
+      required this.spell,
+      required this.isKnown,
+      required this.onLearn});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isKnown
+            ? AppTheme.primary.withOpacity(0.07)
+            : AppTheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isKnown ? AppTheme.primary.withOpacity(0.3) : AppTheme.surfaceVariant,
+        ),
+      ),
+      child: Row(children: [
+        // Nivel badge
+        Container(
+          width: 32, height: 32,
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withOpacity(isKnown ? 0.2 : 0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Center(
+            child: Text(
+              spell.isCantrip ? '∞' : '${spell.level}',
+              style: GoogleFonts.cinzel(
+                  color: AppTheme.primary,
+                  fontSize: spell.isCantrip ? 16 : 13,
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        // Info
+        Expanded(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(spell.name,
+                    style: GoogleFonts.cinzel(
+                        color: AppTheme.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 2),
+                Row(children: [
+                  if (spell.school != null)
+                    Text(spell.school!,
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary, fontSize: 11)),
+                  if (spell.castingTime != null) ...[
+                    if (spell.school != null)
+                      const Text(' · ',
+                          style: TextStyle(
+                              color: AppTheme.textSecondary, fontSize: 11)),
+                    Text(spell.castingTime!,
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary, fontSize: 11)),
+                  ],
+                ]),
+              ]),
+        ),
+
+        // Botón / badge
+        if (isKnown)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppTheme.primary.withOpacity(0.4)),
+            ),
+            child: Text('Known',
+                style: GoogleFonts.lato(
+                    color: AppTheme.primary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold)),
+          )
+        else
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline,
+                color: AppTheme.primary, size: 22),
+            tooltip: 'Learn spell',
+            onPressed: onLearn,
+          ),
+      ]),
+    );
+  }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

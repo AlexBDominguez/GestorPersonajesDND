@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
+import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
+import 'package:gestor_personajes_dnd/services/spells/spell_service.dart';
+
 
 class CharacterSheetViewModel extends ChangeNotifier {
   final CharacterService _service;
   final int characterId;
+  final SpellService _spellService;
+
 
   CharacterSheetViewModel({
     required this.characterId,
     CharacterService? service,
-  }) : _service = service ?? CharacterService();
+    SpellService? spellService,
+  }) : _service = service ?? CharacterService(),
+       _spellService = spellService ?? SpellService();
 
 
   //State
@@ -57,7 +64,6 @@ class CharacterSheetViewModel extends ChangeNotifier {
   }
 
   int usedSlots(int level) => _usedSlots[level] ?? 0;
-
   int maxSlots(int level) {
     return character?.spellSlots
         .where((s) => s.spellLevel == level)
@@ -118,6 +124,54 @@ class CharacterSheetViewModel extends ChangeNotifier {
         notifyListeners();
       }      
     }
+
+    //Nivel máximo de spell que puede aprender según el nivel del personaje
+    int get _maxLearnableSpellLevel =>
+      ((character?.level ?? 1) /2).ceil().clamp(1, 9);
+
+    Future<void> learnSpell(int spellId) async {
+      try {
+        await _spellService.learnSpell(
+          characterId: characterId, 
+          spellId: spellId,
+          );
+          await load(); //recarga la ficha          
+      } catch (e) {
+        _errorMessage = e.toString().replaceFirst('Exception', '');
+        notifyListeners();
+      }
+    }
+
+  // Available spells (para la tab "Learn New")
+  List<SpellOption> _availableSpells = [];
+  List<SpellOption> get availableSpells => _availableSpells;
+
+  bool _isLoadingSpells = false;
+  bool get isLoadingSpells => _isLoadingSpells;
+
+  String? _spellsError;
+  String? get spellsError => _spellsError;
+
+  // IDs de los spells que el personaje ya conoce (para marcarlos como Known)
+  Set<int> get knownSpellIds =>
+      character?.characterSpells.map((s) => s.spellId).toSet() ?? {};
+
+  Future<void> loadAvailableSpells() async {
+    _isLoadingSpells = true;
+    _spellsError = null;
+    notifyListeners();
+    try {
+      _availableSpells = await _spellService.getAvailableSpells(
+        classId: character?.dndClassId,
+        maxLevel: _maxLearnableSpellLevel,
+      );
+    } catch (e) {
+      _spellsError = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      _isLoadingSpells = false;
+      notifyListeners();
+    }
+  }
 
   //Restaura todos los slots (Short/Long Rest)
   void restoreAllSlots(){
