@@ -739,30 +739,23 @@ const kStandardActions = [
       desc: 'Use an object or activate a device (e.g., a trap, lock, or special item).'),
 ];
 
+// Only universal bonus actions available to ALL characters by default.
+// Class-specific features (Second Wind, Cunning Action, Wild Shape, etc.)
+// are loaded dynamically in _ClassFeaturesSection from the API.
 const kBonusActions = [
   _ActionEntry(name: 'Off-Hand Attack',
-      desc: "When you take the Attack action with a light melee weapon, you can use a bonus action to attack with a different light melee weapon. No ability modifier to damage unless it's negative."),
+      desc: "When you take the Attack action with a light melee weapon, you can use a bonus action to attack with a different light melee weapon held in the other hand. No ability modifier to damage unless negative."),
   _ActionEntry(name: 'Bonus Action Spell',
-      desc: "Cast a spell with a casting time of 1 Bonus Action. You can't cast another non-cantrip spell on the same turn."),
-  _ActionEntry(name: 'Second Wind (Fighter)',
-      desc: 'Regain 1d10 + Fighter level HP. Usable once per short or long rest.'),
-  _ActionEntry(name: 'Cunning Action (Rogue)',
-      desc: 'Take the Dash, Disengage, or Hide action as a bonus action.'),
-  _ActionEntry(name: 'Wild Shape (Druid)',
-      desc: 'Transform into a beast you have seen. Twice per short rest.'),
-  _ActionEntry(name: 'Bardic Inspiration (Bard)',
-      desc: 'Give one creature within 60 ft a Bardic Inspiration die (d6–d12). They can add it to one ability check, attack, or saving throw.'),
+      desc: "Cast a spell with a casting time of 1 Bonus Action. You can't cast another spell of 1st level or higher on the same turn."),
 ];
 
+// Only universal reactions available to ALL characters by default.
+// Class-specific reactions (Uncanny Dodge, etc.) appear via _ClassFeaturesSection.
 const kReactions = [
   _ActionEntry(name: 'Opportunity Attack',
-      desc: 'When a creature you can see moves out of your reach, make one melee attack against it.'),
+      desc: 'When a creature you can see moves out of your reach, make one melee attack against it as a reaction.'),
   _ActionEntry(name: 'Readied Action',
-      desc: 'Take the action you prepared with the Ready action when the trigger occurs.'),
-  _ActionEntry(name: 'Shield (Spell)',
-      desc: 'When hit by an attack or targeted by Magic Missile, gain +5 AC until the start of your next turn.'),
-  _ActionEntry(name: 'Uncanny Dodge (Rogue)',
-      desc: 'When an attacker you can see hits you, halve the attack\'s damage.'),
+      desc: 'Take the action you prepared with the Ready action when the trigger you declared occurs.'),
 ];
 
 // ── Section title ──────────────────────────────────────────────────────────────

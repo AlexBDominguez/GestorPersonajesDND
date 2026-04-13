@@ -285,7 +285,7 @@ class _SpellRow extends StatelessWidget {
     if (l.contains('1 action') || l == 'action') return 'Action';
     if (l.contains('minute')) {
       final m = RegExp(r'(\d+)').firstMatch(l)?.group(1) ?? '1';
-      return '${m}m';
+      return '${m} min';
     }
     return ct;
   }
