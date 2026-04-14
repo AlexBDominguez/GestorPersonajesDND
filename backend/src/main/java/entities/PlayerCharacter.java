@@ -132,6 +132,9 @@ public class PlayerCharacter {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    //Preferencia de encumbrance (activado en el wizard)
+    private boolean useEncumbrance = false;
+
 
     //Getters y setters
 
@@ -351,6 +354,14 @@ public class PlayerCharacter {
 
     public void setHasInspiration(boolean hasInspiration) {
         this.hasInspiration = hasInspiration;
+    }
+
+    public boolean isUseEncumbrance() {
+        return useEncumbrance;
+    }
+
+    public void setUseEncumbrance(boolean useEncumbrance) {
+        this.useEncumbrance = useEncumbrance;
     }
 
     public int getExperiencePoints() {

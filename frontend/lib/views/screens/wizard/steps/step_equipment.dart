@@ -20,11 +20,11 @@ class _StepEquipmentState extends State<StepEquipment>
   String _typeFilter = 'all';
 
   static const _typeFilters = [
-    ('all', 'All)'),
+    ('all', 'All'),
     ('weapon', 'Weapons'),
     ('armor', 'Armor'),
-    ('potion', 'Potions)'),
-    ('tool', 'Tools)'),
+    ('potion', 'Potions'),
+    ('tool', 'Tools'),
   ];
   @override
   void initState() {

@@ -123,6 +123,7 @@ public class PlayerCharacterService {
         playerCharacter.setSpeedModifier(dto.getSpeedModifier());
         playerCharacter.setNaturalArmorBonus(dto.getNaturalArmorBonus());
         playerCharacter.setInitiativeBonus(dto.getInitiativeBonus());
+        playerCharacter.setUseEncumbrance(dto.isUseEncumbrance());
 
         //Hit dice disponibles = nivel del personaje (se consume 1 por cada descanso corto)
         playerCharacter.setAvailableHitDice(dto.getLevel());
@@ -280,6 +281,7 @@ public class PlayerCharacterService {
         dto.setMaxPreparedSpells(playerCharacter.getMaxPreparedSpells());
         dto.setEncumberedThreshold(playerCharacter.getEncumberedThreshold());
         dto.setHeavilyEncumberedThreshold(playerCharacter.getHeavilyEncumberedThreshold());
+        dto.setUseEncumbrance(playerCharacter.isUseEncumbrance());
         dto.setMeleeAttackBonus(playerCharacter.getMeleeAttackBonus());
         dto.setRangedAttackBonus(playerCharacter.getRangedAttackBonus());
         dto.setFinesseAttackBonus(playerCharacter.getFinesseAttackBonus());

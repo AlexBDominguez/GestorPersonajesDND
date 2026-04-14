@@ -60,6 +60,12 @@ class PlayerCharacter{
   final List<CharacterSkill> skills;
   final List<CharacterSavingThrow> savingThrows;
   final List<CharacterSpell> characterSpells;
+  final int copperPieces;
+  final int silverPieces;
+  final int electrumPieces;
+  final int goldPieces;
+  final int platinumPieces;
+  final bool useEncumbrance;
 
   const PlayerCharacter({
     required this.id,
@@ -118,6 +124,12 @@ class PlayerCharacter{
     this.skills = const [],
     this.savingThrows = const [],
     this.characterSpells = const [],
+    required this.copperPieces,
+    required this.silverPieces,
+    required this.electrumPieces,
+    required this.goldPieces,
+    required this.platinumPieces,
+    this.useEncumbrance = false,
   });
 
   factory PlayerCharacter.fromJson(Map<String, dynamic> j) {
@@ -191,6 +203,12 @@ class PlayerCharacter{
       characterSpells:     (j['characterSpells'] as List<dynamic>? ?? [])
                                .map((e) => CharacterSpell.fromJson(e as Map<String, dynamic>))
                                .toList(),
+      copperPieces:        (j['copperPieces']   as num?)?.toInt() ?? 0,
+      silverPieces:        (j['silverPieces']   as num?)?.toInt() ?? 0,
+      electrumPieces:      (j['electrumPieces'] as num?)?.toInt() ?? 0,
+      goldPieces:          (j['goldPieces']     as num?)?.toInt() ?? 0,
+      platinumPieces:      (j['platinumPieces'] as num?)?.toInt() ?? 0,
+      useEncumbrance:      (j['useEncumbrance'] as bool?) ?? false,
     );
   }
 

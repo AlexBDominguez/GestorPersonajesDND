@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gestor_personajes_dnd/views/screens/wizard/steps/step_equipment.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../config/app_theme.dart';
@@ -27,12 +28,13 @@ class _WizardBody extends StatelessWidget {
 
   // Metadatos por paso: título e icono
   static const _meta = <WizardStep, ({String title, IconData icon})>{
-    WizardStep.preferences:   (title: 'Prefs',      icon: Icons.settings_outlined),
-    WizardStep.dndClass:      (title: 'Class',       icon: Icons.security_outlined),
-    WizardStep.background:    (title: 'Background',  icon: Icons.menu_book_outlined),
-    WizardStep.race:          (title: 'Race',        icon: Icons.emoji_people_outlined),
-    WizardStep.abilityScores: (title: 'Stats',       icon: Icons.bar_chart),
-    WizardStep.spells:        (title: 'Spells',      icon: Icons.auto_fix_high_outlined),
+    WizardStep.preferences:   (title: 'Prefs',        icon: Icons.settings_outlined),
+    WizardStep.dndClass:      (title: 'Class',        icon: Icons.security_outlined),
+    WizardStep.background:    (title: 'Background',   icon: Icons.menu_book_outlined),
+    WizardStep.race:          (title: 'Race',         icon: Icons.emoji_people_outlined),
+    WizardStep.abilityScores: (title: 'Stats',        icon: Icons.bar_chart),
+    WizardStep.spells:        (title: 'Spells',       icon: Icons.auto_fix_high_outlined),
+    WizardStep.equipment:     (title: 'Equipment',    icon: Icons.backpack_outlined),
   };
 
   Widget _stepWidget(WizardStep step) {
@@ -43,6 +45,7 @@ class _WizardBody extends StatelessWidget {
       case WizardStep.race:          return const StepRace();
       case WizardStep.abilityScores: return const StepAbilityScores();
       case WizardStep.spells:        return const StepSpells();
+      case WizardStep.equipment:     return const StepEquipment();
     }
   }
 

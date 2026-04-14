@@ -54,6 +54,7 @@ class CharacterService {
     String? height,
     String? weight,
     List<int>? spellIds,
+    bool useEncumbrance = false,
   }) async {
     final body = {
       'name': name,
@@ -62,6 +63,7 @@ class CharacterService {
       'backgroundId': backgroundId,
       'abilityScores': abilityScores,
       'level': level,
+      'useEncumbrance': useEncumbrance,
       if (subclassId != null) 'subclassId': subclassId,
       if (personalityTrait != null && personalityTrait.isNotEmpty) 'personalityTrait': personalityTrait,
       if (ideal != null && ideal.isNotEmpty) 'ideal': ideal,

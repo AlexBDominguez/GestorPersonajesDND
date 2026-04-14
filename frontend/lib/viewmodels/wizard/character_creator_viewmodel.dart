@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
 import 'package:gestor_personajes_dnd/models/wizard/background_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/race_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
+import 'package:gestor_personajes_dnd/services/inventory/inventory_service.dart';
 import 'package:gestor_personajes_dnd/services/wizard/wizard_reference_service.dart';
 
 
 
 // - Enums ---------------------
-enum WizardStep {preferences, dndClass, background, race, abilityScores, spells}
+enum WizardStep {preferences, dndClass, background, race, abilityScores, spells, equipment}
 enum AbilityScoreMethod {standardArray, manual}
 
 // - Constante D&D ------------------
@@ -21,12 +23,16 @@ const List<String> kAbilityNames = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 class CharacterCreatorViewModel extends ChangeNotifier {
   final WizardReferenceService _refService;
   final CharacterService       _charService;
+  final InventoryService      _inventoryService;
 
   CharacterCreatorViewModel({
     WizardReferenceService? refService,
     CharacterService?       charService,
+    InventoryService?      inventoryService,
   })  : _refService  = refService  ?? WizardReferenceService(),
-        _charService = charService ?? CharacterService();
+        _charService = charService ?? CharacterService(),
+        _inventoryService = inventoryService ?? InventoryService();
+
 
   //- Navegación ------------------
   WizardStep _currentStep = WizardStep.preferences;
@@ -43,6 +49,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       WizardStep.abilityScores,
     ];
     if(isSpellcaster) steps.add(WizardStep.spells);
+    steps.add(WizardStep.equipment);
     return steps;
   }
 
@@ -176,6 +183,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       case WizardStep.race: return raceValid;
       case WizardStep.abilityScores: return abilityScoresValid;
       case WizardStep.spells: return spellsValid;
+      case WizardStep.equipment: return selectedItemIds.isNotEmpty;
     }
   }
 
@@ -514,6 +522,41 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     }
   }
 
+// PASO 7: Equipment (opcional, no bloquea)
+// ────────────────────────────────────────────────────────────
+List<ItemCatalogEntry> _catalogItems = [];
+List<ItemCatalogEntry> get catalogItems => _catalogItems;
+
+bool _isLoadingItems = false;
+bool get isLoadingItems => _isLoadingItems;
+
+String? _itemsError;
+String? get itemsError => _itemsError;
+
+final Set<int> selectedItemIds = {};
+
+Future<void> loadItemCatalog() async {
+  _isLoadingItems = true;
+  _itemsError = null;
+  notifyListeners();
+  try {
+    _catalogItems = await _inventoryService.searchItems();
+  } catch (e) {
+    _itemsError = e.toString().replaceFirst('Exception', 'toString');
+  } finally {
+    _isLoadingItems = false;
+    notifyListeners();
+  }
+}
+
+void toggleItem(int itemId) {
+  if (selectedItemIds.contains(itemId)){
+    selectedItemIds.remove(itemId); 
+  }else {
+    selectedItemIds.add(itemId);
+  }
+  notifyListeners();
+}
 
 
   // Validación global
@@ -574,8 +617,20 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         age:    age.isNotEmpty     ? age     : null,
         height: height.isNotEmpty  ? height  : null,
         weight: weight.isNotEmpty  ? weight  : null,
+        useEncumbrance: useEncumbrance,
       );
       _createdCharacterId = result.id;
+
+      //añadir equipamiento inicial (si se ha seleccionado alguno, en paralelo al submit del personaje para no bloquearlo)
+      if (selectedItemIds.isNotEmpty){
+        for (final itemId in selectedItemIds){
+          try{
+            await _inventoryService.addItem(_createdCharacterId!, itemId);
+          } catch (_) {
+              // Si falla añadir un item, no bloqueamos el proceso ni mostramos error, simplemente se omite ese item
+          }
+        }
+      }
       _saveSuccess = true;
     } catch (e) {
       _setError('Error saving character: $e');
@@ -602,6 +657,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         _spellsStepVisited = true;
         if (availableSpells.isEmpty) loadAvailableSpells();
         break;
+      case WizardStep.equipment:
+      if (catalogItems.isEmpty) loadItemCatalog();
       default:
         break;
     }

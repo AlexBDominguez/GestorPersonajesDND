@@ -68,6 +68,7 @@ public class PlayerCharacterDto {
     private List<CharacterSpellSummaryDto> characterSpells;
     private List<Long> spellIds; //Ids de spells seleccionados en el wizard
     private List<SpellSlotDto> spellSlots;
+    private boolean useEncumbrance = false;
     private List<CharacterSkillDto> skills;
     private List<CharacterSavingThrowDto> savingThrows;
     
@@ -603,6 +604,12 @@ public class PlayerCharacterDto {
         this.spellIds = spellIds;
     }
 
+    public boolean isUseEncumbrance() {
+        return useEncumbrance;
+    }
 
+    public void setUseEncumbrance(boolean useEncumbrance) {
+        this.useEncumbrance = useEncumbrance;
+    }
 
 }

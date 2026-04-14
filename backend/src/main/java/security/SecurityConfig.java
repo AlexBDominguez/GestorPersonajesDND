@@ -78,6 +78,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/spells/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/skills/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/subclasses/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/items/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
