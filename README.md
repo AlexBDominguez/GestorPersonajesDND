@@ -2,7 +2,7 @@
 
 Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot, MySQL y Flutter.
 
-> Estado del Proyecto: El backend está completo con todas las funcionalidades implementadas y operativas. El frontend está en desarrollo activo, con el flujo de creación de personajes y la ficha de personaje interactiva ya implementados.
+> Estado del Proyecto: El backend está completo con todas las funcionalidades implementadas y operativas. El frontend está en desarrollo activo, con el flujo de creación de personajes (7 pasos) y la ficha de personaje interactiva ya implementados.
 
 ## Descripción
 
@@ -21,6 +21,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Sistema de subida de nivel automatizado
 - Progresión de características por nivel y clase
 - Sistema de inventario, equipamiento y dinero
+- Catálogo de items sincronizado desde la D&D 5e API (armas, armaduras, herramientas, monturas, etc.)
 - Gestión de idiomas y competencias (proficiencies)
 - Sistema de feats (dotes) y recursos de clase
 - Gestión de condiciones y efectos activos
@@ -41,7 +42,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 - **Maven** - Gestión de dependencias
 - **RestTemplate** - Cliente HTTP para integración con D&D 5e API
 - **Hibernate** - ORM (Object-Relational Mapping)
-- **Docker & Docker Compose** - Contenedorización de MySQL
+- **Docker & Docker Compose** - Contenedorización de MySQL y la aplicación backend
 - **Spring Security** - Autenticación y autorización
 - **JWT (jjwt)** - Tokens de autenticación
 
@@ -74,6 +75,7 @@ Sistema completo para gestionar personajes de D&D 5e:
   - 18 habilidades del sistema D&D
   - 300+ hechizos con información completa
   - Slots de hechizos por clase y nivel
+  - 237 items de equipo (armas, armaduras, herramientas, monturas y vehículos)
   - Competencias (proficiencies) de todo tipo
   - Idiomas disponibles
   - Condiciones del juego
@@ -108,18 +110,22 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Navegación automática basada en estado de autenticación
 - Manejo de estados de carga y errores
 - Feedback visual con SnackBars y loaders
+- Manejo de errores de red y autenticación con mensajes descriptivos al usuario
 - Ficha de personaje interactiva con tabs navegables por swipe
 - Header fijo con AC, Initiative y HP interactivo (modal Manage HP)
 - Tab Abilities con grid de atributos, saving throws y senses
 - Tab Skills con tabla completa de las 18 habilidades
-- Tab Spells con filtro por nivel, modificadores y slots reales desde backend
+- Tab Combat con secciones de acciones, acciones de bonus y reacciones siempre visibles
+- Tab Spells con filtro por nivel, modificadores, slots interactivos (usar/restaurar) y detalle de hechizo con botón de lanzamiento
+- Tab Inventory con gestión de peso y control de encumbramiento configurable
+- Tab Info con información narrativa del personaje
 
 ## Estructura del Proyecto
 
 ### Backend
 ```
 src/main/java/
-├── controllers/        # Controladores REST API (27 controladores)
+├── controllers/        # Controladores REST API (28 controladores)
 │   ├── ActiveEffectController
 │   ├── AuthController
 │   ├── BackgroundController
@@ -140,6 +146,7 @@ src/main/java/
 │   ├── DamageTypeController
 │   ├── DndClassController
 │   ├── FeatController
+│   ├── ItemController
 │   ├── LanguageController
 │   ├── PlayerCharacterController
 │   ├── ProficiencyController
@@ -300,7 +307,7 @@ src/main/java/
 │   ├── JwtAuthenticationFilter
 │   ├── JwtUtil
 │   └── SecurityConfig
-└── sync/             # Servicios de sincronización (14 servicios)
+└── sync/             # Servicios de sincronización (15 servicios)
     ├── ApiRateLimiter
     ├── BackgroundSyncService
     ├── BaseSyncService
@@ -308,6 +315,7 @@ src/main/java/
     ├── DamageTypeSyncService
     ├── DndClassSyncService
     ├── FeatSyncService
+    ├── ItemSyncService
     ├── LanguageSyncService
     ├── ProficiencySyncService
     ├── RaceSyncService
@@ -329,9 +337,14 @@ frontend/lib/
 │   │   ├── auth_response.dart
 │   │   └── login_request.dart
 │   ├── character/
+│   │   ├── character_saving_throw.dart
+│   │   ├── character_skill.dart
+│   │   ├── character_spell.dart
 │   │   ├── player_character_summary.dart
 │   │   ├── player_character.dart
 │   │   └── spell_slot.dart
+│   ├── inventory/
+│   │   └── inventory_item.dart
 │   └── wizard/
 │       ├── background_option.dart
 │       ├── class_option.dart
@@ -343,6 +356,10 @@ frontend/lib/
 │   │   └── character_service.dart
 │   ├── http/
 │   │   └── api_client.dart
+│   ├── inventory/
+│   │   └── inventory_service.dart
+│   ├── spells/
+│   │   └── spell_service.dart
 │   ├── storage/
 │   │   └── token_storage.dart
 │   └── wizard/
@@ -364,6 +381,7 @@ frontend/lib/
 │   │   │   └── tabs/
 │   │   │       ├── tab_abilities.dart
 │   │   │       ├── tab_combat.dart
+│   │   │       ├── tab_info.dart
 │   │   │       ├── tab_inventory.dart
 │   │   │       ├── tab_skills.dart
 │   │   │       └── tab_spells.dart
@@ -376,6 +394,8 @@ frontend/lib/
 │   │           ├── step_class.dart
 │   │           ├── step_ability_scores.dart
 │   │           ├── step_background.dart
+│   │           ├── step_equipment.dart
+│   │           ├── step_spells.dart
 │   │           └── step_preferences.dart
 │   └── widgets/
 │       └── character_card.dart
@@ -636,24 +656,37 @@ flutter build apk --release
 
 ## Docker
 
-El proyecto incluye configuración de Docker para facilitar el desarrollo:
+El proyecto incluye configuración de Docker para facilitar el desarrollo y despliegue:
 
 ### Archivos Docker
-- `docker-compose.yml` - Configuración de MySQL
-- `Dockerfile` - Imagen de la aplicación (opcional)
+- `docker-compose.yml` - Configuración de MySQL y el backend de la aplicación
+- `Dockerfile` - Imagen de la aplicación Spring Boot
 - `init-db.sql` - Script de inicialización de base de datos
-- `run.sh` - Script para iniciar MySQL y la aplicación
+
+### Servicios Docker
+El `docker-compose.yml` levanta dos contenedores:
+- `dnd-mysql` — MySQL 8.0 accesible en el puerto `3306`
+- `dnd-backend` — Aplicación Spring Boot accesible en el puerto `8081`
 
 ### Comandos Docker útiles
 ```bash
+# Iniciar todos los servicios
+docker compose up -d
+
 # Iniciar solo MySQL
 docker compose up -d mysql-db
+
+# Ver logs del backend
+docker compose logs -f backend
 
 # Ver logs de MySQL
 docker compose logs -f mysql-db
 
-# Detener MySQL
-docker compose stop mysql-db
+# Reconstruir la imagen del backend
+docker compose build --no-cache backend
+
+# Detener todos los servicios
+docker compose down
 
 # Ejecutar script SQL en el contenedor
 docker exec -i dnd-mysql mysql -u dnd_user -pdnd_password dnd_character_manager < mi_script.sql
@@ -703,6 +736,7 @@ curl -X POST http://localhost:8081/api/sync/backgrounds
 curl -X POST http://localhost:8081/api/sync/races
 curl -X POST http://localhost:8081/api/sync/classes
 curl -X POST http://localhost:8081/api/sync/spells
+curl -X POST http://localhost:8081/api/sync/items
 ```
 
 **Nota:** El endpoint `/sync/all` incluye rate limiting automático para evitar sobrecargar la API externa.
@@ -824,6 +858,10 @@ curl -X POST http://localhost:8081/api/sync/spells
 - `GET /api/backgrounds` - Listar todos los backgrounds
 - `GET /api/backgrounds/{id}` - Obtener un background con detalles
 
+### Items (Catálogo)
+- `GET /api/items` - Listar todos los items (soporta `?type=` y `?name=` como parámetros opcionales)
+- `GET /api/items/{id}` - Obtener item por ID
+
 ### Hechizos (Catálogo)
 - `GET /api/spells` - Listar todos los hechizos
 - `GET /api/spells/{id}` - Obtener un hechizo con detalles
@@ -868,6 +906,7 @@ curl -X POST http://localhost:8081/api/sync/spells
 - `POST /api/sync/feats` - Sincronizar feats
 - `POST /api/sync/conditions` - Sincronizar condiciones
 - `POST /api/sync/damage-types` - Sincronizar tipos de daño
+- `POST /api/sync/items` - Sincronizar items de equipo desde D&D 5e API
 - `POST /api/sync/all` - Sincronización completa de todos los datos
 
 ## Ejemplos de Uso
@@ -876,8 +915,6 @@ curl -X POST http://localhost:8081/api/sync/spells
 
 ```bash
 curl -X POST http://localhost:8081/api/characters \
-  -H "Content-Type: application/json" \
-  curl -X POST http://localhost:8081/api/characters \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Cloud Strife",
@@ -895,6 +932,7 @@ curl -X POST http://localhost:8081/api/characters \
     },
     "maxHp": 13,
     "currentHp": 13,
+    "useEncumbrance": false,
     "personalityTrait1": "Actúo frío y distante, pero me importa más de lo que aparento",
     "ideal": "Identidad. Quiero descubrir quién soy realmente",
     "bond": "Mis compañeros son mi verdadera fuerza",
@@ -975,20 +1013,25 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 
 ### Frontend Mobile - En Desarrollo
 - Sistema de autenticación con login y gestión de tokens
+- Manejo de errores de red con mensajes descriptivos (sin conexión, credenciales incorrectas, errores de servidor)
 - Pantalla de dashboard con lista de personajes
 - Cliente HTTP para consumo de API REST
 - Arquitectura MVVM con Provider para gestión de estado
-- Modelos de datos (personajes, autenticación)
-- Servicios para personajes y autenticación
+- Modelos de datos (personajes, autenticación, inventario)
+- Servicios para personajes, autenticación, inventario y hechizos
 - Almacenamiento persistente de tokens
 - Tema visual personalizado con paleta D&D (dark theme, Cinzel + Lato)
 - Configuración centralizada de API (ApiConfig)
 - Widget de tarjeta de personaje con barra de HP y estadísticas
-- Wizard de creación de personajes en 4 pasos (raza, clase, puntuaciones de habilidad, background)
+- Wizard de creación de personajes en 7 pasos (raza, clase, puntuaciones de habilidad, background, equipamiento, hechizos, preferencias)
+- Pasos de equipamiento y hechizos opcionales con banner informativo y estado vacío con reintento
 - Modelo completo de personaje (PlayerCharacter) para la ficha
+- Ficha de personaje con 6 tabs: Abilities, Skills, Combat, Spells, Inventory, Info
+- Tab Combat con secciones de acciones, acciones de bonus y reacciones siempre visibles
+- Tab Spells con slot tracker interactivo (tocar slot para usar/restaurar) y detalle de hechizo con botón de lanzamiento
+- Tab Inventory con control de encumbramiento basado en la preferencia `useEncumbrance` del personaje
 
 ### Planificado
-- Gestión de hechizos e inventario desde la app
 - Vinculación de personajes a usuarios (privacidad por cuenta)
 
 

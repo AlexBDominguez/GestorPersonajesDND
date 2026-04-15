@@ -38,7 +38,7 @@ public class ItemController {
         List<Item> items;
         if (type != null && name != null) {
             items = 
-                itemRepository.findByItemAndNameContainingIgnoreCase(type, name);
+                itemRepository.findByItemTypeAndNameContainingIgnoreCase(type, name);
         }else if (type != null) {
             items = itemRepository.findByItemType(type);
         }else if (name != null) {

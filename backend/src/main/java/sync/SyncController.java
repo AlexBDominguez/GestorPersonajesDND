@@ -23,6 +23,7 @@ public class SyncController {
     private final LanguageSyncService languageSyncService;
     private final ConditionSyncService conditionSyncService;
     private final DamageTypeSyncService damageTypeSyncService;
+    private final ItemSyncService itemSyncService;
 
     public SyncController(  RaceSyncService raceSyncService,
                             SpellSlotSyncService spellSlotSyncService,
@@ -34,7 +35,8 @@ public class SyncController {
                             ProficiencySyncService proficiencySyncService,
                             LanguageSyncService languageSyncService,
                             ConditionSyncService conditionSyncService,
-                            DamageTypeSyncService damageTypeSyncService                        
+                            DamageTypeSyncService damageTypeSyncService,
+                            ItemSyncService itemSyncService
                         ) {
                             
         this.raceSyncService = raceSyncService;
@@ -48,6 +50,7 @@ public class SyncController {
         this.languageSyncService = languageSyncService;
         this.conditionSyncService = conditionSyncService;
         this.damageTypeSyncService = damageTypeSyncService;
+        this.itemSyncService = itemSyncService;
     }
 
     @PostMapping("/races")
@@ -122,6 +125,12 @@ public class SyncController {
         return ResponseEntity.ok("Damage types synchronized successfully!");
     }
 
+    @PostMapping("/items")
+    public ResponseEntity<String> syncItems() {
+        itemSyncService.syncItems();
+        return ResponseEntity.ok("Items synchronized successfully!");
+    }
+
     @PostMapping("/all")
     public String syncAll() {
         System.out.println("=== STARTING FULL SYNCHRONIZATION ===");
@@ -165,6 +174,10 @@ public class SyncController {
 
             System.out.println("\n10/8 - Syncing Damage Types...");
             damageTypeSyncService.syncDamageTypes();
+            ApiRateLimiter.waitLonger();
+
+            System.out.println("\n11/11 - Syncing Items...");
+            itemSyncService.syncItems();
             ApiRateLimiter.waitLonger();
 
             System.out.println("\n=== FULL SYNCHRONIZATION COMPLETE ===");

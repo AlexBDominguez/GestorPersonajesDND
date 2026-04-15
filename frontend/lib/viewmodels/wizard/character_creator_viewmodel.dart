@@ -542,7 +542,7 @@ Future<void> loadItemCatalog() async {
   try {
     _catalogItems = await _inventoryService.searchItems();
   } catch (e) {
-    _itemsError = e.toString().replaceFirst('Exception', 'toString');
+    _itemsError = e.toString().replaceFirst('Exception: ', '');
   } finally {
     _isLoadingItems = false;
     notifyListeners();

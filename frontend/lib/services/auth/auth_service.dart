@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -22,13 +23,21 @@ class AuthService {
         return AuthResponse.fromJson(json);
       }
 
-      if (response.statusCode == 401) {
-        throw Exception('Invalid username or password');
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        throw Exception('Wrong credentials. Try again.');
       }
 
-      throw Exception('Server error (${response.statusCode}). Please try again.');
+      if (response.statusCode >= 500) {
+        throw Exception('Server error. Please try again later.');
+      }
+
+      throw Exception('Unexpected error (${response.statusCode}).');
     } on SocketException {
-      throw Exception('Could not connect to the server. Check your network.');
+      throw Exception('Cannot reach the server. Check your network connection.');
+    } on TimeoutException {
+      throw Exception('Connection timed out. The server may be down.');
+    } on http.ClientException {
+      throw Exception('Cannot reach the server. Check your network connection.');
     } on Exception {
       rethrow;
     }

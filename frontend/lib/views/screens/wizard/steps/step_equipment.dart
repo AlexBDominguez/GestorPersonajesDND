@@ -79,9 +79,25 @@ class _StepEquipmentState extends State<StepEquipment>
           ]),
           const SizedBox(height: 4),
           Text(
-            'Choose your starting gear. You can always add more items later from your inventory.',
+            'This step is optional — you can add items later from your inventory.',
             style: GoogleFonts.lato(
                 color: AppTheme.textSecondary, fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+          // Optional banner
+          Container(
+            color: AppTheme.primary.withOpacity(0.08),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(children: [
+              const Icon(Icons.info_outline, color: AppTheme.primary, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'This step is optional — you can add items later from your inventory.',
+                  style: GoogleFonts.lato(color: AppTheme.primary, fontSize: 12),
+                ),
+              ),
+            ]),
           ),
           const SizedBox(height: 12),
 
@@ -231,6 +247,26 @@ class _CatalogTab extends StatelessWidget {
                 foregroundColor: AppTheme.primary,
                 side: const BorderSide(color: AppTheme.primary)),
               ),
+        ]),
+      );
+    }
+
+    if (vm.catalogItems.isEmpty && !vm.isLoadingItems && vm.itemsError == null) {
+      return Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.inventory_2_outlined, color: AppTheme.surfaceVariant, size: 48),
+          const SizedBox(height: 12),
+          Text('No items available.',
+              style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: vm.loadItemCatalog,
+            icon: const Icon(Icons.refresh, size: 16),
+            label: const Text('Retry'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.primary,
+              side: const BorderSide(color: AppTheme.primary)),
+          ),
         ]),
       );
     }

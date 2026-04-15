@@ -11,5 +11,5 @@ public interface ItemRepository extends JpaRepository<entities.Item, Long> {
     Optional<Item> findByIndexName(String indexName);
     List<Item> findByItemType(String itemType);
     List<Item> findByNameContainingIgnoreCase(String name);
-    List<Item> findByItemAndNameContainingIgnoreCase(String itemType, String name);
+    List<Item> findByItemTypeAndNameContainingIgnoreCase(String itemType, String name);
 }
