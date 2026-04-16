@@ -812,9 +812,8 @@ const kReactions = [
 /// Hides purely taxonomic / subclass-descriptor features that have no in-combat use.
 bool _combatRelevant(String featureName) {
   final n = featureName.toLowerCase();
-  // Exact matches to always hide.
-  if (n == 'spellcasting') return false;
-  if (n == 'spellcasting focus') return false;
+  // Any feature whose name starts with 'spellcasting' is informational.
+  if (n.startsWith('spellcasting')) return false;
   // Subclass taxonomy preamble patterns.
   const blockedPatterns = [
     'divine domain',

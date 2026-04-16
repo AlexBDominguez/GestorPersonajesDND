@@ -41,8 +41,6 @@ class StepRace extends StatelessWidget {
         ),
 
         // Si hay subraza seleccionada, muestra el selector expandido
-        if (vm.selectedRace != null && vm.subraces.isNotEmpty)
-          _SubraceSelector(vm: vm),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(
@@ -51,10 +49,16 @@ class StepRace extends StatelessWidget {
               itemBuilder: (_, i) {
                 final race = vm.races[i];
                 final isSelected = vm.selectedRace?.id == race.id;
-                return _RaceCard(
-                  race: race,
-                  isSelected: isSelected,
-                  onTap: () => vm.selectRace(race),
+                return Column(
+                  children: [
+                    _RaceCard(
+                      race: race,
+                      isSelected: isSelected,
+                      onTap: () => vm.selectRace(race),
+                    ),
+                    if (isSelected && (vm.subraces.isNotEmpty || vm.isLoadingSubraces))
+                      _SubraceSelector(vm: vm),
+                  ],
                 );
               },
             ),
@@ -156,40 +160,39 @@ class _SubraceSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.4)),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          const Icon(Icons.account_tree_outlined,
-              color: AppTheme.primary, size: 16),
-          const SizedBox(width: 8),
-          Text('Choose Subrace',
-              style: GoogleFonts.cinzel(
-                  color: AppTheme.primary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold)),
-          const Spacer(),
-          if (vm.isLoadingSubraces)
-            const SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(
-                  strokeWidth: 2, color: AppTheme.primary),
+    if (vm.isLoadingSubraces) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Center(
+          child: SizedBox(
+            width: 20, height: 20,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppTheme.primary),
+          ),
+        ),
+      );
+    }
+    if (vm.subraces.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              'Choose a subrace (required)',
+              style: GoogleFonts.lato(
+                  color: AppTheme.textSecondary, fontSize: 12),
             ),
-        ]),
-        const SizedBox(height: 10),
-        ...vm.subraces.map((sub) => _SubraceChip(
-              subrace: sub,
-              isSelected: vm.selectedSubrace?.id == sub.id,
-              onTap: () => vm.selectSubrace(sub),
-            )),
-      ]),
+          ),
+          ...vm.subraces.map((sub) => _SubraceChip(
+                subrace: sub,
+                isSelected: vm.selectedSubrace?.id == sub.id,
+                onTap: () => vm.selectSubrace(sub),
+              )),
+        ],
+      ),
     );
   }
 }

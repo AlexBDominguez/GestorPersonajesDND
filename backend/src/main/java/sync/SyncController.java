@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SyncController {
 
     private final RaceSyncService raceSyncService;
+    private final SubraceSyncService subraceSyncService;
     private final SpellSlotSyncService spellSlotSyncService;
     private final SkillSyncService skillSyncService;
     private final BackgroundSyncService backgroundSyncService;
@@ -26,6 +27,7 @@ public class SyncController {
     private final ItemSyncService itemSyncService;
 
     public SyncController(  RaceSyncService raceSyncService,
+                            SubraceSyncService subraceSyncService,
                             SpellSlotSyncService spellSlotSyncService,
                             SkillSyncService skillSyncService,
                             BackgroundSyncService backgroundSyncService,
@@ -40,6 +42,7 @@ public class SyncController {
                         ) {
                             
         this.raceSyncService = raceSyncService;
+        this.subraceSyncService = subraceSyncService;
         this.spellSlotSyncService = spellSlotSyncService;
         this.skillSyncService = skillSyncService;
         this.backgroundSyncService = backgroundSyncService;
@@ -57,6 +60,12 @@ public class SyncController {
     public String syncRaces(){
         raceSyncService.syncRaces();
         return "Races synced";
+    }
+
+    @PostMapping("/subraces")
+    public ResponseEntity<String> syncSubraces() {
+        subraceSyncService.syncSubraces();
+        return ResponseEntity.ok("Subraces synchronized successfully!");
     }
 
     @PostMapping("/spell-slots/{classIndex}")
@@ -146,6 +155,10 @@ public class SyncController {
             
             System.out.println("\n3/11 - Syncing Races...");
             raceSyncService.syncRaces();
+            ApiRateLimiter.waitLonger();
+
+            System.out.println("\n3b - Syncing Subraces...");
+            subraceSyncService.syncSubraces();
             ApiRateLimiter.waitLonger();
             
             System.out.println("\n4/11 - Syncing Classes...");
