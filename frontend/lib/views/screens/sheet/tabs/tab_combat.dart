@@ -60,6 +60,7 @@ class _TabCombatState extends State<TabCombat> {
           const SizedBox(height: 8),
         ],
         _ClassFeaturesSection(vm: vm),
+        _SubclassFeaturesSection(vm: vm),
         const SizedBox(height: 16),
 
         // ── 3. Bonus Actions ─────────────────────────────────────────────────
@@ -488,6 +489,53 @@ class _SpellDetailSheet extends StatelessWidget {
   }
 }
 
+// ── Subclass Features Section ─────────────────────────────────────────────────
+
+class _SubclassFeaturesSection extends StatelessWidget {
+  final CharacterSheetViewModel vm;
+  const _SubclassFeaturesSection({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    if (vm.isLoadingSubclassFeatures) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppTheme.primary),
+          ),
+        ),
+      );
+    }
+    final features = vm.subclassFeatures
+        .where((f) => _combatRelevant(f.name))
+        .toList();
+    if (features.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Text(
+            'Subclass Features',
+            style: GoogleFonts.cinzel(
+              color: AppTheme.accent,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ),
+        ...features.map((f) => _FeatureTile(feature: f, vm: vm)),
+      ],
+    );
+  }
+}
+
 // ── Class Features Section (from API, grouped with use tracking) ──────────────
 
 class _ClassFeaturesSection extends StatelessWidget {
@@ -510,7 +558,9 @@ class _ClassFeaturesSection extends StatelessWidget {
       );
     }
 
-    final features = vm.classFeatures;
+    final features = vm.classFeatures
+        .where((f) => _combatRelevant(f.name))
+        .toList();
     if (features.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -745,8 +795,6 @@ const kStandardActions = [
 const kBonusActions = [
   _ActionEntry(name: 'Off-Hand Attack',
       desc: "When you take the Attack action with a light melee weapon, you can use a bonus action to attack with a different light melee weapon held in the other hand. No ability modifier to damage unless negative."),
-  _ActionEntry(name: 'Bonus Action Spell',
-      desc: "Cast a spell with a casting time of 1 Bonus Action. You can't cast another spell of 1st level or higher on the same turn."),
 ];
 
 // Only universal reactions available to ALL characters by default.
@@ -759,6 +807,34 @@ const kReactions = [
 ];
 
 // ── Section title ──────────────────────────────────────────────────────────────
+
+/// Returns true when a class feature should appear in the Combat tab.
+/// Hides purely taxonomic / subclass-descriptor features that have no in-combat use.
+bool _combatRelevant(String featureName) {
+  final n = featureName.toLowerCase();
+  // Exact matches to always hide.
+  if (n == 'spellcasting') return false;
+  if (n == 'spellcasting focus') return false;
+  // Subclass taxonomy preamble patterns.
+  const blockedPatterns = [
+    'divine domain',
+    'arcane tradition',
+    'martial archetype',
+    'monastic tradition',
+    'primal path',
+    'sacred oath',
+    'ranger archetype',
+    'druid circle',
+    'bardic college',
+    'otherworldly patron',
+    'domain spells',
+    'expanded spell list',
+    'bonus action spellcasting',
+    'extra cantrips',
+    'cantrip formulas',
+  ];
+  return !blockedPatterns.any((p) => n.contains(p));
+}
 
 class _SectionTitle extends StatelessWidget {
   final String title;

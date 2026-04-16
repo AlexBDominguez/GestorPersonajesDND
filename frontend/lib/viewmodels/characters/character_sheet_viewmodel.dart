@@ -68,6 +68,10 @@ class CharacterSheetViewModel extends ChangeNotifier {
       if (character?.dndClassId != null && _classFeatures.isEmpty) {
         _loadClassFeaturesIfNeeded();
       }
+      // Cargar features de subclase si hay subclase
+      if (character?.subclassId != null && _subclassFeatures.isEmpty) {
+        _loadSubclassFeaturesIfNeeded();
+      }
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception', '');
     } finally {
@@ -228,6 +232,31 @@ class CharacterSheetViewModel extends ChangeNotifier {
       // silently ignore: fallback to empty list
     } finally {
       _isLoadingFeatures = false;
+      notifyListeners();
+    }
+  }
+
+  // Subclass features (para tab_combat)
+  List<ClassFeature> _subclassFeatures = [];
+  List<ClassFeature> get subclassFeatures => _subclassFeatures;
+
+  bool _isLoadingSubclassFeatures = false;
+  bool get isLoadingSubclassFeatures => _isLoadingSubclassFeatures;
+
+  Future<void> _loadSubclassFeaturesIfNeeded() async {
+    final id = character?.subclassId;
+    if (id == null) return;
+    _isLoadingSubclassFeatures = true;
+    notifyListeners();
+    try {
+      final all = await _refService.getSubclassFeatures(id);
+      final charLevel = character?.level ?? 1;
+      _subclassFeatures = all.where((f) => f.level <= charLevel).toList()
+        ..sort((a, b) => a.level.compareTo(b.level));
+    } catch (_) {
+      // silently ignore: fallback to empty list
+    } finally {
+      _isLoadingSubclassFeatures = false;
       notifyListeners();
     }
   }

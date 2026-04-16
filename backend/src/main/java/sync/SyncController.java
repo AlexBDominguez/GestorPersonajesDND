@@ -136,43 +136,43 @@ public class SyncController {
         System.out.println("=== STARTING FULL SYNCHRONIZATION ===");
         
         try {
-            System.out.println("\n1/8 - Syncing Skills...");
+            System.out.println("\n1/11 - Syncing Skills...");
             skillSyncService.syncSkills();
             ApiRateLimiter.waitLonger();
             
-            System.out.println("\n2/8 - Syncing Backgrounds...");
+            System.out.println("\n2/11 - Syncing Backgrounds...");
             backgroundSyncService.syncBackgrounds();
             ApiRateLimiter.waitLonger();
             
-            System.out.println("\n3/8 - Syncing Races...");
+            System.out.println("\n3/11 - Syncing Races...");
             raceSyncService.syncRaces();
             ApiRateLimiter.waitLonger();
             
-            System.out.println("\n4/8 - Syncing Classes...");
+            System.out.println("\n4/11 - Syncing Classes...");
             dndClassSyncService.syncClasses();
             ApiRateLimiter.waitLonger();
             
-            System.out.println("\n5/8 - Syncing Spells...");
+            System.out.println("\n5/11 - Syncing Spells...");
             spellSyncService.syncSpells();
             ApiRateLimiter.waitLonger();
 
-            System.out.println("\n6/8 - Syncing Subclasses...");
+            System.out.println("\n6/11 - Syncing Subclasses...");
             subclassSyncService.syncSubclasses();
             ApiRateLimiter.waitLonger();
 
-            System.out.println("\n7/8 - Syncing Proficiencies...");
+            System.out.println("\n7/11 - Syncing Proficiencies...");
             proficiencySyncService.syncProficiencies();
             ApiRateLimiter.waitLonger();
 
-            System.out.println("\n8/8 - Syncing Languages...");
+            System.out.println("\n8/11 - Syncing Languages...");
             languageSyncService.syncLanguages();
             ApiRateLimiter.waitLonger();
 
-            System.out.println("\n9/8 - Syncing Conditions...");
+            System.out.println("\n9/11 - Syncing Conditions...");
             conditionSyncService.syncConditions();
             ApiRateLimiter.waitLonger();
 
-            System.out.println("\n10/8 - Syncing Damage Types...");
+            System.out.println("\n10/11 - Syncing Damage Types...");
             damageTypeSyncService.syncDamageTypes();
             ApiRateLimiter.waitLonger();
 

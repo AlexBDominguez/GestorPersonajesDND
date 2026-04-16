@@ -23,6 +23,10 @@ public class PlayerCharacter {
     private Race race;
 
     @ManyToOne
+    @JoinColumn(name = "subrace_id")
+    private Subrace subrace;
+
+    @ManyToOne
     @JoinColumn(name = "class_id")
     private DndClass dndClass;
 
@@ -170,6 +174,14 @@ public class PlayerCharacter {
 
     public void setRace(Race race) {
         this.race = race;
+    }
+
+    public Subrace getSubrace() {
+        return subrace;
+    }
+
+    public void setSubrace(Subrace subrace) {
+        this.subrace = subrace;
     }
 
     public DndClass getDndClass() {
@@ -910,10 +922,6 @@ public class PlayerCharacter {
     public int getExperienceNeeded() {
         return Math.max(0, getExperienceToNextLevel() - experiencePoints);
     }
-
-    
-
-
 
 
 }

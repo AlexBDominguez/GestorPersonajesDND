@@ -173,7 +173,7 @@ class _DashboardBody extends StatelessWidget {
                     '$name has been deleted',
                     style: GoogleFonts.lato(color: Colors.white),
                   ),
-                  backgroundColor: AppTheme.accent,
+                  backgroundColor: AppTheme.surfaceVariant,
                   duration: const Duration(seconds: 3),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(

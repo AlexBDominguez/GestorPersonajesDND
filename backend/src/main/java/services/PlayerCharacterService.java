@@ -7,7 +7,6 @@ import dto.CharacterSkillDto;
 import dto.CharacterSpellSummaryDto;
 import entities.*;
 import jakarta.transaction.Transactional;
-import dto.CharacterSpellSummaryDto;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -38,10 +37,12 @@ public class PlayerCharacterService {
     private final CharacterSkillService characterSkillService;
     private final BackgroundRepository backgroundRepository;
     private final SubclassRepository subclassRepository;
+    private final SubraceRepository subraceRepository;
     private final CharacterClassResourceService characterClassResourceService;
     private final CharacterEquipmentRepository equipmentRepository;
     private final CharacterActiveEffectRepository characterActiveEffectRepository;
     private final UserRepository userRepository;
+    private final CharacterFeatService characterFeatService;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -58,16 +59,20 @@ public class PlayerCharacterService {
             CharacterSkillService characterSkillService,
             BackgroundRepository backgroundRepository,
             SubclassRepository subclassRepository,
+            SubraceRepository subraceRepository,
             CharacterClassResourceService characterClassResourceService,
             CharacterEquipmentRepository equipmentRepository,
             CharacterActiveEffectRepository characterActiveEffectRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            CharacterFeatService characterFeatService
+
         ) {
         this.characterRepository = characterRepository;
         this.raceRepository = raceRepository;
         this.dndClassRepository = dndClassRepository;
         this.characterSpellRepository = characterSpellRepository;
         this.userRepository = userRepository;
+        this.characterFeatService = characterFeatService;
         this.spellRepository = spellRepository;
         this.spellSlotProgressionRepository = spellSlotProgressionRepository;
         this.slotRepository = slotRepository;
@@ -78,6 +83,7 @@ public class PlayerCharacterService {
         this.characterSkillService = characterSkillService;
         this.backgroundRepository = backgroundRepository;
         this.subclassRepository = subclassRepository;
+        this.subraceRepository = subraceRepository;
         this.characterClassResourceService = characterClassResourceService;
         this.equipmentRepository = equipmentRepository;
         this.characterActiveEffectRepository = characterActiveEffectRepository;
@@ -184,6 +190,12 @@ public class PlayerCharacterService {
             playerCharacter.setSubclass(subclass);
         }
 
+        if (dto.getSubraceId() != null) {
+            Subrace subrace = subraceRepository.findById(dto.getSubraceId())
+                    .orElseThrow(() -> new RuntimeException("Subrace not found"));
+            playerCharacter.setSubrace(subrace);
+        }
+
         playerCharacter.setPersonalityTraits(dto.getPersonalityTrait() != null ? dto.getPersonalityTrait().trim() : null);
         playerCharacter.setIdeals(dto.getIdeal());
         playerCharacter.setBonds(dto.getBond());
@@ -210,6 +222,13 @@ public class PlayerCharacterService {
         }
 
         PlayerCharacter saved = characterRepository.save(playerCharacter);
+
+        //PROCESAMIENTO DE FEATS
+        if(dto.getFeatIds() != null && !dto.getFeatIds().isEmpty()){
+            for (Long featId : dto.getFeatIds()){
+                characterFeatService.assignFeatToCharacter(saved.getId(), featId, null);
+            }
+        }
 
         //Inicializar skills y saving throws
         characterSkillService.initializeCharacterSkills(saved);
@@ -373,6 +392,11 @@ public class PlayerCharacterService {
         if(playerCharacter.getSubclass() != null) {
             dto.setSubclassId(playerCharacter.getSubclass().getId());
             dto.setSubclassName(playerCharacter.getSubclass().getName());
+        }
+
+        if (playerCharacter.getSubrace() != null) {
+            dto.setSubraceId(playerCharacter.getSubrace().getId());
+            dto.setSubraceName(playerCharacter.getSubrace().getName());
         }
 
         dto.setPersonalityTrait(playerCharacter.getPersonalityTraits());

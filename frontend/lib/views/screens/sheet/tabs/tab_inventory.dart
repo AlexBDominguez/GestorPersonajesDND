@@ -316,7 +316,7 @@ class _InventoryItemTile extends StatelessWidget{
               const SizedBox(height: 2),
               Row(children: [
                 if(item.itemType !=null)
-                  Text(item.itemType!,
+                  Text(_formatItemType(item.itemType!),
                     style: GoogleFonts.lato(
                       color: AppTheme.textSecondary,
                       fontSize: 11)),
@@ -497,8 +497,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                         fontSize: 13,
                         fontWeight: FontWeight.bold)),
                     subtitle: Text(
-                      [item.itemType, item.statSummary]
-                          .where((s) => s != null && s.isNotEmpty)
+                      [if (item.itemType != null) _formatItemType(item.itemType!), item.statSummary]
+                          .where((s) => s.isNotEmpty)
                           .join(' · '),
                       style: GoogleFonts.lato(
                         color: AppTheme.textSecondary,
@@ -653,4 +653,18 @@ class _SectionTitleInline extends StatelessWidget {
     const SizedBox(width: 10),
     const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
   ]);
+}
+
+/// Converts raw backend itemType (e.g. ADVENTURING_GEAR) to a readable label.
+String _formatItemType(String raw) {
+  switch (raw.toUpperCase()) {
+    case 'ADVENTURING_GEAR': return 'Adventuring Gear';
+    case 'MOUNTS_AND_VEHICLES': return 'Mounts & Vehicles';
+    default:
+      return raw
+          .toLowerCase()
+          .split('_')
+          .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
+          .join(' ');
+  }
 }

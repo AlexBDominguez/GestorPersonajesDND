@@ -3,6 +3,7 @@ import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
 import 'package:gestor_personajes_dnd/models/wizard/background_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/race_option.dart';
+import 'package:gestor_personajes_dnd/models/wizard/subrace_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
 import 'package:gestor_personajes_dnd/services/inventory/inventory_service.dart';
@@ -277,11 +278,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   void selectClass(ClassOption c) {
     selectedClass = c;
+    selectedSubclass = null;
+    subclasses = [];
     //Si cambia la clase, limpiar spells seleccionados
     selectedSpellIds.clear();
     availableSpells.clear();
     _markDirty(WizardStep.dndClass);
     notifyListeners();
+    _loadSubclassesFor(c.id);
   }
 
   void clearClass() {
@@ -298,10 +302,38 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool get isLoadingSubclasses => subclasses.isEmpty && selectedClass != null;
+
+  Future<void> loadSubclasses(int classId) async {
+    try {
+      subclasses = await _refService.getSubclasses(classId);
+    } catch (_) {
+      subclasses = [];
+    }
+    notifyListeners();
+  }
+
+  Future<void> _loadSubclassesFor(int classId) async {
+    subclasses = [];
+    notifyListeners();
+    try {
+      subclasses = await _refService.getSubclasses(classId);
+    } catch (_) {
+      subclasses = [];
+    }
+    notifyListeners();
+  }
+
   void selectSubclass(SubclassOption s) {
     selectedSubclass = s;
     selectedSpellIds.clear();
     availableSpells.clear();
+    _markDirty(WizardStep.dndClass);
+    notifyListeners();
+  }
+
+  void clearSubclass() {
+    selectedSubclass = null;
     _markDirty(WizardStep.dndClass);
     notifyListeners();
   }
@@ -391,6 +423,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   List<RaceOption> races = [];
   RaceOption? selectedRace;
+  List<SubraceOption> subraces = [];
+  SubraceOption? selectedSubrace;
+  bool isLoadingSubraces = false;
 
   Future<void> loadRaces() async{
     _setLoading(true);
@@ -405,12 +440,36 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void selectRace(RaceOption r) {
-    selectedRace = r; 
+    selectedRace = r;
+    selectedSubrace = null;
+    subraces = [];
+    _markDirty(WizardStep.race);
+    notifyListeners();
+    _loadSubracesFor(r.id);
+  }
+
+  Future<void> _loadSubracesFor(int raceId) async {
+    isLoadingSubraces = true;
+    notifyListeners();
+    try {
+      subraces = await _refService.getSubRaces(raceId);
+    } catch (_) {
+      subraces = [];
+    } finally {
+      isLoadingSubraces = false;
+      notifyListeners();
+    }
+  }
+
+  void selectSubrace(SubraceOption s) {
+    selectedSubrace = s;
     _markDirty(WizardStep.race);
     notifyListeners();
   }
 
-  bool get raceValid => selectedRace != null;
+  bool get raceValid =>
+      selectedRace != null &&
+      (subraces.isEmpty || selectedSubrace != null);
 
   //PASO 5: Ability Scores
   // ────────────────────────────────────────────────────────────

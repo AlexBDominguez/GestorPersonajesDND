@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:gestor_personajes_dnd/config/api_config.dart';
+import 'package:gestor_personajes_dnd/models/wizard/feat_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/race_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/background_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
+import 'package:gestor_personajes_dnd/models/wizard/subrace_option.dart';
 import 'package:gestor_personajes_dnd/services/http/api_client.dart';
 
 
@@ -52,6 +54,37 @@ class WizardReferenceService {
           .toList();
     }
     throw Exception('Failed to load subclasses ($classId): ${res.statusCode}');
+  }
+
+  Future<List<SubraceOption>> getSubRaces(int raceId) async {
+    final res = await _api.get('/api/subraces/race/$raceId');
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List)
+          .map((e) => SubraceOption.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    if (res.statusCode == 404) return [];
+    throw Exception('Failed to load subraces ($raceId): ${res.statusCode}');
+  }
+
+  Future<List<ClassFeature>> getSubclassFeatures(int subclassId) async {
+    final res = await _api.get('/api/subclasses/$subclassId/features');
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List)
+          .map((e) => ClassFeature.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    throw Exception('Failed to load subclass features ($subclassId): ${res.statusCode}');
+  }
+
+  Future<List<FeatOption>> getFeats() async{
+    final res = await _api.get('/api/feats');
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List)
+          .map((e) => FeatOption.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    throw Exception('Failed to load feats (${res.statusCode})');
   }
 
   Future<List<BackgroundOption>> getBackgrounds() async{

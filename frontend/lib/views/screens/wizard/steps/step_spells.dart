@@ -37,7 +37,7 @@ class _StepSpellsState extends State<StepSpells> {
           s.name.toLowerCase().contains(query) ||
           (s.school?.toLowerCase().contains(query) ?? false);
       return matchLevel && matchSearch;
-    }).toList();
+    }).toList()..sort((a, b) => a.level.compareTo(b.level));
 
     final levels = <int>{};
     for (final s in vm.availableSpells) levels.add(s.level);

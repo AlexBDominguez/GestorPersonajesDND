@@ -9,8 +9,14 @@ class PlayerCharacter{
   final int level;
   final int? raceId;
   final String? raceName;
+  final int? subraceId;
+  final String? subraceName;
   final int? dndClassId;
   final String? dndClassName;
+  final int? subclassId;
+  final String? subclassName;
+  final int? backgroundId;
+  final String? backgroundName;
   final Map<String, int> abilityScores;
   final int maxHp;
   final int currentHp;
@@ -39,8 +45,6 @@ class PlayerCharacter{
   final int spellAttackBonus;
   final int maxPreparedSpells;
   final String? alignment;
-  final String? subclassName;
-  final String? backgroundName;
   final String? personalityTrait;
   final String? ideal;
   final String? bond;
@@ -73,8 +77,12 @@ class PlayerCharacter{
     required this.level,
     this.raceId,
     this.raceName,
+    this.subraceId,
+    this.subraceName,
     this.dndClassId,
     this.dndClassName,
+    this.subclassId,
+    this.backgroundId,
     required this.abilityScores,
     required this.maxHp,
     required this.currentHp,
@@ -144,8 +152,12 @@ class PlayerCharacter{
       level:               (j['level'] as num?)?.toInt() ?? 1,
       raceId:              (j['raceId'] as num?)?.toInt(),
       raceName:            j['raceName'] as String?,
+      subraceId:           (j['subraceId'] as num?)?.toInt(),
+      subraceName:         j['subraceName'] as String?,
       dndClassId:          (j['dndClassId'] as num?)?.toInt(),
       dndClassName:        j['dndClassName'] as String?,
+      subclassId:          (j['subclassId'] as num?)?.toInt(),
+      backgroundId:        (j['backgroundId'] as num?)?.toInt(),
       abilityScores:       scores,
       maxHp:               (j['maxHp'] as num?)?.toInt() ?? 0,
       currentHp:           (j['currentHp'] as num?)?.toInt() ?? 0,

@@ -65,9 +65,29 @@ class TabInfo extends StatelessWidget{
         const SizedBox(height: 24),
 
         //Background and Alignment
-        _SectionTitle('Background'),
+        _SectionTitle('Identity'),
         const SizedBox(height: 12),
 
+        Row(children: [
+          Expanded(
+            child: _InfoPill(
+              label: 'Race',
+              value: c.subraceName != null
+                  ? '${c.raceName ?? '—'} (${c.subraceName})'
+                  : c.raceName ?? '—',
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _InfoPill(
+              label: 'Class',
+              value: c.subclassName != null
+                  ? '${c.dndClassName ?? '—'} · ${c.subclassName}'
+                  : c.dndClassName ?? '—',
+            ),
+          ),
+        ]),
+        const SizedBox(height: 8),
         Row(children: [
           Expanded(
             child: _InfoPill(

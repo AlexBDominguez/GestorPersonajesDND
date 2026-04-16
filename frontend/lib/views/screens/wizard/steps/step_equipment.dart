@@ -23,6 +23,8 @@ class _StepEquipmentState extends State<StepEquipment>
     ('all', 'All'),
     ('weapon', 'Weapons'),
     ('armor', 'Armor'),
+    ('adventuring_gear', 'Gear'),
+    ('mounts_and_vehicles', 'Mounts'),
     ('potion', 'Potions'),
     ('tool', 'Tools'),
   ];
@@ -77,12 +79,6 @@ class _StepEquipmentState extends State<StepEquipment>
                 ),
               ),
           ]),
-          const SizedBox(height: 4),
-          Text(
-            'This step is optional — you can add items later from your inventory.',
-            style: GoogleFonts.lato(
-                color: AppTheme.textSecondary, fontSize: 12),
-          ),
           const SizedBox(height: 8),
           // Optional banner
           Container(
@@ -136,16 +132,15 @@ class _StepEquipmentState extends State<StepEquipment>
           const SizedBox(height: 10),
 
           // Filtros de tipo
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _typeFilters.map((f) {
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _typeFilters.map((f) {
                 final active = _typeFilter == f.$1;
                 return GestureDetector(
                   onTap: () => setState(() => _typeFilter = f.$1),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 5),
                     decoration: BoxDecoration(
@@ -172,7 +167,6 @@ class _StepEquipmentState extends State<StepEquipment>
                   ),
                 );
               }).toList(),
-            ),
           ),
           const SizedBox(height: 8),
 
@@ -436,10 +430,7 @@ class _ItemTile extends StatelessWidget {
                 Row(children: [
                   if (item.itemType != null)
                     Text(
-                      item.itemType!
-                          .substring(0, 1)
-                          .toUpperCase() +
-                          item.itemType!.substring(1),
+                      _formatItemType(item.itemType!),
                       style: GoogleFonts.lato(
                         color: AppTheme.textSecondary, fontSize: 11)),
                   if (item.statSummary.isNotEmpty) ...[
@@ -468,16 +459,15 @@ class _ItemTile extends StatelessWidget {
                     color: AppTheme.textSecondary, fontSize: 10)),
           ]),
 
-          // Info button
-          if (item.description != null && item.description!.isNotEmpty)
-            GestureDetector(
-              onTap: () => _showDetail(context),
-              child: const Padding(
-                padding: EdgeInsets.only(left: 8),
-                child: Icon(Icons.info_outline,
-                    color: AppTheme.textSecondary, size: 18),
-              ),
+          // Info button — always show
+          GestureDetector(
+            onTap: () => _showDetail(context),
+            child: const Padding(
+              padding: EdgeInsets.only(left: 8),
+              child: Icon(Icons.info_outline,
+                  color: AppTheme.textSecondary, size: 18),
             ),
+          ),
         ]),
       ),
     );
@@ -588,3 +578,16 @@ class _DetailRow extends StatelessWidget {
   );
 }
 
+/// Converts raw backend itemType (e.g. ADVENTURING_GEAR) to a readable label.
+String _formatItemType(String raw) {
+  switch (raw.toUpperCase()) {
+    case 'ADVENTURING_GEAR': return 'Adventuring Gear';
+    case 'MOUNTS_AND_VEHICLES': return 'Mounts & Vehicles';
+    default:
+      return raw
+          .toLowerCase()
+          .split('_')
+          .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
+          .join(' ');
+  }
+}

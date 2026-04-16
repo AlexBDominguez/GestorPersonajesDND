@@ -24,6 +24,8 @@ public class PlayerCharacterDto {
     private String flaw;
     private Long subclassId;
     private String subclassName;
+    private Long subraceId;
+    private String subraceName;
     private String alignment;
     private int temporaryHP;
     private int deathSaveSuccesses;
@@ -67,6 +69,7 @@ public class PlayerCharacterDto {
     private Long userId;
     private List<CharacterSpellSummaryDto> characterSpells;
     private List<Long> spellIds; //Ids de spells seleccionados en el wizard
+    private List<Long> featIds;
     private List<SpellSlotDto> spellSlots;
     private boolean useEncumbrance = false;
     private List<CharacterSkillDto> skills;
@@ -235,6 +238,22 @@ public class PlayerCharacterDto {
 
     public void setSubclassName(String subclassName) {
         this.subclassName = subclassName;
+    }
+
+    public Long getSubraceId() {
+        return subraceId;
+    }
+
+    public void setSubraceId(Long subraceId) {
+        this.subraceId = subraceId;
+    }
+
+    public String getSubraceName() {
+        return subraceName;
+    }
+
+    public void setSubraceName(String subraceName) {
+        this.subraceName = subraceName;
     }
 
     public String getAlignment() {
@@ -602,6 +621,14 @@ public class PlayerCharacterDto {
 
     public void setSpellIds(List<Long> spellIds) {
         this.spellIds = spellIds;
+    }
+
+    public List<Long> getFeatIds() {
+        return featIds;
+    }
+
+    public void setFeatIds(List<Long> featIds) {
+        this.featIds = featIds;
     }
 
     public boolean isUseEncumbrance() {

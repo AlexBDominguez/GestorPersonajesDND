@@ -42,6 +42,15 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
     super.initState();
     _level = widget.vm.selectedLevel;
     _initHpRolls(_level);
+    widget.vm.addListener(_onVmChanged);
+  }
+
+  void _onVmChanged() => setState(() {});
+
+  @override
+  void dispose() {
+    widget.vm.removeListener(_onVmChanged);
+    super.dispose();
   }
 
   void _initHpRolls(int level) {
@@ -124,6 +133,12 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                       )),
 
                   const SizedBox(height: 20),
+
+                  // Subclass selector ────────────────────────────────
+                  _SubclassSelectorSection(
+                    vm: widget.vm,
+                    currentLevel: _level,
+                  ),
 
                   // HP por nivel ─────────────────────────────────────
                   _SectionHeader('Manage HP'),
@@ -503,8 +518,149 @@ class _HpInputState extends State<_HpInput> {
   }
 }
 
-class _BottomButtons extends StatelessWidget {
-  final bool canConfirm;
+// ── Subclass selector (inline en ClassOptionsScreen) ─────────────────────────
+
+class _SubclassSelectorSection extends StatelessWidget {
+  final CharacterCreatorViewModel vm;
+  final int currentLevel;
+
+  const _SubclassSelectorSection({
+    required this.vm,
+    required this.currentLevel,
+  });
+
+  // La mayoría de clases reciben subclase a nivel 3 (PHB 2014).
+  // Cleric, Druid, Sorcerer, Warlock: nivel 1.
+  int get _subclassMinLevel {
+    final name = vm.selectedClass?.indexName.toLowerCase() ?? '';
+    if (name == 'cleric' || name == 'druid' ||
+        name == 'sorcerer' || name == 'warlock') return 1;
+    return 3;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // No muestres si no hay subclases todavía
+    if (vm.subclasses.isEmpty) return const SizedBox.shrink();
+
+    final meetsLevel = currentLevel >= _subclassMinLevel;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader('Subclass (optional)'),
+        const SizedBox(height: 6),
+        if (!meetsLevel)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              'You will be able to choose a subclass at level $_subclassMinLevel.',
+              style: GoogleFonts.lato(
+                  color: AppTheme.textSecondary, fontSize: 12),
+            ),
+          )
+        else ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              'Choosing a subclass is optional — you can assign one later.',
+              style: GoogleFonts.lato(
+                  color: AppTheme.textSecondary, fontSize: 12),
+            ),
+          ),
+          ...vm.subclasses.map((sub) => _SubclassChip(
+                subclass: sub,
+                isSelected: vm.selectedSubclass?.id == sub.id,
+                onTap: () {
+                  if (vm.selectedSubclass?.id == sub.id) {
+                    vm.clearSubclass();
+                  } else {
+                    vm.selectSubclass(sub);
+                  }
+                },
+              )),
+          const SizedBox(height: 20),
+        ],
+      ],
+    );
+  }
+}
+
+class _SubclassChip extends StatelessWidget {
+  final SubclassOption subclass;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _SubclassChip({
+    required this.subclass,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppTheme.primary.withOpacity(0.12)
+              : AppTheme.surfaceVariant.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? AppTheme.primary : AppTheme.surfaceVariant,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            width: 18, height: 18,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isSelected ? AppTheme.primary : Colors.transparent,
+              border: Border.all(
+                color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                width: 1.5,
+              ),
+            ),
+            child: isSelected
+                ? const Icon(Icons.check, color: AppTheme.background, size: 12)
+                : null,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(subclass.name,
+                    style: GoogleFonts.cinzel(
+                        color: isSelected
+                            ? AppTheme.primary
+                            : AppTheme.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold)),
+                if (subclass.flavor.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(subclass.flavor,
+                      style: GoogleFonts.lato(
+                          color: AppTheme.textSecondary, fontSize: 11),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis),
+                ],
+              ],
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+class _BottomButtons extends StatelessWidget {  final bool canConfirm;
   final VoidCallback onCancel;
   final VoidCallback onConfirm;
 
