@@ -130,8 +130,7 @@ class CharacterService {
         '${ApiConfig.charactersPath}/$characterId/spells/$spellId/prepare',
       );
       if (res.statusCode == 204) return;
-      if (res.statusCode == 400) {
-        // Intentar extraer mensaje del backend ("Cannot prepare more spells...")
+      if (res.statusCode == 400 || res.statusCode == 422) {
         String msg = res.body.isNotEmpty ? res.body : 'Cannot prepare spell';
         throw Exception(msg);
       }

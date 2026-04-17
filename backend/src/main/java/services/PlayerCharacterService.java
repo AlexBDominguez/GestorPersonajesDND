@@ -500,8 +500,8 @@ public class PlayerCharacterService {
                         .countPreparedNonCantripsByCharacterId(characterId);
                     if (currentPrepared >= maxPrepared) {
                         throw new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST,
-                            "Cannot prepare more spells: limit is " + maxPrepared);
+                            HttpStatus.UNPROCESSABLE_ENTITY,
+                            "Spell preparation limit reached (" + maxPrepared + "/" + maxPrepared + ")");
                     }
                 }
             }

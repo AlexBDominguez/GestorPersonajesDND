@@ -654,7 +654,22 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
     }
 
     void _onVmChanged() {
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      final msg = widget.vm.errorMessage;
+      if (msg != null && msg.isNotEmpty) {
+        widget.vm.clearError();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(msg,
+                style: GoogleFonts.lato(color: Colors.white)),
+              backgroundColor: AppTheme.accent,
+              duration: const Duration(seconds: 3),
+            ));
+          }
+        });
+      }
+      setState(() {});
     }
 
     @override

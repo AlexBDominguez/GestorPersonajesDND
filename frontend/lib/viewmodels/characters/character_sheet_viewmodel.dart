@@ -50,6 +50,10 @@ class CharacterSheetViewModel extends ChangeNotifier {
   String? get error => _errorMessage;
   int get tabIndex => _tabIndex;
 
+  void clearError() {
+    _errorMessage = null;
+  }
+
   void setTab(int i) {
     _tabIndex = i;
     notifyListeners();
