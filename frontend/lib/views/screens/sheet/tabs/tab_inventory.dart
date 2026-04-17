@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
 import 'package:gestor_personajes_dnd/services/inventory/inventory_service.dart';
+import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart' show GoogleFonts;
 
 class TabInventory extends StatefulWidget {
   final PlayerCharacter character;
-  const TabInventory({super.key, required this.character});
+  final CharacterSheetViewModel vm;
+  const TabInventory({super.key, required this.character, required this.vm});
 
   @override
   State<TabInventory> createState() => _TabInventoryState();
@@ -18,6 +21,8 @@ class _TabInventoryState extends State<TabInventory> {
   List<InventoryItem> _items = [];
   bool _loading = true;
   String? _error;
+
+  bool _isDragging = false; // Para evitar que el scroll interfiera con el drag
 
   @override
   void initState() {
@@ -34,6 +39,84 @@ class _TabInventoryState extends State<TabInventory> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  //Equipa/desequipa. Tras la llamada recarga tanto el inventario como
+  // el personaje completo (para actualizar AC en el header)
+  Future<void> _toggleEquipped(InventoryItem item) async {
+    try {
+      await _service.toggleEquipped(widget.character.id, item.id);
+      await Future.wait([_load(), widget.vm.load()]);
+    } catch (e) {
+      if (mounted) {
+        _showError(e.toString().replaceFirst('Exception: ', ''));
+      }
+    }
+  }
+
+  Future<void> _toggleAttuned(InventoryItem item) async {
+    try {
+      await _service.toggleAttuned(widget.character.id, item.id);
+      await Future.wait([_load(), widget.vm.load()]);
+    } catch (e) {
+      if (mounted) {
+        _showError(e.toString().replaceFirst('Exception: ', ''));
+      }
+    }
+  }
+
+  Future<void> _removeItem(InventoryItem item) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        title: Text ('Remove item?',
+          style: GoogleFonts.cinzel(color: AppTheme.primary)),
+        content: Text('Remove "${item.name}" from inventory?',
+          style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel',
+              style: GoogleFonts.lato(color: AppTheme.textSecondary))),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
+              child: const Text('Remove')),
+        ],
+      ),
+    );
+    if(confirm == true){
+      await _service.removeItem(widget.character.id, item.itemId);
+      await _load();
+    }
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      backgroundColor: AppTheme.accent,
+      duration: const Duration(seconds: 3),
+    ));
+  }
+
+  void _showCannotAttuneMessage(String itemName) {
+    HapticFeedback.mediumImpact();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Row(children: [
+        const Icon(Icons.block, color: Colors.white, size: 16),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            '"$itemName" does not require attunement and cannot be attuned.',
+            style: GoogleFonts.lato(color: Colors.white, fontSize: 13),
+          ),
+        ),
+      ]),
+      backgroundColor: AppTheme.accent,
+      duration: const Duration(seconds: 3),
+    ));
   }
 
   @override
@@ -90,39 +173,34 @@ class _TabInventoryState extends State<TabInventory> {
           _CurrencyRow(character: widget.character),
           const SizedBox(height: 24),
 
-          //Attuned
-          _SectionTitle('Attuned Items'),
-          const SizedBox(height: 4),
-          Text('${attuned.length}/3 slots used.',
-              style: GoogleFonts.lato(
-                color: AppTheme.textSecondary,
-                fontSize: 11,
-                fontStyle: FontStyle.italic)),
-          const SizedBox(height: 10),
-          if (attuned.isEmpty)
-            _EmptySlot(message: 'No attuned items')
-          else
-            ...attuned.map((item) => _InventoryItemTile(
-                item: item,
-                showWeight: useEncumbrance,
-                onRemove: () => _removeItem(item),
-                onToggleAttuned: () => _toggleAttuned(item),            
-            )),
+          //  Attuned (DragTarget) 
+          _AttunedDropZone(
+            items: attuned,
+            isDragging: _isDragging,
+            showWeight: useEncumbrance,
+            onDropped: (item) {
+              if (!item.requiresAttunement) {
+                _showCannotAttuneMessage(item.name);
+                return;
+              }
+              _toggleAttuned(item);
+            },
+            onRemoveAttuned: (item) => _toggleAttuned(item),
+            onRemove: (item) => _removeItem(item),
+          ),
           const SizedBox(height: 24),
 
-          //Equipped
-          _SectionTitle('Equipped'),
-          const SizedBox(height: 10),
-          if (equipped.isEmpty)
-            _EmptySlot(message: 'No equipped items')
-          else
-            ...equipped.map((item) => _InventoryItemTile(
-                item: item,
-                showWeight: useEncumbrance,
-                onRemove: () => _removeItem(item),
-                onToggleAttuned: () => _toggleAttuned(item),
-            )),
+          //  Equipped (DragTarget) 
+          _EquippedDropZone(
+            items: equipped,
+            isDragging: _isDragging,
+            showWeight: useEncumbrance,
+            onDropped: (item) => _toggleEquipped(item),
+            onUnequip: (item) => _toggleEquipped(item),
+            onRemove: (item) => _removeItem(item),
+          ),
           const SizedBox(height: 24),
+
 
           //Backpack
           Row(children: [
@@ -151,63 +229,36 @@ class _TabInventoryState extends State<TabInventory> {
               ),
             ),
           ]),
-          const SizedBox(height: 10),
-          if(backpack.isEmpty)
+          const SizedBox(height: 6),
+          //Hint de drag (visible siempre que hay items en la mochila)
+          if(backpack.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(children: [
+              const Icon(Icons.drag_indicator,
+                color: AppTheme.textSecondary, size: 14),
+              const SizedBox(width: 4),
+              Text('Long-press an item to drag it to Equipped or Attuned',
+                style: GoogleFonts.lato(
+                  color: AppTheme.textSecondary,
+                  fontSize: 11,
+                  fontStyle: FontStyle.italic)),
+            ]),
+          ),
+          if (backpack.isEmpty)
             _EmptySlot(message: 'Backpack is empty')
           else
-            ...backpack.map((item) => _InventoryItemTile(
-                item: item,
-                showWeight: useEncumbrance,
-                onRemove: () => _removeItem(item),
-                onToggleAttuned: () => _toggleAttuned(item),
-            )),
-          const SizedBox(height: 16),
+          ...backpack.map((item) => _DraggableItemTile(
+            item: item,
+            showWeight: useEncumbrance,
+            onRemove: () => _removeItem(item),
+            onDragStarted: () => setState(() => _isDragging = true),
+            onDragEnded: () => setState(() => _isDragging = false),
+          )),
+        const SizedBox(height: 16),
         ]),
       ),
     );
-  }
-
-  Future<void> _removeItem(InventoryItem item) async{
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        title: Text('Remove item?',
-          style: GoogleFonts.cinzel(color: AppTheme.primary)),
-        content: Text('Remove "${item.name}" from inventory?',
-          style: GoogleFonts.lato(color: AppTheme.textPrimary)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel',
-              style:
-                GoogleFonts.lato(color: AppTheme.textSecondary))),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.accent),
-            child: const Text('Remove')),
-        ],
-      ),
-    );
-    if (confirm == true) {
-      await _service.removeItem(widget.character.id, item.id);
-      await _load();
-    }
-  }
-
-  Future<void> _toggleAttuned(InventoryItem item) async {
-    try {
-      await _service.toggleAttuned(widget.character.id, item.id);
-      await _load();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: AppTheme.accent,
-        ));
-      }
-    }
   }
 
   Future<void> _showAddItemSheet(BuildContext context) async {
@@ -229,6 +280,523 @@ class _TabInventoryState extends State<TabInventory> {
     );
   }
 }
+
+//Drop Zone: Equipped
+
+class _EquippedDropZone extends StatefulWidget {
+  final List<InventoryItem> items;
+  final bool isDragging;
+  final bool showWeight;
+  final void Function(InventoryItem) onDropped;
+  final void Function(InventoryItem) onUnequip;
+  final void Function(InventoryItem) onRemove;
+
+  const _EquippedDropZone({
+    required this.items,
+    required this.isDragging,
+    required this.showWeight,
+    required this.onDropped,
+    required this.onUnequip,
+    required this.onRemove,
+  });
+
+  @override
+  State<_EquippedDropZone> createState() => _EquippedDropZoneState();
+}
+
+class _EquippedDropZoneState extends State<_EquippedDropZone> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return DragTarget<InventoryItem>(
+      onWillAcceptWithDetails: (details) {
+        //Solo acepta items del backpack (no equipados, no attuend)
+        return !details.data.equipped && !details.data.attuned;
+      },
+      onAcceptWithDetails: (details) {
+        setState(() => _hovering = false);
+        widget.onDropped(details.data);
+      },
+      onMove: (_) => setState(() => _hovering = true),
+      onLeave: (_) => setState(() => _hovering = false),
+      builder: (_, candidateData, __){
+        final isHovering = _hovering || candidateData.isNotEmpty;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isHovering
+                  ? AppTheme.primary
+                  : Colors.transparent,
+              width: 2,
+            ),
+            color: isHovering
+                ? AppTheme.primary.withOpacity(0.06)
+                : Colors.transparent,
+          ),
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionTitle('Equipped'),
+                if (widget.isDragging)
+                  _DropHint(
+                    label: 'Drop here to equip',
+                    active: isHovering,
+                    icon: Icons.shield_outlined,
+                  ),
+                const SizedBox(height: 8),
+                if (widget.items.isEmpty && !widget.isDragging)
+                  _EmptySlot(message: 'No equipped items'),
+                ...widget.items.map((item) => _EquippedItemTile(
+                      item: item,
+                      showWeight: widget.showWeight,
+                      onUnequip: () => widget.onUnequip(item),
+                      onRemove: () => widget.onRemove(item),
+                    )),
+              ]),
+        );
+      },
+    );
+  }
+}
+
+//Drop Zone: Attuned
+class _AttunedDropZone extends StatefulWidget {
+  final List<InventoryItem> items;
+  final bool isDragging;
+  final bool showWeight;
+  final void Function(InventoryItem) onDropped;
+  final void Function(InventoryItem) onRemoveAttuned;
+  final void Function(InventoryItem) onRemove;
+
+  const _AttunedDropZone({
+    required this.items,
+    required this.isDragging,
+    required this.showWeight,
+    required this.onDropped,
+    required this.onRemoveAttuned,
+    required this.onRemove,
+  });
+
+  @override
+  State<_AttunedDropZone> createState() => _AttunedDropZoneState();
+}
+
+class _AttunedDropZoneState extends State<_AttunedDropZone>{
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context){
+    return DragTarget<InventoryItem>(
+      //Aceptamos TODOS para poder dar feedback - la validación real va en onAccept
+      onWillAcceptWithDetails: (_) => true,
+      onAcceptWithDetails: (details) {
+        setState(() => _hovering = false);
+        widget.onDropped(details.data); //la validación se hace en el padre
+      },
+      onMove: (_) => setState(() => _hovering = true),
+      onLeave: (_) => setState(() => _hovering = false),
+      builder: (_, candidateData, __) {
+        final isHovering = _hovering || candidateData.isNotEmpty;
+        //Si hay algo hovering que NO puede ser attuned, mostramos un flash rojo
+        final invalidHover = isHovering &&
+            candidateData.isNotEmpty &&
+            candidateData.first != null &&
+            !candidateData.first!.requiresAttunement;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: invalidHover
+                  ? AppTheme.accent
+                  : isHovering
+                      ? const Color(0xFFB07DFF)
+                      : Colors.transparent,
+              width: 2,
+            ),
+            color: invalidHover
+                ? AppTheme.accent.withOpacity(0.06)
+                : isHovering
+                    ? const Color(0xFFB07DFF).withOpacity(0.06)
+                    : Colors.transparent,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Expanded(
+                  child: _SectionTitle(
+                    'Attuned (${widget.items.length}/3)'),
+                  ),
+                  if (invalidHover)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        const Icon(Icons.block,
+                          color: AppTheme.accent, size: 14),
+                        const SizedBox(width: 4),
+                        Text('Cannot attune',
+                          style: GoogleFonts.lato(
+                            color: AppTheme.accent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold)),
+                      ]),
+                    ),
+              ]),
+              if (widget.isDragging)
+                _DropHint(
+                  label: invalidHover
+                    ? 'This item cannot be attuned'
+                    : 'Drop here to attune',
+                  active: isHovering,
+                  isError: invalidHover,
+                  icon: Icons.auto_awesome_outlined,
+                ),
+              const SizedBox(height: 8),
+              if (widget.items.isEmpty && !widget.isDragging)
+                _EmptySlot(message: 'No attuned items'),
+              ...widget.items.map((item) => _AttunedItemTile(
+                    item: item,
+                    showWeight: widget.showWeight,
+                    onRemoveAttuned: () => widget.onRemoveAttuned(item),
+                    onRemove: () => widget.onRemove(item),
+                  )),
+          ]),
+        );
+      },
+    );
+  }
+}
+
+//Draggable item tile (Backpack)
+class _DraggableItemTile extends StatelessWidget{
+  final InventoryItem item;
+  final bool showWeight;
+  final VoidCallback onRemove;
+  final VoidCallback onDragStarted;
+  final VoidCallback onDragEnded;
+
+  const _DraggableItemTile({
+    required this.item,
+    required this.showWeight,
+    required this.onRemove,
+    required this.onDragStarted,
+    required this.onDragEnded,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tile = _ItemTileContent(
+      item: item,
+      showWeight: showWeight,
+      dimmed: false,
+      trailing: PopupMenuButton<String>(
+        icon: const Icon(Icons.more_vert,
+          color: AppTheme.textSecondary, size: 18),
+        color: AppTheme.surface,
+        onSelected: (v) { if (v == 'remove') onRemove(); },
+        itemBuilder: (_) => [
+          PopupMenuItem(
+            value: 'remove',
+            child: Text('Remove',
+              style: GoogleFonts.lato(color: AppTheme.accent)),
+          ),
+        ],
+      ),
+    );
+
+    return LongPressDraggable<InventoryItem>(
+      data: item,
+      delay: const Duration(milliseconds: 300),
+      onDragStarted: () {
+        HapticFeedback.lightImpact();
+        onDragStarted();
+      },
+      onDragEnd: (_) => onDragEnded(),
+      onDraggableCanceled: (_, __) => onDragEnded(),
+      //Widget "fantasma" que sigue al dedo
+      feedback: Material(
+        color: Colors.transparent,
+        child: Opacity(
+          opacity: 0.9,
+        child: Container(
+          width: 280,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppTheme.primary, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primary.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(children: [
+            Icon(item.typeIcon,
+              size: 18,
+              color: AppTheme.primary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(item.name,
+                style: GoogleFonts.cinzel(
+                  color: AppTheme.primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold)),
+            ),
+          ]),
+        ),
+      ),
+    ),
+    //El item original se vuelve semitransparente mientras se arrastra
+    childWhenDragging: Opacity(
+      opacity: 0.35,
+      child: tile,      
+    ),
+    child: tile,
+    );
+  }
+}
+
+// Equipped item tile (tiene botón Unequip)
+class _EquippedItemTile extends StatelessWidget {
+  final InventoryItem item;
+  final bool showWeight;
+  final VoidCallback onUnequip;
+  final VoidCallback onRemove;
+
+  const _EquippedItemTile({
+    required this.item,
+    required this.showWeight,
+    required this.onUnequip,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _ItemTileContent(
+      item: item,
+      showWeight: showWeight,
+      accentBorder: true,
+      trailing: PopupMenuButton<String>(
+        icon: const Icon(Icons.more_vert,
+          color: AppTheme.textSecondary, size: 18),
+        color: AppTheme.surface,
+        onSelected: (v) {
+          if (v == 'unequip') onUnequip();
+          if (v == 'remove') onRemove();
+        },
+        itemBuilder: (_) => [
+          PopupMenuItem(
+            value: 'unequip',
+            child: Text('Unequip',
+              style: GoogleFonts.lato(color: AppTheme.primary)),
+          ),
+          PopupMenuItem(
+            value: 'remove',
+            child: Text('Remove',
+              style: GoogleFonts.lato(color: AppTheme.accent)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+//Attuned item tile
+class _AttunedItemTile extends StatelessWidget {
+  final InventoryItem item;
+  final bool showWeight;
+  final VoidCallback onRemoveAttuned;
+  final VoidCallback onRemove;
+  const _AttunedItemTile({
+    required this.item,
+    required this.showWeight,
+    required this.onRemoveAttuned,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _ItemTileContent(
+      item: item,
+      showWeight: showWeight,
+      attunedBorder: true,
+      trailing: PopupMenuButton<String>(
+        icon: const Icon(Icons.more_vert,
+            color: AppTheme.textSecondary, size: 18),
+        color: AppTheme.surface,
+        onSelected: (v) {
+          if (v == 'unattune') onRemoveAttuned();
+          if (v == 'remove') onRemove();
+        },
+        itemBuilder: (_) => [
+          PopupMenuItem(
+            value: 'unattune',
+            child: Text('Remove attunement',
+                style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+          ),
+          PopupMenuItem(
+            value: 'remove',
+            child: Text('Remove',
+                style: GoogleFonts.lato(color: AppTheme.accent)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+//Contenido visual compartido de un tile de item
+class _ItemTileContent extends StatelessWidget {
+  final InventoryItem item;
+  final bool showWeight;
+  final bool dimmed;
+  final bool accentBorder;   // equipped
+  final bool attunedBorder;  // attuned
+  final Widget trailing;
+
+  const _ItemTileContent({
+    required this.item,
+    required this.showWeight,
+    this.dimmed = false,
+    this.accentBorder = false,
+    this.attunedBorder = false,
+    required this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color borderColor = attunedBorder
+        ? const Color(0xFFB07DFF)
+        : accentBorder
+            ? AppTheme.primary.withOpacity(0.6)
+            : AppTheme.surfaceVariant;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(children: [
+        Icon(item.typeIcon,
+          size: 18,
+          color: AppTheme.textSecondary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(item.name,
+                style: GoogleFonts.cinzel(
+                    color: dimmed
+                        ? AppTheme.textSecondary
+                        : AppTheme.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 2),
+            Row(children: [
+              if (item.itemType != null)
+                Text(_formatItemType(item.itemType!),
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary, fontSize: 11)),
+              if (showWeight)
+                Text('  ·  ${item.totalWeight.toStringAsFixed(1)} lb',
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary, fontSize: 11)),
+              if (item.attuned) ...[
+                const Text('  ·  ',
+                    style: TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 11)),
+                Text('Attuned',
+                    style: GoogleFonts.lato(
+                        color: const Color(0xFFB07DFF),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold)),
+              ],
+            ]),
+          ]),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceVariant,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text('x${item.quantity}',
+              style: GoogleFonts.lato(
+                  color: AppTheme.textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold)),
+        ),
+        const SizedBox(width: 6),
+        trailing,
+      ]),
+    );
+  }
+}
+
+
+// Drop hint - se muestra mientras hay un drag activo
+
+class _DropHint extends StatelessWidget{
+  final String label;
+  final bool active;
+  final bool isError;
+  final IconData icon;
+
+  const _DropHint({
+    required this.label,
+    required this.active,
+    this.isError = false,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isError ? AppTheme.accent : AppTheme.primary;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        color: active
+            ? color.withOpacity(0.12)
+            : color.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: active ? color : color.withOpacity(0.3),
+          width: active ? 1.5 : 1,
+        ),
+      ),
+      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 8),
+        Text(label,
+            style: GoogleFonts.lato(
+                color: color,
+                fontSize: 12,
+                fontWeight:
+                    active ? FontWeight.bold : FontWeight.normal)),
+      ]),
+    );
+  }
+}
+
+
+// Add Item Sheet (sin)
+
+
+
 
 // Weight bar widget
 class _WeightBar extends StatelessWidget {
@@ -270,119 +838,6 @@ class _WeightBar extends StatelessWidget {
   }
 }
 
-// Inventory Item Tile
-class _InventoryItemTile extends StatelessWidget{
-  final InventoryItem item;
-  final bool showWeight;
-  final VoidCallback onRemove;
-  final VoidCallback onToggleAttuned;
-  const _InventoryItemTile({
-    required this.item,
-    required this.showWeight,
-    required this.onRemove,
-    required this.onToggleAttuned,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: item.attuned
-              ? AppTheme.primary.withOpacity(0.5)
-              : AppTheme.surfaceVariant,
-        ),
-      ),
-      child: Row(children: [
-        //Tipo icon
-        Text(item.typeIcon,
-          style: const TextStyle(fontSize: 20)),
-        const SizedBox(width: 12),
-
-        //Info
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(item.name,
-                style: GoogleFonts.cinzel(
-                  color: AppTheme.textPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold)),
-              const SizedBox(height: 2),
-              Row(children: [
-                if(item.itemType !=null)
-                  Text(_formatItemType(item.itemType!),
-                    style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary,
-                      fontSize: 11)),
-                if (showWeight)
-                  Text('·  ${item.totalWeight.toStringAsFixed(1)} lb',
-                    style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary,
-                      fontSize: 11)),
-                if (item.attuned) ...[
-                  const Text('  ·  ',
-                        style: TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 11)),
-                    Text('Attuned',
-                        style: GoogleFonts.lato(
-                            color: AppTheme.primary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold)),
-                  ],
-                ]),
-              ]),
-        ),
-
-        // Qty badge
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceVariant,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Text('x${item.quantity}',
-            style: GoogleFonts.lato(
-              color: AppTheme.textPrimary,
-              fontSize: 12,
-              fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(width: 6),
-
-            //Actions
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert,
-                color: AppTheme.textSecondary, size: 18),
-              color: AppTheme.surface,
-              onSelected: (v) {
-                if (v == 'attune') onToggleAttuned();
-                if (v == 'remove') onRemove();
-              },
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'attune',
-                  child: Text(
-                    item.attuned ? 'Remove attunement' : 'Attune',
-                    style: 
-                      GoogleFonts.lato(color: AppTheme.textPrimary)),
-                  ),
-                  PopupMenuItem(
-                    value: 'remove',
-                    child: Text('Remove',
-                      style: GoogleFonts.lato(color: AppTheme.accent)),
-                ),
-              ],
-            ),
-      ]),
-    );       
-  }
-}
 // Add Item Sheet
 
 class _AddItemSheet extends StatefulWidget {

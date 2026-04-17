@@ -488,6 +488,24 @@ public class PlayerCharacterService {
                 throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "Cantrips are always available and cannot be prepared/unprepared");                
             }
+
+            // Si va a preparar (actualmente no preparado), verificar el límite
+            if (!characterSpell.isPrepared()) {
+                PlayerCharacter character = characterRepository.findById(characterId)
+                    .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Character not found"));
+                int maxPrepared = character.getMaxPreparedSpells();
+                if (maxPrepared > 0) {
+                    int currentPrepared = characterSpellRepository
+                        .countPreparedNonCantripsByCharacterId(characterId);
+                    if (currentPrepared >= maxPrepared) {
+                        throw new ResponseStatusException(
+                            HttpStatus.BAD_REQUEST,
+                            "Cannot prepare more spells: limit is " + maxPrepared);
+                    }
+                }
+            }
+
             characterSpell.setPrepared(!characterSpell.isPrepared());
             characterSpellRepository.save(characterSpell);
     }

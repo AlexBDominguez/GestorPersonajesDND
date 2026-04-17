@@ -2,7 +2,6 @@ package entities;
 
 import java.util.List;
 import java.util.Map;
-
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;

@@ -70,4 +70,11 @@ public class CharacterInventoryController {
         
         return ResponseEntity.ok(inventoryService.toggleAttuned(inventoryId));
     }
+
+    @PostMapping("/{inventoryId}/toggle-equipped")
+    public ResponseEntity<CharacterInventoryDto> toggleEquipped(
+            @PathVariable Long characterId,
+            @PathVariable Long inventoryId) {
+        return ResponseEntity.ok(inventoryService.toggleEquipped(inventoryId));
+    }
 }

@@ -12,6 +12,7 @@ public class CharacterInventoryDto {
     private double totalWeight; // weight * quantity
     private boolean equipped;
     private boolean attuned;
+    private boolean requiresAttunement;
     private String notes;
 
     // Getters y Setters
@@ -103,6 +104,7 @@ public class CharacterInventoryDto {
     public void setAttuned(boolean attuned) {
         this.attuned = attuned;
     }
+    
 
     public String getNotes() {
         return notes;
@@ -110,5 +112,13 @@ public class CharacterInventoryDto {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public boolean isRequiresAttunement() {
+        return requiresAttunement;
+    }
+
+    public void setRequiresAttunement(boolean requiresAttunement) {
+        this.requiresAttunement = requiresAttunement;
     }
 }

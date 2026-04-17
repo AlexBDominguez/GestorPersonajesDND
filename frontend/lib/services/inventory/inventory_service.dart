@@ -86,5 +86,15 @@ class InventoryService {
             .toList();
       }
       throw Exception('Failed to load items (${res.statusCode})');
-    }  
+    }
+
+    Future<InventoryItem> toggleEquipped(int characterId, int inventoryId) async {
+      final res = await _api.post(
+        '/api/characters/$characterId/inventory/$inventoryId/toggle-equipped',
+      );
+      if (res.statusCode == 200) {
+        return InventoryItem.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      }
+      throw Exception('Failed to toggle equipped (${res.statusCode})');
+    }
 }

@@ -650,10 +650,16 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
       void initState() {
         super.initState();
         _tabCtrl = TabController(length: 2, vsync: this);
+        widget.vm.addListener(_onVmChanged);
+    }
+
+    void _onVmChanged() {
+      if (mounted) setState(() {});
     }
 
     @override
     void dispose() {
+      widget.vm.removeListener(_onVmChanged);
       _tabCtrl.dispose();
       _searchCtrl.dispose();
       super.dispose();
@@ -661,7 +667,7 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
 
     List<CharacterSpell> get _filteredSpells {
     final q = _query.toLowerCase();
-    return widget.character.characterSpells.where((s) {
+    return widget.vm.character!.characterSpells.where((s) {
       return q.isEmpty ||
           s.name.toLowerCase().contains(q) ||
           (s.school?.toLowerCase().contains(q) ?? false);

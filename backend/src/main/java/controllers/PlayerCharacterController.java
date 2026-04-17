@@ -18,7 +18,6 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/characters")
-@CrossOrigin(origins = "*") // Permitir solicitudes desde cualquier origen (ajustar en producción)
 public class PlayerCharacterController {
 
     private final PlayerCharacterService playerCharacterService;

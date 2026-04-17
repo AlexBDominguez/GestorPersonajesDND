@@ -124,7 +124,7 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
                 TabSkills(character: c, vm: vm),
                 TabCombat(character: c, vm: vm),
                 TabSpells(character: c, vm: vm),
-                TabInventory(character: c),
+                TabInventory(character: c, vm: vm),
                 TabInfo(character: c),                
               ],
             ),

@@ -1,11 +1,14 @@
 package services;
 
 import dto.CharacterInventoryDto;
+import entities.CharacterEquipment;
 import entities.CharacterInventory;
 import entities.PlayerCharacter;
 import entities.Item;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+
+import repositories.CharacterEquipmentRepository;
 import repositories.CharacterInventoryRepository;
 import repositories.PlayerCharacterRepository;
 import repositories.ItemRepository;
@@ -19,13 +22,16 @@ public class CharacterInventoryService {
     private final CharacterInventoryRepository inventoryRepository;
     private final PlayerCharacterRepository characterRepository;
     private final ItemRepository itemRepository;
+    private final CharacterEquipmentRepository equipmentRepository;
 
     public CharacterInventoryService(CharacterInventoryRepository inventoryRepository,
                                      PlayerCharacterRepository characterRepository,
-                                     ItemRepository itemRepository) {
+                                     ItemRepository itemRepository,
+                                     CharacterEquipmentRepository equipmentRepository) {
         this.inventoryRepository = inventoryRepository;
         this.characterRepository = characterRepository;
         this.itemRepository = itemRepository;
+        this.equipmentRepository = equipmentRepository;
     }
 
     public List<CharacterInventoryDto> getCharacterInventory(Long characterId) {
@@ -112,6 +118,56 @@ public class CharacterInventoryService {
         return toDto(inventory);
     }
 
+    /**
+     * Para armors: sincroniza CharacterEquipment armor slot para que el AC se calcule correctamente. 
+     * Equipar una segunda armadura automáticamente desequipa la primera
+     * 
+     */
+
+    @Transactional
+    public CharacterInventoryDto toggleEquipped(Long inventoryId) {
+        CharacterInventory inventory = inventoryRepository.findById(inventoryId)
+                .orElseThrow(() -> new RuntimeException("Inventory item not found"));
+
+        boolean willBeEquipped = !inventory.isEquipped();
+        inventory.setEquipped(willBeEquipped);
+
+        // Sincronizar CharacterEquipment para ARMOR -> impulsa el cálculo de AC
+        String itemType = inventory.getItem().getItemType();
+        if (itemType != null && itemType.equalsIgnoreCase("armor")) {
+            CharacterEquipment eq = equipmentRepository
+                    .findByCharacter(inventory.getCharacter())
+                    .orElseGet(() -> {
+                        CharacterEquipment newEq = new CharacterEquipment(inventory.getCharacter());
+                        return equipmentRepository.save(newEq);
+                    });
+
+            if (willBeEquipped) {
+                // Desequipar la armadura anterior del CharacterInventory si es un item diferente
+                Item previousArmor = eq.getArmor();
+                if (previousArmor != null && !previousArmor.getId().equals(inventory.getItem().getId())) {
+                    inventoryRepository
+                            .findByCharacterAndItem(inventory.getCharacter(), previousArmor)
+                            .ifPresent(old -> {
+                                old.setEquipped(false);
+                                inventoryRepository.save(old);
+                            });
+                }
+                eq.setArmor(inventory.getItem());
+            } else {
+                // Solo limpiar el slot si este item era el que estaba en él
+                if (eq.getArmor() != null && eq.getArmor().getId().equals(inventory.getItem().getId())) {
+                    eq.setArmor(null);
+                }
+            }
+            equipmentRepository.save(eq);
+        }
+
+        inventoryRepository.save(inventory);
+        return toDto(inventory);
+    }
+
+
     private CharacterInventoryDto toDto(CharacterInventory inventory) {
         CharacterInventoryDto dto = new CharacterInventoryDto();
         dto.setId(inventory.getId());
@@ -126,6 +182,7 @@ public class CharacterInventoryService {
         dto.setAttuned(inventory.isAttuned());
         dto.setEquipped(inventory.isEquipped());
         dto.setNotes(inventory.getNotes());
+        dto.setRequiresAttunement(inventory.getItem().isRequiresAttunement());
         return dto;
     }
 }

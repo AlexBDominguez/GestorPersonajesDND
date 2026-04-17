@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*") // Permitir peticiones desde Flutter
 public class AuthController {
 
     @Autowired

@@ -121,20 +121,23 @@ class CharacterService {
     }
 
 
-    // PATCH toggle prepare/unprepare spell
+    // POST toggle prepare/unprepare spell
     Future<void> togglePrepareSpell({
       required int characterId,
       required int spellId,
     }) async {
-      final res = await _api.patch(
+      final res = await _api.post(
         '${ApiConfig.charactersPath}/$characterId/spells/$spellId/prepare',
       );
       if (res.statusCode == 204) return;
-      if (res.statusCode == 400) throw Exception('res.body');
+      if (res.statusCode == 400) {
+        // Intentar extraer mensaje del backend ("Cannot prepare more spells...")
+        String msg = res.body.isNotEmpty ? res.body : 'Cannot prepare spell';
+        throw Exception(msg);
+      }
       if (res.statusCode == 401) throw Exception('Unauthorized');
       if (res.statusCode == 403) throw Exception('Access denied');
       if (res.statusCode == 404) throw Exception('Spell not found on character');
-      
       throw Exception('Failed to toggle prepare (${res.statusCode})');
     }
 

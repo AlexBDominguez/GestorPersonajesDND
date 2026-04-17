@@ -1,3 +1,7 @@
+import 'package:flutter/widgets.dart' show IconData;
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+
 class InventoryItem {
   final int id;         // CharacterInventory id (la relación)
   final int itemId;
@@ -9,6 +13,7 @@ class InventoryItem {
   final bool equipped;
   final bool attuned;
   final String? notes;
+  final bool requiresAttunement;
 
   const InventoryItem({
     required this.id,
@@ -21,34 +26,38 @@ class InventoryItem {
     required this.equipped,
     required this.attuned,
     this.notes,
+    this.requiresAttunement = false,
   });
 
   factory InventoryItem.fromJson(Map<String, dynamic> j) => InventoryItem(
-        id:          (j['id'] as num).toInt(),
-        itemId:      (j['itemId'] as num).toInt(),
-        name:        j['itemName'] as String? ?? '',
-        itemType:    j['itemType'] as String?,
-        quantity:    (j['quantity'] as num?)?.toInt() ?? 1,
-        weight:      (j['weight'] as num?)?.toDouble() ?? 0,
-        totalWeight: (j['totalWeight'] as num?)?.toDouble() ?? 0,
-        equipped:    j['equipped'] as bool? ?? false,
-        attuned:     j['attuned'] as bool? ?? false,
-        notes:       j['notes'] as String?,
+        id:                 (j['id'] as num).toInt(),
+        itemId:             (j['itemId'] as num).toInt(),
+        name:               j['itemName'] as String? ?? '',
+        itemType:           j['itemType'] as String?,
+        quantity:           (j['quantity'] as num?)?.toInt() ?? 1,
+        weight:             (j['weight'] as num?)?.toDouble() ?? 0,
+        totalWeight:        (j['totalWeight'] as num?)?.toDouble() ?? 0,
+        equipped:           j['equipped'] as bool? ?? false,
+        attuned:            j['attuned'] as bool? ?? false,
+        notes:              j['notes'] as String?,
+        requiresAttunement: j['requiresAttunement'] as bool? ?? false,
       );
 
   // Icono por tipo
-  String get typeIcon {
+  IconData get typeIcon {
     switch (itemType?.toLowerCase()) {
-      case 'weapon':      return '⚔️';
-      case 'armor':       return '🛡️';
-      case 'potion':      return '🧪';
-      case 'wand':
-      case 'staff':
-      case 'rod':         return '🪄';
-      case 'ring':        return '💍';
-      case 'scroll':      return '📜';
-      case 'tool':        return '🔧';
-      default:            return '🎒';
+      case 'weapon':      return MdiIcons.sword;
+      case 'armor':       return FontAwesomeIcons.shieldHalved;
+      case 'potion':      return FontAwesomeIcons.flaskVial;
+      case 'wand':        return FontAwesomeIcons.wandMagicSparkles;
+      case 'staff':       return FontAwesomeIcons.staffSnake;
+      case 'rod':         return FontAwesomeIcons.wandMagic;
+      case 'ring':        return FontAwesomeIcons.ring;
+      case 'scroll':      return FontAwesomeIcons.scroll;
+      case 'tool':        return FontAwesomeIcons.screwdriverWrench;
+      case 'gear':        return MdiIcons.bagPersonal;
+      case 'mount':       return FontAwesomeIcons.horse;
+      default:            return FontAwesomeIcons.boxOpen;
     }
   }
 
