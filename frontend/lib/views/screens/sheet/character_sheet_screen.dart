@@ -4,6 +4,7 @@ import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_abilities.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_combat.dart';
+import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_features.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_inventory.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_skills.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_spells.dart';
@@ -38,6 +39,7 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
       Tab(text: 'Skills'),
       Tab(text: 'Combat'),
       Tab(text: 'Spells'),
+      Tab(text: 'Features'),
       Tab(text: 'Inventory'),
       Tab(text: 'Info'),
     ];
@@ -124,6 +126,7 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
                 TabSkills(character: c, vm: vm),
                 TabCombat(character: c, vm: vm),
                 TabSpells(character: c, vm: vm),
+                TabFeatures(character: c, vm: vm),
                 TabInventory(character: c, vm: vm),
                 TabInfo(character: c),                
               ],

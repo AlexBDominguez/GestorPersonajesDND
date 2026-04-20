@@ -1,21 +1,24 @@
 class ClassFeature{
   final int id;
+  final String indexName;
   final String name;
   final int level;
   final String description;
 
   const ClassFeature({
     required this.id,
+    required this.indexName,
     required this.name,
     required this.level,
     required this.description
   });
 
   factory ClassFeature.fromJson(Map<String, dynamic> j) => ClassFeature(
-    id: j['id'] as int,
-    name: j['name'] as String,
-    level: j['level'] as int,
-    description: j['description'] as String? ?? '',
+    id:           j['id'] as int,
+    indexName:    j['indexName'] as String? ?? '',
+    name:         j['name'] as String,
+    level:        j['level'] as int,
+    description:  j['description'] as String? ?? '',
   );
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
+import 'package:gestor_personajes_dnd/config/combat_features.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
@@ -45,6 +46,19 @@ class _TabCombatState extends State<TabCombat> {
         .where((s) => _isReaction(s) && (s.isCantrip || s.prepared))
         .toList();
 
+        final actionFeatures =
+          vm.combatFeaturesByCategory(FeatureCategory.combatAction)
+              + vm.subclassFeatures.where((f) => classifyFeature(f.indexName) ==
+                  FeatureCategory.combatAction).toList();
+        final bonusFeatures =
+          vm.combatFeaturesByCategory(FeatureCategory.combatBonus)
+              + vm.subclassFeatures.where((f) => classifyFeature(f.indexName) ==
+                  FeatureCategory.combatBonus).toList();
+        final reactionFeatures =
+          vm.combatFeaturesByCategory(FeatureCategory.combatReaction)
+              + vm.subclassFeatures.where((f) => classifyFeature(f.indexName) ==
+                  FeatureCategory.combatReaction).toList();
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 32),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -59,8 +73,10 @@ class _TabCombatState extends State<TabCombat> {
           _SpellAttackTable(spells: actionSpells, vm: vm),
           const SizedBox(height: 8),
         ],
-        _ClassFeaturesSection(vm: vm),
-        _SubclassFeaturesSection(vm: vm),
+        if (vm.isLoadingFeatures)
+          const _LoadingRow()
+        else
+          _FeatureGroup(features: actionFeatures, vm: vm),
         const SizedBox(height: 16),
 
         // ── 3. Bonus Actions ─────────────────────────────────────────────────
@@ -71,6 +87,10 @@ class _TabCombatState extends State<TabCombat> {
           const SizedBox(height: 8),
         ],
         _StaticSection(actions: kBonusActions),
+        if (bonusFeatures.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _FeatureGroup(features: bonusFeatures, vm: vm),
+        ],
         const SizedBox(height: 16),
 
         // ── 4. Reactions ─────────────────────────────────────────────────────
@@ -81,6 +101,10 @@ class _TabCombatState extends State<TabCombat> {
           const SizedBox(height: 8),
         ],
         _StaticSection(actions: kReactions),
+        if (reactionFeatures.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _FeatureGroup(features: reactionFeatures, vm: vm),
+        ],
         const SizedBox(height: 20),
 
         // ── 5. Death Saves (conditional) ─────────────────────────────────────
@@ -133,6 +157,120 @@ class _TabCombatState extends State<TabCombat> {
 
   static bool _isReaction(CharacterSpell s) =>
       s.castingTime?.toLowerCase().contains('reaction') ?? false;
+}
+
+// ── Feature group: lista de features de una categoría ────────────────────────────────────────────
+class _FeatureGroup extends StatelessWidget {
+  final List<ClassFeature> features;
+  final CharacterSheetViewModel vm;
+  const _FeatureGroup({required this.features, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    if (features.isEmpty) return const SizedBox.shrink();
+    return Column(
+      children: features.map((feature) => 
+      _FeatureTile(feature: feature, vm: vm)).toList(),
+    );
+  }
+}
+
+// ── Feature tile con contadores circulares ───────────────────────────────────────────
+class _FeatureTile extends StatelessWidget {
+  final ClassFeature feature;
+  final CharacterSheetViewModel vm;
+  const _FeatureTile({required this.feature, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final isConsumable = vm.isConsumableFeature(feature);
+    final maxUses = vm.featureMaxUses(feature);
+    final remaining = vm.featureUsesRemaining(feature);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.surfaceVariant),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.fromLTRB(14, 4, 10, 4),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+          title: Row(children: [
+            Expanded(
+              child: Text(feature.name,
+                  style: GoogleFonts.cinzel(
+                    color: AppTheme.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold)),
+                  ),
+                  //Contadores circulares
+                  if (isConsumable) ...[
+                    const SizedBox(width: 8),
+                    ...List.generate(maxUses, (i) {
+                      final isUsed = i >= remaining;
+                      return GestureDetector(
+                        onTap: () => 
+                          isUsed ? vm.restoreFeature(feature) :
+                          vm.useFeature(feature),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isUsed
+                                  ? Colors.transparent
+                                  : AppTheme.primary,
+                              border: Border.all(
+                                color: isUsed
+                                  ? AppTheme.textSecondary
+                                  : AppTheme.primary,
+                                width: 1.5),
+                              ),
+                            ),
+                          ),
+                        );
+                    }),
+                  ],
+          ]),
+          subtitle: Text('Level ${feature.level}',
+              style: GoogleFonts.lato(
+                color: AppTheme.textSecondary, fontSize: 10)),
+          iconColor: AppTheme.textSecondary,
+          collapsedIconColor: AppTheme.textSecondary,
+          children: [
+            Text(feature.description,
+                style: GoogleFonts.lato(
+                  color: AppTheme.textSecondary,
+                  fontSize: 12,
+                  height: 1.5)),
+          ],
+        )
+      )
+    );
+  }
+}
+
+// ── Loading row ───────────────────────────────────────────
+class _LoadingRow extends StatelessWidget {
+  const _LoadingRow();
+  @override
+  Widget build(BuildContext context) => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: SizedBox(
+            width: 20, height: 20,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppTheme.primary),
+          ),
+        ),
+      );
 }
 
 // ── Standard Actions card (navigates to full-screen list) ─────────────────────
@@ -834,6 +972,9 @@ bool _combatRelevant(String featureName) {
   ];
   return !blockedPatterns.any((p) => n.contains(p));
 }
+
+
+//Shared WIDGETS
 
 class _SectionTitle extends StatelessWidget {
   final String title;
