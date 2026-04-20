@@ -2,6 +2,7 @@ package entities;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +33,14 @@ public class Race {
             inverseJoinColumns = @JoinColumn(name = "spell_id")
     )
     private List<Spell> grantedSpells;
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(
+            name = "race_traits",
+            joinColumns = @JoinColumn(name = "race_id"),
+            inverseJoinColumns = @JoinColumn(name = "trait_id")
+    )
+    private List<RacialTrait> traits = new ArrayList<>();
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -101,5 +110,13 @@ public class Race {
 
     public void setGrantedSpells(List<Spell> grantedSpells) {
         this.grantedSpells = grantedSpells;
+    }
+
+    public List<RacialTrait> getTraits() {
+        return traits;
+    }
+
+    public void setTraits(List<RacialTrait> traits) {
+        this.traits = traits;
     }
 }
