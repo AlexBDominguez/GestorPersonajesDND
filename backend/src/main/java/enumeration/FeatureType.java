@@ -10,5 +10,9 @@ public enum FeatureType {
     FIGHTING_STYLE, // Elegir un estilo de lucha (para clases como el Guerrero o el Paladín)
     INVOCATION, // Elegir una invocación para el Warlock
     METAMAGIC, // Elegir una opción de Metamagia para el Hechicero
-    CLASS_FEATURE // Cualquier otra característica específica de la clase que se obtiene al subir de nivel
+    CLASS_FEATURE, // Cualquier otra característica específica de la clase que se obtiene al subir de nivel
+    FAVORED_ENEMY, // Elegir un enemigo favorecido (Ranger)
+    FAVORED_TERRAIN, // Elegir un terreno favorecido (Ranger)
+    DRACONIC_ANCESTRY, // Elegir una ascendencia dracónica (Dragonborn)
+    EXPERTISE // Elegir habilidades para la competencia experta (Bard
 }

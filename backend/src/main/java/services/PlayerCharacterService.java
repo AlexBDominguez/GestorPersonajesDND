@@ -1033,6 +1033,27 @@ public class PlayerCharacterService {
                 task.setMetadata(feature.getMetadata());
                 break;
 
+            case FAVORED_ENEMY:
+                task.setTaskType("FAVORED_ENEMY");
+                task.setDescription("Choose your Favored Enemy");
+                break;
+            
+            case FAVORED_TERRAIN:
+                task.setTaskType("FAVORED_TERRAIN");
+                task.setDescription("Choose your Favored Terrain (Natural Explorer)");
+                break;
+            
+            case DRACONIC_ANCESTRY:
+                task.setTaskType("DRACONIC_ANCESTRY");
+                task.setDescription("Choose your Draconic Ancestry (determines Breath Weapon damage type)");
+                break;
+
+            case EXPERTISE:
+                task.setTaskType("EXPERTISE");
+                task.setDescription("Choose skills to gain Expertise (double proficiency bonus)");
+                task.setMetadata(feature.getMetadata()); // numero de skills a elegir
+                break;
+
             default:
                 System.out.println("Unknown task type for: " + feature.getType());
                 return;
