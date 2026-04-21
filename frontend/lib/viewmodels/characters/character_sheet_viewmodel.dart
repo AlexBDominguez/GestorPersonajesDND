@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
+import 'package:gestor_personajes_dnd/models/character/racial_trait.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
@@ -39,11 +40,16 @@ class CharacterSheetViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   int _tabIndex = 0;
+  List<RacialTrait> _racialTraits = [];
+  List<RacialTrait> get racialTraits => _racialTraits;
 
   bool get isLoading    => _isLoading;
   String? get error     => _errorMessage;
   String? get errorMessage => _errorMessage;
   int get tabIndex      => _tabIndex;
+
+  bool _isLoadingTraits = false;
+  bool get isLoadingTraits => _isLoadingTraits;
 
   void setTab(int i) { _tabIndex = i; notifyListeners(); }
 
@@ -60,6 +66,9 @@ class CharacterSheetViewModel extends ChangeNotifier {
       }
       if (character?.subclassId != null && _subclassFeatures.isEmpty) {
         _loadSubclassFeaturesIfNeeded();
+      }
+      if (character?.raceId != null && _racialTraits.isEmpty){
+        _loadRacialTraits();
       }
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception', '');
@@ -246,6 +255,32 @@ class CharacterSheetViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _loadRacialTraits() async {
+    final raceId = character?.raceId;
+    final subraceId = character?.subraceId;
+    if (raceId == null) return;
+
+    _isLoadingTraits = true;
+    notifyListeners();
+    try {
+      final raceTraits = await _refService.getRacialTraits(raceId);
+      final subraceTraits = subraceId != null
+          ? await _refService.getSubraceTraits(subraceId)
+          : <RacialTrait>[];
+      // Evitar duplicados: un trait de subraza puede solapar con uno de raza
+      final seen = <String>{};
+      _racialTraits = [
+        ...raceTraits,
+        ...subraceTraits,
+      ].where((t) => seen.add(t.indexName)).toList();
+    } catch (_) {
+      //silencioso igual que los otros loaders
+    } finally {
+      _isLoadingTraits = false;
+      notifyListeners();
+    }
+  }
+
   // ── Consumable feature tracking 
   final Map<String, int> _featureUsesRemaining = {};
 
@@ -329,6 +364,13 @@ class CharacterSheetViewModel extends ChangeNotifier {
     'INT': 'Intelligence', 'WIS': 'Wisdom', 'CHA': 'Charisma',
   };
 
+  static const List<String> skillNames = [
+    'Acrobatics', 'Animal Handling', 'Arcana', 'Athletics', 'Deception',
+    'History', 'Insight', 'Intimidation', 'Investigation', 'Medicine',
+    'Nature', 'Perception', 'Performance', 'Persuasion', 'Religion',
+    'Sleight of Hand', 'Stealth', 'Survival',
+  ];
+
   static const Map<String, String> _skillAbility = {
     'Acrobatics': 'DEX', 'Animal Handling': 'WIS', 'Arcana': 'INT',
     'Athletics': 'STR', 'Deception': 'CHA', 'History': 'INT',
@@ -352,6 +394,10 @@ class CharacterSheetViewModel extends ChangeNotifier {
 
   bool skillExpertise(String skill) =>
       character?.skills.where((s) => s.skillName == skill).firstOrNull?.expertise ?? false;
+
+  void clearError() {
+    _errorMessage = null;
+  }
 
   String signedInt(int v) => v >= 0 ? '+$v' : '$v';
 

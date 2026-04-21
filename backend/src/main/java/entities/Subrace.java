@@ -108,11 +108,11 @@ public class Subrace {
         this.abilityBonuses = abilityBonuses;
     }
 
-    public List<String> getTraits() {
+    public List<RacialTrait> getTraits() {
         return traits;
     }
 
-    public void setTraits(List<String> traits) {
+    public void setTraits(List<RacialTrait> traits) {
         this.traits = traits;
     }
 

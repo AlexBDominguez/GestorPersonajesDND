@@ -43,7 +43,7 @@ public class SubraceService {
         s.setRace(race);
         s.setDescription(dto.getDescription());
         s.setAbilityBonuses(dto.getAbilityBonuses());
-        s.setTraits(dto.getTraits());
+        // Traits are managed via sync; skip setting from DTO
         return toDto(subraceRepository.save(s));
     }
 
@@ -58,7 +58,8 @@ public class SubraceService {
         dto.setAbilityBonuses(s.getAbilityBonuses() != null
                 ? s.getAbilityBonuses() : new java.util.HashMap<>());
         dto.setTraits(s.getTraits() != null
-                ? s.getTraits() : new java.util.ArrayList<>());
+                ? s.getTraits().stream().map(t -> t.getName()).collect(Collectors.toList())
+                : new java.util.ArrayList<>());
         return dto;        
     }
 }

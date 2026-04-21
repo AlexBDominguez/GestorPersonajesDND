@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
+import 'package:gestor_personajes_dnd/models/character/racial_trait.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_combat.dart';
@@ -81,7 +82,7 @@ class TabFeatures extends StatelessWidget {
           color: Color(0xFF7FAACC),
         ),
         const SizedBox(height: 8),
-        _RacialTraitsSection(character: character),
+        _RacialTraitsSection(character: character, vm: vm),
 
         const SizedBox(height: 24),
 
@@ -251,79 +252,107 @@ class _FeatureTile extends StatelessWidget {
 
 class _RacialTraitsSection extends StatelessWidget {
   final PlayerCharacter character;
-  const _RacialTraitsSection({required this.character});
+  final CharacterSheetViewModel vm;
+  const _RacialTraitsSection({required this.character, required this.vm});
 
   @override
   Widget build(BuildContext context) {
-    // Los traits individuales aún no vienen del backend como entidades separadas.
-    // Mostramos la info disponible + aviso honesto.
-    final rows = <(String, String)>[];
-    if (character.raceName != null) {
-      rows.add(('Race', character.raceName!));
+    if (vm.isLoadingTraits) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(
+          child: SizedBox(
+            width: 20, height: 20,
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppTheme.primary),
+          ),
+        ),
+      );
     }
-    if (character.subraceName != null) {
-      rows.add(('Subrace', character.subraceName!));
+    final traits = vm.racialTraits;
+
+    if(traits.isEmpty){
+      return _EmptyCard(message: 'No racial traits loaded.');
     }
 
-    return Column(children: [
-      // Info disponible
-      if (rows.isNotEmpty)
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppTheme.surfaceVariant),
-          ),
-          child: Column(
-            children: rows.map((r) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: Row(children: [
-                SizedBox(
-                  width: 70,
-                  child: Text('${r.$1}:',
-                      style: GoogleFonts.lato(
-                          color: AppTheme.textSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold)),
-                ),
-                Expanded(
-                  child: Text(r.$2,
-                      style: GoogleFonts.cinzel(
-                          color: AppTheme.textPrimary, fontSize: 13)),
-                ),
-              ]),
-            )).toList(),
-          ),
-        ),
-      const SizedBox(height: 8),
-      // Aviso honesto sobre los traits pendientes
-      Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceVariant.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.divider),
-        ),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Icon(Icons.info_outline,
-              color: AppTheme.textSecondary, size: 14),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Individual racial traits (Darkvision, Fey Ancestry, etc.) will appear here once the backend provides them as separate entities.',
-              style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary,
-                  fontSize: 11,
-                  fontStyle: FontStyle.italic),
-            ),
-          ),
-        ]),
-      ),
-    ]);
+    return Column(
+      children: traits.map((t) => _RacialTraitTile(trait: t)).toList(),      
+    );
   }
+}
+
+class _RacialTraitTile extends StatelessWidget {
+  final RacialTrait trait;
+  const _RacialTraitTile({required this.trait});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.surfaceVariant),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.fromLTRB(14, 4, 10, 4),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+          title: Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 6,
+            children: [
+              Text(trait.name,
+                  style: GoogleFonts.cinzel(
+                    color: AppTheme.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold)),
+              if (trait.isCombatRelevant)
+                _TypeBadge('combat', AppTheme.primary),
+              if (trait.requiresChoice)
+                _TypeBadge('choice', Colors.orange),
+            ],
+          ),
+          iconColor: AppTheme.textSecondary,
+          collapsedIconColor: AppTheme.textSecondary,
+          children: [
+            Text(
+              trait.description.isNotEmpty
+                  ? trait.description
+                  : 'No description available.',
+              style: GoogleFonts.lato(
+                color: AppTheme.textSecondary,
+                fontSize: 12,
+                height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TypeBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _TypeBadge(this.label, this.color);
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.15),
+      borderRadius: BorderRadius.circular(4),
+      border: Border.all(color: color.withOpacity(0.4)),
+    ),
+    child: Text(label,
+      style: GoogleFonts.lato(
+        color: color,
+        fontSize: 9,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.5)),
+  );
 }
 
 //-- Feats

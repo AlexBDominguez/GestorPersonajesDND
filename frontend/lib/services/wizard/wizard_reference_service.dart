@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:gestor_personajes_dnd/config/api_config.dart';
+import 'package:gestor_personajes_dnd/models/character/racial_trait.dart';
 import 'package:gestor_personajes_dnd/models/wizard/feat_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/race_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
@@ -65,6 +66,24 @@ class WizardReferenceService {
     }
     if (res.statusCode == 404) return [];
     throw Exception('Failed to load subraces ($raceId): ${res.statusCode}');
+  }
+
+  Future<List<RacialTrait>> getRacialTraits(int raceId) async {
+    final res = await _api.get('/api/races/$raceId/traits');
+    if (res.statusCode == 200) {
+      final list = jsonDecode(res.body) as List;
+      return list.map((j) => RacialTrait.fromJson(j as Map<String, dynamic>)).toList();
+    }
+    throw Exception('Failed to load racial traits ($raceId): ${res.statusCode}');
+  }
+
+  Future<List<RacialTrait>> getSubraceTraits(int subraceId) async {
+    final res = await _api.get('/api/races/subraces/$subraceId/traits');
+    if (res.statusCode == 200) {
+      final list = jsonDecode(res.body) as List;
+      return list.map((j) => RacialTrait.fromJson(j as Map<String, dynamic>)).toList();
+    }
+    throw Exception('Failed to load subrace traits ($subraceId): ${res.statusCode}');
   }
 
   Future<List<ClassFeature>> getSubclassFeatures(int subclassId) async {
