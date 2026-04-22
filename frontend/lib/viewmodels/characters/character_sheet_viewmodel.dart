@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
+import 'package:gestor_personajes_dnd/models/character/pending_task.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/character/racial_trait.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
+import 'package:gestor_personajes_dnd/services/characters/pending_task_service.dart';
 import 'package:gestor_personajes_dnd/services/spells/spell_service.dart';
 import 'package:gestor_personajes_dnd/services/wizard/wizard_reference_service.dart';
 
@@ -25,6 +27,10 @@ class CharacterSheetViewModel extends ChangeNotifier {
   final int characterId;
   final SpellService _spellService;
   final WizardReferenceService _refService;
+  final PendingTaskService _taskService = PendingTaskService();
+  List<PendingTask> _pendingTasks = [];
+  List<PendingTask> get pendingTasks => _pendingTasks;
+  bool get hasPendingTasks => _pendingTasks.isNotEmpty;
 
   CharacterSheetViewModel({
     required this.characterId,
@@ -60,6 +66,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       character = await _service.getCharacterById(characterId);
+      await _loadPendingTasks();
       _initSpellSlots();
       if (character?.dndClassId != null && _classFeatures.isEmpty) {
         _loadClassFeaturesIfNeeded();
@@ -353,6 +360,34 @@ class CharacterSheetViewModel extends ChangeNotifier {
     } finally {
       isSavingHp = false;
       notifyListeners();
+    }
+  }
+
+  // ── Pending Tasks
+  Future<void> _loadPendingTasks() async {
+    try {
+      _pendingTasks = await _taskService.getPendingTasks(characterId);
+    } catch (_) {
+      _pendingTasks = [];
+    }
+    notifyListeners();
+  }
+
+  Future<bool> resolveTask(int taskId, String choice, {String? extraData}) async{
+    try{
+      await _taskService.resolveTask(
+        characterId: characterId, 
+        taskId: taskId, 
+        choice: choice,
+        extraData: extraData,
+        );
+      
+      await _loadPendingTasks();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception', '');
+      notifyListeners();
+      return false;
     }
   }
 

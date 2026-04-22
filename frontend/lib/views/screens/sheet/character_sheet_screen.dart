@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
+import 'package:gestor_personajes_dnd/views/screens/sheet/pending_tasks_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_abilities.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_combat.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_features.dart';
@@ -11,6 +12,9 @@ import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_spells.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_info.dart';
+
+// Asegúrate de que esta ruta sea correcta
+// import 'package:gestor_personajes_dnd/views/screens/sheet/pending_tasks_screen.dart'; 
 
 class CharacterSheetScreen extends StatelessWidget {
   final int characterId;
@@ -25,45 +29,44 @@ class CharacterSheetScreen extends StatelessWidget {
   }
 }
 
-class _SheetBody extends StatefulWidget{
+class _SheetBody extends StatefulWidget {
   const _SheetBody();
   @override
   State<_SheetBody> createState() => _SheetBodyState();
 }
 
-class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMixin{
-    late final TabController _tabController;
-    
-    static const _tabs = [
-      Tab(text: 'Abilities'),
-      Tab(text: 'Skills'),
-      Tab(text: 'Combat'),
-      Tab(text: 'Spells'),
-      Tab(text: 'Features'),
-      Tab(text: 'Inventory'),
-      Tab(text: 'Info'),
-    ];
+class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
 
-    @override
-    void initState() {
-      super.initState();
-      _tabController = TabController(length: _tabs.length, vsync: this);
-    }
+  static const _tabs = [
+    Tab(text: 'Abilities'),
+    Tab(text: 'Skills'),
+    Tab(text: 'Combat'),
+    Tab(text: 'Spells'),
+    Tab(text: 'Features'),
+    Tab(text: 'Inventory'),
+    Tab(text: 'Info'),
+  ];
 
-    @override
-    void dispose() {
-      _tabController.dispose();
-      super.dispose();
-    }    
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _tabs.length, vsync: this);
+  }
 
-    @override
-    Widget build(BuildContext context) {
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final vm = context.watch<CharacterSheetViewModel>();
 
     if (vm.isLoading) {
       return const Scaffold(
-        body: Center(
-            child: CircularProgressIndicator(color: AppTheme.primary)),
+        body: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
       );
     }
 
@@ -79,8 +82,7 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: vm.load,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(160, 44)),
+              style: ElevatedButton.styleFrom(minimumSize: const Size(160, 44)),
               child: const Text('Retry'),
             ),
           ]),
@@ -93,13 +95,14 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
     return Scaffold(
       body: SafeArea(
         child: Column(children: [
-          // Barra de navegación
-          _NavBar(character: c),
+          // Barra de navegación (Ahora recibe vm)
+          _NavBar(character: c, vm: vm),
           const Divider(height: 1, color: AppTheme.surfaceVariant),
-          // Stats header (sin nombre ni avatar)
+          
+          // Stats header
           _SheetHeader(character: c, vm: vm),
 
-          //Tab bar
+          // Tab bar
           Container(
             color: AppTheme.surface,
             child: TabBar(
@@ -110,14 +113,15 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
               unselectedLabelColor: AppTheme.textSecondary,
               labelStyle: GoogleFonts.cinzel(fontSize: 12, fontWeight: FontWeight.bold),
               unselectedLabelStyle: GoogleFonts.cinzel(fontSize: 12),
-              indicatorColor: AppTheme.primary, indicatorWeight: 2,
-              tabs: _tabs,              
+              indicatorColor: AppTheme.primary,
+              indicatorWeight: 2,
+              tabs: _tabs,
             ),
           ),
 
           const Divider(height: 1),
 
-          //Tab content (swipeable)
+          // Tab content
           Expanded(
             child: TabBarView(
               controller: _tabController,
@@ -128,7 +132,7 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
                 TabSpells(character: c, vm: vm),
                 TabFeatures(character: c, vm: vm),
                 TabInventory(character: c, vm: vm),
-                TabInfo(character: c),                
+                TabInfo(character: c),
               ],
             ),
           ),
@@ -138,10 +142,11 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
   }
 }
 
-// Barra de navegación
+// Barra de navegación actualizada
 class _NavBar extends StatelessWidget {
   final PlayerCharacter character;
-  const _NavBar({required this.character});
+  final CharacterSheetViewModel vm;
+  const _NavBar({required this.character, required this.vm});
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +157,7 @@ class _NavBar extends StatelessWidget {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back_ios_new,
-              color: AppTheme.primary, size: 20),
+                color: AppTheme.primary, size: 20),
             tooltip: 'Back',
             onPressed: () => Navigator.of(context).pop(),
           ),
@@ -167,23 +172,56 @@ class _NavBar extends StatelessWidget {
                   child: Text(
                     character.name,
                     style: GoogleFonts.cinzel(
-                      color: AppTheme.primary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold),
+                        color: AppTheme.primary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
-                Text(
-                  _subtitle(),
-                  style: GoogleFonts.lato(
-                    color: AppTheme.textSecondary, fontSize: 11),
-                  overflow: TextOverflow.ellipsis),
+                Text(_subtitle(),
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary, fontSize: 11),
+                    overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
+          
+          // Botón condicional de Tareas Pendientes
+          if (vm.hasPendingTasks)
+            IconButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PendingTasksScreen(vm: vm),
+                ),
+              ),
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.assignment_late_outlined,
+                      color: AppTheme.primary),
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppTheme.accent,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              tooltip: '${vm.pendingTasks.length} pending choice(s)',
+            ),
+
           const SizedBox(width: 10),
+          
           // Avatar
           Container(
-            width: 52, height: 52,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppTheme.surfaceVariant,
@@ -207,13 +245,13 @@ class _NavBar extends StatelessWidget {
 }
 
 // Stats header (AC, Init, Speed, Prof, HP)
-class _SheetHeader extends StatelessWidget{
+class _SheetHeader extends StatelessWidget {
   final PlayerCharacter character;
   final CharacterSheetViewModel vm;
   const _SheetHeader({required this.character, required this.vm});
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     final c = character;
     final initLabel = vm.signedInt(c.initiativeModifier);
     final profLabel = vm.signedInt(c.proficiencyBonus);
@@ -225,12 +263,10 @@ class _SheetHeader extends StatelessWidget{
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // AC en escudo
           _ShieldAC(ac: c.armorClass),
           _StatPill(label: 'Initiative', value: initLabel),
           _StatPill(label: 'Speed', value: '${c.currentSpeed}'),
           _StatPill(label: 'Proficiency', value: profLabel),
-          // HP tappable
           GestureDetector(
             onTap: () => _showManageHpModal(context),
             child: Column(children: [
@@ -242,26 +278,28 @@ class _SheetHeader extends StatelessWidget{
                   border: Border.all(color: _hpColor(c), width: 1.5),
                 ),
                 child: Column(children: [
-                  Text(
-                    '${c.currentHp}/${c.maxHp}',
-                    style: GoogleFonts.cinzel(
-                      color: _hpColor(c), fontSize: 13,
-                      fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center),
+                  Text('${c.currentHp}/${c.maxHp}',
+                      style: GoogleFonts.cinzel(
+                          color: _hpColor(c),
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center),
                   if (c.temporaryHp > 0)
                     Text('+${c.temporaryHp} tmp',
-                      style: GoogleFonts.lato(
-                        color: Colors.lightBlueAccent, fontSize: 9)),
+                        style: GoogleFonts.lato(
+                            color: Colors.lightBlueAccent, fontSize: 9)),
                 ]),
               ),
               const SizedBox(height: 2),
               Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('HP',
-                  style: GoogleFonts.lato(
-                    color: AppTheme.textSecondary, fontSize: 9,
-                    letterSpacing: 1)),
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary,
+                        fontSize: 9,
+                        letterSpacing: 1)),
                 const SizedBox(width: 2),
-                const Icon(Icons.touch_app, color: AppTheme.textSecondary, size: 11),
+                const Icon(Icons.touch_app,
+                    color: AppTheme.textSecondary, size: 11),
               ]),
             ]),
           ),
@@ -269,8 +307,9 @@ class _SheetHeader extends StatelessWidget{
       ),
     );
   }
+
   Color _hpColor(PlayerCharacter c) {
-    if(c.currentHp <= 0) return AppTheme.accent;
+    if (c.currentHp <= 0) return AppTheme.accent;
     final pct = c.hpPercent;
     if (pct < 0.25) return AppTheme.accent;
     if (pct < 0.5) return Colors.orangeAccent;
@@ -301,24 +340,24 @@ class _ShieldAC extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(children: [
       SizedBox(
-        width: 42, height: 50,
+        width: 42,
+        height: 50,
         child: CustomPaint(
           painter: _ShieldPainter(),
           child: Align(
             alignment: const Alignment(0, -0.1),
             child: Text('$ac',
-              style: GoogleFonts.cinzel(
-                color: AppTheme.primary,
-                fontSize: 15,
-                fontWeight: FontWeight.bold)),
+                style: GoogleFonts.cinzel(
+                    color: AppTheme.primary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold)),
           ),
         ),
       ),
       const SizedBox(height: 2),
       Text('AC',
-        style: GoogleFonts.lato(
-          color: AppTheme.textSecondary, fontSize: 9,
-          letterSpacing: 1)),
+          style: GoogleFonts.lato(
+              color: AppTheme.textSecondary, fontSize: 9, letterSpacing: 1)),
     ]);
   }
 }
@@ -338,16 +377,18 @@ class _ShieldPainter extends CustomPainter {
       ..lineTo(0, h * 0.1)
       ..quadraticBezierTo(0, 0, w * 0.08, 0)
       ..close();
-    canvas.drawPath(path,
-      Paint()
-        ..color = AppTheme.surfaceVariant
-        ..style = PaintingStyle.fill);
-    canvas.drawPath(path,
-      Paint()
-        ..color = AppTheme.primary
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
-        ..strokeJoin = StrokeJoin.round);
+    canvas.drawPath(
+        path,
+        Paint()
+          ..color = AppTheme.surfaceVariant
+          ..style = PaintingStyle.fill);
+    canvas.drawPath(
+        path,
+        Paint()
+          ..color = AppTheme.primary
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..strokeJoin = StrokeJoin.round);
   }
 
   @override
@@ -360,46 +401,45 @@ class _StatPill extends StatelessWidget {
   const _StatPill({required this.label, required this.value});
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Column(children: [
       Container(
-        width: 52, height: 36,
+        width: 52,
+        height: 36,
         decoration: BoxDecoration(
           color: AppTheme.surfaceVariant,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(color: AppTheme.primary, width: 1),
+        ),
+        child: Center(
+          child: Text(value,
+              style: GoogleFonts.cinzel(
+                  color: AppTheme.primary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold)),
+        ),
       ),
-      child: Center(
-        child: Text(value,
-          style: GoogleFonts.cinzel(
-            color: AppTheme.primary,
-            fontSize: 14,
-            fontWeight: FontWeight.bold)),
-      ),
-    ),
-    const SizedBox(height: 2),
-    Text(label,
-      style: GoogleFonts.lato(
-        color: AppTheme.textSecondary, fontSize: 9,
-        letterSpacing: 1)), 
+      const SizedBox(height: 2),
+      Text(label,
+          style: GoogleFonts.lato(
+              color: AppTheme.textSecondary, fontSize: 9, letterSpacing: 1)),
     ]);
   }
 }
 
-// Manage HP Modal
 class _ManageHpSheet extends StatefulWidget {
   const _ManageHpSheet();
   @override
   State<_ManageHpSheet> createState() => _ManageHpSheetState();
 }
 
-class _ManageHpSheetState extends State<_ManageHpSheet>{
+class _ManageHpSheetState extends State<_ManageHpSheet> {
   final _damageCtrl = TextEditingController();
   final _healCtrl = TextEditingController();
   final _tempCtrl = TextEditingController();
 
   @override
-  void dispose(){
+  void dispose() {
     _damageCtrl.dispose();
     _healCtrl.dispose();
     _tempCtrl.dispose();
@@ -407,96 +447,102 @@ class _ManageHpSheetState extends State<_ManageHpSheet>{
   }
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     final vm = context.watch<CharacterSheetViewModel>();
     final c = vm.character!;
 
     return Padding(
       padding: EdgeInsets.only(
-        left: 20, right: 20, top: 20,
+        left: 20,
+        right: 20,
+        top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      child: Column (mainAxisSize: MainAxisSize.min, children: [
-        //Handle
-        Container(width: 40, height: 4,
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceVariant,
-            borderRadius: BorderRadius.circular(2))),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+                color: AppTheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(2))),
         const SizedBox(height: 16),
-
         Text('Manage HP',
-          style: GoogleFonts.cinzel(
-            color: AppTheme.primary,
-            fontSize: 18, fontWeight: FontWeight.bold)),
+            style: GoogleFonts.cinzel(
+                color: AppTheme.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Text(
           '${c.currentHp}/${c.maxHp} HP'
           '${c.temporaryHp > 0 ? ' +${c.temporaryHp} temp' : ''}',
           style: GoogleFonts.lato(color: AppTheme.textSecondary),
-          ),
-          const SizedBox(height: 20),
-
-          //HP bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: c.hpPercent,
-              minHeight: 8,
-              backgroundColor: AppTheme.surfaceVariant,
-              valueColor: AlwaysStoppedAnimation(
-                c.hpPercent < 0.25
-                ? AppTheme.accent
-                : c.hpPercent < 0.5
-                  ? Colors.orange
-                  : AppTheme.primary,
-              ),
+        ),
+        const SizedBox(height: 20),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: c.hpPercent,
+            minHeight: 8,
+            backgroundColor: AppTheme.surfaceVariant,
+            valueColor: AlwaysStoppedAnimation(
+              c.hpPercent < 0.25
+                  ? AppTheme.accent
+                  : c.hpPercent < 0.5
+                      ? Colors.orange
+                      : AppTheme.primary,
             ),
           ),
-          const SizedBox(height: 24),
-
-          // Inputs en fila
-          Row(children: [
-            Expanded(child: _HpField(
-              controller: _damageCtrl, label: 'Damage',
-                icon: Icons.remove_circle_outline, color: AppTheme.accent)),
-            const SizedBox(width: 10),
-            Expanded(child: _HpField(
-              controller: _healCtrl, label: 'Heal',
-                icon: Icons.add_circle_outline, color: Colors.green)),
-            const SizedBox(width: 10),
-            Expanded(child: _HpField(
-              controller: _tempCtrl, label: 'Temp HP',
-                icon: Icons.shield_outlined, color: Colors.lightBlueAccent)),
-          ]),
-          const SizedBox(height: 20),
-
-          if (vm.hpError != null)
+        ),
+        const SizedBox(height: 24),
+        Row(children: [
+          Expanded(
+              child: _HpField(
+                  controller: _damageCtrl,
+                  label: 'Damage',
+                  icon: Icons.remove_circle_outline,
+                  color: AppTheme.accent)),
+          const SizedBox(width: 10),
+          Expanded(
+              child: _HpField(
+                  controller: _healCtrl,
+                  label: 'Heal',
+                  icon: Icons.add_circle_outline,
+                  color: Colors.green)),
+          const SizedBox(width: 10),
+          Expanded(
+              child: _HpField(
+                  controller: _tempCtrl,
+                  label: 'Temp HP',
+                  icon: Icons.shield_outlined,
+                  color: Colors.lightBlueAccent)),
+        ]),
+        const SizedBox(height: 20),
+        if (vm.hpError != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              vm.hpError!,
-              style: GoogleFonts.lato(color: AppTheme.accent, fontSize: 12)),
+            child: Text(vm.hpError!,
+                style: GoogleFonts.lato(color: AppTheme.accent, fontSize: 12)),
           ),
-          ElevatedButton(
-            onPressed: vm.isSavingHp
-            ? null
-            : () async {
-              final dmg = int.tryParse(_damageCtrl.text) ?? 0;
-              final heal = int.tryParse(_healCtrl.text) ?? 0;
-              final temp = int.tryParse(_tempCtrl.text) ?? 0;
-              await vm.applyHpChange(
-                damage: dmg, heal: heal, tempHp: temp);
-              if (vm.hpError == null && context.mounted) {
-                Navigator.pop(context);
-              }
-            },
+        ElevatedButton(
+          onPressed: vm.isSavingHp
+              ? null
+              : () async {
+                  final dmg = int.tryParse(_damageCtrl.text) ?? 0;
+                  final heal = int.tryParse(_healCtrl.text) ?? 0;
+                  final temp = int.tryParse(_tempCtrl.text) ?? 0;
+                  await vm.applyHpChange(damage: dmg, heal: heal, tempHp: temp);
+                  if (vm.hpError == null && context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
           child: vm.isSavingHp
-            ? const SizedBox(
-              height: 20, width: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2, color: AppTheme.background))
-            : const Text('Apply'),
-              ),
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: AppTheme.background))
+              : const Text('Apply'),
+        ),
       ]),
     );
   }
@@ -507,11 +553,14 @@ class _HpField extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color color;
-  const _HpField({required this.controller, required this.label,
-    required this.icon, required this.color});
+  const _HpField(
+      {required this.controller,
+      required this.label,
+      required this.icon,
+      required this.color});
 
   @override
-  Widget build (BuildContext context){
+  Widget build(BuildContext context) {
     return TextField(
       controller: controller,
       keyboardType: TextInputType.number,
@@ -530,7 +579,7 @@ class _HpField extends StatelessWidget {
           borderSide: BorderSide(color: color.withOpacity(0.4)),
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 10),
-        ),
-      );    
+      ),
+    );
   }
 }
