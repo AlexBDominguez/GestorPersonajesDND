@@ -39,7 +39,6 @@ class PendingTask{
   }
 
   ///Icono representativo por tipo de tarea
-  /*
   String get icon {
     switch (taskType) {
       case 'FIGHTING_STYLE':    return '⚔️';
@@ -55,7 +54,6 @@ class PendingTask{
       default:                  return '📋';
     }
   }
-  */
 
   String get displayName {
     switch (taskType) {

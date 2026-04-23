@@ -1,73 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
+import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
 import 'package:gestor_personajes_dnd/models/character/pending_task.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-//---- Opciones estáticas por tipo de tarea
-//--------------------------------------------
-
-//Las que dependen de datos de la API (Favored Enemy, etc.) usan listas fijas
-//de referencia D&D5e. Se pueden enriquecer con llamadas API en el futuro.
-
-const _kFightingStyles = [
-  _TaskOption('Archery',          '+2 bonus to attack rolls with ranged weapons.'),
-  _TaskOption('Defense',          '+1 to AC while wearing armor.'),
-  _TaskOption('Dueling',          '+2 to damage rolls when wielding a melee weapon in one hand and no other weapons.'),
-  _TaskOption('Great Weapon Fighting', 'Reroll 1s and 2s on damage dice when using two-handed melee weapons.'),
-  _TaskOption('Protection',       'Impose disadvantage on attacks against allies within 5 ft (requires shield).'),
-  _TaskOption('Two-Weapon Fighting', 'Add ability modifier to the damage of your off-hand attack.'),
-  _TaskOption('Blind Fighting',   'You have blindsight with a range of 10 ft.'),
-  _TaskOption('Interception',     'Reduce damage to a creature within 5 ft by 1d10 + proficiency bonus (reaction).'),
-  _TaskOption('Superior Technique','Learn one maneuver and gain one superiority die (d6).'),
-  _TaskOption('Thrown Weapon Fighting', '+2 to damage with thrown weapons; draw them as part of the attack.'),
-  _TaskOption('Unarmed Fighting', 'Unarmed strikes deal 1d6 (1d8 if hands free). Grappled creatures take 1d4 bludgeoning at start of your turn.'),
-];
-
-const _kFavoredEnemies = [
-  _TaskOption('Aberrations',   'Aberrations: mind flayers, beholders, and other alien horrors.'),
-  _TaskOption('Beasts',        'Beasts: animals and other natural creatures.'),
-  _TaskOption('Celestials',    'Celestials: angels, unicorns, and other divine creatures.'),
-  _TaskOption('Constructs',    'Constructs: golems, animated objects, and similar.'),
-  _TaskOption('Dragons',       'Dragons: true dragons and related creatures.'),
-  _TaskOption('Elementals',    'Elementals: creatures of elemental planes.'),
-  _TaskOption('Fey',           'Fey: sprites, dryads, and other fey creatures.'),
-  _TaskOption('Fiends',        'Fiends: demons, devils, and similar.'),
-  _TaskOption('Giants',        'Giants: hill giants, storm giants, and their kin.'),
-  _TaskOption('Monstrosities', 'Monstrosities: monsters of unknown origin.'),
-  _TaskOption('Oozes',         'Oozes: gelatinous cubes, black puddings, etc.'),
-  _TaskOption('Plants',        'Plants: shambling mounds, treants, and similar.'),
-  _TaskOption('Undead',        'Undead: zombies, vampires, ghosts, and the like.'),
-  _TaskOption('Two humanoid types', 'Choose two humanoid races (e.g. orcs and gnolls).'),
-];
-
-const _kFavoredTerrains = [
-  _TaskOption('Arctic',      'Tundra and frozen wastes.'),
-  _TaskOption('Coast',       'Shores, beaches, and tidal areas.'),
-  _TaskOption('Desert',      'Hot or cold desert environments.'),
-  _TaskOption('Forest',      'Dense woodlands and jungles.'),
-  _TaskOption('Grassland',   'Prairies, savannas, and plains.'),
-  _TaskOption('Mountain',    'High altitude rocky terrain.'),
-  _TaskOption('Swamp',       'Wetlands, marshes, and bogs.'),
-  _TaskOption('Underdark',   'Subterranean tunnels and caverns.'),
-];
-
-const _kDraconicAncestries = [
-  _TaskOption('Black',   'Acid — Line 5×30 ft, DC Con'),
-  _TaskOption('Blue',    'Lightning — Line 5×30 ft, DC Dex'),
-  _TaskOption('Brass',   'Fire — Line 5×30 ft, DC Dex'),
-  _TaskOption('Bronze',  'Lightning — Line 5×30 ft, DC Dex'),
-  _TaskOption('Copper',  'Acid — Line 5×30 ft, DC Dex'),
-  _TaskOption('Gold',    'Fire — Cone 15 ft, DC Dex'),
-  _TaskOption('Green',   'Poison — Cone 15 ft, DC Con'),
-  _TaskOption('Red',     'Fire — Cone 15 ft, DC Dex'),
-  _TaskOption('Silver',  'Cold — Cone 15 ft, DC Con'),
-  _TaskOption('White',   'Cold — Cone 15 ft, DC Con'),
-];
-
 
 // ---- Entry Point
 class PendingTasksScreen extends StatelessWidget {
+  final CharacterSheetViewModel vm;
+  const PendingTasksScreen({super.key, required this.vm});
 
   @override
   Widget build(BuildContext context) {
@@ -179,16 +121,16 @@ class _TaskResolver extends StatelessWidget {
     switch (task.taskType) {
       case 'FIGHTING_STYLE':
         return _OptionListResolver(
-            task: task, vm: vm, options: _kFightingStyles);
+            task: task, vm: vm, options: kFightingStyles);
       case 'FAVORED_ENEMY':
         return _OptionListResolver(
-            task: task, vm: vm, options: _kFavoredEnemies);
+            task: task, vm: vm, options: kFavoredEnemies);
       case 'FAVORED_TERRAIN':
         return _OptionListResolver(
-            task: task, vm: vm, options: _kFavoredTerrains);
+            task: task, vm: vm, options: kFavoredTerrains);
       case 'DRACONIC_ANCESTRY':
         return _OptionListResolver(
-            task: task, vm: vm, options: _kDraconicAncestries);
+            task: task, vm: vm, options: kDraconicAncestries);
       case 'ASI_OR_FEAT':
         return _AsiOrFeatResolver(task: task, vm: vm);
       default:
@@ -202,7 +144,7 @@ class _TaskResolver extends StatelessWidget {
 class _OptionListResolver extends StatefulWidget {
   final PendingTask task;
   final CharacterSheetViewModel vm;
-  final List<_TaskOption> options;
+  final List<DndChoiceOption> options;
   const _OptionListResolver(
       {required this.task, required this.vm, required this.options});
 
@@ -243,7 +185,7 @@ class _OptionListResolverState extends State<_OptionListResolver> {
                   width: 18, height: 18,
                   child: CircularProgressIndicator(
                       color: Colors.white, strokeWidth: 2))
-              : Text('Confirm: $_selected',
+              : Text(_selected == null ? 'Select an option above' : 'Confirm: $_selected',
                   style: GoogleFonts.cinzel(
                       fontSize: 12, fontWeight: FontWeight.bold)),
         ),
@@ -516,9 +458,4 @@ class _FreeTextResolverState extends State<_FreeTextResolver> {
   }
 }
 
-// ---- Data
-class _TaskOption {
-  final String name;
-  final String description;
-  const _TaskOption(this.name, this.description);
-}
+

@@ -247,6 +247,12 @@ public class PlayerCharacterService {
         }
 
         generateSpellSlots(saved);
+
+        // Generate pending tasks for all choice-requiring features from level 1 to selectedLevel
+        generateChoiceTasksForCreation(saved);
+
+        // Generate pending tasks for race-level choices (e.g., Dragonborn Draconic Ancestry)
+        generateRaceChoiceTasksForCreation(saved);
         
         return toDto(saved);
     }
@@ -985,6 +991,29 @@ public class PlayerCharacterService {
         }
     }
 
+    /**
+     * Creates PendingTasks for every choice-requiring ClassLevelFeature from level 1
+     * to the character's starting level. Does NOT apply automatic features (those are
+     * already handled during create()).
+     */
+    private void generateChoiceTasksForCreation(PlayerCharacter character) {
+        DndClass dndClass = character.getDndClass();
+        if (dndClass == null) return;
+        for (int level = 1; level <= character.getLevel(); level++) {
+            ClassLevelProgression progression =
+                classLevelProgressionRepository.findByDndClassAndLevel(dndClass, level)
+                    .orElse(null);
+            if (progression == null) continue;
+            List<ClassLevelFeature> features = progression.getFeatures();
+            if (features == null) continue;
+            for (ClassLevelFeature feature : features) {
+                if (feature.isRequiresChoice()) {
+                    createTask(character, level, feature);
+                }
+            }
+        }
+    }
+
     private void createTask(PlayerCharacter character, int level, ClassLevelFeature feature) {
         System.out.println("Creating task for feature type: " + feature.getType());
 
@@ -1061,6 +1090,64 @@ public class PlayerCharacterService {
 
         pendingTaskRepository.save(task);
         System.out.println("Task created: " + task.getTaskType());
+    }
+
+    /**
+     * Creates PendingTasks for CHOICE_REQUIRED racial traits of the character's race (and subrace).
+     * Only creates a task if no task of the same type+level already exists (avoids duplicates
+     * e.g. for a Dragonborn Draconic Sorcerer whose class already generated a DRACONIC_ANCESTRY task).
+     */
+    private void generateRaceChoiceTasksForCreation(PlayerCharacter character) {
+        List<RacialTrait> allTraits = new ArrayList<>();
+
+        Race race = character.getRace();
+        if (race != null && race.getTraits() != null) {
+            allTraits.addAll(race.getTraits());
+        }
+        Subrace subrace = character.getSubrace();
+        if (subrace != null && subrace.getTraits() != null) {
+            allTraits.addAll(subrace.getTraits());
+        }
+
+        // These traits are derived from draconic-ancestry — they don't need their own task
+        java.util.Set<String> derivedTraits = java.util.Set.of("breath-weapon", "damage-resistance");
+
+        List<PendingTask> existing = pendingTaskRepository.findByCharacter(character);
+
+        for (RacialTrait trait : allTraits) {
+            if (!"CHOICE_REQUIRED".equals(trait.getTraitType())) continue;
+            if (derivedTraits.contains(trait.getIndexName())) continue;
+
+            String taskType;
+            String description;
+            switch (trait.getIndexName()) {
+                case "draconic-ancestry":
+                    taskType = "DRACONIC_ANCESTRY";
+                    description = "Choose your Draconic Ancestry (determines Breath Weapon damage type)";
+                    break;
+                default:
+                    System.out.println("Skipping unhandled racial choice trait: " + trait.getIndexName());
+                    continue;
+            }
+
+            // Avoid duplicate tasks (e.g. Draconic Sorcerer already has this from class features)
+            final String finalTaskType = taskType;
+            boolean alreadyExists = existing.stream()
+                .anyMatch(t -> finalTaskType.equals(t.getTaskType()) && t.getRelatedLevel() == 1);
+            if (alreadyExists) {
+                System.out.println("Race task " + taskType + " level 1 already exists, skipping.");
+                continue;
+            }
+
+            PendingTask task = new PendingTask();
+            task.setCharacter(character);
+            task.setRelatedLevel(1);
+            task.setCompleted(false);
+            task.setTaskType(taskType);
+            task.setDescription(description);
+            pendingTaskRepository.save(task);
+            System.out.println("Race task created: " + taskType + " for " + character.getName());
+        }
     }
 
     private void applyAutomaticFeature(PlayerCharacter character, int level, ClassLevelFeature feature) {

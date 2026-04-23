@@ -26,7 +26,7 @@ class DndApp extends StatelessWidget {
           builder: (context, vm, child) {
             // Splash mientras lee SharedPreferences
             if (!vm.isLoggedIn && vm.isLoading == false && vm.errorMessage == null) {
-              // Sin token guardado → login
+              // Sin token guardado -> login
             }
             return vm.isLoggedIn
                 ? const DashboardScreen()

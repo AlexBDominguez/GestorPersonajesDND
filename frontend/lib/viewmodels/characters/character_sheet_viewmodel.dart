@@ -29,8 +29,10 @@ class CharacterSheetViewModel extends ChangeNotifier {
   final WizardReferenceService _refService;
   final PendingTaskService _taskService = PendingTaskService();
   List<PendingTask> _pendingTasks = [];
-  List<PendingTask> get pendingTasks => _pendingTasks;
-  bool get hasPendingTasks => _pendingTasks.isNotEmpty;
+  /// Only incomplete tasks — completed ones are displayed elsewhere (Features tab)
+  List<PendingTask> get pendingTasks =>
+      _pendingTasks.where((t) => !t.completed).toList();
+  bool get hasPendingTasks => _pendingTasks.any((t) => !t.completed);
 
   CharacterSheetViewModel({
     required this.characterId,
@@ -371,6 +373,17 @@ class CharacterSheetViewModel extends ChangeNotifier {
       _pendingTasks = [];
     }
     notifyListeners();
+  }
+
+  /// Returns the resolved choice value (from completed tasks) for a given
+  /// task type and level, or null if not resolved yet.
+  String? resolvedChoiceFor(String taskType, int level) {
+    for (final task in _pendingTasks) {
+      if (task.taskType == taskType && task.relatedLevel == level && task.completed) {
+        return task.resolvedChoice;
+      }
+    }
+    return null;
   }
 
   Future<bool> resolveTask(int taskId, String choice, {String? extraData}) async{

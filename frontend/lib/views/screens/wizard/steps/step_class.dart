@@ -50,10 +50,12 @@ class StepClass extends StatelessWidget {
             itemBuilder: (_, i) {
               final cls = vm.classes[i];
               final isSelected = vm.selectedClass?.id == cls.id;
+              final otherSelected = vm.selectedClass != null && !isSelected;
               return _ClassCard(
                 cls: cls,
                 isSelected: isSelected,
-                onTap: () => _openClassDetail(context, vm, cls),
+                isDisabled: otherSelected,
+                onTap: otherSelected ? null : () => _openClassDetail(context, vm, cls),
               );
             },
           ),
@@ -134,12 +136,14 @@ class _SelectedClassBadge extends StatelessWidget {
 class _ClassCard extends StatelessWidget {
   final ClassOption cls;
   final bool isSelected;
-  final VoidCallback onTap;
+  final bool isDisabled;
+  final VoidCallback? onTap;
 
   const _ClassCard({
     required this.cls,
     required this.isSelected,
-    required this.onTap,
+    this.isDisabled = false,
+    this.onTap,
   });
 
   @override
@@ -154,10 +158,16 @@ class _ClassCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? AppTheme.primary.withOpacity(0.12)
-              : AppTheme.surface,
+              : isDisabled
+                  ? AppTheme.surface.withOpacity(0.4)
+                  : AppTheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppTheme.primary : AppTheme.surfaceVariant,
+            color: isSelected
+                ? AppTheme.primary
+                : isDisabled
+                    ? AppTheme.surfaceVariant.withOpacity(0.4)
+                    : AppTheme.surfaceVariant,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -188,7 +198,9 @@ class _ClassCard extends StatelessWidget {
                       style: GoogleFonts.cinzel(
                           color: isSelected
                               ? AppTheme.primary
-                              : AppTheme.textPrimary,
+                              : isDisabled
+                                  ? AppTheme.textSecondary.withOpacity(0.4)
+                                  : AppTheme.textPrimary,
                           fontSize: 15,
                           fontWeight: FontWeight.bold)),
                   if (cls.description.isNotEmpty) ...[

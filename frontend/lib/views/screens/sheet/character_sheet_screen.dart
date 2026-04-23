@@ -36,13 +36,13 @@ class _SheetBody extends StatefulWidget {
 }
 
 class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+  late TabController _tabController;
+  bool _showSpells = true; // initialised before character loads
 
-  static const _tabs = [
+  static const _baseTabs = [
     Tab(text: 'Abilities'),
     Tab(text: 'Skills'),
     Tab(text: 'Combat'),
-    Tab(text: 'Spells'),
     Tab(text: 'Features'),
     Tab(text: 'Inventory'),
     Tab(text: 'Info'),
@@ -51,13 +51,24 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    // Start with spells tab visible; will be adjusted once character loads
+    _tabController = TabController(length: _baseTabs.length + 1, vsync: this);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _updateTabController(bool showSpells) {
+    if (_showSpells == showSpells) return;
+    final newLength = showSpells ? _baseTabs.length + 1 : _baseTabs.length;
+    final clampedIndex = _tabController.index.clamp(0, newLength - 1);
+    _tabController.dispose();
+    _showSpells = showSpells;
+    _tabController = TabController(
+        length: newLength, vsync: this, initialIndex: clampedIndex);
   }
 
   @override
@@ -92,6 +103,26 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
 
     final c = vm.character!;
 
+    // Determine whether the Spells tab should be shown and update controller
+    final showSpells =
+        c.spellSlots.isNotEmpty || c.characterSpells.isNotEmpty;
+    _updateTabController(showSpells);
+
+    final tabs = [
+      ..._baseTabs.sublist(0, 3), // Abilities, Skills, Combat
+      if (showSpells) const Tab(text: 'Spells'),
+      ..._baseTabs.sublist(3),    // Features, Inventory, Info
+    ];
+    final views = <Widget>[
+      TabAbilities(character: c),
+      TabSkills(character: c, vm: vm),
+      TabCombat(character: c, vm: vm),
+      if (showSpells) TabSpells(character: c, vm: vm),
+      TabFeatures(character: c, vm: vm),
+      TabInventory(character: c, vm: vm),
+      TabInfo(character: c),
+    ];
+
     return Scaffold(
       body: SafeArea(
         child: Column(children: [
@@ -115,7 +146,7 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
               unselectedLabelStyle: GoogleFonts.cinzel(fontSize: 12),
               indicatorColor: AppTheme.primary,
               indicatorWeight: 2,
-              tabs: _tabs,
+              tabs: tabs,
             ),
           ),
 
@@ -125,15 +156,7 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: [
-                TabAbilities(character: c),
-                TabSkills(character: c, vm: vm),
-                TabCombat(character: c, vm: vm),
-                TabSpells(character: c, vm: vm),
-                TabFeatures(character: c, vm: vm),
-                TabInventory(character: c, vm: vm),
-                TabInfo(character: c),
-              ],
+              children: views,
             ),
           ),
         ]),

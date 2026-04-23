@@ -102,11 +102,13 @@ class _SpellStatsHeader extends StatelessWidget {
             label: 'ATTACK',
             value: vm.signedInt(c.spellAttackBonus),
           ),
-          _VertDivider(),
-          _StatPill(
-            label: 'PREPARED',
-            value: '${c.characterSpells.where((s) => s.prepared && !s.isCantrip).length}/${c.maxPreparedSpells}',
-          ),
+          if (!vm.alwaysPreparedClass) ...[
+            _VertDivider(),
+            _StatPill(
+              label: 'PREPARED',
+              value: '${c.characterSpells.where((s) => s.prepared && !s.isCantrip).length}/${c.maxPreparedSpells}',
+            ),
+          ],
         ],
       ),
     );

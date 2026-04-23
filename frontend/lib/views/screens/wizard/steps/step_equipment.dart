@@ -56,6 +56,22 @@ class _StepEquipmentState extends State<StepEquipment>
         color: AppTheme.surface,
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Optional banner
+          Container(
+            color: AppTheme.primary.withOpacity(0.08),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(children: [
+              const Icon(Icons.info_outline, color: AppTheme.primary, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'This step is optional — you can add items later from your inventory.',
+                  style: GoogleFonts.lato(color: AppTheme.primary, fontSize: 12),
+                ),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 8),
           Row(children: [
             Expanded(
               child: Text('Starting Equipment',
@@ -79,22 +95,6 @@ class _StepEquipmentState extends State<StepEquipment>
                 ),
               ),
           ]),
-          const SizedBox(height: 8),
-          // Optional banner
-          Container(
-            color: AppTheme.primary.withOpacity(0.08),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(children: [
-              const Icon(Icons.info_outline, color: AppTheme.primary, size: 16),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'This step is optional — you can add items later from your inventory.',
-                  style: GoogleFonts.lato(color: AppTheme.primary, fontSize: 12),
-                ),
-              ),
-            ]),
-          ),
           const SizedBox(height: 12),
 
           // Buscador

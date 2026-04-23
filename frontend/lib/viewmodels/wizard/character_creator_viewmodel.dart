@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
 import 'package:gestor_personajes_dnd/models/wizard/background_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
@@ -6,6 +7,7 @@ import 'package:gestor_personajes_dnd/models/wizard/race_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/subrace_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
+import 'package:gestor_personajes_dnd/services/characters/pending_task_service.dart';
 import 'package:gestor_personajes_dnd/services/inventory/inventory_service.dart';
 import 'package:gestor_personajes_dnd/services/wizard/wizard_reference_service.dart';
 
@@ -19,20 +21,43 @@ enum AbilityScoreMethod {standardArray, manual}
 const List<int> kStandardArray = [15, 14, 13, 12, 10, 8];
 const List<String> kAbilityNames = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 
+/// One required feature choice – shown as a section in the wizard Features step.
+class WizardChoiceConfig {
+  /// D&D task type, e.g. 'FIGHTING_STYLE', 'FAVORED_ENEMY'.
+  final String type;
+  /// Level at which this feature is acquired.
+  final int level;
+  /// Display label shown in the wizard UI.
+  final String label;
+  /// Selectable options.
+  final List<DndChoiceOption> options;
+  const WizardChoiceConfig({
+    required this.type,
+    required this.level,
+    required this.label,
+    required this.options,
+  });
+  /// Unique key used to store / look up the selection: e.g. 'FAVORED_ENEMY_6'.
+  String get key => '${type}_$level';
+}
+
 
 // - ViewModel -------------------
 class CharacterCreatorViewModel extends ChangeNotifier {
   final WizardReferenceService _refService;
   final CharacterService       _charService;
   final InventoryService      _inventoryService;
+  final PendingTaskService    _pendingTaskService;
 
   CharacterCreatorViewModel({
     WizardReferenceService? refService,
     CharacterService?       charService,
     InventoryService?      inventoryService,
+    PendingTaskService?    pendingTaskService,
   })  : _refService  = refService  ?? WizardReferenceService(),
         _charService = charService ?? CharacterService(),
-        _inventoryService = inventoryService ?? InventoryService();
+        _inventoryService = inventoryService ?? InventoryService(),
+        _pendingTaskService = pendingTaskService ?? PendingTaskService();
 
 
   //- Navegación ------------------
@@ -67,10 +92,19 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       selectedSubclass!.spellCastingAbility!.isNotEmpty);
 
   //Nivel máximo de spell que puede aprender según nivel del personaje
-  //Regla simplificada: ceil (characterLevel / 2), maximo 9
-  int get maxSpellLevel => isSpellcaster
-    ? ((selectedLevel / 2).ceil()).clamp(1, 9)
-    : 0;
+  // Half-casters (Ranger, Paladin): nivel de hechizo limitado por tabla PHB
+  // Full-casters: ceil(level/2), máximo 9
+  int get maxSpellLevel {
+    if (!isSpellcaster) return 0;
+    final className = selectedClass?.name.toLowerCase() ?? '';
+    final level = selectedLevel;
+    if (className.contains('ranger') || className.contains('paladin')) {
+      // Half-caster: spell slot level table (levels 0-20)
+      const table = [0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5];
+      return table[level.clamp(0, 20)];
+    }
+    return ((level / 2).ceil()).clamp(1, 9);
+  }
 
   // Límite de selección de hechizos ------------
   // Cantrips conocidos según clase y nivel (tablas PHB exactas 2014)
@@ -184,7 +218,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       case WizardStep.race: return raceValid;
       case WizardStep.abilityScores: return abilityScoresValid;
       case WizardStep.spells: return spellsValid;
-      case WizardStep.equipment: return selectedItemIds.isNotEmpty;
+      case WizardStep.equipment: return selectedItemIds.isNotEmpty; // optional step, tick only if items selected
     }
   }
 
@@ -289,12 +323,17 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void clearClass() {
+    // Clear class feature choices before clearing selectedClass
+    for (final c in classFeatureChoices) {
+      featureChoices.remove(c.key);
+    }
     selectedClass = null;
     selectedSubclass = null;
     selectedLevel = 1;
     _hpRolls.clear();
     classFeatures.clear();
     subclasses.clear();
+    subclassFeatures = [];
     selectedSpellIds.clear();
     availableSpells.clear();
     _spellsStepVisited = false;
@@ -326,15 +365,33 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   void selectSubclass(SubclassOption s) {
     selectedSubclass = s;
+    subclassFeatures = [];
     selectedSpellIds.clear();
     availableSpells.clear();
     _markDirty(WizardStep.dndClass);
     notifyListeners();
+    _loadSubclassFeaturesFor(s.id);
   }
 
   void clearSubclass() {
+    // Clear subclass-specific feature choices
+    for (final c in classFeatureChoices) {
+      if (c.type == 'DRACONIC_ANCESTRY') featureChoices.remove(c.key);
+    }
     selectedSubclass = null;
+    subclassFeatures = [];
     _markDirty(WizardStep.dndClass);
+    notifyListeners();
+  }
+
+  List<ClassFeature> subclassFeatures = [];
+
+  Future<void> _loadSubclassFeaturesFor(int subclassId) async {
+    try {
+      subclassFeatures = await _refService.getSubclassFeatures(subclassId);
+    } catch (_) {
+      subclassFeatures = [];
+    }
     notifyListeners();
   }
 
@@ -367,7 +424,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     return (base + conMod) + ((base ~/ 2 + 1 + conMod) * (selectedLevel - 1));  
     }
 
-    bool get classValid => selectedClass != null;
+    bool get classValid => selectedClass != null && classFeatureChoicesDone;
 
   // PASO 3: Background
   // ────────────────────────────────────────────────────────────
@@ -440,6 +497,10 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void selectRace(RaceOption r) {
+    // Clear previous race feature choices
+    for (final c in raceFeatureChoices) {
+      featureChoices.remove(c.key);
+    }
     selectedRace = r;
     selectedSubrace = null;
     subraces = [];
@@ -469,7 +530,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   bool get raceValid =>
       selectedRace != null &&
-      (subraces.isEmpty || selectedSubrace != null);
+      (subraces.isEmpty || selectedSubrace != null) &&
+      raceFeatureChoicesDone;
 
   //PASO 5: Ability Scores
   // ────────────────────────────────────────────────────────────
@@ -618,6 +680,97 @@ void toggleItem(int itemId) {
 }
 
 
+  // Feature Choices — inline en el step de clase y el step de raza
+  // ────────────────────────────────────────────────────────────
+
+  /// Choices requeridas por la clase/subclase al nivel seleccionado.
+  List<WizardChoiceConfig> get classFeatureChoices {
+    final choices = <WizardChoiceConfig>[];
+    final className = selectedClass?.name.toLowerCase() ?? '';
+    final subcName  = selectedSubclass?.name.toLowerCase() ?? '';
+    final level     = selectedLevel;
+
+    // Fighter: Fighting Style at level 1
+    if (className.contains('fighter') && level >= 1) {
+      choices.add(const WizardChoiceConfig(
+        type: 'FIGHTING_STYLE', level: 1,
+        label: 'Fighting Style',
+        options: kFightingStyles,
+      ));
+    }
+    // Paladin: Fighting Style at level 2
+    if (className.contains('paladin') && level >= 2) {
+      choices.add(const WizardChoiceConfig(
+        type: 'FIGHTING_STYLE', level: 2,
+        label: 'Fighting Style',
+        options: kFightingStyles,
+      ));
+    }
+    // Ranger: Favored Enemy at levels 1, 6, 14
+    if (className.contains('ranger')) {
+      for (final l in [1, 6, 14]) {
+        if (level >= l) {
+          choices.add(WizardChoiceConfig(
+            type: 'FAVORED_ENEMY', level: l,
+            label: 'Favored Enemy (lv $l)',
+            options: kFavoredEnemies,
+          ));
+        }
+      }
+      // Natural Explorer Terrain at levels 1, 6, 10
+      for (final l in [1, 6, 10]) {
+        if (level >= l) {
+          choices.add(WizardChoiceConfig(
+            type: 'FAVORED_TERRAIN', level: l,
+            label: 'Natural Explorer Terrain (lv $l)',
+            options: kFavoredTerrains,
+          ));
+        }
+      }
+    }
+    // Draconic Sorcerer: Draconic Ancestry at level 1
+    if (className.contains('sorcerer') &&
+        subcName.contains('draconic') &&
+        level >= 1) {
+      choices.add(const WizardChoiceConfig(
+        type: 'DRACONIC_ANCESTRY', level: 1,
+        label: 'Draconic Ancestry',
+        options: kDraconicAncestries,
+      ));
+    }
+    return choices;
+  }
+
+  /// Choices requeridas por la raza/subraza seleccionada.
+  List<WizardChoiceConfig> get raceFeatureChoices {
+    final choices = <WizardChoiceConfig>[];
+    final raceName = selectedRace?.name.toLowerCase() ?? '';
+    // Dragonborn: Draconic Ancestry (type matches backend task type so auto-resolve works)
+    if (raceName.contains('dragonborn')) {
+      choices.add(const WizardChoiceConfig(
+        type: 'DRACONIC_ANCESTRY', level: 1,
+        label: 'Draconic Ancestry',
+        options: kDraconicAncestries,
+      ));
+    }
+    return choices;
+  }
+
+  /// Map of choice key (e.g. 'FAVORED_ENEMY_1') → selected option name.
+  final Map<String, String> featureChoices = {};
+
+  void setFeatureChoice(String key, String value) {
+    featureChoices[key] = value;
+    notifyListeners();
+  }
+
+  bool get classFeatureChoicesDone =>
+    classFeatureChoices.every((c) => featureChoices.containsKey(c.key));
+
+  bool get raceFeatureChoicesDone =>
+    raceFeatureChoices.every((c) => featureChoices.containsKey(c.key));
+
+
   // Validación global
   // ────────────────────────────────────────────────────────────
 
@@ -628,7 +781,11 @@ void toggleItem(int itemId) {
     raceValid &&
     abilityScoresValid;
 
-  bool get canProceedCurrentStep => isStepCompleted(_currentStep);  
+  bool get canProceedCurrentStep {
+    // Equipment is optional — it never blocks navigation or creation
+    if (_currentStep == WizardStep.equipment) return canFinish;
+    return isStepCompleted(_currentStep);
+  }
 
   //Submit
   // ────────────────────────────────────────────────────────────
@@ -641,6 +798,8 @@ void toggleItem(int itemId) {
 
   int? _createdCharacterId;
   int? get createdCharacterId => _createdCharacterId;
+
+  Object? get requiredFeatureChoices => null;
 
   Future<void> submit() async {
     if (_isSaving) return; // guard contra doble click
@@ -680,6 +839,11 @@ void toggleItem(int itemId) {
       );
       _createdCharacterId = result.id;
 
+      // Auto-resolve the simple feature choices collected in the wizard
+      if (featureChoices.isNotEmpty) {
+        await _autoResolveFeatureChoices(_createdCharacterId!);
+      }
+
       //añadir equipamiento inicial (si se ha seleccionado alguno, en paralelo al submit del personaje para no bloquearlo)
       if (selectedItemIds.isNotEmpty){
         for (final itemId in selectedItemIds){
@@ -700,6 +864,27 @@ void toggleItem(int itemId) {
   }
 
   // Carga automática al cambiar de paso
+
+  /// Loads pending tasks for the newly created character and silently resolves
+  /// any task whose key (taskType_relatedLevel) matches a wizard-collected choice.
+  Future<void> _autoResolveFeatureChoices(int characterId) async {
+    try {
+      final tasks = await _pendingTaskService.getPendingTasks(characterId);
+      for (final task in tasks) {
+        final key = '${task.taskType}_${task.relatedLevel}';
+        final choice = featureChoices[key];
+        if (choice != null) {
+          await _pendingTaskService.resolveTask(
+            characterId: characterId,
+            taskId: task.id,
+            choice: choice,
+          );
+        }
+      }
+    } catch (_) {
+      // Non-fatal: remaining choices are resolved from PendingTasksScreen
+    }
+  }
 
   void _loadStepData() {
     switch (_currentStep) {

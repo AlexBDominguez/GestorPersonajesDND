@@ -62,12 +62,12 @@ class _TabCombatState extends State<TabCombat> {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 32),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // ── 1. Standard Actions card (always visible, at top) ────────────────
-        _StandardActionsCard(),
-        const SizedBox(height: 16),
 
-        // ── 2. Actions ───────────────────────────────────────────────────────
+        // ── 1. Actions ───────────────────────────────────────────────────────
         _SectionTitle('Actions'),
+        const SizedBox(height: 8),
+        // Standard Actions are actions — show them first inside Actions
+        _StandardActionsCard(),
         const SizedBox(height: 8),
         if (actionSpells.isNotEmpty) ...[
           _SpellAttackTable(spells: actionSpells, vm: vm),

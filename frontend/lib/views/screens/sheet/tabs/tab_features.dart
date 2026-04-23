@@ -5,7 +5,6 @@ import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/character/racial_trait.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
-import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_combat.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class TabFeatures extends StatelessWidget {
@@ -141,19 +140,31 @@ class _FeatureTile extends StatelessWidget {
   final ClassFeature feature;
   final CharacterSheetViewModel vm;
   final bool showCombatBadge;
-  final bool isSubclass;
   const _FeatureTile({
     required this.feature,
     required this.vm,
     this.showCombatBadge = false,
-    this.isSubclass = false,
   });
+
+  /// Map a feature to its task type so we can look up the resolved choice.
+  String? get _taskType {
+    final n = feature.name.toLowerCase();
+    if (n.contains('fighting style')) return 'FIGHTING_STYLE';
+    if (n.contains('favored enemy'))  return 'FAVORED_ENEMY';
+    if (n.contains('natural explorer') || n.contains('favored terrain')) return 'FAVORED_TERRAIN';
+    if (n.contains('draconic ancestry')) return 'DRACONIC_ANCESTRY';
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
     final isConsumable = vm.isConsumableFeature(feature);
     final maxUses = vm.featureMaxUses(feature);
     final remaining = vm.featureUsesRemaining(feature);
+    final taskType = _taskType;
+    final resolvedChoice = taskType != null
+        ? vm.resolvedChoiceFor(taskType, feature.level)
+        : null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -161,9 +172,7 @@ class _FeatureTile extends StatelessWidget {
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isSubclass
-              ? AppTheme.surfaceVariant.withOpacity(0.6)
-              : AppTheme.surfaceVariant,
+          color: AppTheme.surfaceVariant,
         ),
       ),
       child: Theme(
@@ -193,9 +202,24 @@ class _FeatureTile extends StatelessWidget {
                   child: Text('combat',
                     style: GoogleFonts.lato(
                       color: AppTheme.primary,
-                      fontSize: 0,
+                      fontSize: 9,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5)),
+                ),
+              // Resolved choice badge (e.g. "Undead", "Coast", etc.)
+              if (resolvedChoice != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC8A45A).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFC8A45A).withOpacity(0.5)),
+                  ),
+                  child: Text(resolvedChoice,
+                    style: GoogleFonts.lato(
+                      color: const Color(0xFFC8A45A),
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold)),
                 ),
             ],
           ),
@@ -276,17 +300,55 @@ class _RacialTraitsSection extends StatelessWidget {
     }
 
     return Column(
-      children: traits.map((t) => _RacialTraitTile(trait: t)).toList(),      
+      children: traits.map((t) => _RacialTraitTile(trait: t, vm: vm)).toList(),      
     );
   }
 }
 
 class _RacialTraitTile extends StatelessWidget {
   final RacialTrait trait;
-  const _RacialTraitTile({required this.trait});
+  final CharacterSheetViewModel vm;
+  const _RacialTraitTile({required this.trait, required this.vm});
+
+  /// Map an indexName to the task type whose resolved choice describes this trait.
+  String? get _ancestryTaskType {
+    final idx = trait.indexName.toLowerCase();
+    // Direct draconic ancestry choice
+    if (idx.contains('draconic-ancestry') || idx.contains('draconic_ancestry')) {
+      return 'DRACONIC_ANCESTRY';
+    }
+    // Breath weapon and damage resistance are DERIVED from draconic ancestry
+    if (idx.contains('breath-weapon') || idx.contains('breath_weapon') ||
+        idx.contains('damage-resistance') || idx.contains('damage_resistance')) {
+      return 'DRACONIC_ANCESTRY'; // show the ancestry as context
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final ancestryTaskType = _ancestryTaskType;
+    final resolvedAncestry = ancestryTaskType != null
+        ? vm.resolvedChoiceFor(ancestryTaskType, 1)
+        : null;
+
+    // Build a disambiguated subtitle for traits derived from ancestry
+    final String? ancestrySuffix;
+    if (resolvedAncestry != null) {
+      final idx = trait.indexName.toLowerCase();
+      if (idx.contains('draconic-ancestry') || idx.contains('draconic_ancestry')) {
+        ancestrySuffix = resolvedAncestry;
+      } else if (idx.contains('breath-weapon') || idx.contains('breath_weapon')) {
+        ancestrySuffix = resolvedAncestry; // dragon type determines the element
+      } else if (idx.contains('damage-resistance') || idx.contains('damage_resistance')) {
+        ancestrySuffix = resolvedAncestry;
+      } else {
+        ancestrySuffix = null;
+      }
+    } else {
+      ancestrySuffix = null;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
@@ -310,8 +372,23 @@ class _RacialTraitTile extends StatelessWidget {
                     fontWeight: FontWeight.bold)),
               if (trait.isCombatRelevant)
                 _TypeBadge('combat', AppTheme.primary),
-              if (trait.requiresChoice)
-                _TypeBadge('choice', Colors.orange),
+              // Show the resolved ancestry choice as a gold badge
+              if (ancestrySuffix != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC8A45A).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFC8A45A).withOpacity(0.5)),
+                  ),
+                  child: Text(ancestrySuffix,
+                    style: GoogleFonts.lato(
+                      color: const Color(0xFFC8A45A),
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold)),
+                )
+              else if (trait.requiresChoice)
+                _TypeBadge('choose!', Colors.orange),
             ],
           ),
           iconColor: AppTheme.textSecondary,

@@ -58,6 +58,8 @@ class StepRace extends StatelessWidget {
                     ),
                     if (isSelected && (vm.subraces.isNotEmpty || vm.isLoadingSubraces))
                       _SubraceSelector(vm: vm),
+                    if (isSelected && vm.raceFeatureChoices.isNotEmpty)
+                      _RaceChoiceSection(vm: vm),
                   ],
                 );
               },
@@ -279,6 +281,183 @@ class _SubraceChip extends StatelessWidget {
   }
 }
 
+// ── Race feature choices ─────────────────────────────────────────────────────────────────
+
+class _RaceChoiceSection extends StatelessWidget {
+  final CharacterCreatorViewModel vm;
+  const _RaceChoiceSection({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 0, 16),
+      child: Column(
+        children: vm.raceFeatureChoices
+            .map((c) => _RaceChoiceBlock(
+                  config: c,
+                  selected: vm.featureChoices[c.key],
+                  onSelect: (val) => vm.setFeatureChoice(c.key, val),
+                ))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _RaceChoiceBlock extends StatelessWidget {
+  final WizardChoiceConfig config;
+  final String? selected;
+  final ValueChanged<String> onSelect;
+  const _RaceChoiceBlock({
+    required this.config,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final done = selected != null;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: done
+              ? AppTheme.primary.withOpacity(0.6)
+              : AppTheme.accent.withOpacity(0.4),
+          width: done ? 1.5 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+            decoration: BoxDecoration(
+              color: done
+                  ? AppTheme.primary.withOpacity(0.10)
+                  : AppTheme.accent.withOpacity(0.06),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(10)),
+            ),
+            child: Row(children: [
+              Icon(
+                done
+                    ? Icons.check_circle_outline
+                    : Icons.radio_button_unchecked,
+                color: done ? AppTheme.primary : AppTheme.accent,
+                size: 16,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(config.label,
+                    style: GoogleFonts.cinzel(
+                        color: done ? AppTheme.primary : AppTheme.accent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold)),
+              ),
+              if (done)
+                Text(selected!,
+                    style: GoogleFonts.lato(
+                        color: AppTheme.primary,
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic)),
+            ]),
+          ),
+          // Options
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              children: config.options
+                  .map((opt) => _RaceOptionTile(
+                        label: opt.name,
+                        description: opt.description,
+                        selected: selected == opt.name,
+                        onTap: () => onSelect(opt.name),
+                      ))
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RaceOptionTile extends StatelessWidget {
+  final String label;
+  final String description;
+  final bool selected;
+  final VoidCallback onTap;
+  const _RaceOptionTile({
+    required this.label,
+    required this.description,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppTheme.primary.withOpacity(0.12)
+              : AppTheme.surfaceVariant.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: selected ? AppTheme.primary : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Row(children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 16, height: 16,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: selected ? AppTheme.primary : Colors.transparent,
+              border: Border.all(
+                color: selected ? AppTheme.primary : AppTheme.textSecondary,
+                width: 1.5,
+              ),
+            ),
+            child: selected
+                ? const Icon(Icons.check, color: Colors.white, size: 10)
+                : null,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: GoogleFonts.cinzel(
+                        color: selected
+                            ? AppTheme.primary
+                            : AppTheme.textPrimary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 1),
+                Text(description,
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary,
+                        fontSize: 10,
+                        height: 1.3)),
+              ],
+            ),
+          ),
+        ]),
+      ),
+    );
+  }
+}
 
 class _Tag extends StatelessWidget {
   final String label;

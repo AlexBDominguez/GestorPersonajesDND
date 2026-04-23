@@ -8,7 +8,7 @@ class PendingTaskService {
   PendingTaskService({ApiClient? api}) : _api = api ?? ApiClient();
 
   Future<List<PendingTask>> getPendingTasks(int characterId) async {
-    final res = await _api.get('/api/characters/$characterId/pending-tasks');
+    final res = await _api.get('/api/characters/$characterId/pending-tasks/all');
     if (res.statusCode == 200) {
       final list = jsonDecode(res.body) as List;
       return list

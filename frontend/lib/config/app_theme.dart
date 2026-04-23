@@ -89,6 +89,9 @@ class AppTheme {
         ),
       ),
       dividerTheme: const DividerThemeData(color: divider, thickness: 1),
+      tabBarTheme: const TabBarThemeData(
+        dividerColor: Colors.transparent,
+      ),
     );
   }
 }

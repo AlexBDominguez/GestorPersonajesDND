@@ -7,6 +7,26 @@ import '../../../models/wizard/class_option.dart';
 import '../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import 'class_detail_screen.dart' show classIcon;
 
+/// Returns the matching [WizardChoiceConfig] for a feature, or null if
+/// this feature does not require a wizard choice.
+WizardChoiceConfig? _choiceForFeature(
+    ClassFeature feature, CharacterCreatorViewModel vm) {
+  final name = feature.name.toLowerCase();
+  for (final c in vm.classFeatureChoices) {
+    if (c.level != feature.level) continue;
+    final matches = switch (c.type) {
+      'FIGHTING_STYLE'   => name.contains('fighting style'),
+      'FAVORED_ENEMY'    => name.contains('favored enemy'),
+      'FAVORED_TERRAIN'  => name.contains('natural explorer') ||
+                            name.contains('favored terrain'),
+      'DRACONIC_ANCESTRY'=> name.contains('draconic ancestry'),
+      _                  => false,
+    };
+    if (matches) return c;
+  }
+  return null;
+}
+
 /// Pantalla donde el usuario configura su clase elegida:
 ///  - Elige el nivel del personaje
 ///  - Ve las features que gana hasta ese nivel
@@ -120,25 +140,53 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Features ─────────────────────────────────────────
-                  _SectionHeader('Class Features'),
-                  const SizedBox(height: 8),
-                  ..._featuresUpToLevel.map((f) => _FeatureTile(
-                        feature: f,
-                        isExpanded: _expandedFeatures.contains(f.id),
-                        onToggle: () => setState(() =>
-                            _expandedFeatures.contains(f.id)
-                                ? _expandedFeatures.remove(f.id)
-                                : _expandedFeatures.add(f.id)),
-                      )),
-
-                  const SizedBox(height: 20),
-
                   // Subclass selector ────────────────────────────────
                   _SubclassSelectorSection(
                     vm: widget.vm,
                     currentLevel: _level,
                   ),
+
+                  // Features ─────────────────────────────────────────
+                  _SectionHeader('Class Features'),
+                  const SizedBox(height: 8),
+                  ..._featuresUpToLevel.map((f) {
+                    final choice = _choiceForFeature(f, widget.vm);
+                    return _FeatureTile(
+                      feature: f,
+                      isExpanded: _expandedFeatures.contains(f.id),
+                      onToggle: () => setState(() =>
+                          _expandedFeatures.contains(f.id)
+                              ? _expandedFeatures.remove(f.id)
+                              : _expandedFeatures.add(f.id)),
+                      choice: choice,
+                      currentChoice: choice != null
+                          ? widget.vm.featureChoices[choice.key]
+                          : null,
+                      onChoiceSelected: choice != null
+                          ? (value) => widget.vm.setFeatureChoice(choice.key, value)
+                          : null,
+                    );
+                  }),
+
+                  // Subclass features (once subclass selected) ────────
+                  if (widget.vm.selectedSubclass != null &&
+                      widget.vm.subclassFeatures.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _SectionHeader('${widget.vm.selectedSubclass!.name} Features'),
+                    const SizedBox(height: 8),
+                    ...widget.vm.subclassFeatures
+                        .where((f) => f.level <= _level)
+                        .map((f) => _FeatureTile(
+                              feature: f,
+                              isExpanded: _expandedFeatures.contains(f.id),
+                              onToggle: () => setState(() =>
+                                  _expandedFeatures.contains(f.id)
+                                      ? _expandedFeatures.remove(f.id)
+                                      : _expandedFeatures.add(f.id)),
+                            )),
+                  ],
+
+                  const SizedBox(height: 20),
 
                   // HP por nivel ─────────────────────────────────────
                   _SectionHeader('Manage HP'),
@@ -176,7 +224,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
           // Botones
           _BottomButtons(
-            canConfirm: _hpComplete,
+            canConfirm: _hpComplete && widget.vm.classFeatureChoicesDone,
             onCancel: _onCancel,
             onConfirm: _onConfirm,
           ),
@@ -288,42 +336,53 @@ class _FeatureTile extends StatelessWidget {
   final ClassFeature feature;
   final bool isExpanded;
   final VoidCallback onToggle;
+  final WizardChoiceConfig? choice;
+  final String? currentChoice;
+  final ValueChanged<String>? onChoiceSelected;
 
   const _FeatureTile({
     required this.feature,
     required this.isExpanded,
     required this.onToggle,
+    this.choice,
+    this.currentChoice,
+    this.onChoiceSelected,
   });
+
+  bool get _needsChoice => choice != null;
+  bool get _choiceDone  => choice != null && currentChoice != null;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onToggle,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 6),
-        decoration: BoxDecoration(
-          color: isExpanded
-              ? AppTheme.primary.withOpacity(0.08)
-              : AppTheme.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isExpanded
-                ? AppTheme.primary.withOpacity(0.4)
-                : AppTheme.divider,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    final borderColor = _needsChoice && !_choiceDone
+        ? AppTheme.accent.withOpacity(0.5)
+        : isExpanded
+            ? AppTheme.primary.withOpacity(0.4)
+            : AppTheme.divider;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.only(bottom: 6),
+      decoration: BoxDecoration(
+        color: isExpanded
+            ? AppTheme.primary.withOpacity(0.08)
+            : (_needsChoice && !_choiceDone
+                ? AppTheme.accent.withOpacity(0.04)
+                : AppTheme.surface),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header — tappable
+          GestureDetector(
+            onTap: onToggle,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Row(children: [
-                // Badge de nivel
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppTheme.primary.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(4),
@@ -344,6 +403,13 @@ class _FeatureTile extends StatelessWidget {
                           fontSize: 13,
                           fontWeight: FontWeight.bold)),
                 ),
+                if (_needsChoice) ...[  
+                  if (_choiceDone)
+                    _ChoiceBadgeDone(text: currentChoice!)
+                  else
+                    const _ChoiceBadgePending(),
+                  const SizedBox(width: 6),
+                ],
                 Icon(
                   isExpanded
                       ? Icons.keyboard_arrow_up
@@ -353,17 +419,140 @@ class _FeatureTile extends StatelessWidget {
                 ),
               ]),
             ),
-            if (isExpanded && feature.description.isNotEmpty) ...[
-              const Divider(height: 1, color: AppTheme.divider),
+          ),
+          // Expanded content
+          if (isExpanded) ...[  
+            const Divider(height: 1, color: AppTheme.divider),
+            if (_needsChoice)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                child: Column(
+                  children: choice!.options
+                      .map((opt) => _InlineOptionTile(
+                            label: opt.name,
+                            description: opt.description,
+                            selected: currentChoice == opt.name,
+                            onTap: () => onChoiceSelected?.call(opt.name),
+                          ))
+                      .toList(),
+                ),
+              )
+            else if (feature.description.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                 child: Text(feature.description,
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary, fontSize: 12)),
               ),
-            ],
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ChoiceBadgeDone extends StatelessWidget {
+  final String text;
+  const _ChoiceBadgeDone({required this.text});
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: AppTheme.primary.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(4),
         ),
+        child: Text(text,
+            style: GoogleFonts.lato(
+                color: AppTheme.primary, fontSize: 10)),
+      );
+}
+
+class _ChoiceBadgePending extends StatelessWidget {
+  const _ChoiceBadgePending();
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: AppTheme.accent.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text('Choose!',
+            style: GoogleFonts.lato(
+                color: AppTheme.accent,
+                fontSize: 10,
+                fontWeight: FontWeight.bold)),
+      );
+}
+
+class _InlineOptionTile extends StatelessWidget {
+  final String label;
+  final String description;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _InlineOptionTile({
+    required this.label,
+    required this.description,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppTheme.primary.withOpacity(0.12)
+              : AppTheme.surfaceVariant.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: selected ? AppTheme.primary : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Row(children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 18, height: 18,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: selected ? AppTheme.primary : Colors.transparent,
+              border: Border.all(
+                color: selected ? AppTheme.primary : AppTheme.textSecondary,
+                width: 2,
+              ),
+            ),
+            child: selected
+                ? const Icon(Icons.check, color: Colors.white, size: 12)
+                : null,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: GoogleFonts.cinzel(
+                        color: selected
+                            ? AppTheme.primary
+                            : AppTheme.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 2),
+                Text(description,
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary,
+                        fontSize: 10,
+                        height: 1.4)),
+              ],
+            ),
+          ),
+        ]),
       ),
     );
   }
