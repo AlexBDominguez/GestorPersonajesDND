@@ -128,7 +128,7 @@ public class RaceSyncService {
         final Set<String> choiceTraits = Set.of(
             "draconic-ancestry", "breath-weapon",
             "extra-language", "tool-proficiency", "skill-versatility",
-            "natural-illusionist"
+            "natural-illusionist", "high-elf-cantrip"
         );
         if (choiceTraits.contains(indexName)) return "CHOICE_REQUIRED";
         if (combatTraits.contains(indexName)) return "COMBAT";

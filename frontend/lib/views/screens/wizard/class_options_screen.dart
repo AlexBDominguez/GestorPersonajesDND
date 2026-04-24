@@ -81,9 +81,49 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
     _hpRolls.removeWhere((k, _) => k > level);
   }
 
-  List<ClassFeature> get _featuresUpToLevel =>
-      widget.features.where((f) => f.level <= _level).toList()
-        ..sort((a, b) => a.level.compareTo(b.level));
+  /// Subclass level based on class: Cleric/Druid/Sorcerer/Warlock get it at 1,
+  /// Wizard at 2, everything else at 3.
+  int get _subclassLevel {
+    final n = cls.indexName.toLowerCase();
+    if (n == 'cleric' || n == 'druid' || n == 'sorcerer' || n == 'warlock') return 1;
+    if (n == 'wizard') return 2;
+    return 3;
+  }
+
+  /// Returns true for the "choose a subclass at this level" class feature —
+  /// a generic placeholder that should be hidden once a real subclass is selected.
+  bool _isSubclassPlaceholderFeature(ClassFeature f) {
+    final n = f.name.toLowerCase();
+    return n.contains('archetype') ||
+        n.contains('primal path') ||
+        n.contains('sacred oath') ||
+        n.contains('monastic tradition') ||
+        n.contains('bardic college') ||
+        n.contains('divine domain') ||
+        n.contains('sorcerous origin') ||
+        n.contains('arcane tradition') ||
+        n.contains('otherworldly patron') ||
+        n.contains('druid circle') ||
+        n.contains('circle of ');
+  }
+
+  List<ClassFeature> get _featuresUpToLevel {
+    var features = widget.features
+        .where((f) => f.level <= _level)
+        .toList()
+      ..sort((a, b) => a.level.compareTo(b.level));
+
+    // When a subclass is selected, hide the generic "choose subclass here" class
+    // feature at that level — the actual subclass features are shown below instead.
+    if (widget.vm.selectedSubclass != null &&
+        widget.vm.subclassFeatures.isNotEmpty) {
+      final subcLevel = _subclassLevel;
+      features = features
+          .where((f) => !(f.level == subcLevel && _isSubclassPlaceholderFeature(f)))
+          .toList();
+    }
+    return features;
+  }
 
   bool get _hpComplete =>
       _level == 1 ||

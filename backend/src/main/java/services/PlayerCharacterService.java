@@ -6,6 +6,7 @@ import dto.CharacterSavingThrowDto;
 import dto.CharacterSkillDto;
 import dto.CharacterSpellSummaryDto;
 import entities.*;
+import enumeration.FeatureType;
 import jakarta.transaction.Transactional;
 
 import org.springframework.http.HttpStatus;
@@ -1017,6 +1018,22 @@ public class PlayerCharacterService {
     private void createTask(PlayerCharacter character, int level, ClassLevelFeature feature) {
         System.out.println("Creating task for feature type: " + feature.getType());
 
+        // SPELL_LEARN / SPELL_PREPARE: initial spells are selected directly in the
+        // creation wizard (spellIds in the DTO). These tasks are only relevant for
+        // level-up, not for the initial creation.
+        if (feature.getType() == FeatureType.SPELL_LEARN ||
+            feature.getType() == FeatureType.SPELL_PREPARE) {
+            System.out.println("Skipping " + feature.getType() + " at creation – handled by wizard spell selection.");
+            return;
+        }
+
+        // SUBCLASS_CHOICE: if the wizard already chose a subclass, no pending task needed.
+        if (feature.getType() == FeatureType.SUBCLASS_CHOICE &&
+            character.getSubclass() != null) {
+            System.out.println("Skipping SUBCLASS_CHOICE – subclass already chosen: " + character.getSubclass().getName());
+            return;
+        }
+
         PendingTask task = new PendingTask();
         task.setCharacter(character);
         task.setRelatedLevel(level);
@@ -1115,7 +1132,11 @@ public class PlayerCharacterService {
         List<PendingTask> existing = pendingTaskRepository.findByCharacter(character);
 
         for (RacialTrait trait : allTraits) {
-            if (!"CHOICE_REQUIRED".equals(trait.getTraitType())) continue;
+            // high-elf-cantrip may not be CHOICE_REQUIRED in the DB (needs re-sync to fix),
+            // so we check it explicitly by indexName too.
+            boolean isChoice = "CHOICE_REQUIRED".equals(trait.getTraitType()) ||
+                               "high-elf-cantrip".equals(trait.getIndexName());
+            if (!isChoice) continue;
             if (derivedTraits.contains(trait.getIndexName())) continue;
 
             String taskType;
@@ -1124,6 +1145,44 @@ public class PlayerCharacterService {
                 case "draconic-ancestry":
                     taskType = "DRACONIC_ANCESTRY";
                     description = "Choose your Draconic Ancestry (determines Breath Weapon damage type)";
+                    break;
+                case "extra-language":
+                    taskType = "EXTRA_LANGUAGE";
+                    description = "Choose an extra language";
+                    break;
+                case "high-elf-cantrip":
+                    taskType = "HIGH_ELF_CANTRIP";
+                    description = "Choose one wizard cantrip (High Elf trait)";
+                    break;
+                case "skill-versatility": {
+                    // Half-Elf gets TWO separate skill choices
+                    String[] svTypes = {"SKILL_VERSATILITY_1", "SKILL_VERSATILITY_2"};
+                    String[] svDescs = {
+                        "Choose first skill proficiency (Skill Versatility)",
+                        "Choose second skill proficiency (Skill Versatility)"
+                    };
+                    for (int i = 0; i < svTypes.length; i++) {
+                        final String svType = svTypes[i];
+                        boolean svExists = existing.stream()
+                            .anyMatch(t -> svType.equals(t.getTaskType()) && t.getRelatedLevel() == 1);
+                        if (!svExists) {
+                            PendingTask svTask = new PendingTask();
+                            svTask.setCharacter(character);
+                            svTask.setRelatedLevel(1);
+                            svTask.setCompleted(false);
+                            svTask.setTaskType(svType);
+                            svTask.setDescription(svDescs[i]);
+                            pendingTaskRepository.save(svTask);
+                            System.out.println("Race task created: " + svType + " for " + character.getName());
+                        } else {
+                            System.out.println("Race task " + svType + " level 1 already exists, skipping.");
+                        }
+                    }
+                    continue;
+                }
+                case "tool-proficiency":
+                    taskType = "TOOL_PROFICIENCY";
+                    description = "Choose a tool proficiency (smith's tools, brewer's supplies, or mason's tools)";
                     break;
                 default:
                     System.out.println("Skipping unhandled racial choice trait: " + trait.getIndexName());

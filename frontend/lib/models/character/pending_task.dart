@@ -45,6 +45,11 @@ class PendingTask{
       case 'FAVORED_ENEMY':     return '🎯';
       case 'FAVORED_TERRAIN':   return '🌲';
       case 'DRACONIC_ANCESTRY': return '🐉';
+      case 'EXTRA_LANGUAGE':    return '🗣️';
+      case 'HIGH_ELF_CANTRIP':      return '✦';
+      case 'SKILL_VERSATILITY_1': return '🎯';
+      case 'SKILL_VERSATILITY_2': return '🎯';
+      case 'TOOL_PROFICIENCY':    return '🔨';
       case 'EXPERTISE':         return '📚';
       case 'ASI_OR_FEAT':       return '⬆️';
       case 'CHOOSE_SUBCLASS':   return '🏛️';
@@ -61,6 +66,11 @@ class PendingTask{
       case 'FAVORED_ENEMY':     return 'Favored Enemy';
       case 'FAVORED_TERRAIN':   return 'Favored Terrain';
       case 'DRACONIC_ANCESTRY': return 'Draconic Ancestry';
+      case 'EXTRA_LANGUAGE':    return 'Extra Language';
+      case 'HIGH_ELF_CANTRIP':      return 'High Elf Cantrip';
+      case 'SKILL_VERSATILITY_1': return 'Skill Versatility (1st Skill)';
+      case 'SKILL_VERSATILITY_2': return 'Skill Versatility (2nd Skill)';
+      case 'TOOL_PROFICIENCY':    return 'Tool Proficiency';
       case 'EXPERTISE':         return 'Expertise';
       case 'ASI_OR_FEAT':       return 'Ability Score Improvement';
       case 'CHOOSE_SUBCLASS':   return 'Choose Subclass';

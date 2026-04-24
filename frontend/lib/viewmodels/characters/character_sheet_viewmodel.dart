@@ -29,10 +29,22 @@ class CharacterSheetViewModel extends ChangeNotifier {
   final WizardReferenceService _refService;
   final PendingTaskService _taskService = PendingTaskService();
   List<PendingTask> _pendingTasks = [];
-  /// Only incomplete tasks — completed ones are displayed elsewhere (Features tab)
-  List<PendingTask> get pendingTasks =>
-      _pendingTasks.where((t) => !t.completed).toList();
-  bool get hasPendingTasks => _pendingTasks.any((t) => !t.completed);
+  /// Only incomplete tasks — completed ones are displayed elsewhere (Features tab).
+  /// Also filters out tasks that are handled outside the pending-tasks flow:
+  ///   • LEARN_SPELLS / PREPARE_SPELLS – initial spells added directly in the wizard
+  ///   • CHOOSE_SUBCLASS – subclass was assigned in the wizard
+  List<PendingTask> get pendingTasks => _pendingTasks.where((t) {
+    if (t.completed) return false;
+    if (t.taskType == 'LEARN_SPELLS' || t.taskType == 'PREPARE_SPELLS') return false;
+    if (t.taskType == 'CHOOSE_SUBCLASS' && character?.subclassId != null) return false;
+    return true;
+  }).toList();
+  bool get hasPendingTasks => _pendingTasks.any((t) {
+    if (t.completed) return false;
+    if (t.taskType == 'LEARN_SPELLS' || t.taskType == 'PREPARE_SPELLS') return false;
+    if (t.taskType == 'CHOOSE_SUBCLASS' && character?.subclassId != null) return false;
+    return true;
+  });
 
   CharacterSheetViewModel({
     required this.characterId,

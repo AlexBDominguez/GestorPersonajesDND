@@ -497,10 +497,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void selectRace(RaceOption r) {
-    // Clear previous race feature choices
-    for (final c in raceFeatureChoices) {
-      featureChoices.remove(c.key);
-    }
+    // Clear previous race AND subrace feature choices before switching
+    for (final c in raceFeatureChoices) featureChoices.remove(c.key);
+    for (final c in subraceFeatureChoices) featureChoices.remove(c.key); // must be before clearing subrace
     selectedRace = r;
     selectedSubrace = null;
     subraces = [];
@@ -523,6 +522,10 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void selectSubrace(SubraceOption s) {
+    // Clear previous subrace feature choices before switching
+    for (final c in subraceFeatureChoices) {
+      featureChoices.remove(c.key);
+    }
     selectedSubrace = s;
     _markDirty(WizardStep.race);
     notifyListeners();
@@ -741,16 +744,75 @@ void toggleItem(int itemId) {
     return choices;
   }
 
-  /// Choices requeridas por la raza/subraza seleccionada.
+  /// Choices requeridas por la raza seleccionada (nivel de raza, no subraza).
   List<WizardChoiceConfig> get raceFeatureChoices {
     final choices = <WizardChoiceConfig>[];
     final raceName = selectedRace?.name.toLowerCase() ?? '';
-    // Dragonborn: Draconic Ancestry (type matches backend task type so auto-resolve works)
+
+    // Dragonborn: Draconic Ancestry
     if (raceName.contains('dragonborn')) {
       choices.add(const WizardChoiceConfig(
         type: 'DRACONIC_ANCESTRY', level: 1,
         label: 'Draconic Ancestry',
         options: kDraconicAncestries,
+      ));
+    }
+
+    // Human: Extra Language
+    if (raceName == 'human' || raceName.contains('human')) {
+      choices.add(const WizardChoiceConfig(
+        type: 'EXTRA_LANGUAGE', level: 1,
+        label: 'Extra Language',
+        options: kLanguages,
+      ));
+    }
+
+    // Half-Elf: Skill Versatility (two separate skills) + Extra Language
+    if (raceName.contains('half-elf') || raceName.contains('half elf')) {
+      choices.add(const WizardChoiceConfig(
+        type: 'SKILL_VERSATILITY_1', level: 1,
+        label: 'Skill Versatility — First Skill',
+        options: kSkills,
+      ));
+      choices.add(const WizardChoiceConfig(
+        type: 'SKILL_VERSATILITY_2', level: 1,
+        label: 'Skill Versatility — Second Skill',
+        options: kSkills,
+      ));
+      choices.add(const WizardChoiceConfig(
+        type: 'EXTRA_LANGUAGE', level: 1,
+        label: 'Extra Language',
+        options: kLanguages,
+      ));
+    }
+
+    // Dwarf (Hill Dwarf subrace trait, but some toolsets expose it at race level):
+    // Tool Proficiency — handled here to catch the race-level trait
+    if (raceName.contains('dwarf')) {
+      choices.add(const WizardChoiceConfig(
+        type: 'TOOL_PROFICIENCY', level: 1,
+        label: 'Tool Proficiency',
+        options: kDwarfTools,
+      ));
+    }
+
+    return choices;
+  }
+
+  /// Choices required by the selected subrace (e.g. High Elf cantrip, extra language).
+  List<WizardChoiceConfig> get subraceFeatureChoices {
+    final choices = <WizardChoiceConfig>[];
+    final subIdx = selectedSubrace?.indexName.toLowerCase() ?? '';
+    if (subIdx.contains('high-elf') || subIdx == 'high-elf') {
+      choices.add(const WizardChoiceConfig(
+        type: 'HIGH_ELF_CANTRIP', level: 1,
+        label: 'High Elf Cantrip (Wizard cantrip)',
+        options: kWizardCantrips,
+      ));
+      choices.add(const WizardChoiceConfig(
+        type: 'EXTRA_LANGUAGE', level: 1,
+        label: 'Extra Language',
+        options: kLanguages,
       ));
     }
     return choices;
@@ -768,7 +830,8 @@ void toggleItem(int itemId) {
     classFeatureChoices.every((c) => featureChoices.containsKey(c.key));
 
   bool get raceFeatureChoicesDone =>
-    raceFeatureChoices.every((c) => featureChoices.containsKey(c.key));
+    raceFeatureChoices.every((c) => featureChoices.containsKey(c.key)) &&
+    subraceFeatureChoices.every((c) => featureChoices.containsKey(c.key));
 
 
   // Validación global

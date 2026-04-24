@@ -58,6 +58,9 @@ class StepRace extends StatelessWidget {
                     ),
                     if (isSelected && (vm.subraces.isNotEmpty || vm.isLoadingSubraces))
                       _SubraceSelector(vm: vm),
+                    if (isSelected && vm.selectedSubrace != null &&
+                        vm.subraceFeatureChoices.isNotEmpty)
+                      _SubraceChoiceSection(vm: vm),
                     if (isSelected && vm.raceFeatureChoices.isNotEmpty)
                       _RaceChoiceSection(vm: vm),
                   ],
@@ -293,6 +296,29 @@ class _RaceChoiceSection extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 0, 0, 16),
       child: Column(
         children: vm.raceFeatureChoices
+            .map((c) => _RaceChoiceBlock(
+                  config: c,
+                  selected: vm.featureChoices[c.key],
+                  onSelect: (val) => vm.setFeatureChoice(c.key, val),
+                ))
+            .toList(),
+      ),
+    );
+  }
+}
+
+// ── Subrace feature choices (e.g. High Elf cantrip, extra language) ───────────────────
+
+class _SubraceChoiceSection extends StatelessWidget {
+  final CharacterCreatorViewModel vm;
+  const _SubraceChoiceSection({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 0, 16),
+      child: Column(
+        children: vm.subraceFeatureChoices
             .map((c) => _RaceChoiceBlock(
                   config: c,
                   selected: vm.featureChoices[c.key],

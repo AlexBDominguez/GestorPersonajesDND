@@ -131,6 +131,19 @@ class _TaskResolver extends StatelessWidget {
       case 'DRACONIC_ANCESTRY':
         return _OptionListResolver(
             task: task, vm: vm, options: kDraconicAncestries);
+      case 'EXTRA_LANGUAGE':
+        return _OptionListResolver(
+            task: task, vm: vm, options: kLanguages);
+      case 'HIGH_ELF_CANTRIP':
+        return _OptionListResolver(
+            task: task, vm: vm, options: kWizardCantrips);
+      case 'SKILL_VERSATILITY_1':
+      case 'SKILL_VERSATILITY_2':
+        return _OptionListResolver(
+            task: task, vm: vm, options: kSkills);
+      case 'TOOL_PROFICIENCY':
+        return _OptionListResolver(
+            task: task, vm: vm, options: kDwarfTools);
       case 'ASI_OR_FEAT':
         return _AsiOrFeatResolver(task: task, vm: vm);
       default:

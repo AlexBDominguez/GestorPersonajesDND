@@ -322,29 +322,39 @@ class _RacialTraitTile extends StatelessWidget {
         idx.contains('damage-resistance') || idx.contains('damage_resistance')) {
       return 'DRACONIC_ANCESTRY'; // show the ancestry as context
     }
+    // High Elf cantrip
+    if (idx.contains('high-elf-cantrip') || idx.contains('high_elf_cantrip')) {
+      return 'HIGH_ELF_CANTRIP';
+    }
+    // Extra language
+    if (idx.contains('extra-language') || idx.contains('extra_language')) {
+      return 'EXTRA_LANGUAGE';
+    }
+    // Skill versatility (Half-Elf) — composite, handled specially in build()
+    if (idx.contains('skill-versatility') || idx.contains('skill_versatility')) {
+      return 'SKILL_VERSATILITY';
+    }
+    // Tool proficiency (Dwarf)
+    if (idx.contains('tool-proficiency') || idx.contains('tool_proficiency')) {
+      return 'TOOL_PROFICIENCY';
+    }
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final ancestryTaskType = _ancestryTaskType;
-    final resolvedAncestry = ancestryTaskType != null
-        ? vm.resolvedChoiceFor(ancestryTaskType, 1)
-        : null;
 
-    // Build a disambiguated subtitle for traits derived from ancestry
+    // Skill versatility is composited from two tasks
     final String? ancestrySuffix;
-    if (resolvedAncestry != null) {
-      final idx = trait.indexName.toLowerCase();
-      if (idx.contains('draconic-ancestry') || idx.contains('draconic_ancestry')) {
-        ancestrySuffix = resolvedAncestry;
-      } else if (idx.contains('breath-weapon') || idx.contains('breath_weapon')) {
-        ancestrySuffix = resolvedAncestry; // dragon type determines the element
-      } else if (idx.contains('damage-resistance') || idx.contains('damage_resistance')) {
-        ancestrySuffix = resolvedAncestry;
-      } else {
-        ancestrySuffix = null;
-      }
+    if (ancestryTaskType == 'SKILL_VERSATILITY') {
+      final s1 = vm.resolvedChoiceFor('SKILL_VERSATILITY_1', 1);
+      final s2 = vm.resolvedChoiceFor('SKILL_VERSATILITY_2', 1);
+      final parts = [s1, s2].whereType<String>().toList();
+      ancestrySuffix = parts.isNotEmpty ? parts.join(' · ') : null;
+    } else if (ancestryTaskType != null) {
+      final resolvedAncestry = vm.resolvedChoiceFor(ancestryTaskType, 1);
+      ancestrySuffix = resolvedAncestry;
     } else {
       ancestrySuffix = null;
     }
