@@ -110,6 +110,12 @@ public class SyncController {
         return ResponseEntity.ok("Subclasses synchronized successfully!");
     }
 
+    @PostMapping("/subclass-features")
+    public ResponseEntity<String> syncSubclassFeatures() {
+        subclassSyncService.syncMissingSubclassFeatures();
+        return ResponseEntity.ok("Subclass features synchronized successfully!");
+    }
+
     @PostMapping("/proficiencies")
     public ResponseEntity<String> syncProficiencies() {
         proficiencySyncService.syncProficiencies();

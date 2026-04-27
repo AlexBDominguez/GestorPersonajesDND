@@ -3,12 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/app_theme.dart';
+import '../../../config/dnd_choice_options.dart';
 import '../../../models/wizard/class_option.dart';
 import '../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import 'class_detail_screen.dart' show classIcon;
 
-/// Returns the matching [WizardChoiceConfig] for a feature, or null if
-/// this feature does not require a wizard choice.
+/// Returns the matching [WizardChoiceConfig] for a BASE CLASS feature,
+/// or null if this feature does not require a wizard choice.
 WizardChoiceConfig? _choiceForFeature(
     ClassFeature feature, CharacterCreatorViewModel vm) {
   final name = feature.name.toLowerCase();
@@ -20,6 +21,7 @@ WizardChoiceConfig? _choiceForFeature(
       'FAVORED_TERRAIN'  => name.contains('natural explorer') ||
                             name.contains('favored terrain'),
       'DRACONIC_ANCESTRY'=> name.contains('draconic ancestry'),
+      'ASI_OR_FEAT'      => name.contains('ability score improvement'),
       _                  => false,
     };
     if (matches) return c;
@@ -186,11 +188,18 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                     currentLevel: _level,
                   ),
 
-                  // Features ─────────────────────────────────────────
+                  // Class Features ───────────────────────────────────
                   _SectionHeader('Class Features'),
                   const SizedBox(height: 8),
                   ..._featuresUpToLevel.map((f) {
                     final choice = _choiceForFeature(f, widget.vm);
+                    // Compute which options of the same type were already chosen at earlier levels
+                    final Set<String> takenOptions = choice == null ? const {} :
+                        widget.vm.classFeatureChoices
+                            .where((c) => c.type == choice.type && c.level < f.level)
+                            .map((c) => widget.vm.featureChoices[c.key])
+                            .whereType<String>()
+                            .toSet();
                     return _FeatureTile(
                       feature: f,
                       isExpanded: _expandedFeatures.contains(f.id),
@@ -202,18 +211,48 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                       currentChoice: choice != null
                           ? widget.vm.featureChoices[choice.key]
                           : null,
+                      alreadyTaken: takenOptions,
                       onChoiceSelected: choice != null
                           ? (value) => widget.vm.setFeatureChoice(choice.key, value)
                           : null,
+                      vm: widget.vm,
                     );
                   }),
 
-                  // Subclass features (once subclass selected) ────────
-                  if (widget.vm.selectedSubclass != null &&
-                      widget.vm.subclassFeatures.isNotEmpty) ...[
+                  // Subclass section (choices + API features) ─────────
+                  // Always shown after class features for consistent layout.
+                  if (widget.vm.selectedSubclass != null) ...[
                     const SizedBox(height: 12),
                     _SectionHeader('${widget.vm.selectedSubclass!.name} Features'),
                     const SizedBox(height: 8),
+
+                    // Hardcoded interactive choices (e.g. Hunter's Prey, Totem Spirit…)
+                    ...widget.vm.subclassFeatureChoices
+                        .where((c) => c.level <= _level)
+                        .map((c) {
+                          final synth = ClassFeature(
+                            id: c.level * 10000 + c.type.hashCode.abs() % 10000,
+                            indexName: c.type.toLowerCase(),
+                            name: c.label,
+                            level: c.level,
+                            description: '',
+                          );
+                          return _FeatureTile(
+                            feature: synth,
+                            isExpanded: _expandedFeatures.contains(synth.id),
+                            onToggle: () => setState(() =>
+                                _expandedFeatures.contains(synth.id)
+                                    ? _expandedFeatures.remove(synth.id)
+                                    : _expandedFeatures.add(synth.id)),
+                            choice: c,
+                            currentChoice: widget.vm.featureChoices[c.key],
+                            alreadyTaken: const {},
+                            onChoiceSelected: (v) => widget.vm.setFeatureChoice(c.key, v),
+                            vm: widget.vm,
+                          );
+                        }),
+
+                    // API / DB features (descriptive, no choice)
                     ...widget.vm.subclassFeatures
                         .where((f) => f.level <= _level)
                         .map((f) => _FeatureTile(
@@ -228,7 +267,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
                   const SizedBox(height: 20),
 
-                  // HP por nivel ─────────────────────────────────────
+                  // HP ────────────────────────────────────────────────────────
                   _SectionHeader('Manage HP'),
                   const SizedBox(height: 4),
                   Text(
@@ -378,7 +417,9 @@ class _FeatureTile extends StatelessWidget {
   final VoidCallback onToggle;
   final WizardChoiceConfig? choice;
   final String? currentChoice;
+  final Set<String> alreadyTaken;
   final ValueChanged<String>? onChoiceSelected;
+  final CharacterCreatorViewModel? vm;
 
   const _FeatureTile({
     required this.feature,
@@ -386,7 +427,9 @@ class _FeatureTile extends StatelessWidget {
     required this.onToggle,
     this.choice,
     this.currentChoice,
+    this.alreadyTaken = const {},
     this.onChoiceSelected,
+    this.vm,
   });
 
   bool get _needsChoice => choice != null;
@@ -463,7 +506,16 @@ class _FeatureTile extends StatelessWidget {
           // Expanded content
           if (isExpanded) ...[  
             const Divider(height: 1, color: AppTheme.divider),
-            if (_needsChoice)
+            if (_needsChoice && choice!.type == 'ASI_OR_FEAT')
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                child: _AsiOrFeatSection(
+                  level: feature.level,
+                  vm: vm!,
+                  onFeatSelected: onToggle,
+                ),
+              )
+            else if (_needsChoice)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                 child: Column(
@@ -472,7 +524,11 @@ class _FeatureTile extends StatelessWidget {
                             label: opt.name,
                             description: opt.description,
                             selected: currentChoice == opt.name,
-                            onTap: () => onChoiceSelected?.call(opt.name),
+                            disabled: alreadyTaken.contains(opt.name),
+                            onTap: () {
+                              onChoiceSelected?.call(opt.name);
+                              onToggle();
+                            },
                           ))
                       .toList(),
                 ),
@@ -528,6 +584,7 @@ class _InlineOptionTile extends StatelessWidget {
   final String label;
   final String description;
   final bool selected;
+  final bool disabled;
   final VoidCallback onTap;
 
   const _InlineOptionTile({
@@ -535,23 +592,30 @@ class _InlineOptionTile extends StatelessWidget {
     required this.description,
     required this.selected,
     required this.onTap,
+    this.disabled = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = disabled
+        ? AppTheme.textSecondary.withOpacity(0.4)
+        : selected ? AppTheme.primary : AppTheme.textPrimary;
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: disabled ? null : onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: selected
-              ? AppTheme.primary.withOpacity(0.12)
-              : AppTheme.surfaceVariant.withOpacity(0.4),
+          color: disabled
+              ? AppTheme.surfaceVariant.withOpacity(0.2)
+              : selected
+                  ? AppTheme.primary.withOpacity(0.12)
+                  : AppTheme.surfaceVariant.withOpacity(0.4),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: selected ? AppTheme.primary : Colors.transparent,
+            color: selected && !disabled ? AppTheme.primary : Colors.transparent,
             width: 1.5,
           ),
         ),
@@ -561,13 +625,13 @@ class _InlineOptionTile extends StatelessWidget {
             width: 18, height: 18,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: selected ? AppTheme.primary : Colors.transparent,
+              color: selected && !disabled ? AppTheme.primary : Colors.transparent,
               border: Border.all(
-                color: selected ? AppTheme.primary : AppTheme.textSecondary,
+                color: effectiveColor,
                 width: 2,
               ),
             ),
-            child: selected
+            child: selected && !disabled
                 ? const Icon(Icons.check, color: Colors.white, size: 12)
                 : null,
           ),
@@ -578,17 +642,16 @@ class _InlineOptionTile extends StatelessWidget {
               children: [
                 Text(label,
                     style: GoogleFonts.cinzel(
-                        color: selected
-                            ? AppTheme.primary
-                            : AppTheme.textPrimary,
+                        color: effectiveColor,
                         fontSize: 12,
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
-                Text(description,
-                    style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary,
-                        fontSize: 10,
-                        height: 1.4)),
+                Text(
+                  disabled ? '(already chosen)' : description,
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary.withOpacity(disabled ? 0.4 : 1.0),
+                      fontSize: 10,
+                      height: 1.4)),
               ],
             ),
           ),
@@ -596,6 +659,180 @@ class _InlineOptionTile extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── ASI or Feat special section ───────────────────────────────────────────────
+
+/// Two-step section shown inside the Ability Score Improvement feature tile.
+/// Step 1: toggle "Ability Score Improvement" vs "Take a Feat".
+/// Step 2: pick the two abilities (ASI) or the feat.
+/// Choices are stored in vm.featureChoices under dynamic keys; optional only.
+class _AsiOrFeatSection extends StatefulWidget {
+  final int level;
+  final CharacterCreatorViewModel vm;
+  final VoidCallback? onFeatSelected;
+  const _AsiOrFeatSection({required this.level, required this.vm, this.onFeatSelected});
+
+  @override
+  State<_AsiOrFeatSection> createState() => _AsiOrFeatSectionState();
+}
+
+class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
+  bool _isAsi = true;
+
+  String get _mainKey   => 'ASI_OR_FEAT_${widget.level}';
+  String get _asiaKey   => 'ASI_A_${widget.level}';
+  String get _asibKey   => 'ASI_B_${widget.level}';
+  String get _featKey   => 'FEAT_CHOICE_${widget.level}';
+
+  @override
+  void initState() {
+    super.initState();
+    final cur = widget.vm.featureChoices[_mainKey];
+    if (cur == 'Feat') {
+      _isAsi = false;
+    } else {
+      // Default to ASI mode immediately so opening the tile marks it as chosen
+      widget.vm.featureChoices[_mainKey] = 'Ability Score Improvement';
+    }
+  }
+
+  void _pickAsi() {
+    setState(() { _isAsi = true; });
+    widget.vm.featureChoices.remove(_featKey);
+    widget.vm.featureChoices[_mainKey] = 'Ability Score Improvement';
+    widget.vm.notifyListeners();
+  }
+
+  void _pickFeat() {
+    setState(() { _isAsi = false; });
+    widget.vm.featureChoices.remove(_asiaKey);
+    widget.vm.featureChoices.remove(_asibKey);
+    widget.vm.featureChoices[_mainKey] = 'Feat';
+    widget.vm.notifyListeners();
+  }
+
+  /// Updates the badge in the parent tile to show the chosen abilities.
+  void _setAsiBadge(String asiA, String asiB) {
+    final a = asiA.length > 3 ? asiA.substring(0, 3) : asiA;
+    final b = asiB.length > 3 ? asiB.substring(0, 3) : asiB;
+    widget.vm.featureChoices[_mainKey] = '$a / $b';
+    widget.vm.notifyListeners();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final asiA = widget.vm.featureChoices[_asiaKey];
+    final asiB = widget.vm.featureChoices[_asibKey];
+    final feat = widget.vm.featureChoices[_featKey];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Toggle row
+        Row(children: [
+          Expanded(child: _AsiToggleButton(label: 'Ability Score\nImprovement', selected: _isAsi, onTap: _pickAsi)),
+          const SizedBox(width: 8),
+          Expanded(child: _AsiToggleButton(label: 'Take a Feat', selected: !_isAsi, onTap: _pickFeat)),
+        ]),
+        const SizedBox(height: 10),
+        if (_isAsi) ...[
+          Text('Choose two ability scores to increase by +1 each (or the same twice for +2):',
+              style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11)),
+          const SizedBox(height: 8),
+          _AbilityDropdown(
+            label: 'First ability',
+            value: asiA,
+            onChanged: (v) {
+              widget.vm.featureChoices[_asiaKey] = v;
+              final b = widget.vm.featureChoices[_asibKey];
+              if (b != null) _setAsiBadge(v, b);
+              else widget.vm.notifyListeners();
+            },
+          ),
+          const SizedBox(height: 6),
+          _AbilityDropdown(
+            label: 'Second ability',
+            value: asiB,
+            onChanged: (v) {
+              widget.vm.featureChoices[_asibKey] = v;
+              final a = widget.vm.featureChoices[_asiaKey];
+              if (a != null) _setAsiBadge(a, v);
+              else widget.vm.notifyListeners();
+            },
+          ),
+        ] else ...[
+          Text('Choose a feat:', style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11)),
+          const SizedBox(height: 8),
+          ...kFeats.map((f) => _InlineOptionTile(
+            label: f.name,
+            description: f.description,
+            selected: feat == f.name,
+            onTap: () {
+              widget.vm.featureChoices[_featKey] = f.name;
+              widget.vm.notifyListeners();
+              widget.onFeatSelected?.call();
+            },
+          )),
+        ],
+      ],
+    );
+  }
+}
+
+class _AsiToggleButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _AsiToggleButton({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 140),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+        color: selected ? AppTheme.primary.withOpacity(0.15) : AppTheme.surfaceVariant.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: selected ? AppTheme.primary : AppTheme.surfaceVariant, width: selected ? 1.5 : 1),
+      ),
+      child: Center(
+        child: Text(label, textAlign: TextAlign.center,
+            style: GoogleFonts.cinzel(
+                color: selected ? AppTheme.primary : AppTheme.textSecondary,
+                fontSize: 11, fontWeight: FontWeight.bold)),
+      ),
+    ),
+  );
+}
+
+class _AbilityDropdown extends StatelessWidget {
+  final String label;
+  final String? value;
+  final ValueChanged<String> onChanged;
+  const _AbilityDropdown({required this.label, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+    decoration: BoxDecoration(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: value == null ? AppTheme.accent.withOpacity(0.4) : AppTheme.divider),
+    ),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: value,
+        hint: Text(label, style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 12)),
+        dropdownColor: AppTheme.surface,
+        isExpanded: true,
+        style: GoogleFonts.cinzel(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
+        items: kAbilityScoreNames.map((a) => DropdownMenuItem(value: a.name, child: Text(a.name))).toList(),
+        onChanged: (v) { if (v != null) onChanged(v); },
+      ),
+    ),
+  );
 }
 
 class _HpRow extends StatelessWidget {

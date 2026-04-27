@@ -31,11 +31,14 @@ class WizardChoiceConfig {
   final String label;
   /// Selectable options.
   final List<DndChoiceOption> options;
+  /// If false, this choice does not block classFeatureChoicesDone (e.g. ASI).
+  final bool required;
   const WizardChoiceConfig({
     required this.type,
     required this.level,
     required this.label,
     required this.options,
+    this.required = true,
   });
   /// Unique key used to store / look up the selection: e.g. 'FAVORED_ENEMY_6'.
   String get key => '${type}_$level';
@@ -374,7 +377,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void clearSubclass() {
-    // Clear subclass-specific feature choices
+    // Clear subclass-specific feature choices (Hunter choices etc.)
+    for (final c in subclassFeatureChoices) featureChoices.remove(c.key);
+    // Also remove DRACONIC_ANCESTRY if it was a subclass-driven class choice
     for (final c in classFeatureChoices) {
       if (c.type == 'DRACONIC_ANCESTRY') featureChoices.remove(c.key);
     }
@@ -709,6 +714,14 @@ void toggleItem(int itemId) {
         options: kFightingStyles,
       ));
     }
+    // Ranger: Fighting Style at level 2
+    if (className.contains('ranger') && level >= 2) {
+      choices.add(const WizardChoiceConfig(
+        type: 'FIGHTING_STYLE', level: 2,
+        label: 'Fighting Style',
+        options: kRangerFightingStyles,
+      ));
+    }
     // Ranger: Favored Enemy at levels 1, 6, 14
     if (className.contains('ranger')) {
       for (final l in [1, 6, 14]) {
@@ -727,6 +740,28 @@ void toggleItem(int itemId) {
             type: 'FAVORED_TERRAIN', level: l,
             label: 'Natural Explorer Terrain (lv $l)',
             options: kFavoredTerrains,
+          ));
+        }
+      }
+    }
+    // ASI_OR_FEAT — available at level 4, 8, 12, 16, 19 for most classes;
+    // Fighter also at 6, 14; Rogue also at 10, 18. Marked optional (not blocking).
+    {
+      final List<int> asiLevels;
+      if (className.contains('fighter')) {
+        asiLevels = [4, 6, 8, 12, 14, 16, 19];
+      } else if (className.contains('rogue')) {
+        asiLevels = [4, 8, 10, 12, 16, 18];
+      } else {
+        asiLevels = [4, 8, 12, 16, 19];
+      }
+      for (final l in asiLevels) {
+        if (level >= l) {
+          choices.add(WizardChoiceConfig(
+            type: 'ASI_OR_FEAT', level: l,
+            label: 'Ability Score Improvement (lv $l)',
+            options: const [], // handled by special ASI widget, options unused here
+            required: false,
           ));
         }
       }
@@ -826,8 +861,53 @@ void toggleItem(int itemId) {
     notifyListeners();
   }
 
+  /// Choices required by the selected subclass at the selected level.
+  List<WizardChoiceConfig> get subclassFeatureChoices {
+    final choices = <WizardChoiceConfig>[];
+    final subcIdx  = selectedSubclass?.indexName.toLowerCase() ?? '';
+    final level    = selectedLevel;
+
+    // Hunter Ranger
+    if (subcIdx.contains('hunter')) {
+      if (level >= 3)  choices.add(const WizardChoiceConfig(type: 'HUNTERS_PREY',               level: 3,  label: "Hunter's Prey",                  options: kHuntersPrey));
+      if (level >= 7)  choices.add(const WizardChoiceConfig(type: 'DEFENSIVE_TACTICS',          level: 7,  label: 'Defensive Tactics',              options: kDefensiveTactics));
+      if (level >= 11) choices.add(const WizardChoiceConfig(type: 'HUNTER_MULTIATTACK',         level: 11, label: 'Multiattack',                    options: kHunterMultiattack));
+      if (level >= 15) choices.add(const WizardChoiceConfig(type: 'SUPERIOR_HUNTERS_DEFENSE',   level: 15, label: "Superior Hunter's Defense",       options: kSuperiorHuntersDefense));
+    }
+
+    // Totem Warrior Barbarian
+    if (subcIdx.contains('totem')) {
+      if (level >= 3)  choices.add(const WizardChoiceConfig(type: 'TOTEM_SPIRIT',       level: 3,  label: 'Totem Spirit',       options: kTotemSpirit));
+      if (level >= 6)  choices.add(const WizardChoiceConfig(type: 'TOTEM_ASPECT',       level: 6,  label: 'Aspect of the Beast', options: kTotemAspect));
+      if (level >= 14) choices.add(const WizardChoiceConfig(type: 'TOTEMIC_ATTUNEMENT', level: 14, label: 'Totemic Attunement',  options: kTotemicAttunement));
+    }
+
+    // Battle Master Fighter (choose 3 maneuvers at lv3, +2 at lv7, +2 at lv15)
+    if (subcIdx.contains('battle-master') || subcIdx.contains('battlemaster') || subcIdx.contains('battle master')) {
+      if (level >= 3)  choices.add(WizardChoiceConfig(type: 'BATTLEMASTER_MANEUVER_1', level: 3,  label: 'Maneuver 1', options: kBattleMasterManeuvers));
+      if (level >= 3)  choices.add(WizardChoiceConfig(type: 'BATTLEMASTER_MANEUVER_2', level: 3,  label: 'Maneuver 2', options: kBattleMasterManeuvers));
+      if (level >= 3)  choices.add(WizardChoiceConfig(type: 'BATTLEMASTER_MANEUVER_3', level: 3,  label: 'Maneuver 3', options: kBattleMasterManeuvers));
+      if (level >= 7)  choices.add(WizardChoiceConfig(type: 'BATTLEMASTER_MANEUVER_4', level: 7,  label: 'Maneuver 4', options: kBattleMasterManeuvers));
+      if (level >= 7)  choices.add(WizardChoiceConfig(type: 'BATTLEMASTER_MANEUVER_5', level: 7,  label: 'Maneuver 5', options: kBattleMasterManeuvers));
+      if (level >= 15) choices.add(WizardChoiceConfig(type: 'BATTLEMASTER_MANEUVER_6', level: 15, label: 'Maneuver 6', options: kBattleMasterManeuvers));
+      if (level >= 15) choices.add(WizardChoiceConfig(type: 'BATTLEMASTER_MANEUVER_7', level: 15, label: 'Maneuver 7', options: kBattleMasterManeuvers));
+    }
+
+    // Way of the Four Elements Monk (choose disciplines at lv3/6/11/17)
+    if (subcIdx.contains('four-elements') || subcIdx.contains('four elements')) {
+      if (level >= 3)  choices.add(WizardChoiceConfig(type: 'FOUR_ELEM_DISC_1', level: 3,  label: 'Discipline 1', options: kFourElementsDisciplines));
+      if (level >= 3)  choices.add(WizardChoiceConfig(type: 'FOUR_ELEM_DISC_2', level: 3,  label: 'Discipline 2', options: kFourElementsDisciplines));
+      if (level >= 6)  choices.add(WizardChoiceConfig(type: 'FOUR_ELEM_DISC_3', level: 6,  label: 'Discipline 3', options: kFourElementsDisciplines));
+      if (level >= 11) choices.add(WizardChoiceConfig(type: 'FOUR_ELEM_DISC_4', level: 11, label: 'Discipline 4', options: kFourElementsDisciplines));
+      if (level >= 17) choices.add(WizardChoiceConfig(type: 'FOUR_ELEM_DISC_5', level: 17, label: 'Discipline 5', options: kFourElementsDisciplines));
+    }
+
+    return choices;
+  }
+
   bool get classFeatureChoicesDone =>
-    classFeatureChoices.every((c) => featureChoices.containsKey(c.key));
+    classFeatureChoices.where((c) => c.required).every((c) => featureChoices.containsKey(c.key)) &&
+    subclassFeatureChoices.every((c) => featureChoices.containsKey(c.key));
 
   bool get raceFeatureChoicesDone =>
     raceFeatureChoices.every((c) => featureChoices.containsKey(c.key)) &&

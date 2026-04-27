@@ -128,3 +128,155 @@ const kDwarfTools = [
   DndChoiceOption('Brewer\'s Supplies', 'Brew ales, meads, and other beverages.'),
   DndChoiceOption('Mason\'s Tools',     'Work with stone — cutting, shaping, construction.'),
 ];
+
+/// Rangers only have access to 4 of the 11 Fighting Styles.
+const kRangerFightingStyles = [
+  DndChoiceOption('Archery',             '+2 bonus to attack rolls with ranged weapons.'),
+  DndChoiceOption('Defense',             '+1 to AC while wearing armor.'),
+  DndChoiceOption('Dueling',             '+2 to damage rolls when wielding a melee weapon in one hand and no other weapons.'),
+  DndChoiceOption('Two-Weapon Fighting', 'Add ability modifier to the damage of your off-hand attack.'),
+];
+
+// ── Hunter Ranger subclass choices ────────────────────────────────────────────
+
+const kHuntersPrey = [
+  DndChoiceOption('Colossus Slayer',  'Once per turn, deal an extra 1d8 damage to a creature below its hit point maximum.'),
+  DndChoiceOption('Giant Killer',     'Reaction: make one attack against a Large or larger creature that misses you within reach.'),
+  DndChoiceOption('Horde Breaker',    'Once per turn, attack a second creature adjacent to the first target (same action).'),
+];
+
+const kDefensiveTactics = [
+  DndChoiceOption('Escape the Horde',        'Opportunity attacks against you are made with disadvantage.'),
+  DndChoiceOption('Multiattack Defense',     'After being hit by a creature, gain +4 AC against further attacks from it this turn.'),
+  DndChoiceOption('Steel Will',              'Advantage on saving throws against being frightened.'),
+];
+
+const kHunterMultiattack = [
+  DndChoiceOption('Volley',           'Use your action to make a ranged attack against every creature within 10 ft of a chosen point.'),
+  DndChoiceOption('Whirlwind Attack', 'Use your action to make a melee attack against every creature within 5 ft of you.'),
+];
+
+const kSuperiorHuntersDefense = [
+  DndChoiceOption('Evasion',                   'Half damage on failed DEX saves; no damage on success.'),
+  DndChoiceOption('Stand Against the Tide',    'Reaction when a creature misses you: force it to reroll against a creature of your choice.'),
+  DndChoiceOption('Uncanny Dodge',             'Reaction: halve the damage from an attack you can see from an attacker you can see.'),
+];
+
+// ── Totem Warrior ─────────────────────────────────────────────────────────────
+
+const kTotemSpirit = [
+  DndChoiceOption('Bear',   'Resistance to all damage except psychic while raging.'),
+  DndChoiceOption('Eagle',  'Dash as bonus action while raging; OA against you have disadvantage (except from creatures you attack).'),
+  DndChoiceOption('Wolf',   'Allies have advantage on melee attacks vs. creatures adjacent to you while you rage.'),
+];
+
+const kTotemAspect = [
+  DndChoiceOption('Bear',   'Carry twice normal amount; push/drag/lift weight is doubled.'),
+  DndChoiceOption('Eagle',  'See up to 1 mile clearly; dim light doesn\'t impose Perception disadvantage.'),
+  DndChoiceOption('Wolf',   'Track by scent; know which creatures have been in an area within the past day.'),
+];
+
+const kTotemicAttunement = [
+  DndChoiceOption('Bear',   'Frightened enemies within 5 ft have disadvantage on attacks not directed at you.'),
+  DndChoiceOption('Eagle',  'Flying speed equal to walking speed while raging.'),
+  DndChoiceOption('Wolf',   'Knock a Large or smaller enemy prone when you hit it with a melee attack while raging.'),
+];
+
+// ── Battle Master Maneuvers ───────────────────────────────────────────────────
+
+const kBattleMasterManeuvers = [
+  DndChoiceOption('Commander\'s Strike',    'Forgo one attack to direct an ally; they add your superiority die to the attack.'),
+  DndChoiceOption('Disarming Attack',       'Add superiority die to damage; target drops an item (STR save).'),
+  DndChoiceOption('Distracting Strike',     'Add superiority die to damage; next attack against target has advantage until your next turn.'),
+  DndChoiceOption('Evasive Footwork',       'Add superiority die to AC while moving until you stop.'),
+  DndChoiceOption('Feinting Attack',        'Bonus action feint vs. adjacent creature; advantage on next attack + superiority die damage.'),
+  DndChoiceOption('Goading Attack',         'Add superiority die to damage; target has disadvantage on attacks not against you (WIS save).'),
+  DndChoiceOption('Lunging Attack',         'Add 5 ft to your melee reach for one attack; add superiority die to damage.'),
+  DndChoiceOption('Maneuvering Attack',     'Add superiority die to damage; ally can move half speed without OA from target.'),
+  DndChoiceOption('Menacing Attack',        'Add superiority die to damage; target is frightened until end of your next turn (WIS save).'),
+  DndChoiceOption('Parry',                  'Reaction when hit by melee attack: reduce damage by superiority die + DEX modifier.'),
+  DndChoiceOption('Precision Attack',       'Add superiority die to an attack roll before knowing if it hits.'),
+  DndChoiceOption('Pushing Attack',         'Add superiority die to damage; push target up to 15 ft (STR save).'),
+  DndChoiceOption('Rally',                  'Boost ally\'s morale: they gain temp HP equal to superiority die + CHA modifier.'),
+  DndChoiceOption('Riposte',                'Reaction when missed by melee attacker: one melee attack + superiority die damage.'),
+  DndChoiceOption('Sweeping Attack',        'Add superiority die damage to a second creature adjacent to the first if first attack hits.'),
+  DndChoiceOption('Trip Attack',            'Add superiority die to damage; knock prone (STR save) if target is Large or smaller.'),
+];
+
+// ── Four Elements Disciplines ─────────────────────────────────────────────────
+
+const kFourElementsDisciplines = [
+  DndChoiceOption('Elemental Attunement',       'Free. Minor elemental effects: create sensory phenomena, move tiny objects, light/snuff flames.'),
+  DndChoiceOption('Breath of Winter',           '6 ki. Cast Cone of Cold.'),
+  DndChoiceOption('Clench of the North Wind',   '3 ki. Cast Hold Person.'),
+  DndChoiceOption('Eternal Mountain Defense',   '5 ki. Cast Stoneskin (self only).'),
+  DndChoiceOption('Fangs of the Fire Snake',    '1 ki. Your unarmed strike can reach 10 ft and deals fire damage; extra ki for more damage.'),
+  DndChoiceOption('Fist of Four Thunders',      '2 ki. Cast Thunderwave.'),
+  DndChoiceOption('Fist of Unbroken Air',       '2 ki. Ranged attack: 3d10 bludgeoning + push 20 ft + knock prone (STR save).'),
+  DndChoiceOption('Flames of the Phoenix',      '4 ki. Cast Fireball.'),
+  DndChoiceOption('Gong of the Summit',         '3 ki. Cast Shatter.'),
+  DndChoiceOption('Mist Stance',                '4 ki. Cast Gaseous Form (self).'),
+  DndChoiceOption('Ride the Wind',              '4 ki. Cast Fly (self).'),
+  DndChoiceOption('River of Hungry Flame',      '5 ki. Cast Wall of Fire.'),
+  DndChoiceOption('Rush of the Gale Spirits',   '2 ki. Cast Gust of Wind.'),
+  DndChoiceOption('Shape the Flowing River',    '1 ki. As action, shape ice/water in a 30-ft cube.'),
+  DndChoiceOption('Sweeping Cinder Strike',     '2 ki. Cast Burning Hands.'),
+  DndChoiceOption('Water Whip',                 '2 ki. Magic whip: 3d10 bludgeoning + pull 25 ft or knock prone (STR save).'),
+  DndChoiceOption('Wave of Rolling Earth',      '6 ki. Cast Wall of Stone.'),
+];
+
+// ── Ability Score Improvement ─────────────────────────────────────────────────
+
+/// Six ability score names used in ASI two-pick UI.
+const kAbilityScoreNames = [
+  DndChoiceOption('Strength',      'STR'),
+  DndChoiceOption('Dexterity',     'DEX'),
+  DndChoiceOption('Constitution',  'CON'),
+  DndChoiceOption('Intelligence',  'INT'),
+  DndChoiceOption('Wisdom',        'WIS'),
+  DndChoiceOption('Charisma',      'CHA'),
+];
+
+/// Common SRD feats for the Feat picker.
+const kFeats = [
+  DndChoiceOption('Alert',                 '+5 initiative, can\'t be surprised while conscious, hidden attackers gain no advantage.'),
+  DndChoiceOption('Athlete',               '+1 STR or DEX; improved climbing, jumping and stand-up mechanics.'),
+  DndChoiceOption('Actor',                 '+1 CHA; advantage on Deception/Performance when impersonating; mimic voices/sounds.'),
+  DndChoiceOption('Charger',               'After Dash as action, bonus attack (+5 dmg) or shove 10 ft.'),
+  DndChoiceOption('Crossbow Expert',       'Ignore loading; no disadvantage in melee; bonus hand-crossbow attack.'),
+  DndChoiceOption('Defensive Duelist',     'Reaction: +proficiency bonus to AC against one melee hit (requires finesse weapon).'),
+  DndChoiceOption('Dual Wielder',          '+1 AC while dual-wielding; wield non-light melee weapons in each hand; draw/stow two.'),
+  DndChoiceOption('Dungeon Delver',        'Advantage to detect secret doors and avoid traps; resistance to trap damage.'),
+  DndChoiceOption('Durable',               '+1 CON; minimum roll of 2 × CON modifier on Hit Dice.'),
+  DndChoiceOption('Grappler',              '+1 STR; advantage on attacks vs. grappled creatures; pin a creature you are grappling.'),
+  DndChoiceOption('Great Weapon Master',   'Bonus attack on crit or reduce-to-0; take −5 to attack for +10 damage.'),
+  DndChoiceOption('Healer',                'Use healer\'s kit to stabilise (1 HP) or restore 1d6+4+level HP once per creature per rest.'),
+  DndChoiceOption('Heavily Armored',       '+1 STR; gain proficiency with heavy armor.'),
+  DndChoiceOption('Heavy Armor Master',    '+1 STR; reduce non-magical B/P/S damage by 3 while wearing heavy armor.'),
+  DndChoiceOption('Inspiring Leader',      'After 10 min speech, grant up to 6 creatures temp HP = level + CHA modifier.'),
+  DndChoiceOption('Keen Mind',             '+1 INT; know direction/time elapsed; perfect recall of last month\'s events.'),
+  DndChoiceOption('Linguist',              '+1 INT; learn 3 languages; create and decode ciphers.'),
+  DndChoiceOption('Lucky',                 '3 luck points/long rest: add extra d20 to any attack, check, save, or enemy attack roll (choose which).'),
+  DndChoiceOption('Mage Slayer',           'Reaction attack when adjacent creature casts; advantage on saves vs adjacent spellcasters.'),
+  DndChoiceOption('Magic Initiate',        'Learn 2 cantrips + 1 1st-level spell from a chosen class list (cast once per long rest).'),
+  DndChoiceOption('Martial Adept',         'Learn 2 Battle Master maneuvers; gain 1 superiority die (d6).'),
+  DndChoiceOption('Medium Armor Master',   'No Stealth disadvantage in medium armor; max DEX bonus +3.'),
+  DndChoiceOption('Mobile',                '+10 ft speed; Dash doesn\'t provoke OA; no OA from targets you attack.'),
+  DndChoiceOption('Moderately Armored',    '+1 STR or DEX; proficiency with medium armor and shields.'),
+  DndChoiceOption('Mounted Combatant',     'Advantage on melee attacks vs unmounted smaller creatures; redirect enemy attacks to mount.'),
+  DndChoiceOption('Observant',             '+1 INT or WIS; can lip-read; +5 passive Perception and Investigation.'),
+  DndChoiceOption('Polearm Master',        'Bonus attack with butt end (d4); opportunity attack when creature enters reach.'),
+  DndChoiceOption('Resilient',             '+1 to chosen ability score; gain proficiency in that ability\'s saving throw.'),
+  DndChoiceOption('Ritual Caster',         'Learn ritual spells from a class list; cast them as rituals without expending a spell slot.'),
+  DndChoiceOption('Savage Attacker',       'Once per turn, reroll all weapon damage dice and use either result.'),
+  DndChoiceOption('Sentinel',              'OA stops movement; attack creature that uses Disengage; react to ally attack.'),
+  DndChoiceOption('Sharpshooter',          'No disadvantage at long range; ignore half/three-quarters cover; −5 attack for +10 damage.'),
+  DndChoiceOption('Shield Master',         'Shove as bonus action after Attack; add shield bonus to DEX saves; negate damage on success.'),
+  DndChoiceOption('Skilled',               'Gain proficiency in any 3 skills or tools of your choice.'),
+  DndChoiceOption('Skulker',               'Hide when lightly obscured; ranged miss doesn\'t reveal you; no Perception penalty in dim light.'),
+  DndChoiceOption('Spell Sniper',          'Double range of spell attacks; ignore cover; learn one attack cantrip.'),
+  DndChoiceOption('Tavern Brawler',        '+1 STR or CON; proficient with improvised weapons; d4 unarmed; grapple as bonus action.'),
+  DndChoiceOption('Tough',                 '+2 HP per level (including retroactively).'),
+  DndChoiceOption('War Caster',            'Advantage on concentration saves; somatic with hands full; cast spell as opportunity attack.'),
+  DndChoiceOption('Weapon Master',         '+1 STR or DEX; proficiency with 4 weapons of your choice.'),
+];

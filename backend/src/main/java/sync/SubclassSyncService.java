@@ -98,14 +98,14 @@ public class SubclassSyncService {
         String levelsUrl = BASE_URL + "/" + subclassIndex + "/levels";
 
         try {
-            //Obtener info de niveles de la subclase
-            Map<String, Object> levelsResponse = restTemplate.getForObject(levelsUrl, Map.class);
-
-            if(levelsResponse == null) {
+            // The /levels endpoint returns a JSON array — use Object.class to avoid
+            // deserialization failure and just confirm the endpoint is reachable.
+            Object levelsCheck = restTemplate.getForObject(levelsUrl, Object.class);
+            if(levelsCheck == null) {
                 return;
             }
 
-            //La API devuelve un array de niveles
+            //La API devuelve un array de niveles; consultar cada nivel individualmente
             for(int level = 1; level <= 20; level++){
                 ApiRateLimiter.waitBetweenRequests();
 
@@ -156,5 +156,24 @@ public class SubclassSyncService {
         }catch (Exception e) {
             System.err.println("Error syncing features for subclass " + subclass.getName() + ": " + e.getMessage());
         }
+    }
+
+    /**
+     * For each already-synced subclass that has no features yet, fetch and store
+     * its features from the D&D 5e API.  Safe to call repeatedly.
+     */
+    public void syncMissingSubclassFeatures() {
+        System.out.println("=== Syncing missing subclass features ===");
+        List<Subclass> all = subclassRepository.findAll();
+        for (Subclass subclass : all) {
+            List<SubclassFeature> existing = subclassFeatureRepository.findBySubclass(subclass);
+            if (existing.isEmpty()) {
+                System.out.println("Syncing features for: " + subclass.getIndexName());
+                syncSubclassFeatures(subclass, subclass.getIndexName());
+            } else {
+                System.out.println("Features already present for: " + subclass.getIndexName() + " (" + existing.size() + " features)");
+            }
+        }
+        System.out.println("=== Subclass feature sync complete ===");
     }
 }

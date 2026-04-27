@@ -11,8 +11,8 @@ services:
       MYSQL_USER: ${MYSQL_USER:-dnd_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dnd_password}
       MYSQL_ROOT_HOST: '%'
-    ports:
-      - "3306:3306"
+    #ports:
+     # - "3306:3306"
     volumes:
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
       - ./mysql-data:/var/lib/mysql
