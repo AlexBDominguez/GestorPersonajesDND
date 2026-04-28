@@ -96,11 +96,20 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   //Nivel máximo de spell que puede aprender según nivel del personaje
   // Half-casters (Ranger, Paladin): nivel de hechizo limitado por tabla PHB
+  // Third-casters (EK, AT): lv3→1, lv7→2, lv13→3
   // Full-casters: ceil(level/2), máximo 9
   int get maxSpellLevel {
     if (!isSpellcaster) return 0;
     final className = selectedClass?.name.toLowerCase() ?? '';
     final level = selectedLevel;
+    // Third-caster subclasses
+    if (selectedSubclass?.spellCastingAbility != null &&
+        selectedClass?.spellCastingAbility == null) {
+      if (level >= 13) return 3;
+      if (level >= 7)  return 2;
+      if (level >= 3)  return 1;
+      return 0;
+    }
     if (className.contains('ranger') || className.contains('paladin')) {
       // Half-caster: spell slot level table (levels 0-20)
       const table = [0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5];
@@ -142,7 +151,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     }
     
     // Eldritch Knight / Arcane Trickster: Empiezan con 2, suben a 3 al nivel 10
-    if (selectedSubclass?.spellCastingAbility != null) {
+    if (selectedSubclass?.spellCastingAbility != null &&
+        selectedClass?.spellCastingAbility == null) {
       return level >= 10 ? 3 : 2;
     }
     
@@ -161,9 +171,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       return table[level.clamp(0, 20)];
     }
     if (className.contains('bard')) {
-      // Incluye Secretos Mágicos en niveles 10, 14 y 18
+      // Magical Secrets slots are tracked separately; subtract them from the table
       const table = [0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 15, 16, 18, 19, 19, 20, 22, 22, 22];
-      return table[level.clamp(0, 20)];
+      return (table[level.clamp(0, 20)] - magicalSecretsSlots).clamp(0, 99);
     }
     if (className.contains('warlock')) {
       const table = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15];
@@ -189,7 +199,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     }
 
     // 3. Subclases (Eldritch Knight / Arcane Trickster)
-    if (selectedSubclass?.spellCastingAbility != null) {
+    if (selectedSubclass?.spellCastingAbility != null &&
+        selectedClass?.spellCastingAbility == null) {
       const table = [0, 0, 0, 3, 4, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10, 10, 11, 11, 11, 12, 13];
       return table[level.clamp(0, 20)];
     }
@@ -320,6 +331,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     //Si cambia la clase, limpiar spells seleccionados
     selectedSpellIds.clear();
     availableSpells.clear();
+    magicalSecretIds.clear();
+    additionalMagicalSecretIds.clear();
+    magicalSecretsPool.clear();
     _markDirty(WizardStep.dndClass);
     notifyListeners();
     _loadSubclassesFor(c.id);
@@ -339,6 +353,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     subclassFeatures = [];
     selectedSpellIds.clear();
     availableSpells.clear();
+    magicalSecretIds.clear();
+    additionalMagicalSecretIds.clear();
+    magicalSecretsPool.clear();
     _spellsStepVisited = false;
     _markDirty(WizardStep.dndClass);
     notifyListeners();
@@ -371,6 +388,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     subclassFeatures = [];
     selectedSpellIds.clear();
     availableSpells.clear();
+    magicalSecretIds.clear();
+    additionalMagicalSecretIds.clear();
+    magicalSecretsPool.clear();
     _markDirty(WizardStep.dndClass);
     notifyListeners();
     _loadSubclassFeaturesFor(s.id);
@@ -635,6 +655,73 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ── Magical Secrets ─────────────────────────────────────────
+  /// How many Magical Secrets picks are available (PHB: 2 at lv10, +2 at lv14, +2 at lv18).
+  int get magicalSecretsSlots {
+    final className = selectedClass?.name.toLowerCase() ?? '';
+    if (!className.contains('bard')) return 0;
+    final lv = selectedLevel;
+    if (lv >= 18) return 6;
+    if (lv >= 14) return 4;
+    if (lv >= 10) return 2;
+    return 0;
+  }
+
+  /// Extra 2 free picks for College of Lore bards at level 6+ (Additional Magical Secrets).
+  int get additionalMagicalSecretsSlots {
+    final subName = selectedSubclass?.name.toLowerCase() ?? '';
+    if (!subName.contains('lore')) return 0;
+    return selectedLevel >= 6 ? 2 : 0;
+  }
+
+  List<SpellOption> magicalSecretsPool = [];
+  bool _isLoadingMagicalSecrets = false;
+  bool get isLoadingMagicalSecrets => _isLoadingMagicalSecrets;
+
+  final Set<int> magicalSecretIds = {};
+  final Set<int> additionalMagicalSecretIds = {};
+
+  int get selectedMagicalSecretCount => magicalSecretIds.length;
+  int get selectedAdditionalMagicalSecretCount => additionalMagicalSecretIds.length;
+  bool get magicalSecretLimitReached => selectedMagicalSecretCount >= magicalSecretsSlots;
+  bool get additionalMagicalSecretLimitReached =>
+      selectedAdditionalMagicalSecretCount >= additionalMagicalSecretsSlots;
+
+  Future<void> loadMagicalSecretsPool() async {
+    _isLoadingMagicalSecrets = true;
+    notifyListeners();
+    try {
+      magicalSecretsPool = await _refService.getAvailableSpells(
+        maxLevel: maxSpellLevel,
+      );
+    } catch (_) {
+      magicalSecretsPool = [];
+    } finally {
+      _isLoadingMagicalSecrets = false;
+      notifyListeners();
+    }
+  }
+
+  void toggleMagicalSecret(int spellId) {
+    if (magicalSecretIds.contains(spellId)) {
+      magicalSecretIds.remove(spellId);
+    } else {
+      magicalSecretIds.add(spellId);
+    }
+    _markDirty(WizardStep.spells);
+    notifyListeners();
+  }
+
+  void toggleAdditionalMagicalSecret(int spellId) {
+    if (additionalMagicalSecretIds.contains(spellId)) {
+      additionalMagicalSecretIds.remove(spellId);
+    } else {
+      additionalMagicalSecretIds.add(spellId);
+    }
+    _markDirty(WizardStep.spells);
+    notifyListeners();
+  }
+
   Future<void> loadAvailableSpells() async {
     _setLoading(true);
     _setError(null);
@@ -644,6 +731,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         subclassId: selectedSubclass?.id,
         maxLevel: maxSpellLevel,
       );
+      if (magicalSecretsSlots > 0 || additionalMagicalSecretsSlots > 0) {
+        await loadMagicalSecretsPool();
+      }
     } catch(e) {
       _setError('Error loading spells: $e');
     } finally {
@@ -959,7 +1049,8 @@ void toggleItem(int itemId) {
         backgroundId: selectedBackground!.id,        
         level:        selectedLevel,           
         subclassId:   selectedSubclass?.id,
-        spellIds:    selectedSpellIds.toList(),     
+        spellIds:    selectedSpellIds.toList(),
+        magicalSecretSpellIds: [...magicalSecretIds, ...additionalMagicalSecretIds].toList(),
         abilityScores: {
           'str': abilityScores['STR']!,
           'dex': abilityScores['DEX']!,

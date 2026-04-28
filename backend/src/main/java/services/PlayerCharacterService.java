@@ -247,6 +247,12 @@ public class PlayerCharacterService {
             }
         }
 
+        if (dto.getMagicalSecretSpellIds() != null){
+            for (Long spellId : dto.getMagicalSecretSpellIds()){
+                addSpellToCharacter(saved.getId(), spellId, "MAGICAL_SECRETS");
+            }
+        }
+
         generateSpellSlots(saved);
 
         // Generate pending tasks for all choice-requiring features from level 1 to selectedLevel
@@ -602,58 +608,98 @@ public class PlayerCharacterService {
         List<CharacterSpellSlot> existingSlots = slotRepository.findByCharacterId(character.getId());
         slotRepository.deleteAll(existingSlots);
 
-        // Buscar progresión según clase y nivel
-        List<SpellSlotProgression> progression =
-                spellSlotProgressionRepository.findByDndClassAndCharacterLevel(
-                        character.getDndClass(),
-                        character.getLevel()
-                );
+        DndClass dndClass = character.getDndClass();
+        Subclass subclass = character.getSubclass();
+        boolean classHasSpellcasting = dndClass != null && dndClass.getSpellcastingAbility() != null
+                && !dndClass.getSpellcastingAbility().isEmpty();
+        boolean subclassHasSpellcasting = subclass != null && subclass.getSpellcastingAbility() != null
+                && !subclass.getSpellcastingAbility().isEmpty();
 
-        for (SpellSlotProgression p : progression) {
-            CharacterSpellSlot slot = new CharacterSpellSlot();
-            slot.setCharacter(character);
-            slot.setSpellLevel(p.getSpellLevel());
-            slot.setMaxSlots(p.getSlots());
-            slot.setUsedSlots(0);
-
-            slotRepository.save(slot);
+        if (classHasSpellcasting) {
+            // Standard full/half-caster: look up progression table
+            List<SpellSlotProgression> progression =
+                    spellSlotProgressionRepository.findByDndClassAndCharacterLevel(
+                            dndClass, character.getLevel());
+            for (SpellSlotProgression p : progression) {
+                CharacterSpellSlot slot = new CharacterSpellSlot();
+                slot.setCharacter(character);
+                slot.setSpellLevel(p.getSpellLevel());
+                slot.setMaxSlots(p.getSlots());
+                slot.setUsedSlots(0);
+                slotRepository.save(slot);
+            }
+        } else if (subclassHasSpellcasting) {
+            // Third-caster subclass (Eldritch Knight / Arcane Trickster)
+            saveThirdCasterSlots(character, character.getLevel());
         }
+    }
+
+    /** Computes and persists spell slots for a 1/3-caster at the given character level. */
+    private void saveThirdCasterSlots(PlayerCharacter character, int level) {
+        int[] slots = computeThirdCasterSlots(level);
+        for (int spellLvl = 1; spellLvl <= 3; spellLvl++) {
+            int maxSlots = slots[spellLvl - 1];
+            if (maxSlots > 0) {
+                CharacterSpellSlot slot = slotRepository
+                        .findByCharacterAndSpellLevel(character, spellLvl)
+                        .orElse(new CharacterSpellSlot());
+                slot.setCharacter(character);
+                slot.setSpellLevel(spellLvl);
+                slot.setMaxSlots(maxSlots);
+                slot.setUsedSlots(0);
+                slotRepository.save(slot);
+            }
+        }
+    }
+
+    /**
+     * Third-caster (1/3) spell slot table per character level (PHB Eldritch Knight / Arcane Trickster).
+     * Returns int[3] = [lv1Slots, lv2Slots, lv3Slots].
+     */
+    private int[] computeThirdCasterSlots(int level) {
+        int lv1 = 0, lv2 = 0, lv3 = 0;
+        if (level >= 3)  lv1 = 2;
+        if (level >= 4)  lv1 = 3;
+        if (level >= 7)  { lv1 = 4; lv2 = 2; }
+        if (level >= 10) lv2 = 3;
+        if (level >= 13) lv3 = 2;
+        if (level >= 18) lv3 = 3;
+        return new int[]{lv1, lv2, lv3};
     }
 
     private void updateSpellSlots(PlayerCharacter character, int newLevel) {
         DndClass dndClass = character.getDndClass();
+        Subclass subclass = character.getSubclass();
+        boolean classHasSpellcasting = dndClass != null && dndClass.getSpellcastingAbility() != null
+                && !dndClass.getSpellcastingAbility().isEmpty();
+        boolean subclassHasSpellcasting = subclass != null && subclass.getSpellcastingAbility() != null
+                && !subclass.getSpellcastingAbility().isEmpty();
 
-        if (dndClass == null || dndClass.getSpellcastingAbility() == null) {
+        if (classHasSpellcasting) {
+            List<SpellSlotProgression> progressions =
+                    spellSlotProgressionRepository.findByDndClassAndCharacterLevel(dndClass, newLevel);
+            if (progressions.isEmpty()) {
+                System.out.println("No spell slot progression for level " + newLevel);
+                return;
+            }
+            for (SpellSlotProgression progression : progressions) {
+                int spellLevel = progression.getSpellLevel();
+                int maxSlots = progression.getSlots();
+                CharacterSpellSlot characterSlot = slotRepository
+                        .findByCharacterAndSpellLevel(character, spellLevel)
+                        .orElse(new CharacterSpellSlot());
+                characterSlot.setCharacter(character);
+                characterSlot.setSpellLevel(spellLevel);
+                characterSlot.setMaxSlots(maxSlots);
+                characterSlot.setUsedSlots(0);
+                slotRepository.save(characterSlot);
+                System.out.println("Updated spell slots level " + spellLevel + ": " + maxSlots + " slots");
+            }
+        } else if (subclassHasSpellcasting) {
+            // Third-caster level-up
+            saveThirdCasterSlots(character, newLevel);
+        } else {
             System.out.println("Character is not a spellcaster");
-            return;
-        }
-
-        // Obtener la progresión de spell slots para este nivel
-        List<SpellSlotProgression> progressions =
-                spellSlotProgressionRepository.findByDndClassAndCharacterLevel(dndClass, newLevel);
-
-        if (progressions.isEmpty()) {
-            System.out.println("No spell slot progression for level " + newLevel);
-            return;
-        }
-
-        for (SpellSlotProgression progression : progressions) {
-            int spellLevel = progression.getSpellLevel();
-            int maxSlots = progression.getSlots();
-
-            // Buscar o crear el slot del personaje
-            CharacterSpellSlot characterSlot = slotRepository
-                    .findByCharacterAndSpellLevel(character, spellLevel)
-                    .orElse(new CharacterSpellSlot());
-
-            characterSlot.setCharacter(character);
-            characterSlot.setSpellLevel(spellLevel);
-            characterSlot.setMaxSlots(maxSlots);
-            characterSlot.setUsedSlots(0);
-
-            slotRepository.save(characterSlot);
-
-            System.out.println("Updated spell slots level " + spellLevel + ": " + maxSlots + " slots");
         }
     }
 

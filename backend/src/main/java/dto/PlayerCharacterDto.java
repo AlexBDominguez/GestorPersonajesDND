@@ -69,6 +69,7 @@ public class PlayerCharacterDto {
     private Long userId;
     private List<CharacterSpellSummaryDto> characterSpells;
     private List<Long> spellIds; //Ids de spells seleccionados en el wizard
+    private List<Long> magicalSecretSpellIds; //Ids de Magical Secrets (any-class) seleccionados en el wizard
     private List<Long> featIds;
     private List<SpellSlotDto> spellSlots;
     private boolean useEncumbrance = false;
@@ -621,6 +622,14 @@ public class PlayerCharacterDto {
 
     public void setSpellIds(List<Long> spellIds) {
         this.spellIds = spellIds;
+    }
+
+    public List<Long> getMagicalSecretSpellIds() {
+        return magicalSecretSpellIds;
+    }
+
+    public void setMagicalSecretSpellIds(List<Long> magicalSecretSpellIds) {
+        this.magicalSecretSpellIds = magicalSecretSpellIds;
     }
 
     public List<Long> getFeatIds() {

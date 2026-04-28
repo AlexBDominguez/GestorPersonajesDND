@@ -35,9 +35,11 @@ class _SheetBody extends StatefulWidget {
   State<_SheetBody> createState() => _SheetBodyState();
 }
 
-class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMixin {
+class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
   late TabController _tabController;
-  bool _showSpells = true; // initialised before character loads
+  bool _showSpells = false;
+  // Direct reference to the ViewModel so we can add/remove a listener.
+  CharacterSheetViewModel? _vmRef;
 
   static const _baseTabs = [
     Tab(text: 'Abilities'),
@@ -51,24 +53,51 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
   @override
   void initState() {
     super.initState();
-    // Start with spells tab visible; will be adjusted once character loads
-    _tabController = TabController(length: _baseTabs.length + 1, vsync: this);
+    _tabController = TabController(length: _baseTabs.length, vsync: this);
+  }
+
+  /// Called whenever an InheritedWidget above us changes — which includes the
+  /// first time the Provider is available.  We attach a **direct** listener to
+  /// the ViewModel here so that we can synchronously update `_tabController`
+  /// via `setState` BEFORE `build()` runs with the new data.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final vm = context.read<CharacterSheetViewModel>();
+    if (_vmRef != vm) {
+      _vmRef?.removeListener(_onVmChanged);
+      _vmRef = vm;
+      vm.addListener(_onVmChanged);
+    }
   }
 
   @override
   void dispose() {
+    _vmRef?.removeListener(_onVmChanged);
     _tabController.dispose();
     super.dispose();
   }
 
-  void _updateTabController(bool showSpells) {
+  /// Fired synchronously by [CharacterSheetViewModel.notifyListeners].
+  /// Updates the tab controller BEFORE [build] is called, so tabs/views and
+  /// the controller are always in sync within the same frame.
+  void _onVmChanged() {
+    if (!mounted) return;
+    final character = _vmRef?.character;
+    if (character == null) return;
+    final showSpells =
+        character.spellSlots.isNotEmpty || character.characterSpells.isNotEmpty;
     if (_showSpells == showSpells) return;
-    final newLength = showSpells ? _baseTabs.length + 1 : _baseTabs.length;
-    final clampedIndex = _tabController.index.clamp(0, newLength - 1);
-    _tabController.dispose();
-    _showSpells = showSpells;
-    _tabController = TabController(
-        length: newLength, vsync: this, initialIndex: clampedIndex);
+    // setState here is safe: we are inside a ChangeNotifier listener, which
+    // fires outside of any build() call.
+    setState(() {
+      final newLength = showSpells ? _baseTabs.length + 1 : _baseTabs.length;
+      final clampedIndex = _tabController.index.clamp(0, newLength - 1);
+      _tabController.dispose();
+      _showSpells = showSpells;
+      _tabController = TabController(
+          length: newLength, vsync: this, initialIndex: clampedIndex);
+    });
   }
 
   @override
@@ -103,21 +132,18 @@ class _SheetBodyState extends State<_SheetBody> with SingleTickerProviderStateMi
 
     final c = vm.character!;
 
-    // Determine whether the Spells tab should be shown and update controller
-    final showSpells =
-        c.spellSlots.isNotEmpty || c.characterSpells.isNotEmpty;
-    _updateTabController(showSpells);
-
+    // _showSpells is kept in sync with _tabController by _onVmChanged.
+    // Both are always consistent here — no postFrameCallback needed.
     final tabs = [
       ..._baseTabs.sublist(0, 3), // Abilities, Skills, Combat
-      if (showSpells) const Tab(text: 'Spells'),
+      if (_showSpells) const Tab(text: 'Spells'),
       ..._baseTabs.sublist(3),    // Features, Inventory, Info
     ];
     final views = <Widget>[
       TabAbilities(character: c),
       TabSkills(character: c, vm: vm),
       TabCombat(character: c, vm: vm),
-      if (showSpells) TabSpells(character: c, vm: vm),
+      if (_showSpells) TabSpells(character: c, vm: vm),
       TabFeatures(character: c, vm: vm),
       TabInventory(character: c, vm: vm),
       TabInfo(character: c),

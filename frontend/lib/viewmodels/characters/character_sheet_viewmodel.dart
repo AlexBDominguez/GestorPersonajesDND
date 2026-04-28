@@ -463,7 +463,10 @@ class CharacterSheetViewModel extends ChangeNotifier {
 
   String get spellcastingAbility {
     final cls = character?.dndClassName?.toLowerCase() ?? '';
-    if (cls.contains('wizard') || cls.contains('eldritch knight')) return 'INT';
+    final sub = character?.subclassName?.toLowerCase() ?? '';
+    // Subclass-based spellcasters (third-casters use INT)
+    if (sub.contains('eldritch knight') || sub.contains('arcane trickster')) return 'INT';
+    if (cls.contains('wizard')) return 'INT';
     if (cls.contains('cleric') || cls.contains('druid') ||
         cls.contains('ranger') || cls.contains('monk')) return 'WIS';
     if (cls.contains('bard') || cls.contains('paladin') ||

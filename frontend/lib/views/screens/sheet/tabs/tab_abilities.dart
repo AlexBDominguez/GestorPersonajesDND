@@ -58,18 +58,8 @@ class TabAbilities extends StatelessWidget {
         _SenseRow(value: c.passivePerception, label: 'Passive Perception'),
         _SenseRow(value: c.passiveInvestigation, label: 'Passive Investigation'),
         _SenseRow(value: c.passiveInsight, label: 'Passive Insight'),
-        const SizedBox(height: 4),
-        //Darkvision racial (si raceName lo implica - TODO: campo desde backend)
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Text(
-            'Special senses will be shown here when the backend provides them',
-            style: GoogleFonts.lato(
-              color: AppTheme.textSecondary, fontSize: 11,
-                fontStyle: FontStyle.italic),
-            ),
-          ),
-          const SizedBox(height: 16),
+        const SizedBox(height: 4),        
+        
       ]),
     );
   }

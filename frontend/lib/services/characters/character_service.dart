@@ -54,6 +54,7 @@ class CharacterService {
     String? height,
     String? weight,
     List<int>? spellIds,
+    List<int>? magicalSecretSpellIds,
     bool useEncumbrance = false,
   }) async {
     final body = {
@@ -76,6 +77,7 @@ class CharacterService {
       if (height != null && height.isNotEmpty) 'height': height,
       if (weight != null && weight.isNotEmpty) 'weight': weight,
       if (spellIds != null && spellIds.isNotEmpty) 'spellIds': spellIds,
+      if (magicalSecretSpellIds != null && magicalSecretSpellIds.isNotEmpty) 'magicalSecretSpellIds': magicalSecretSpellIds,
     };
     final res = await _api.post(ApiConfig.charactersPath, body: body);
     if (res.statusCode == 200 || res.statusCode == 201) {
