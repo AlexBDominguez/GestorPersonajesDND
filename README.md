@@ -663,8 +663,8 @@ docker exec -i dnd-mysql mysql -u dnd_user -pdnd_password dnd_character_manager 
 - **Host:** `localhost`
 - **Port:** `3306`
 - **Database:** `dnd_character_manager`
-- **Username:** `dnd_user`
-- **Password:** `dnd_password`
+- **Username:** `<tu_usuario>`
+- **Password:** `<tu_contraseña>`
 
 Nota: En DBeaver, añade en "Driver properties":
 - `allowPublicKeyRetrieval` = `true`
