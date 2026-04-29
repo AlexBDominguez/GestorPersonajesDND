@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "*") // Permitir CORS para todas las fuentes (ajustar según necesidades)
 public class AuthController {
 
     @Autowired
@@ -46,20 +47,32 @@ public class AuthController {
 
             // Actualizar lastLogin
             User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+                //Bloquear acceso a usuarios inactivos
+                if (!user.getActive()){
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body("User account is inactive. Please contact the administrator.");
+                }
+
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
 
             // Retornar token y datos del usuario
-            AuthResponse response = new AuthResponse(token, user.getUsername(), user.getEmail());
+            AuthResponse response = new AuthResponse(
+                token, 
+                user.getUsername(), 
+                user.getEmail(), 
+                user.getRole().name()
+            );
             return ResponseEntity.ok(response);
 
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Credenciales incorrectas");
+                    .body("Incorrect username or password");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error en el servidor: " + e.getMessage());
+                    .body("Server error: " + e.getMessage());
         }
     }
 }

@@ -4,79 +4,87 @@ import 'package:gestor_personajes_dnd/services/auth/auth_service.dart';
 import 'package:gestor_personajes_dnd/services/storage/token_storage.dart';
 
 class AuthViewModel extends ChangeNotifier {
-  final AuthService _authService;
-  final TokenStorage _tokenStorage;
+  final AuthService   _authService;
+  final TokenStorage  _tokenStorage;
 
+  AuthViewModel({AuthService? authService, TokenStorage? tokenStorage})
+      : _authService    = authService   ?? AuthService(),
+        _tokenStorage   = tokenStorage  ?? TokenStorage();
 
-  AuthViewModel({
-    AuthService? authService,
-    TokenStorage? tokenStorage,
-  }) : _authService = authService ?? AuthService(),
-       _tokenStorage = tokenStorage ?? TokenStorage();
-
-  bool _isLoading = false;
+  bool    _isLoading    = false;
   String? _errorMessage;
-  bool _isLoggedIn = false;
+  bool    _isLoggedIn   = false;
+  bool    _isAdmin      = false;
+  String  _username     = '';
+  String  _email        = '';
 
-  bool get isLoading => _isLoading;
+  bool    get isLoading    => _isLoading;
   String? get errorMessage => _errorMessage;
-  bool get isLoggedIn => _isLoggedIn;
+  bool    get isLoggedIn   => _isLoggedIn;
+  bool    get isAdmin      => _isAdmin;
+  String  get currentUsername => _username;
+  String  get currentEmail    => _email;
 
   Future<void> init() async {
     try {
       final token = await _tokenStorage.getToken();
-      _isLoggedIn = token != null && token.isNotEmpty;
-    } catch (e) {
-      // Si hay error al leer el token, asumimos que no está logueado
-      _isLoggedIn = false;
-      if (kDebugMode) {
-        print('Error initializing auth: $e');
+      if (token != null && token.isNotEmpty) {
+        _isLoggedIn = true;
+        _username   = await _tokenStorage.getUsername() ?? '';
+        _email      = await _tokenStorage.getEmail()    ?? '';
+        final storedRole = await _tokenStorage.getRole();
+        _isAdmin    = storedRole == 'ADMIN';
+        if (kDebugMode) print('[AuthViewModel.init] storedRole=$storedRole  _isAdmin=$_isAdmin');
       }
+    } catch (e) {
+      _isLoggedIn = false;
+      if (kDebugMode) print('Error initializing auth: $e');
     }
     notifyListeners();
   }
 
-  Future<void> login({
-    required String username,
-    required String password,
-  }) async {
+  Future<void> login({required String username, required String password}) async {
     _setLoading(true);
-    _setErrorMessage(null);
-
-    try{
+    _setError(null);
+    try {
       final auth = await _authService.login(
-        LoginRequest(username: username, password: password),
-      );
-      
+          LoginRequest(username: username, password: password));
+
       await _tokenStorage.saveSession(
-        token: auth.token,
+        token:    auth.token,
         username: auth.username,
-        email: auth.email,
+        email:    auth.email,
+        role:     auth.role,
       );
 
       _isLoggedIn = true;
+      _username   = auth.username;
+      _email      = auth.email;
+      _isAdmin    = auth.role == 'ADMIN';
     } catch (e) {
       final msg = e.toString();
-      _setErrorMessage(msg.startsWith('Exception: ') ? msg.substring(11) : msg);
+      _setError(msg.startsWith('Exception: ') ? msg.substring(11) : msg);
       _isLoggedIn = false;
-    }finally {
+    } finally {
       _setLoading(false);
     }
   }
 
-  Future<void> logout() async{
+  Future<void> logout() async {
     await _tokenStorage.clearSession();
     _isLoggedIn = false;
+    _isAdmin    = false;
+    _username   = '';
+    _email      = '';
     notifyListeners();
   }
 
-  void _setLoading(bool value){
-    _isLoading = value;
+  // Actualizar username localmente tras cambiarlo
+  void updateUsername(String newUsername) {
+    _username = newUsername;
     notifyListeners();
   }
 
-  void _setErrorMessage(String? value) {
-    _errorMessage = value;
-    notifyListeners();
-  }
+  void _setLoading(bool v) { _isLoading = v; notifyListeners(); }
+  void _setError(String? v) { _errorMessage = v; notifyListeners(); }
 }

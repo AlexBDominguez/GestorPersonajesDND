@@ -72,6 +72,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/sync/**").permitAll()
+
                 // Reference data (read-only game data) accessible to all
                 .requestMatchers(HttpMethod.GET, "/api/classes/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/races/**").permitAll()
@@ -81,7 +82,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/subclasses/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/subraces/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/items/**").permitAll()
+
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                .requestMatchers("/api/users/me/**").authenticated()
+
+
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

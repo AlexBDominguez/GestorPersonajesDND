@@ -10,6 +10,7 @@ import enumeration.FeatureType;
 import jakarta.transaction.Transactional;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -107,6 +108,18 @@ public class PlayerCharacterService {
 
     @Transactional
     public PlayerCharacterDto create(PlayerCharacterDto dto) {
+        User user = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + dto.getUserId()));
+
+        long charCount = characterRepository.countByUser(user);
+        if (charCount >= UserService.MAX_CHARACTERS_PER_USER){
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN,
+                "Character limit reached (" + UserService.MAX_CHARACTERS_PER_USER + " per user).");
+        }
+
+
+
         PlayerCharacter playerCharacter = new PlayerCharacter();
 
         playerCharacter.setName(dto.getName());
@@ -205,8 +218,6 @@ public class PlayerCharacterService {
         playerCharacter.setProficiencyBonus(2 + ((dto.getLevel() - 1) / 4));
 
         if(dto.getUserId() != null) {
-            User user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + dto.getUserId()));
             playerCharacter.setUser(user);
         }else{
             throw new RuntimeException("User ID is required to create a character");

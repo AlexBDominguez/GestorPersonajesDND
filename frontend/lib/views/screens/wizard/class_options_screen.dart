@@ -117,8 +117,9 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
     // When a subclass is selected, hide the generic "choose subclass here" class
     // feature at that level — the actual subclass features are shown below instead.
-    if (widget.vm.selectedSubclass != null &&
-        widget.vm.subclassFeatures.isNotEmpty) {
+    // Hide immediately (even while subclass features are still loading) so the
+    // placeholder doesn't flash on screen.
+    if (widget.vm.selectedSubclass != null) {
       final subcLevel = _subclassLevel;
       features = features
           .where((f) => !(f.level == subcLevel && _isSubclassPlaceholderFeature(f)))

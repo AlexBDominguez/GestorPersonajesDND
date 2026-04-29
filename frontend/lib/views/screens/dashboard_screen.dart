@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gestor_personajes_dnd/views/screens/admin/admin_panel_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/character_sheet_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/wizard/character_creator_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,7 +26,7 @@ class _DashboardBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authVm = context.read<AuthViewModel>();
+    final authVm = context.watch<AuthViewModel>();
     final vm     = context.watch<CharacterListViewModel>();
 
     return Scaffold(
@@ -33,6 +34,23 @@ class _DashboardBody extends StatelessWidget {
       appBar: AppBar(
         title: const Text('DungeonScroll'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.lock_reset, color: AppTheme.textSecondary),
+            tooltip: 'Change Password',
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const ChangePasswordScreen()),
+            ),
+          ),
+          if (authVm.isAdmin)
+            IconButton(
+              icon: const Icon(Icons.admin_panel_settings_outlined,
+                color: AppTheme.primary),
+              tooltip: 'User Management',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminPanelScreen()),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
@@ -44,6 +62,14 @@ class _DashboardBody extends StatelessWidget {
       // ── FAB: crear personaje ─────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
+          // Dentro del onPressed del FAB, antes de navegar al wizard:
+          if (vm.characters.length >= 10) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Character limit reached (10 per account).'),
+              backgroundColor: AppTheme.accent,
+            ));
+            return;
+          }
           final newId = await Navigator.of(context).push<int>(MaterialPageRoute(
             builder: (_) => const CharacterCreatorScreen()),
           );

@@ -1,5 +1,7 @@
 package dto;
 
+import java.time.LocalDateTime;
+
 import enumeration.Role;
 
 public class UserDto {
@@ -9,6 +11,9 @@ public class UserDto {
     private String email;
     private Boolean active;
     private Role role;
+    private LocalDateTime createdAt;
+    private LocalDateTime lastLogin;
+    private int characterCount;
 
     public UserDto() {
     }
@@ -61,5 +66,28 @@ public class UserDto {
         this.role = role;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getLastLogin() {
+        return lastLogin;
+    }
+
+    public void setLastLogin(LocalDateTime lastLogin) {
+        this.lastLogin = lastLogin;
+    }
+
+    public int getCharacterCount() {
+        return characterCount;
+    }
+
+    public void setCharacterCount(int characterCount) {
+        this.characterCount = characterCount;
+    }
     
 }
