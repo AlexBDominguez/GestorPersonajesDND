@@ -22,6 +22,9 @@ WizardChoiceConfig? _choiceForFeature(
                             name.contains('favored terrain'),
       'DRACONIC_ANCESTRY'=> name.contains('draconic ancestry'),
       'ASI_OR_FEAT'      => name.contains('ability score improvement'),
+      'EXPERTISE'        => name.contains('expertise'),
+      'METAMAGIC'        => name.contains('metamagic'),
+      'INVOCATION'       => name.contains('eldritch invocation'),
       _                  => false,
     };
     if (matches) return c;
@@ -83,21 +86,13 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
     _hpRolls.removeWhere((k, _) => k > level);
   }
 
-  /// Subclass level based on class: Cleric/Druid/Sorcerer/Warlock get it at 1,
-  /// Wizard at 2, everything else at 3.
-  int get _subclassLevel {
-    final n = cls.indexName.toLowerCase();
-    if (n == 'cleric' || n == 'druid' || n == 'sorcerer' || n == 'warlock') return 1;
-    if (n == 'wizard') return 2;
-    return 3;
-  }
-
   /// Returns true for the "choose a subclass at this level" class feature —
   /// a generic placeholder that should be hidden once a real subclass is selected.
   bool _isSubclassPlaceholderFeature(ClassFeature f) {
     final n = f.name.toLowerCase();
     return n.contains('archetype') ||
         n.contains('primal path') ||
+        n.contains('path feature') ||
         n.contains('sacred oath') ||
         n.contains('monastic tradition') ||
         n.contains('bardic college') ||
@@ -105,6 +100,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
         n.contains('sorcerous origin') ||
         n.contains('arcane tradition') ||
         n.contains('otherworldly patron') ||
+        n.contains('ranger archetype') ||
         n.contains('druid circle') ||
         n.contains('circle of ');
   }
@@ -115,14 +111,12 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
         .toList()
       ..sort((a, b) => a.level.compareTo(b.level));
 
-    // When a subclass is selected, hide the generic "choose subclass here" class
-    // feature at that level — the actual subclass features are shown below instead.
-    // Hide immediately (even while subclass features are still loading) so the
-    // placeholder doesn't flash on screen.
+    // When a subclass is selected, hide ALL generic subclass placeholder features
+    // (both the initial "choose subclass" entry AND the "...feature" entries at
+    // higher levels) — the actual subclass features are shown below instead.
     if (widget.vm.selectedSubclass != null) {
-      final subcLevel = _subclassLevel;
       features = features
-          .where((f) => !(f.level == subcLevel && _isSubclassPlaceholderFeature(f)))
+          .where((f) => !_isSubclassPlaceholderFeature(f))
           .toList();
     }
     return features;
@@ -516,6 +510,11 @@ class _FeatureTile extends StatelessWidget {
                   onFeatSelected: onToggle,
                 ),
               )
+            else if (_needsChoice && choice!.pickCount > 1)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                child: _MultiPickSection(config: choice!, vm: vm!),
+              )
             else if (_needsChoice)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -581,6 +580,147 @@ class _ChoiceBadgePending extends StatelessWidget {
       );
 }
 
+// ── Multi-pick section (Expertise, Metamagic, Invocations, …) ────────────────
+
+/// Shows N sequential picks from an option list.
+/// Individual picks are stored as '${type}_PICK_${n}_${level}'; the summary
+/// badge is written to featureChoices[config.key].
+class _MultiPickSection extends StatefulWidget {
+  final WizardChoiceConfig config;
+  final CharacterCreatorViewModel vm;
+  const _MultiPickSection({required this.config, required this.vm});
+
+  @override
+  State<_MultiPickSection> createState() => _MultiPickSectionState();
+}
+
+class _MultiPickSectionState extends State<_MultiPickSection> {
+  late int _activeSlot;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeSlot = _firstUnfilled;
+  }
+
+  int get _firstUnfilled {
+    for (int i = 0; i < widget.config.pickCount; i++) {
+      if (_choice(i) == null) return i;
+    }
+    return widget.config.pickCount - 1;
+  }
+
+  String _pickKey(int idx) =>
+      '${widget.config.type}_PICK_${idx}_${widget.config.level}';
+
+  String? _choice(int idx) => widget.vm.featureChoices[_pickKey(idx)];
+
+  bool get _allDone => List.generate(widget.config.pickCount, _choice)
+      .every((c) => c != null);
+
+  void _select(String value) {
+    widget.vm.featureChoices[_pickKey(_activeSlot)] = value;
+    _syncSummary();
+    // Advance to next unfilled slot, or stay on last if all done
+    final next = List.generate(widget.config.pickCount, (i) => i)
+        .firstWhere((i) => _choice(i) == null, orElse: () => _activeSlot);
+    setState(() => _activeSlot = next);
+    widget.vm.notify();
+  }
+
+  void _clearSlot(int idx) {
+    widget.vm.featureChoices.remove(_pickKey(idx));
+    _syncSummary();
+    setState(() => _activeSlot = idx);
+    widget.vm.notify();
+  }
+
+  void _syncSummary() {
+    final parts = List.generate(widget.config.pickCount, (i) =>
+        widget.vm.featureChoices[_pickKey(i)]).whereType<String>().toList();
+    if (parts.isEmpty) {
+      widget.vm.featureChoices.remove(widget.config.key);
+    } else {
+      widget.vm.featureChoices[widget.config.key] = parts.join(', ');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final takenByOthers = <String>{
+      for (int j = 0; j < widget.config.pickCount; j++)
+        if (j != _activeSlot && _choice(j) != null) _choice(j)!,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Already-picked chips (tappable to re-pick)
+        for (int i = 0; i < widget.config.pickCount; i++)
+          if (_choice(i) != null && (i != _activeSlot || _allDone))
+            _PickedChip(
+              label: '${i + 1}. ${_choice(i)!}',
+              onClear: _allDone ? () => _clearSlot(i) : null,
+            ),
+
+        // Active slot options (hidden when all done)
+        if (!_allDone) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 6, bottom: 4),
+            child: Text(
+              'Choice ${_activeSlot + 1} of ${widget.config.pickCount}:',
+              style: GoogleFonts.lato(
+                  color: AppTheme.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
+          ...widget.config.options.map((opt) => _InlineOptionTile(
+                label: opt.name,
+                description: opt.description,
+                selected: _choice(_activeSlot) == opt.name,
+                disabled: takenByOthers.contains(opt.name),
+                onTap: () => _select(opt.name),
+              )),
+        ],
+      ],
+    );
+  }
+}
+
+class _PickedChip extends StatelessWidget {
+  final String label;
+  final VoidCallback? onClear;
+  const _PickedChip({required this.label, this.onClear});
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onClear,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(8),
+            border:
+                Border.all(color: AppTheme.primary.withOpacity(0.3)),
+          ),
+          child: Row(children: [
+            Expanded(
+              child: Text(label,
+                  style: GoogleFonts.lato(
+                      color: AppTheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600)),
+            ),
+            if (onClear != null)
+              Icon(Icons.close,
+                  color: AppTheme.primary.withOpacity(0.6), size: 14),
+          ]),
+        ),
+      );
+}
+
 class _InlineOptionTile extends StatelessWidget {
   final String label;
   final String description;
@@ -595,8 +735,6 @@ class _InlineOptionTile extends StatelessWidget {
     required this.onTap,
     this.disabled = false,
   });
-
-  @override
   Widget build(BuildContext context) {
     final effectiveColor = disabled
         ? AppTheme.textSecondary.withOpacity(0.4)
@@ -702,7 +840,7 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
     setState(() { _isAsi = true; });
     widget.vm.featureChoices.remove(_featKey);
     widget.vm.featureChoices[_mainKey] = 'Ability Score Improvement';
-    widget.vm.notifyListeners();
+    widget.vm.notify();
   }
 
   void _pickFeat() {
@@ -710,7 +848,7 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
     widget.vm.featureChoices.remove(_asiaKey);
     widget.vm.featureChoices.remove(_asibKey);
     widget.vm.featureChoices[_mainKey] = 'Feat';
-    widget.vm.notifyListeners();
+    widget.vm.notify();
   }
 
   /// Updates the badge in the parent tile to show the chosen abilities.
@@ -718,7 +856,7 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
     final a = asiA.length > 3 ? asiA.substring(0, 3) : asiA;
     final b = asiB.length > 3 ? asiB.substring(0, 3) : asiB;
     widget.vm.featureChoices[_mainKey] = '$a / $b';
-    widget.vm.notifyListeners();
+    widget.vm.notify();
   }
 
   @override
@@ -748,7 +886,7 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
               widget.vm.featureChoices[_asiaKey] = v;
               final b = widget.vm.featureChoices[_asibKey];
               if (b != null) _setAsiBadge(v, b);
-              else widget.vm.notifyListeners();
+              else widget.vm.notify();
             },
           ),
           const SizedBox(height: 6),
@@ -759,7 +897,7 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
               widget.vm.featureChoices[_asibKey] = v;
               final a = widget.vm.featureChoices[_asiaKey];
               if (a != null) _setAsiBadge(a, v);
-              else widget.vm.notifyListeners();
+              else widget.vm.notify();
             },
           ),
         ] else ...[
@@ -771,7 +909,7 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
             selected: feat == f.name,
             onTap: () {
               widget.vm.featureChoices[_featKey] = f.name;
-              widget.vm.notifyListeners();
+              widget.vm.notify();
               widget.onFeatSelected?.call();
             },
           )),
@@ -997,11 +1135,12 @@ class _SubclassSelectorSection extends StatelessWidget {
   });
 
   // La mayoría de clases reciben subclase a nivel 3 (PHB 2014).
-  // Cleric, Druid, Sorcerer, Warlock: nivel 1.
+  // Cleric, Druid, Sorcerer, Warlock: nivel 1. Wizard: nivel 2.
   int get _subclassMinLevel {
     final name = vm.selectedClass?.indexName.toLowerCase() ?? '';
     if (name == 'cleric' || name == 'druid' ||
         name == 'sorcerer' || name == 'warlock') return 1;
+    if (name == 'wizard') return 2;
     return 3;
   }
 
@@ -1012,42 +1151,36 @@ class _SubclassSelectorSection extends StatelessWidget {
 
     final meetsLevel = currentLevel >= _subclassMinLevel;
 
+    // If the character hasn't reached the subclass unlock level, hide the
+    // entire section — not worth showing a "come back at level X" message
+    // during wizard creation, since the level selector is right above.
+    if (!meetsLevel) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader('Subclass (optional)'),
         const SizedBox(height: 6),
-        if (!meetsLevel)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(
-              'You will be able to choose a subclass at level $_subclassMinLevel.',
-              style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary, fontSize: 12),
-            ),
-          )
-        else ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Text(
-              'Choosing a subclass is optional — you can assign one later.',
-              style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary, fontSize: 12),
-            ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Text(
+            'Choosing a subclass is optional — you can assign one later.',
+            style: GoogleFonts.lato(
+                color: AppTheme.textSecondary, fontSize: 12),
           ),
-          ...vm.subclasses.map((sub) => _SubclassChip(
-                subclass: sub,
-                isSelected: vm.selectedSubclass?.id == sub.id,
-                onTap: () {
-                  if (vm.selectedSubclass?.id == sub.id) {
-                    vm.clearSubclass();
-                  } else {
-                    vm.selectSubclass(sub);
-                  }
-                },
-              )),
-          const SizedBox(height: 20),
-        ],
+        ),
+        ...vm.subclasses.map((sub) => _SubclassChip(
+              subclass: sub,
+              isSelected: vm.selectedSubclass?.id == sub.id,
+              onTap: () {
+                if (vm.selectedSubclass?.id == sub.id) {
+                  vm.clearSubclass();
+                } else {
+                  vm.selectSubclass(sub);
+                }
+              },
+            )),
+        const SizedBox(height: 20),
       ],
     );
   }

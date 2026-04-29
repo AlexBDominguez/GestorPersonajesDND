@@ -52,14 +52,10 @@ public class UserService {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("El nombre de usuario ya existe: " + request.getUsername());
         }
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("El email ya está registrado: " + request.getEmail());
-        }
 
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword())); // Hashear contraseña
-        user.setEmail(request.getEmail());
         user.setRole(Role.USER); //admin never creates another admin from this endpoint
         user.setActive(true);
 
@@ -134,7 +130,6 @@ public class UserService {
         UserDto dto = new UserDto(
                 user.getId(),
                 user.getUsername(),
-                user.getEmail(),
                 user.getActive(),
                 user.getRole());
         dto.setCreatedAt(user.getCreatedAt());

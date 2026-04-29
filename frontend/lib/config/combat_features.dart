@@ -62,7 +62,7 @@ const kCombatBonusFeatures = <String>{
 // ── REACCIONES (Reactions) ──────────────────────────────────────────────────
 const kCombatReactionFeatures = <String>{
   // Rogue
-  'uncanny-dodge', 'misdirection', 'stroke-of-luck',
+  'uncanny-dodge', 'misdirection', 'stroke-of-luck', 'spell-thief',
   // Bard
   'cutting-words',
   // Monk

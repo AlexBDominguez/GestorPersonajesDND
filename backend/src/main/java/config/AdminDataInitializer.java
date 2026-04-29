@@ -26,7 +26,6 @@ public class AdminDataInitializer implements ApplicationRunner {
             User admin = new User();
             admin.setUsername("admin");
             admin.setPassword(passwordEncoder.encode("admin123")); //Contraseña por defecto (cambiar en producción)
-            admin.setEmail("admin@dungeonscroll.com");
             admin.setRole(Role.ADMIN);
             admin.setActive(true);
             userRepository.save(admin);

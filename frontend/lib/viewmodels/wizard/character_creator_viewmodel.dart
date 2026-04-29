@@ -33,12 +33,15 @@ class WizardChoiceConfig {
   final List<DndChoiceOption> options;
   /// If false, this choice does not block classFeatureChoicesDone (e.g. ASI).
   final bool required;
+  /// How many items the user must pick (1 = single pick, 2+ = multi-pick).
+  final int pickCount;
   const WizardChoiceConfig({
     required this.type,
     required this.level,
     required this.label,
     required this.options,
     this.required = true,
+    this.pickCount = 1,
   });
   /// Unique key used to store / look up the selection: e.g. 'FAVORED_ENEMY_6'.
   String get key => '${type}_$level';
@@ -276,6 +279,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   void clearError() {_error = null; notifyListeners();}
   void _setLoading(bool v){ _isLoading = v; notifyListeners();}
   void _setError(String? v) {_error = v; notifyListeners();}
+  /// Public wrapper — lets external widgets trigger a rebuild without
+  /// violating the @protected restriction on notifyListeners().
+  void notify() => notifyListeners();
 
   // - PASO 1: Preferencias
   // ────────────────────────────────────────────────────────────
@@ -866,6 +872,51 @@ void toggleItem(int itemId) {
         options: kDraconicAncestries,
       ));
     }
+    // ── Expertise: doubles proficiency bonus for chosen skills ──────────────
+    // Rogue: lv 1 and lv 6 (2 skills each)
+    if (className.contains('rogue')) {
+      for (final l in [1, 6]) {
+        if (level >= l) choices.add(WizardChoiceConfig(
+          type: 'EXPERTISE', level: l,
+          label: 'Expertise (lv $l)',
+          options: kSkills,
+          pickCount: 2,
+          required: false,
+        ));
+      }
+    }
+    // Bard: lv 3 and lv 10 (2 skills each)
+    if (className.contains('bard')) {
+      for (final l in [3, 10]) {
+        if (level >= l) choices.add(WizardChoiceConfig(
+          type: 'EXPERTISE', level: l,
+          label: 'Expertise (lv $l)',
+          options: kSkills,
+          pickCount: 2,
+          required: false,
+        ));
+      }
+    }
+    // ── Sorcerer Metamagic ───────────────────────────────────────────────────
+    // lv 3: 2 picks; lv 10 and 17: 1 pick each
+    if (className.contains('sorcerer')) {
+      if (level >= 3)  choices.add(WizardChoiceConfig(type: 'METAMAGIC', level: 3,  label: 'Metamagic (lv 3)',  options: kMetamagicOptions, pickCount: 2, required: false));
+      if (level >= 10) choices.add(WizardChoiceConfig(type: 'METAMAGIC', level: 10, label: 'Metamagic (lv 10)', options: kMetamagicOptions, required: false));
+      if (level >= 17) choices.add(WizardChoiceConfig(type: 'METAMAGIC', level: 17, label: 'Metamagic (lv 17)', options: kMetamagicOptions, required: false));
+    }
+    // ── Warlock Eldritch Invocations ─────────────────────────────────────────
+    // Count scales with level: 2 at lv2, +1 at lv5/7/9/12/15/18
+    if (className.contains('warlock') && level >= 2) {
+      final invCount = level >= 18 ? 8 : level >= 15 ? 7 : level >= 12 ? 6
+          : level >= 9 ? 5 : level >= 7 ? 4 : level >= 5 ? 3 : 2;
+      choices.add(WizardChoiceConfig(
+        type: 'INVOCATION', level: 2,
+        label: 'Eldritch Invocations',
+        options: kEldritchInvocations,
+        pickCount: invCount,
+        required: false,
+      ));
+    }
     return choices;
   }
 
@@ -990,6 +1041,17 @@ void toggleItem(int itemId) {
       if (level >= 6)  choices.add(WizardChoiceConfig(type: 'FOUR_ELEM_DISC_3', level: 6,  label: 'Discipline 3', options: kFourElementsDisciplines));
       if (level >= 11) choices.add(WizardChoiceConfig(type: 'FOUR_ELEM_DISC_4', level: 11, label: 'Discipline 4', options: kFourElementsDisciplines));
       if (level >= 17) choices.add(WizardChoiceConfig(type: 'FOUR_ELEM_DISC_5', level: 17, label: 'Discipline 5', options: kFourElementsDisciplines));
+    }
+
+    // ── College of Lore Bard: Bonus Proficiencies at lv 3 (pick 3 skills) ──
+    if (subcIdx.contains('lore') && level >= 3) {
+      choices.add(WizardChoiceConfig(
+        type: 'LORE_BONUS_PROF', level: 3,
+        label: 'Bonus Proficiencies (3 skills)',
+        options: kSkills,
+        pickCount: 3,
+        required: false,
+      ));
     }
 
     return choices;

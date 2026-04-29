@@ -18,27 +18,29 @@ class AdminService {
 
   Future<UserDto> createUser({
     required String username,
-    required String email,
     required String password,
   }) async {
     final res = await _api.post(
       '/api/admin/users',
-      body: jsonEncode({
+      body: {
         'username': username,
-        'email': email,
         'password': password,
-      }),
+      },
     );
     if (res.statusCode == 201) {
       return UserDto.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
     }
-    final msg = jsonDecode(res.body);
-    throw Exception(msg is String ? msg : 'Failed to create user');
+    final body = res.body;
+    String msg = 'Failed to create user (${res.statusCode})';
+    if (body.isNotEmpty) {
+      try { final decoded = jsonDecode(body); msg = decoded is String ? decoded : msg; } catch (_) { msg = body; }
+    }
+    throw Exception(msg);
   }
 
   Future<UserDto> setActive(int userId, bool active) async {
     final endpoint = '/api/admin/users/$userId/${active ? 'activate' : 'deactivate'}';
-    final res = await _api.post(endpoint);
+    final res = await _api.patch(endpoint);
     if (res.statusCode == 200) {
       return UserDto.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
     }
@@ -48,7 +50,7 @@ class AdminService {
   Future<void> resetPassword(int userId, String newPassword) async {
     final res = await _api.patch(
       '/api/admin/users/$userId/reset-password',
-      body: jsonEncode({'newPassword': newPassword}),
+      body: {'newPassword': newPassword},
     );
     if (res.statusCode != 204)
       throw Exception('Failed to reset password (${res.statusCode})');
@@ -66,10 +68,10 @@ class AdminService {
   }) async {
     final res = await _api.patch(
       '/api/users/me/password',
-      body: jsonEncode({
+      body: {
         'currentPassword': currentPassword,
         'newPassword':     newPassword,
-      }),
+      },
     );
     if (res.statusCode != 204) {
       final msg = res.body;

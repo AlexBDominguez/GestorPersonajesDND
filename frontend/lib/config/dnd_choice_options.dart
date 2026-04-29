@@ -280,3 +280,47 @@ const kFeats = [
   DndChoiceOption('War Caster',            'Advantage on concentration saves; somatic with hands full; cast spell as opportunity attack.'),
   DndChoiceOption('Weapon Master',         '+1 STR or DEX; proficiency with 4 weapons of your choice.'),
 ];
+
+// ── Sorcerer Metamagic ────────────────────────────────────────────────────────
+
+const kMetamagicOptions = <DndChoiceOption>[
+  DndChoiceOption('Careful Spell',    'Up to CHA modifier creatures auto-succeed on saves against your spell. (1 SP)'),
+  DndChoiceOption('Distant Spell',    'Double range of a spell; touch-range spells become 30 ft. (1 SP)'),
+  DndChoiceOption('Empowered Spell',  'Reroll up to CHA modifier damage dice (keep new results). Combinable. (1 SP)'),
+  DndChoiceOption('Extended Spell',   'Double a spell\'s duration (max 24 h). (1 SP)'),
+  DndChoiceOption('Heightened Spell', 'One target auto-fails its first save against your spell. (3 SP)'),
+  DndChoiceOption('Quickened Spell',  'Change casting time from 1 action to 1 bonus action. (2 SP)'),
+  DndChoiceOption('Subtle Spell',     'Cast without verbal or somatic components. (1 SP)'),
+  DndChoiceOption('Twinned Spell',    'Target a second creature with a single-target spell. (SP = spell level, min 1)'),
+];
+
+// ── Warlock Eldritch Invocations ──────────────────────────────────────────────
+
+const kEldritchInvocations = <DndChoiceOption>[
+  DndChoiceOption('Agonizing Blast',          'Add CHA modifier to each Eldritch Blast beam\'s damage. (Req: Eldritch Blast)'),
+  DndChoiceOption('Armor of Shadows',         'Cast Mage Armor on yourself at will, no slot.'),
+  DndChoiceOption('Beast Speech',             'Cast Speak with Animals at will, no slot.'),
+  DndChoiceOption('Beguiling Influence',      'Proficiency in Deception and Persuasion.'),
+  DndChoiceOption('Book of Ancient Secrets',  'Learn 2 ritual spells from any class. (Req: Pact of the Tome)'),
+  DndChoiceOption('Devil\'s Sight',           'See normally in magical and non-magical darkness to 120 ft.'),
+  DndChoiceOption('Eldritch Mind',            'Advantage on CON saves to maintain concentration.'),
+  DndChoiceOption('Eldritch Sight',           'Cast Detect Magic at will, no slot.'),
+  DndChoiceOption('Eldritch Spear',           'Eldritch Blast range becomes 300 ft. (Req: Eldritch Blast)'),
+  DndChoiceOption('Eyes of the Rune Keeper',  'You can read all writing.'),
+  DndChoiceOption('Fiendish Vigor',           'Cast False Life on yourself at will (1st level), no slot.'),
+  DndChoiceOption('Gaze of Two Minds',        'Perceive through a willing humanoid\'s senses (action).'),
+  DndChoiceOption('Grasp of Hadar',           'Pull a creature hit by EB 10 ft toward you. (Req: Eldritch Blast)'),
+  DndChoiceOption('Lance of Lethargy',        'Reduce one creature\'s speed by 10 ft on EB hit. (Req: Eldritch Blast)'),
+  DndChoiceOption('Mask of Many Faces',       'Cast Disguise Self at will, no slot.'),
+  DndChoiceOption('Misty Visions',            'Cast Silent Image at will, no slot.'),
+  DndChoiceOption('One with Shadows',         'Become invisible in dim light or darkness (action). (Req: lv 5)'),
+  DndChoiceOption('Repelling Blast',          'Push creatures 10 ft on each EB hit. (Req: Eldritch Blast)'),
+  DndChoiceOption('Sculptor of Flesh',        'Cast Polymorph once per long rest using a Pact Magic slot. (Req: lv 7)'),
+  DndChoiceOption('Sign of Ill Omen',         'Cast Bestow Curse once per long rest using a Pact Magic slot. (Req: lv 5)'),
+  DndChoiceOption('Thief of Five Fates',      'Cast Bane once per long rest using a Pact Magic slot.'),
+  DndChoiceOption('Thirsting Blade',          'Attack twice with Attack action. (Req: Pact of the Blade, lv 5)'),
+  DndChoiceOption('Visions of Distant Realms','Cast Arcane Eye at will, no slot. (Req: lv 15)'),
+  DndChoiceOption('Voice of the Chain Master','Telepathic link + perceive through familiar. (Req: Pact of the Chain)'),
+  DndChoiceOption('Whispers of the Grave',    'Cast Speak with Dead at will, no slot. (Req: lv 9)'),
+  DndChoiceOption('Witch Sight',              'See true forms of shapechangers within 30 ft. (Req: lv 15)'),
+];

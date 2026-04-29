@@ -143,10 +143,6 @@ class _UserTile extends StatelessWidget {
             _Badge('ADMIN', AppTheme.primary),
         ]),
         subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(user.email,
-              style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary, fontSize: 11)),
-          const SizedBox(height: 2),
           Text(
             '${user.characterCount}/10 characters'
             '${user.lastLogin != null ? '  ·  Last login: ${_formatDate(user.lastLogin!)}' : ''}',
@@ -316,7 +312,6 @@ class _CreateUserDialog extends StatefulWidget {
 class _CreateUserDialogState extends State<_CreateUserDialog> {
   final _formKey    = GlobalKey<FormState>();
   final _userCtrl   = TextEditingController();
-  final _emailCtrl  = TextEditingController();
   final _pwCtrl     = TextEditingController();
   bool _obscure     = true;
   bool _saving      = false;
@@ -338,12 +333,6 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
               icon: Icons.person_outline,
               validator: (v) => (v == null || v.length < 3)
                   ? 'Min. 3 characters' : null),
-          const SizedBox(height: 12),
-          _Field(ctrl: _emailCtrl, label: 'Email',
-              icon: Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress,
-              validator: (v) => (v == null || !v.contains('@'))
-                  ? 'Enter a valid email' : null),
           const SizedBox(height: 12),
           TextFormField(
             controller: _pwCtrl,
@@ -407,7 +396,6 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
     try {
       await widget.service.createUser(
         username: _userCtrl.text.trim(),
-        email:    _emailCtrl.text.trim(),
         password: _pwCtrl.text,
       );
       if (mounted) Navigator.pop(context);
@@ -589,19 +577,16 @@ class _Field extends StatelessWidget {
   final String label;
   final IconData icon;
   final String? Function(String?)? validator;
-  final TextInputType? keyboardType;
   const _Field({
     required this.ctrl,
     required this.label,
     required this.icon,
     this.validator,
-    this.keyboardType,
   });
 
   @override
   Widget build(BuildContext context) => TextFormField(
     controller: ctrl,
-    keyboardType: keyboardType,
     style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
     decoration: InputDecoration(
       labelText: label,

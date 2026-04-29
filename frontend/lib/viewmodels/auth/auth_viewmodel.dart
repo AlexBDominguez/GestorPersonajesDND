@@ -16,14 +16,12 @@ class AuthViewModel extends ChangeNotifier {
   bool    _isLoggedIn   = false;
   bool    _isAdmin      = false;
   String  _username     = '';
-  String  _email        = '';
 
-  bool    get isLoading    => _isLoading;
-  String? get errorMessage => _errorMessage;
-  bool    get isLoggedIn   => _isLoggedIn;
-  bool    get isAdmin      => _isAdmin;
+  bool    get isLoading       => _isLoading;
+  String? get errorMessage    => _errorMessage;
+  bool    get isLoggedIn      => _isLoggedIn;
+  bool    get isAdmin         => _isAdmin;
   String  get currentUsername => _username;
-  String  get currentEmail    => _email;
 
   Future<void> init() async {
     try {
@@ -31,7 +29,6 @@ class AuthViewModel extends ChangeNotifier {
       if (token != null && token.isNotEmpty) {
         _isLoggedIn = true;
         _username   = await _tokenStorage.getUsername() ?? '';
-        _email      = await _tokenStorage.getEmail()    ?? '';
         final storedRole = await _tokenStorage.getRole();
         _isAdmin    = storedRole == 'ADMIN';
         if (kDebugMode) print('[AuthViewModel.init] storedRole=$storedRole  _isAdmin=$_isAdmin');
@@ -53,13 +50,11 @@ class AuthViewModel extends ChangeNotifier {
       await _tokenStorage.saveSession(
         token:    auth.token,
         username: auth.username,
-        email:    auth.email,
         role:     auth.role,
       );
 
       _isLoggedIn = true;
       _username   = auth.username;
-      _email      = auth.email;
       _isAdmin    = auth.role == 'ADMIN';
     } catch (e) {
       final msg = e.toString();
@@ -75,7 +70,6 @@ class AuthViewModel extends ChangeNotifier {
     _isLoggedIn = false;
     _isAdmin    = false;
     _username   = '';
-    _email      = '';
     notifyListeners();
   }
 

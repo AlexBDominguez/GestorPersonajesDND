@@ -87,7 +87,7 @@ class _DashboardBody extends StatelessWidget {
         backgroundColor: AppTheme.primary,
         foregroundColor: AppTheme.background,
         icon: const Icon(Icons.add),
-        label: Text('New Character',
+        label: Text('New Character (${vm.characters.length} / 10)',
             style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
       ),
 
