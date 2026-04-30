@@ -15,7 +15,16 @@ class CharacterListViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   List<PlayerCharacterSummary> get characters => _characters;
 
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   Future<void> load() async{
+    if (_disposed) return;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -26,7 +35,7 @@ class CharacterListViewModel extends ChangeNotifier {
       _errorMessage = e.toString();
     } finally {
       _isLoading = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
   }
 

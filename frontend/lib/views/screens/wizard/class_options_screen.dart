@@ -1400,16 +1400,56 @@ String _formatSkillName(String indexName) {
       .join(' ');
 }
 
-class _SkillPickerSection extends StatelessWidget {
+class _SkillPickerSection extends StatefulWidget {
   final ClassOption cls;
   final CharacterCreatorViewModel vm;
 
   const _SkillPickerSection({required this.cls, required this.vm});
 
   @override
+  State<_SkillPickerSection> createState() => _SkillPickerSectionState();
+}
+
+class _SkillPickerSectionState extends State<_SkillPickerSection> {
+  // Local copy of picked skills – kept in sync with vm
+  late Set<String> _picked;
+
+  @override
+  void initState() {
+    super.initState();
+    _picked = Set.from(widget.vm.classSkillIndices);
+    widget.vm.addListener(_onVmChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.vm.removeListener(_onVmChanged);
+    super.dispose();
+  }
+
+  void _onVmChanged() {
+    setState(() {
+      _picked = Set.from(widget.vm.classSkillIndices);
+    });
+  }
+
+  void _toggle(String skill) {
+    final count = widget.cls.skillChoiceCount;
+    setState(() {
+      if (_picked.contains(skill)) {
+        _picked.remove(skill);
+        widget.vm.toggleClassSkill(skill);
+      } else if (_picked.length < count) {
+        _picked.add(skill);
+        widget.vm.toggleClassSkill(skill);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final count = cls.skillChoiceCount;
-    final picked = vm.classSkillIndices.length;
+    final count = widget.cls.skillChoiceCount;
+    final picked = _picked.length;
     final remaining = count - picked;
 
     return Column(
@@ -1430,11 +1470,11 @@ class _SkillPickerSection extends StatelessWidget {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: cls.allowedSkillIndices.map((skill) {
-            final isSelected = vm.classSkillIndices.contains(skill);
+          children: widget.cls.allowedSkillIndices.map((skill) {
+            final isSelected = _picked.contains(skill);
             final isDisabled = !isSelected && remaining == 0;
             return GestureDetector(
-              onTap: isDisabled ? null : () => vm.toggleClassSkill(skill),
+              onTap: isDisabled ? null : () => _toggle(skill),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
