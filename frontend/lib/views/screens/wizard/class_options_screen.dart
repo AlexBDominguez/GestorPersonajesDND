@@ -279,9 +279,38 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                           );
                         }),
 
-                    // API / DB features (descriptive, no choice)
+                    // API / DB features (descriptive, no choice).
+                    // Exclude any feature that already has a hardcoded interactive
+                    // choice tile rendered above (matched by level + name keyword).
                     ...widget.vm.subclassFeatures
                         .where((f) => f.level <= _level)
+                        .where((f) {
+                          // If there is a subclassFeatureChoice that covers this feature
+                          // at the same level, suppress the descriptive tile to avoid duplication.
+                          final fname = f.name.toLowerCase();
+                          return !widget.vm.subclassFeatureChoices.any((c) {
+                            if (c.level != f.level) return false;
+                            return switch (c.type) {
+                              'HUNTERS_PREY'             => fname.contains("hunter's prey") || fname.contains('hunters prey'),
+                              'DEFENSIVE_TACTICS'        => fname.contains('defensive tactics'),
+                              'HUNTER_MULTIATTACK'       => fname.contains('multiattack'),
+                              'SUPERIOR_HUNTERS_DEFENSE' => fname.contains("superior hunter"),
+                              'TOTEM_SPIRIT'             => fname.contains('totem spirit'),
+                              'TOTEM_ASPECT'             => fname.contains('aspect of the beast'),
+                              'TOTEMIC_ATTUNEMENT'       => fname.contains('totemic attunement'),
+                              'BATTLEMASTER_MANEUVER_1' ||
+                              'BATTLEMASTER_MANEUVER_2' ||
+                              'BATTLEMASTER_MANEUVER_3' ||
+                              'BATTLEMASTER_MANEUVER_4' ||
+                              'BATTLEMASTER_MANEUVER_5' ||
+                              'BATTLEMASTER_MANEUVER_6' ||
+                              'BATTLEMASTER_MANEUVER_7'  => fname.contains('combat superiority') || fname.contains('maneuver'),
+                              'LORE_BARD_MAGIC'          => fname.contains('additional magical secret') || fname.contains('magical secrets'),
+                              'COLLEGE_OF_LORE_SKILLS'   => fname.contains('bonus proficienc'),
+                              _                          => false,
+                            };
+                          });
+                        })
                         .map((f) => _FeatureTile(
                               feature: f,
                               isExpanded: _expandedFeatures.contains(f.id),
