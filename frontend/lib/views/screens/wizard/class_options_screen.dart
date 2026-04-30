@@ -188,13 +188,29 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                   const SizedBox(height: 8),
                   ..._featuresUpToLevel.map((f) {
                     final choice = _choiceForFeature(f, widget.vm);
-                    // Compute which options of the same type were already chosen at earlier levels
-                    final Set<String> takenOptions = choice == null ? const {} :
-                        widget.vm.classFeatureChoices
-                            .where((c) => c.type == choice.type && c.level < f.level)
-                            .map((c) => widget.vm.featureChoices[c.key])
-                            .whereType<String>()
-                            .toSet();
+                    // Compute which options of the same type were already chosen at earlier levels.
+                    // For multi-pick choices (e.g. Expertise), collect individual picks by key;
+                    // for single-pick choices, collect the single stored value.
+                    final Set<String> takenOptions;
+                    if (choice == null) {
+                      takenOptions = const {};
+                    } else if (choice.pickCount > 1) {
+                      final taken = <String>{};
+                      for (final c in widget.vm.classFeatureChoices) {
+                        if (c.type != choice.type || c.level >= f.level) continue;
+                        for (int i = 0; i < c.pickCount; i++) {
+                          final v = widget.vm.featureChoices['${c.type}_PICK_${i}_${c.level}'];
+                          if (v != null) taken.add(v);
+                        }
+                      }
+                      takenOptions = taken;
+                    } else {
+                      takenOptions = widget.vm.classFeatureChoices
+                          .where((c) => c.type == choice.type && c.level < f.level)
+                          .map((c) => widget.vm.featureChoices[c.key])
+                          .whereType<String>()
+                          .toSet();
+                    }
                     return _FeatureTile(
                       feature: f,
                       isExpanded: _expandedFeatures.contains(f.id),
@@ -305,6 +321,26 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
             ),
           ),
 
+          // Hint when button is disabled
+          if (!(_hpComplete && widget.vm.classFeatureChoicesDone && widget.vm.classSkillPicksDone)) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!widget.vm.classSkillPicksDone)
+                    _BlockerHint(
+                      '${widget.vm.classSkillIndices.length}/${cls.skillChoiceCount} skill proficiencies chosen — scroll up to pick them',
+                    ),
+                  if (!_hpComplete)
+                    const _BlockerHint('All HP rolls must be filled'),
+                  if (!widget.vm.classFeatureChoicesDone)
+                    const _BlockerHint('Some required feature choices are pending'),
+                ],
+              ),
+            ),
+          ],
+
           // Botones
           _BottomButtons(
             canConfirm: _hpComplete && widget.vm.classFeatureChoicesDone && widget.vm.classSkillPicksDone,
@@ -315,6 +351,28 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
       ),
     );
   }
+}
+
+class _BlockerHint extends StatelessWidget {
+  final String message;
+  const _BlockerHint(this.message);
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Row(children: [
+      Icon(Icons.info_outline, color: AppTheme.accent, size: 13),
+      const SizedBox(width: 5),
+      Expanded(child: Text(
+        message,
+        style: GoogleFonts.lato(
+          color: AppTheme.accent,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      )),
+    ]),
+  );
 }
 
 // ── Widgets ───────────────────────────────────────────────────────────────────
@@ -522,7 +580,11 @@ class _FeatureTile extends StatelessWidget {
             else if (_needsChoice && choice!.pickCount > 1)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                child: _MultiPickSection(config: choice!, vm: vm!),
+                child: _MultiPickSection(
+                  config: choice!,
+                  vm: vm!,
+                  alreadyTaken: alreadyTaken,
+                ),
               )
             else if (_needsChoice)
               Padding(
@@ -597,7 +659,12 @@ class _ChoiceBadgePending extends StatelessWidget {
 class _MultiPickSection extends StatefulWidget {
   final WizardChoiceConfig config;
   final CharacterCreatorViewModel vm;
-  const _MultiPickSection({required this.config, required this.vm});
+  final Set<String> alreadyTaken;
+  const _MultiPickSection({
+    required this.config,
+    required this.vm,
+    this.alreadyTaken = const {},
+  });
 
   @override
   State<_MultiPickSection> createState() => _MultiPickSectionState();
@@ -657,6 +724,7 @@ class _MultiPickSectionState extends State<_MultiPickSection> {
   @override
   Widget build(BuildContext context) {
     final takenByOthers = <String>{
+      ...widget.alreadyTaken,
       for (int j = 0; j < widget.config.pickCount; j++)
         if (j != _activeSlot && _choice(j) != null) _choice(j)!,
     };
@@ -669,7 +737,7 @@ class _MultiPickSectionState extends State<_MultiPickSection> {
           if (_choice(i) != null && (i != _activeSlot || _allDone))
             _PickedChip(
               label: '${i + 1}. ${_choice(i)!}',
-              onClear: _allDone ? () => _clearSlot(i) : null,
+              onClear: () => _clearSlot(i),
             ),
 
         // Active slot options (hidden when all done)
