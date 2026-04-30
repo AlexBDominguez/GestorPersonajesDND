@@ -355,6 +355,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     selectedLevel = 1;
     _hpRolls.clear();
     _classSkillIndices.clear();
+    _classSkillRequiredCount = 0;
     classFeatures.clear();
     subclasses.clear();
     subclassFeatures = [];
@@ -462,8 +463,22 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   final Set<String> _classSkillIndices = {};
   Set<String> get classSkillIndices => Set.unmodifiable(_classSkillIndices);
 
+  // Override count set from ClassOptionsScreen to avoid stale ClassOption
+  int _classSkillRequiredCount = 0;
+
+  void setClassSkillRequiredCount(int count) {
+    if (_classSkillRequiredCount != count) {
+      _classSkillRequiredCount = count;
+    }
+  }
+
+  int get _effectiveSkillCount =>
+      _classSkillRequiredCount > 0
+          ? _classSkillRequiredCount
+          : (selectedClass?.skillChoiceCount ?? 0);
+
   bool get classSkillPicksDone {
-    final count = selectedClass?.skillChoiceCount ?? 0;
+    final count = _effectiveSkillCount;
     if (count == 0) return true;
     return _classSkillIndices.length >= count;
   }
@@ -472,7 +487,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     if (_classSkillIndices.contains(skillIndex)) {
       _classSkillIndices.remove(skillIndex);
     } else {
-      final count = selectedClass?.skillChoiceCount ?? 0;
+      final count = _effectiveSkillCount;
       if (_classSkillIndices.length < count) {
         _classSkillIndices.add(skillIndex);
       }

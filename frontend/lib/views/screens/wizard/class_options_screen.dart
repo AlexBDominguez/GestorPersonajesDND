@@ -67,6 +67,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
     super.initState();
     _level = widget.vm.selectedLevel;
     _initHpRolls(_level);
+    widget.vm.setClassSkillRequiredCount(widget.classOption.skillChoiceCount);
     widget.vm.addListener(_onVmChanged);
   }
 
