@@ -496,6 +496,33 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Skills the character is already proficient in (class picks + background).
+  /// Used to restrict Expertise options to only valid choices per D&D 5e rules.
+  Set<String> get _proficientSkillIndices {
+    final indices = <String>{};
+    // Class skill picks (already lowercase hyphenated, e.g. 'sleight-of-hand')
+    indices.addAll(_classSkillIndices);
+    // Background skill proficiencies (same format from the API)
+    if (selectedBackground != null) {
+      indices.addAll(selectedBackground!.skillProficiencies);
+    }
+    return indices;
+  }
+
+  /// Returns only the kSkills options the character already has proficiency in.
+  /// Falls back to all kSkills if none are selected yet (prevents empty list).
+  List<DndChoiceOption> get proficientSkillOptions {
+    final proficient = _proficientSkillIndices;
+    if (proficient.isEmpty) return kSkills;
+    // Normalize kSkills name to index format: 'Sleight of Hand' → 'sleight-of-hand'
+    String toIndex(String name) =>
+        name.toLowerCase().replaceAll(' ', '-');
+    final filtered = kSkills
+        .where((s) => proficient.contains(toIndex(s.name)))
+        .toList();
+    return filtered.isEmpty ? kSkills : filtered;
+  }
+
   // PASO 3: Background
   // ────────────────────────────────────────────────────────────
   List<BackgroundOption> backgrounds = [];
@@ -918,7 +945,7 @@ void toggleItem(int itemId) {
         if (level >= l) choices.add(WizardChoiceConfig(
           type: 'EXPERTISE', level: l,
           label: 'Expertise (lv $l)',
-          options: kSkills,
+          options: proficientSkillOptions,
           pickCount: 2,
           required: false,
         ));
@@ -930,7 +957,7 @@ void toggleItem(int itemId) {
         if (level >= l) choices.add(WizardChoiceConfig(
           type: 'EXPERTISE', level: l,
           label: 'Expertise (lv $l)',
-          options: kSkills,
+          options: proficientSkillOptions,
           pickCount: 2,
           required: false,
         ));
