@@ -4,7 +4,7 @@
 
 // ── ACCIONES (Actions) ──────────────────────────────────────────────────────
 const kCombatActionFeatures = <String>{
-  // Fighter
+  // Fighter — variantes de action-surge resueltas por prefijo en classifyFeature
   'action-surge', 'extra-attack', 'indomitable', 'know-your-enemy',
   // Barbarian
   'reckless-attack', 'frenzy', 'retaliation', 'intimidating-presence',
@@ -84,16 +84,24 @@ enum FeatureCategory {
   passive, 
 }
 
+/// Devuelve true si [i] coincide exactamente con alguna entrada del set,
+/// o si [i] empieza por "<entrada>-" (para manejar variantes del estilo
+/// 'action-surge-1-use', 'bardic-inspiration-d6', 'wild-shape-cr-*…', etc.)
+bool _matchesCombatSet(String i, Set<String> features) {
+  if (features.contains(i)) return true;
+  return features.any((k) => i.startsWith('$k-'));
+}
+
 FeatureCategory classifyFeature(String indexName) {
   if (indexName.isEmpty) return FeatureCategory.passive;
-  
+
   final i = indexName.toLowerCase().trim();
 
   // El orden de búsqueda prioriza el tipo de acción sobre la pasiva
-  if (kCombatReactionFeatures.contains(i)) return FeatureCategory.combatReaction;
-  if (kCombatBonusFeatures.contains(i)) return FeatureCategory.combatBonus;
-  if (kCombatActionFeatures.contains(i)) return FeatureCategory.combatAction;
-  
+  if (_matchesCombatSet(i, kCombatReactionFeatures)) return FeatureCategory.combatReaction;
+  if (_matchesCombatSet(i, kCombatBonusFeatures))    return FeatureCategory.combatBonus;
+  if (_matchesCombatSet(i, kCombatActionFeatures))   return FeatureCategory.combatAction;
+
   return FeatureCategory.passive;
 }
 

@@ -11,15 +11,34 @@ import 'package:gestor_personajes_dnd/services/spells/spell_service.dart';
 import 'package:gestor_personajes_dnd/services/wizard/wizard_reference_service.dart';
 
 // Consumable features: indexName -> max uses (o código especial negativo)
+// Keys deben coincidir con los index_name reales de la DB.
+// -1 = CHA mod, -2 = nivel*5, -3 = nivel, -4 = tabla Barbarian
 const _kConsumableFeatures = <String, int>{
-  'channel-divinity':   1,
-  'wild-shape':         2,
-  'action-surge':       1,
-  'second-wind':        1,
-  'bardic-inspiration': -1, // -1 = CHA mod
-  'lay-on-hands':       -2, // -2 = nivel * 5
-  'ki-points':          -3, // -3 = nivel
-  'rage':               -4, // -4 = tabla de barbarian
+  // Barbarian
+  'rage':                    -4,
+  // Bard — las variantes (d6/d8/d10/d12) se resuelven por prefijo
+  'bardic-inspiration':      -1,
+  // Cleric — variantes por usos/descanso
+  'channel-divinity-1-rest': 1,
+  'channel-divinity-2-rest': 2,
+  'channel-divinity-3-rest': 3,
+  // Druid — variantes de CR se resuelven por prefijo
+  'wild-shape':              2,
+  // Fighter
+  'action-surge-1-use':      1,
+  'action-surge-2-uses':     2,
+  'second-wind':             1,
+  // Monk — el recurso principal se llama 'ki' en la DB (no 'ki-points')
+  'ki':                      -3,
+  // Paladin
+  'channel-divinity':        1,
+  'lay-on-hands':            -2,
+};
+
+// Prefijos que se resuelven por coincidencia parcial (indexName.startsWith(prefix + '-'))
+const _kConsumableFeaturePrefixes = <String>{
+  'bardic-inspiration', // cubre d6/d8/d10/d12
+  'wild-shape',         // cubre todas las variantes de CR
 };
 
 class CharacterSheetViewModel extends ChangeNotifier {
@@ -306,7 +325,18 @@ class CharacterSheetViewModel extends ChangeNotifier {
   final Map<String, int> _featureUsesRemaining = {};
 
   int featureMaxUses(ClassFeature f) {
-    final raw = _kConsumableFeatures[f.indexName.toLowerCase()];
+    final key = f.indexName.toLowerCase();
+    // 1. Coincidencia exacta
+    int? raw = _kConsumableFeatures[key];
+    // 2. Coincidencia por prefijo para variantes (bardic-inspiration-d6, wild-shape-cr-*, …)
+    if (raw == null) {
+      for (final prefix in _kConsumableFeaturePrefixes) {
+        if (key.startsWith('$prefix-')) {
+          raw = _kConsumableFeatures[prefix];
+          break;
+        }
+      }
+    }
     if (raw == null) return 0;
     final lvl = character?.level ?? 1;
     if (raw == -1) return ((character?.abilityScores['cha'] ?? character?.abilityScores['CHA'] ?? 10) - 10) ~/ 2;
