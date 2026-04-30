@@ -24,6 +24,15 @@ public class DndClass {
     @Column(name = "proficiency")
     private List<String> proficiencies;
 
+    // Skill choices at character creation
+    @ElementCollection
+    @CollectionTable(name = "class_skill_choices", joinColumns = @JoinColumn(name = "class_id"))
+    @Column(name = "skill_index")
+    private List<String> skillChoiceOptions;
+
+    @Column(name = "num_skill_choices")
+    private int numSkillChoices;
+
     //Saving Throws
     @ElementCollection
     @CollectionTable(name = "class_saving_throws", joinColumns = @JoinColumn(name = "class_id"))
@@ -114,6 +123,22 @@ public class DndClass {
 
     public void setSpells(Set<Spell> spells) {
         this.spells = spells;
+    }
+
+    public List<String> getSkillChoiceOptions() {
+        return skillChoiceOptions;
+    }
+
+    public void setSkillChoiceOptions(List<String> skillChoiceOptions) {
+        this.skillChoiceOptions = skillChoiceOptions;
+    }
+
+    public int getNumSkillChoices() {
+        return numSkillChoices;
+    }
+
+    public void setNumSkillChoices(int numSkillChoices) {
+        this.numSkillChoices = numSkillChoices;
     }
     
 }

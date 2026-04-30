@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS classes (
     spellcasting_ability VARCHAR(255),
     subclass_level INT,
     description TEXT,
+    num_skill_choices INT NOT NULL DEFAULT 0,
     INDEX idx_index_name (index_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -52,6 +53,17 @@ CREATE TABLE IF NOT EXISTS class_saving_throws (
     class_id BIGINT NOT NULL,
     saving_throw VARCHAR(255) NOT NULL,
     PRIMARY KEY (class_id, saving_throw),
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Tabla: class_skill_choices (Habilidades elegibles por clase)
+-- ============================================
+CREATE TABLE IF NOT EXISTS class_skill_choices (
+    class_id BIGINT NOT NULL,
+    num_choices INT NOT NULL,
+    skill_index VARCHAR(100) NOT NULL,
+    PRIMARY KEY (class_id, skill_index),
     FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

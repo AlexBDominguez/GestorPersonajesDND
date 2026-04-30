@@ -176,7 +176,7 @@ class _SpellLevelSection extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const SizedBox(height: 12),
 
-      //A. Cabecera de nivel con slot tracker
+      // A. Level name + slot tracker + divider (separate from column headers to prevent overflow)
       Row(children: [
         Text(levelName,
             style: GoogleFonts.cinzel(
@@ -189,33 +189,42 @@ class _SpellLevelSection extends StatelessWidget {
         ],
         const SizedBox(width: 8),
         const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
-        if (!isCantrip) ...[
-          const SizedBox(width: _kColGap),
-          SizedBox(
-            width: _kHitDcW,
-            child: Text('HIT / DC',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.lato(
-                    color: AppTheme.textSecondary,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5)),
-          ),
-          const SizedBox(width: _kColGap),
-          SizedBox(
-            width: _kDmgW,
-            child: Text('DAMAGE',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.lato(
-                    color: AppTheme.textSecondary,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5)),
-          ),
-          const SizedBox(width: _kCastPad + _kCastW),
-        ],
       ]),
-      const SizedBox(height: 6),
+
+      // B. Column headers row (aligned with spell row columns, no slot tracker competition)
+      if (!isCantrip) ...[
+        const SizedBox(height: 2),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Row(children: [
+            const Expanded(child: SizedBox.shrink()),
+            const SizedBox(width: _kColGap),
+            SizedBox(
+              width: _kHitDcW,
+              child: Text('HIT / DC',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5)),
+            ),
+            const SizedBox(width: _kColGap),
+            SizedBox(
+              width: _kDmgW,
+              child: Text('DAMAGE',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5)),
+            ),
+            const SizedBox(width: _kCastPad + _kCastW),
+          ]),
+        ),
+      ],
+      const SizedBox(height: 4),
 
       // C. Filas de hechizos
       ...spells.map((spell) => _SpellRow(

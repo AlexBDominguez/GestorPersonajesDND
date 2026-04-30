@@ -354,6 +354,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     selectedSubclass = null;
     selectedLevel = 1;
     _hpRolls.clear();
+    _classSkillIndices.clear();
     classFeatures.clear();
     subclasses.clear();
     subclassFeatures = [];
@@ -455,7 +456,30 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     return (base + conMod) + ((base ~/ 2 + 1 + conMod) * (selectedLevel - 1));  
     }
 
-    bool get classValid => selectedClass != null && classFeatureChoicesDone;
+    bool get classValid => selectedClass != null && classFeatureChoicesDone && classSkillPicksDone;
+
+  // Class skill picks
+  final Set<String> _classSkillIndices = {};
+  Set<String> get classSkillIndices => Set.unmodifiable(_classSkillIndices);
+
+  bool get classSkillPicksDone {
+    final count = selectedClass?.skillChoiceCount ?? 0;
+    if (count == 0) return true;
+    return _classSkillIndices.length >= count;
+  }
+
+  void toggleClassSkill(String skillIndex) {
+    if (_classSkillIndices.contains(skillIndex)) {
+      _classSkillIndices.remove(skillIndex);
+    } else {
+      final count = selectedClass?.skillChoiceCount ?? 0;
+      if (_classSkillIndices.length < count) {
+        _classSkillIndices.add(skillIndex);
+      }
+    }
+    _markDirty(WizardStep.dndClass);
+    notifyListeners();
+  }
 
   // PASO 3: Background
   // ────────────────────────────────────────────────────────────
@@ -1113,6 +1137,7 @@ void toggleItem(int itemId) {
         subclassId:   selectedSubclass?.id,
         spellIds:    selectedSpellIds.toList(),
         magicalSecretSpellIds: [...magicalSecretIds, ...additionalMagicalSecretIds].toList(),
+        classSkillIndices: _classSkillIndices.toList(),
         abilityScores: {
           'str': abilityScores['STR']!,
           'dex': abilityScores['DEX']!,

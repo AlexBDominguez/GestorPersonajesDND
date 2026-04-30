@@ -262,6 +262,15 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
                   const SizedBox(height: 20),
 
+                  // Skill Picks ───────────────────────────────────────────────
+                  if (cls.skillChoiceCount > 0 && cls.allowedSkillIndices.isNotEmpty) ...[  
+                    _SkillPickerSection(
+                      cls: cls,
+                      vm: widget.vm,
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
                   // HP ────────────────────────────────────────────────────────
                   _SectionHeader('Manage HP'),
                   const SizedBox(height: 4),
@@ -298,7 +307,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
           // Botones
           _BottomButtons(
-            canConfirm: _hpComplete && widget.vm.classFeatureChoicesDone,
+            canConfirm: _hpComplete && widget.vm.classFeatureChoicesDone && widget.vm.classSkillPicksDone,
             onCancel: _onCancel,
             onConfirm: _onConfirm,
           ),
@@ -1303,6 +1312,85 @@ class _BottomButtons extends StatelessWidget {  final bool canConfirm;
           ),
         ),
       ]),
+    );
+  }
+}
+
+// ── Skill Picker ─────────────────────────────────────────────────────────────
+
+String _formatSkillName(String indexName) {
+  return indexName
+      .split('-')
+      .map((w) => w.isEmpty ? '' : w[0].toUpperCase() + w.substring(1))
+      .join(' ');
+}
+
+class _SkillPickerSection extends StatelessWidget {
+  final ClassOption cls;
+  final CharacterCreatorViewModel vm;
+
+  const _SkillPickerSection({required this.cls, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final count = cls.skillChoiceCount;
+    final picked = vm.classSkillIndices.length;
+    final remaining = count - picked;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader('Skill Proficiencies'),
+        const SizedBox(height: 4),
+        Text(
+          remaining > 0
+              ? 'Choose $count skills — $remaining remaining'
+              : 'All $count skills chosen ✓',
+          style: GoogleFonts.lato(
+            color: remaining > 0 ? AppTheme.textSecondary : AppTheme.primary,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: cls.allowedSkillIndices.map((skill) {
+            final isSelected = vm.classSkillIndices.contains(skill);
+            final isDisabled = !isSelected && remaining == 0;
+            return GestureDetector(
+              onTap: isDisabled ? null : () => vm.toggleClassSkill(skill),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppTheme.primary
+                      : isDisabled
+                          ? AppTheme.surfaceVariant.withOpacity(0.4)
+                          : AppTheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? AppTheme.primary : AppTheme.divider,
+                  ),
+                ),
+                child: Text(
+                  _formatSkillName(skill),
+                  style: GoogleFonts.lato(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected
+                        ? AppTheme.background
+                        : isDisabled
+                            ? AppTheme.textSecondary.withOpacity(0.4)
+                            : AppTheme.textPrimary,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 }

@@ -11,6 +11,8 @@ public class DndClassDto {
     private List<String> proficiencies;
     private String description;
     private String spellcastingAbility;
+    private int skillChoiceCount;
+    private List<String> allowedSkillIndices;
 
     public Long getId() {
         return id;
@@ -66,5 +68,21 @@ public class DndClassDto {
 
     public void setSpellcastingAbility(String spellcastingAbility) {
         this.spellcastingAbility = spellcastingAbility;
+    }
+
+    public int getSkillChoiceCount() {
+        return skillChoiceCount;
+    }
+
+    public void setSkillChoiceCount(int skillChoiceCount) {
+        this.skillChoiceCount = skillChoiceCount;
+    }
+
+    public List<String> getAllowedSkillIndices() {
+        return allowedSkillIndices;
+    }
+
+    public void setAllowedSkillIndices(List<String> allowedSkillIndices) {
+        this.allowedSkillIndices = allowedSkillIndices;
     }
 }

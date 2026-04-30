@@ -75,6 +75,7 @@ public class PlayerCharacterDto {
     private boolean useEncumbrance = false;
     private List<CharacterSkillDto> skills;
     private List<CharacterSavingThrowDto> savingThrows;
+    private List<String> classSkillIndices; // input: class skill picks from wizard
     
 
 
@@ -606,6 +607,14 @@ public class PlayerCharacterDto {
     }
     public void setSavingThrows(List<CharacterSavingThrowDto> savingThrows) {
         this.savingThrows = savingThrows;
+    }
+
+    public List<String> getClassSkillIndices() {
+        return classSkillIndices;
+    }
+
+    public void setClassSkillIndices(List<String> classSkillIndices) {
+        this.classSkillIndices = classSkillIndices;
     }
 
     public List<CharacterSpellSummaryDto> getCharacterSpells() {

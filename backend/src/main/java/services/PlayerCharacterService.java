@@ -250,6 +250,13 @@ public class PlayerCharacterService {
             applyBackgroundProficiencies(saved);
         }
 
+        // Apply class skill picks from wizard
+        if (dto.getClassSkillIndices() != null) {
+            for (String skillIndex : dto.getClassSkillIndices()) {
+                characterSkillService.applySkillProficiencyByIndex(saved, skillIndex);
+            }
+        }
+
         applyRaceSpells(saved);
 
         if (dto.getSpellIds() != null){

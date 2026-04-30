@@ -64,6 +64,7 @@ class _WizardBody extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 48,
         title: const Text('New Character'),
         leading: IconButton(
           icon: const Icon(Icons.close),
@@ -164,24 +165,30 @@ class _StepIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppTheme.surface,
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: List.generate(steps.length, (i) {
-          final step = steps[i];
-          return Expanded(
-            child: Center(
-              child: _StepDot(
-                title:     meta[step]!.title,
-                icon:      meta[step]!.icon,
-                isDone:    isCompleted(step),
-                isPartial: isPartial(step),
-                isCurrent: i == current,
-                onTap:     () => onTap(step),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: LayoutBuilder(builder: (context, constraints) {
+        // If each step has less than ~52 px we go icon-only compact mode
+        final perStep = constraints.maxWidth / steps.length;
+        final compact = perStep < 52;
+        return Row(
+          children: List.generate(steps.length, (i) {
+            final step = steps[i];
+            return Expanded(
+              child: Center(
+                child: _StepDot(
+                  title:     meta[step]!.title,
+                  icon:      meta[step]!.icon,
+                  isDone:    isCompleted(step),
+                  isPartial: isPartial(step),
+                  isCurrent: i == current,
+                  compact:   compact,
+                  onTap:     () => onTap(step),
+                ),
               ),
-            ),
-          );
-        }),
-      ),
+            );
+          }),
+        );
+      }),
     );
   }
 }
@@ -194,6 +201,7 @@ class _StepDot extends StatelessWidget {
   final bool isDone;
   final bool isPartial;
   final bool isCurrent;
+  final bool compact;
   final VoidCallback onTap;
 
   const _StepDot({
@@ -203,6 +211,7 @@ class _StepDot extends StatelessWidget {
     required this.isPartial,
     required this.isCurrent,
     required this.onTap,
+    this.compact = false,
   });
 
   @override
@@ -244,21 +253,25 @@ class _StepDot extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 250),
-          width: 36, height: 36,
+          width:  compact ? 28 : 34,
+          height: compact ? 28 : 34,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: bgColor,
             border: Border.all(color: borderColor, width: 2),
           ),
-          child: Icon(dotIcon, color: dotColor, size: 18),
+          child: Icon(dotIcon, color: dotColor, size: compact ? 14 : 17),
         ),
-        const SizedBox(height: 4),
-        Text(title,
-          style: GoogleFonts.lato(
-            color: labelColor,
-            fontSize: 10,
-            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-          )),
+        if (!compact) ...[
+          const SizedBox(height: 3),
+          Text(title,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.lato(
+              color: labelColor,
+              fontSize: 9,
+              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+            )),
+        ],
       ]),
     );
   }
@@ -274,12 +287,13 @@ class _NavButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLast     = vm.isLastStep;
     final canProceed = vm.canProceedCurrentStep && !vm.isSaving;
+    final bottom     = MediaQuery.of(context).padding.bottom;
 
     final sharedShape   = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
-    const sharedPadding = EdgeInsets.symmetric(vertical: 14);
+    const sharedPadding = EdgeInsets.symmetric(vertical: 12);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: EdgeInsets.fromLTRB(16, 10, 16, bottom > 0 ? bottom : 16),
       decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.divider)),

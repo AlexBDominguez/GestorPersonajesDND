@@ -79,6 +79,8 @@ public class DndClassService {
         dto.setProficiencies(dndClass.getProficiencies());
         dto.setDescription(dndClass.getDescription());
         dto.setSpellcastingAbility(dndClass.getSpellcastingAbility());
+        dto.setSkillChoiceCount(dndClass.getNumSkillChoices());
+        dto.setAllowedSkillIndices(dndClass.getSkillChoiceOptions());
         return dto;
     }
 

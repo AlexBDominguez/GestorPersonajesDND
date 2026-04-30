@@ -58,6 +58,8 @@ class ClassOption {
   final String description;
   final List<String> proficiencies;
   final String? spellCastingAbility;
+  final int skillChoiceCount;
+  final List<String> allowedSkillIndices;
 
   const ClassOption({
     required this.id,
@@ -67,6 +69,8 @@ class ClassOption {
     required this.description,
     required this.proficiencies,
     this.spellCastingAbility,
+    this.skillChoiceCount = 0,
+    this.allowedSkillIndices = const [],
   });
 
   factory ClassOption.fromJson(Map<String, dynamic> j) => ClassOption(
@@ -77,6 +81,8 @@ class ClassOption {
     description: j['description'] as String? ?? '',
     proficiencies: List<String>.from(j['proficiencies'] as List? ?? []),
     spellCastingAbility: j['spellcastingAbility'] as String?,
+    skillChoiceCount: j['skillChoiceCount'] as int? ?? 0,
+    allowedSkillIndices: List<String>.from(j['allowedSkillIndices'] as List? ?? []),
   );
 
   // HP al nivel 1: hitDie + CON modifier (se calcula en el ViewModel)
