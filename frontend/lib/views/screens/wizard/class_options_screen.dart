@@ -62,6 +62,12 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
   ClassOption get cls => widget.classOption;
 
+  // Computed locally from cls (widget param) to avoid stale vm.selectedClass data
+  bool get _classSkillsDone {
+    if (cls.skillChoiceCount == 0 || cls.allowedSkillIndices.isEmpty) return true;
+    return widget.vm.classSkillIndices.length >= cls.skillChoiceCount;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -178,6 +184,15 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                   ),
                   const SizedBox(height: 20),
 
+                  // Skill Picks ───────────────────────────────────────────
+                  if (cls.skillChoiceCount > 0 && cls.allowedSkillIndices.isNotEmpty) ...[  
+                    _SkillPickerSection(
+                      cls: cls,
+                      vm: widget.vm,
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
                   // Subclass selector ────────────────────────────────
                   _SubclassSelectorSection(
                     vm: widget.vm,
@@ -279,15 +294,6 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Skill Picks ───────────────────────────────────────────────
-                  if (cls.skillChoiceCount > 0 && cls.allowedSkillIndices.isNotEmpty) ...[  
-                    _SkillPickerSection(
-                      cls: cls,
-                      vm: widget.vm,
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-
                   // HP ────────────────────────────────────────────────────────
                   _SectionHeader('Manage HP'),
                   const SizedBox(height: 4),
@@ -323,15 +329,15 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
           ),
 
           // Hint when button is disabled
-          if (!(_hpComplete && widget.vm.classFeatureChoicesDone && widget.vm.classSkillPicksDone)) ...[
+          if (!(_hpComplete && widget.vm.classFeatureChoicesDone && _classSkillsDone)) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (!widget.vm.classSkillPicksDone)
+                  if (!_classSkillsDone)
                     _BlockerHint(
-                      '${widget.vm.classSkillIndices.length}/${cls.skillChoiceCount} skill proficiencies chosen — scroll up to pick them',
+                      '${widget.vm.classSkillIndices.length}/${cls.skillChoiceCount} skill proficiencies chosen — scroll to the top to pick them',
                     ),
                   if (!_hpComplete)
                     const _BlockerHint('All HP rolls must be filled'),
@@ -344,7 +350,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
           // Botones
           _BottomButtons(
-            canConfirm: _hpComplete && widget.vm.classFeatureChoicesDone && widget.vm.classSkillPicksDone,
+            canConfirm: _hpComplete && widget.vm.classFeatureChoicesDone && _classSkillsDone,
             onCancel: _onCancel,
             onConfirm: _onConfirm,
           ),
