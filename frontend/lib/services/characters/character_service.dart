@@ -101,7 +101,7 @@ class CharacterService {
         'heal': heal,
         'temporaryHp': tempHp,
       };
-      final res = await _api.put('${ApiConfig.charactersPath}/$id/hp', body: body);
+      final res = await _api.patch('${ApiConfig.charactersPath}/$id/hp', body: body);
       if (res.statusCode == 200){
         return PlayerCharacter.fromJson(
           jsonDecode(res.body) as Map<String, dynamic>);        

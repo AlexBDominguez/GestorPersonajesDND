@@ -87,6 +87,8 @@ public class SecurityConfig {
 
                 .requestMatchers("/api/users/me/**").authenticated()
 
+                // Allow Spring Boot's internal error forwarding path
+                .requestMatchers("/error").permitAll()
 
                 .anyRequest().authenticated()
             )

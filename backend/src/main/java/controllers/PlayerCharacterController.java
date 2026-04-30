@@ -214,6 +214,27 @@ public class PlayerCharacterController {
         return ResponseEntity.ok(playerCharacterService.resetDeathSaves(id));
     }
 
+    // Combined HP update: damage + heal + temporaryHp in one call
+    @PatchMapping("/{id}/hp")
+    public ResponseEntity<PlayerCharacterDto> updateHp(
+            @PathVariable Long id,
+            @RequestBody Map<String, Integer> body) {
+
+        verifyCharacterOwnership(id);
+
+        int damage  = body.getOrDefault("damage",      0);
+        int heal    = body.getOrDefault("heal",        0);
+        int tempHp  = body.getOrDefault("temporaryHp", 0);
+
+        PlayerCharacterDto result = null;
+        if (damage > 0) result = playerCharacterService.takeDamage(id, damage);
+        if (heal   > 0) result = playerCharacterService.heal(id, heal);
+        if (tempHp > 0) result = playerCharacterService.setTemporaryHP(id, tempHp);
+        if (result == null) result = playerCharacterService.getById(id);
+
+        return ResponseEntity.ok(result);
+    }
+
     @PostMapping("/{id}/toggle-inspiration")
     public ResponseEntity<PlayerCharacterDto> toggleInspiration(@PathVariable Long id) {
         verifyCharacterOwnership(id);

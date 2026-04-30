@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'config/app_theme.dart';
+import 'services/http/api_client.dart';
 import 'viewmodels/auth/auth_viewmodel.dart';
 import 'views/screens/login_screen.dart';
 import 'views/screens/dashboard_screen.dart';
@@ -24,10 +25,8 @@ class DndApp extends StatelessWidget {
         theme: AppTheme.darkTheme,  
         home: Consumer<AuthViewModel>(
           builder: (context, vm, child) {
-            // Splash mientras lee SharedPreferences
-            if (!vm.isLoggedIn && vm.isLoading == false && vm.errorMessage == null) {
-              // Sin token guardado -> login
-            }
+            // Register global 401/403 → logout handler
+            ApiClient.onSessionExpired = () { vm.logout(); };
             return vm.isLoggedIn
                 ? const DashboardScreen()
                 : const LoginScreen();
