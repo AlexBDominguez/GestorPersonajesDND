@@ -273,6 +273,9 @@ public class PlayerCharacterService {
 
         generateSpellSlots(saved);
 
+        // Initialize class resources (Rage charges, Ki Points, Bardic Inspiration, etc.)
+        characterClassResourceService.initializeClassResourcesForCharacter(saved.getId());
+
         // Generate pending tasks for all choice-requiring features from level 1 to selectedLevel
         generateChoiceTasksForCreation(saved);
 

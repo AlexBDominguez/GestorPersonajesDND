@@ -6,7 +6,9 @@ import entities.CharacterInventory;
 import entities.PlayerCharacter;
 import entities.Item;
 import jakarta.transaction.Transactional;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import repositories.CharacterEquipmentRepository;
 import repositories.CharacterInventoryRepository;
@@ -101,7 +103,7 @@ public class CharacterInventoryService {
     @Transactional
     public CharacterInventoryDto toggleAttuned(Long inventoryId) {
         CharacterInventory inventory = inventoryRepository.findById(inventoryId)
-                .orElseThrow(() -> new RuntimeException("Inventory item not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inventory item not found"));
 
         // Verificar límite de attunement (máximo 3 items attuned)
         if (!inventory.isAttuned()) {
@@ -109,7 +111,7 @@ public class CharacterInventoryService {
                     inventory.getCharacter().getId(), true).size();
 
             if (attunedCount >= 3) {
-                throw new RuntimeException("Character already has 3 attuned items (maximum)");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Character already has 3 attuned items (maximum)");
             }
         }
 
