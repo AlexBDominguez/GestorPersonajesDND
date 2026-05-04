@@ -81,6 +81,19 @@ const kLanguages = [
   DndChoiceOption('Undercommon', 'Trade language of the Underdark; script: Elvish.'),
 ];
 
+/// The nine standard D&D 5e alignments.
+const kAlignments = [
+  'Lawful Good',
+  'Neutral Good',
+  'Chaotic Good',
+  'Lawful Neutral',
+  'True Neutral',
+  'Chaotic Neutral',
+  'Lawful Evil',
+  'Neutral Evil',
+  'Chaotic Evil',
+];
+
 /// Wizard cantrips from the SRD/Player's Handbook.
 const kWizardCantrips = [
   DndChoiceOption('Acid Splash',       'Orb of acid splashes up to two creatures within 5 ft of each other.'),

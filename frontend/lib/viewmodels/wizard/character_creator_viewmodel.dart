@@ -557,7 +557,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   String ideals      = '';
   String bonds       = '';
   String flaws       = '';
+  String? alignment;
 
+  void setAlignment(String? v) { alignment = v; _markDirty(WizardStep.background); notifyListeners(); }
   void setHair(String v)        { hair        = v; _markDirty(WizardStep.background); notifyListeners(); }
   void setEyes(String v)        { eyes        = v; _markDirty(WizardStep.background); notifyListeners(); }
   void setSkin(String v)        { skin        = v; _markDirty(WizardStep.background); notifyListeners(); }
@@ -1192,6 +1194,7 @@ void toggleItem(int itemId) {
         ideal:  ideals.isNotEmpty  ? ideals  : null,
         bond:   bonds.isNotEmpty   ? bonds   : null,
         flaw:   flaws.isNotEmpty   ? flaws   : null,
+        alignment: alignment,
         hair:   hair.isNotEmpty    ? hair    : null,
         eyes:   eyes.isNotEmpty    ? eyes    : null,
         skin:   skin.isNotEmpty    ? skin    : null,

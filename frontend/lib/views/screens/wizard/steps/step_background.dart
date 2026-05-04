@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../config/app_theme.dart';
+import '../../../../config/dnd_choice_options.dart';
 import '../../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import '../../../../models/wizard/background_option.dart';
 
@@ -134,6 +135,38 @@ class _StepBackgroundState extends State<StepBackground> {
           const SizedBox(height: 20),
           _BackgroundDetail(bg: bg),
         ],
+
+        // ── Alignment ─────────────────────────────────────────────
+        _SectionTitle('Alignment'),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: vm.alignment != null ? AppTheme.primary : AppTheme.surfaceVariant,
+              width: vm.alignment != null ? 1.5 : 1,
+            ),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              dropdownColor: AppTheme.surface,
+              value: vm.alignment,
+              hint: Text('Select alignment…',
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary, fontSize: 14)),
+              items: kAlignments.map((a) => DropdownMenuItem(
+                value: a,
+                child: Text(a,
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textPrimary, fontSize: 14)),
+              )).toList(),
+              onChanged: vm.setAlignment,
+            ),
+          ),
+        ),
 
         const SizedBox(height: 24),
 

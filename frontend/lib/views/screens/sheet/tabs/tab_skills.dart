@@ -97,9 +97,28 @@ class TabSkills extends StatelessWidget{
 
                 //Skill name
                 Expanded(
-                  child: Text(skill,
-                  style: GoogleFonts.lato(
-                    color: AppTheme.textPrimary, fontSize: 13)),
+                  child: Row(children: [
+                    Text(skill,
+                    style: GoogleFonts.lato(
+                      color: AppTheme.textPrimary, fontSize: 13)),
+                    if (expertise) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: AppTheme.primary.withOpacity(0.5)),
+                        ),
+                        child: Text('EXP',
+                          style: GoogleFonts.lato(
+                            color: AppTheme.primary,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5)),
+                      ),
+                    ],
+                  ]),
                 ),
 
                 //Bonus

@@ -994,8 +994,15 @@ class _AddItemSheetState extends State<_AddItemSheet> {
 }
 
 // Currency Row
-class _CurrencyRow extends StatelessWidget {
+class _CurrencyRow extends StatefulWidget {
   final PlayerCharacter character;
+  const _CurrencyRow({required this.character});
+
+  @override
+  State<_CurrencyRow> createState() => _CurrencyRowState();
+}
+
+class _CurrencyRowState extends State<_CurrencyRow> {
   static const _coins = [
     ('CP', Colors.brown),
     ('SP', Colors.grey),
@@ -1003,18 +1010,101 @@ class _CurrencyRow extends StatelessWidget {
     ('GP', Color(0xFFC8A45A)),
     ('PP', Color(0xFFB0A0C8)),
   ];
+  static const _keys = ['copper', 'silver', 'electrum', 'gold', 'platinum'];
 
-  const _CurrencyRow({required this.character});
+  late List<int> _values;
+  final _svc = InventoryService();
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _values = [
+      widget.character.copperPieces,
+      widget.character.silverPieces,
+      widget.character.electrumPieces,
+      widget.character.goldPieces,
+      widget.character.platinumPieces,
+    ];
+  }
+
+  Future<void> _update(Map<String, int> newValues) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final result = await _svc.setMoney(widget.character.id, newValues);
+      if (mounted) {
+        setState(() {
+          _values = [
+            result['copper']!,
+            result['silver']!,
+            result['electrum']!,
+            result['gold']!,
+            result['platinum']!,
+          ];
+        });
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _adjust(int index, int delta) {
+    final newVal = (_values[index] + delta).clamp(0, 999999);
+    final updated = List<int>.from(_values)..[index] = newVal;
+    final body = {for (var i = 0; i < _keys.length; i++) _keys[i]: updated[i]};
+    setState(() => _values = updated);
+    _update(body);
+  }
+
+  void _editDialog(BuildContext context, int index) {
+    final ctrl = TextEditingController(text: '${_values[index]}');
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        title: Text('Set ${_coins[index].$1}',
+            style: GoogleFonts.cinzel(color: AppTheme.primary, fontSize: 14)),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          style: GoogleFonts.lato(color: AppTheme.textPrimary),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppTheme.surfaceVariant,
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(_),
+              child: Text('Cancel',
+                  style: GoogleFonts.lato(color: AppTheme.textSecondary))),
+          ElevatedButton(
+            onPressed: () {
+              final v = int.tryParse(ctrl.text) ?? _values[index];
+              Navigator.pop(_);
+              final updated = List<int>.from(_values)..[index] = v.clamp(0, 999999);
+              final body = {for (var i = 0; i < _keys.length; i++) _keys[i]: updated[i]};
+              setState(() => _values = updated);
+              _update(body);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+            child: Text('Set',
+                style: GoogleFonts.cinzel(color: AppTheme.background)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final values = [
-      character.copperPieces,
-      character.silverPieces,
-      character.electrumPieces,
-      character.goldPieces,
-      character.platinumPieces,
-    ];
     return Row(
       children: List.generate(_coins.length, (i) {
         final label = _coins[i].$1;
@@ -1022,26 +1112,61 @@ class _CurrencyRow extends StatelessWidget {
         return Expanded(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 3),
-            padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
               color: AppTheme.surface,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: color.withOpacity(0.5)),
             ),
-            child: Column(
-              children: [
-                Text ('${values[i]}',
-                  style: GoogleFonts.cinzel(
-                    color: color,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
-                const SizedBox(height: 2),
-                Text(label,
-                  style: GoogleFonts.lato(
-                    color: AppTheme.textSecondary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold)),
-           ]),
+            child: Column(children: [
+              // + button
+              GestureDetector(
+                onTap: () => _adjust(i, 1),
+                onLongPress: () => _adjust(i, 10),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(7)),
+                  ),
+                  child: Icon(Icons.add, color: color, size: 14),
+                ),
+              ),
+              // Value (tap to edit)
+              GestureDetector(
+                onTap: () => _editDialog(context, i),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Column(children: [
+                    Text('${_values[i]}',
+                        style: GoogleFonts.cinzel(
+                            color: color,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 2),
+                    Text(label,
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold)),
+                  ]),
+                ),
+              ),
+              // - button
+              GestureDetector(
+                onTap: () => _adjust(i, -1),
+                onLongPress: () => _adjust(i, -10),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.08),
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(7)),
+                  ),
+                  child: Icon(Icons.remove, color: color.withOpacity(0.7), size: 14),
+                ),
+              ),
+            ]),
           ),
         );
       }),

@@ -331,8 +331,14 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           _Field(ctrl: _userCtrl,  label: 'Username',
               icon: Icons.person_outline,
-              validator: (v) => (v == null || v.length < 3)
-                  ? 'Min. 3 characters' : null),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Required';
+                if (v.trim().length < 3) return 'Min. 3 characters';
+                if (v.trim().length > 20) return 'Max. 20 characters';
+                if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(v.trim()))
+                  return 'Only letters, numbers and underscores';
+                return null;
+              }),
           const SizedBox(height: 12),
           TextFormField(
             controller: _pwCtrl,
@@ -357,8 +363,12 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none),
             ),
-            validator: (v) =>
-                (v == null || v.length < 6) ? 'Min. 6 characters' : null,
+            validator: (v) {
+                if (v == null || v.isEmpty) return 'Required';
+                if (v.length < 6) return 'Min. 6 characters';
+                if (v.length > 64) return 'Max. 64 characters';
+                return null;
+              },
           ),
           if (_error != null) ...[
             const SizedBox(height: 10),

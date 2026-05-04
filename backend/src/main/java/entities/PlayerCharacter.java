@@ -661,7 +661,7 @@ public class PlayerCharacter {
 
     /**
      * Calcula la velocidad de movimiento actual
-     * Base: velocidad de la raza + modificadores
+     * Base: velocidad de la raza + modificadores + bonificaciones de clase
      */
     @Transient
     public int getCurrentSpeed(){
@@ -671,6 +671,28 @@ public class PlayerCharacter {
 
         int baseSpeed = race.getSpeed();
         int totalSpeed = baseSpeed + speedModifier;
+
+        // Class speed bonuses
+        if (dndClass != null) {
+            String className = dndClass.getName();
+            if (className != null) {
+                String cn = className.toLowerCase();
+                // Barbarian Fast Movement: +10 ft at level 5+ (not while wearing heavy armor)
+                if (cn.contains("barbarian") && level >= 5) {
+                    totalSpeed += 10;
+                }
+                // Monk Unarmored Movement: scales with level
+                if (cn.contains("monk") && level >= 2) {
+                    int bonus = 0;
+                    if      (level >= 18) bonus = 30;
+                    else if (level >= 14) bonus = 25;
+                    else if (level >= 10) bonus = 20;
+                    else if (level >=  6) bonus = 15;
+                    else                  bonus = 10;
+                    totalSpeed += bonus;
+                }
+            }
+        }
 
         //no puede ser negativa
         return Math.max(0, totalSpeed);

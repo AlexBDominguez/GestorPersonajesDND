@@ -387,6 +387,46 @@ class _SpellRow extends StatelessWidget {
     return '—';
   }
 
+  Widget _buildDamageCell() {
+    final b = spell.damageBase;
+    final t = spell.damageType;
+    if (b == null || b.isEmpty) {
+      return Text('—',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.lato(
+              color: const Color(0xFFCB7A48),
+              fontSize: 12,
+              fontWeight: FontWeight.w600));
+    }
+    if (t == null || t.isEmpty) {
+      return Text(b,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.lato(
+              color: const Color(0xFFCB7A48),
+              fontSize: 12,
+              fontWeight: FontWeight.w600));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(b,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.lato(
+                color: const Color(0xFFCB7A48),
+                fontSize: 12,
+                fontWeight: FontWeight.w600)),
+        Text(t,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.lato(
+                color: const Color(0xFFCB7A48).withOpacity(0.75),
+                fontSize: 9,
+                fontWeight: FontWeight.w500)),
+      ],
+    );
+  }
+
   String _damage() {
     final b = spell.damageBase;
     final t = spell.damageType;
@@ -451,13 +491,7 @@ class _SpellRow extends StatelessWidget {
           const SizedBox(width: _kColGap),
           SizedBox(
             width: _kDmgW,
-            child: Text(_damage(),
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.lato(
-                    color: const Color(0xFFCB7A48),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600)),
+            child: _buildDamageCell(),
           ),
         ]),
       ),

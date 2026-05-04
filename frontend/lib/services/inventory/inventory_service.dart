@@ -98,4 +98,57 @@ class InventoryService {
       }
       throw Exception('Failed to toggle equipped (${res.statusCode})');
     }
+
+    // ── Money ──────────────────────────────────────────────────
+    /// Returns updated money map: {'platinum':0,'gold':0,'electrum':0,'silver':0,'copper':0}
+    Future<Map<String, int>> getMoney(int characterId) async {
+      final res = await _api.get('/api/characters/$characterId/money');
+      if (res.statusCode == 200) {
+        final j = jsonDecode(res.body) as Map<String, dynamic>;
+        return {
+          'platinum': (j['platinum'] as num?)?.toInt() ?? 0,
+          'gold':     (j['gold']     as num?)?.toInt() ?? 0,
+          'electrum': (j['electrum'] as num?)?.toInt() ?? 0,
+          'silver':   (j['silver']   as num?)?.toInt() ?? 0,
+          'copper':   (j['copper']   as num?)?.toInt() ?? 0,
+        };
+      }
+      throw Exception('Failed to load money (${res.statusCode})');
+    }
+
+    Future<Map<String, int>> setMoney(int characterId, Map<String, int> values) async {
+      final res = await _api.post(
+        '/api/characters/$characterId/money/set',
+        body: values,
+      );
+      if (res.statusCode == 200) {
+        final j = jsonDecode(res.body) as Map<String, dynamic>;
+        return {
+          'platinum': (j['platinum'] as num?)?.toInt() ?? 0,
+          'gold':     (j['gold']     as num?)?.toInt() ?? 0,
+          'electrum': (j['electrum'] as num?)?.toInt() ?? 0,
+          'silver':   (j['silver']   as num?)?.toInt() ?? 0,
+          'copper':   (j['copper']   as num?)?.toInt() ?? 0,
+        };
+      }
+      throw Exception('Failed to set money (${res.statusCode})');
+    }
+
+    Future<Map<String, int>> addMoney(int characterId, Map<String, int> values) async {
+      final res = await _api.post(
+        '/api/characters/$characterId/money/add',
+        body: values,
+      );
+      if (res.statusCode == 200) {
+        final j = jsonDecode(res.body) as Map<String, dynamic>;
+        return {
+          'platinum': (j['platinum'] as num?)?.toInt() ?? 0,
+          'gold':     (j['gold']     as num?)?.toInt() ?? 0,
+          'electrum': (j['electrum'] as num?)?.toInt() ?? 0,
+          'silver':   (j['silver']   as num?)?.toInt() ?? 0,
+          'copper':   (j['copper']   as num?)?.toInt() ?? 0,
+        };
+      }
+      throw Exception('Failed to add money (${res.statusCode})');
+    }
 }
