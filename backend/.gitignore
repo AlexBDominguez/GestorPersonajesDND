@@ -36,3 +36,10 @@ Thumbs.db
 
 # Environment
 .env
+
+# Backups
+dnd_backup_20260313_110548.sql
+dnd_backup_20260313_110553.sql
+dnd_backup_20260429.sql
+dnd_backup_complete_20250313_111223.sql
+backup.sql
