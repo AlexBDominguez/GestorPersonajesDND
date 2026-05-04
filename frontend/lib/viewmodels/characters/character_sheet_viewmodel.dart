@@ -172,6 +172,17 @@ class CharacterSheetViewModel extends ChangeNotifier {
   }
 
   Future<void> togglePrepareSpell(int spellId) async {
+    // Validate prepare limit before calling API
+    final spell = character?.characterSpells.where((s) => s.spellId == spellId).firstOrNull;
+    if (spell != null && !spell.prepared && !spell.isCantrip && !alwaysPreparedClass) {
+      final preparedCount = character!.characterSpells.where((s) => s.prepared && !s.isCantrip).length;
+      final max = character!.maxPreparedSpells;
+      if (max > 0 && preparedCount >= max) {
+        _errorMessage = ': Prepared spell limit reached ($preparedCount/$max). Unprepare a spell first.';
+        notifyListeners();
+        return;
+      }
+    }
     try {
       await _service.togglePrepareSpell(characterId: characterId, spellId: spellId);
       await load();
