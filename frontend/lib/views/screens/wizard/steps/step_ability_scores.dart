@@ -265,11 +265,10 @@ class _ManualRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final base = vm.abilityScores[ability] ?? 10;
     final racialBonus = vm.racialBonuses[ability] ?? 0;
-    final total = vm.finalScore(ability);
     final mod = vm.abilityModifier(ability);
     final modLabel = mod >= 0 ? '+$mod' : '$mod';
     final atMin = base <= 3;
-    final atMax = base >= 20;
+    final atMax = base >= 18;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -323,16 +322,11 @@ class _ManualRow extends StatelessWidget {
 
         const Spacer(),
 
-        // ── Total + modifier ───────────────────────────────────
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text('$total',
-              style: GoogleFonts.cinzel(
-                  color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-          Text(modLabel,
-              style: GoogleFonts.lato(
-                  color: mod >= 0 ? AppTheme.primary : AppTheme.accent,
-                  fontSize: 12, fontWeight: FontWeight.bold)),
-        ]),
+        // ── Modifier ──────────────────────────────────────────
+        Text(modLabel,
+            style: GoogleFonts.cinzel(
+                color: mod >= 0 ? AppTheme.primary : AppTheme.accent,
+                fontSize: 18, fontWeight: FontWeight.bold)),
       ]),
     );
   }
