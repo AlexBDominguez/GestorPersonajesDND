@@ -941,18 +941,22 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
   void initState() {
     super.initState();
     final cur = widget.vm.featureChoices[_mainKey];
+    // Solo cambiamos el modo si ya había una elección guardada
     if (cur == 'Feat') {
       _isAsi = false;
-    } else {
-      // Default to ASI mode immediately so opening the tile marks it as chosen
-      widget.vm.featureChoices[_mainKey] = 'Ability Score Improvement';
     }
+    // No pre-escribimos nada: el tile solo se marca como "done" cuando el
+    // usuario realmente elige habilidades (badge Str/Con) o un Feat concreto.
   }
 
   void _pickAsi() {
     setState(() { _isAsi = true; });
     widget.vm.featureChoices.remove(_featKey);
-    widget.vm.featureChoices[_mainKey] = 'Ability Score Improvement';
+    // Solo borramos el mainKey si venía de modo Feat para limpiar el badge
+    if (widget.vm.featureChoices[_mainKey] == 'Feat') {
+      widget.vm.featureChoices.remove(_mainKey);
+    }
+    // Si ya había un badge de habilidades (Str / Con), lo conservamos
     widget.vm.notify();
   }
 
