@@ -43,5 +43,11 @@ ArreglosRequirements.md
 # IntelliJ IDEA
 .idea/
 
+# Database backups
 backup.sql
+backup*.sql
+*_backup*.sql
+dnd_backup*.sql
+*.sql.gz
+backups/
 
