@@ -42,9 +42,16 @@ public class UserController {
     // POST /api/admin/users -> crear un usuario nuevo
     @PostMapping("/api/admin/users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDto> createUser(@RequestBody CreateUserRequest request) {
-        UserDto created = userService.createUser(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<?> createUser(@RequestBody CreateUserRequest request) {
+        try {
+            UserDto created = userService.createUser(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("ya existe")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     // PATCH /api/admin/users/{id}/activate -> activar usuario

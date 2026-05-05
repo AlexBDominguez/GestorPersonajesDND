@@ -672,6 +672,67 @@ class _ItemTileContent extends StatelessWidget {
     required this.trailing,
   });
 
+  void _showDescription(BuildContext context) {
+    final desc = item.description;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.45,
+        minChildSize: 0.25,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (_, ctrl) => SingleChildScrollView(
+          controller: ctrl,
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                    color: AppTheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            Row(children: [
+              Icon(item.typeIcon, color: AppTheme.primary, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(item.name,
+                    style: GoogleFonts.cinzel(
+                        color: AppTheme.primary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold)),
+              ),
+            ]),
+            const SizedBox(height: 4),
+            if (item.itemType != null)
+              Text(_formatItemType(item.itemType!),
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary, fontSize: 12)),
+            const SizedBox(height: 16),
+            if (desc != null && desc.isNotEmpty)
+              Text(desc,
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textPrimary,
+                      fontSize: 13,
+                      height: 1.6))
+            else
+              Text('No description available.',
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary,
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic)),
+          ]),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final Color borderColor = attunedBorder
@@ -737,7 +798,15 @@ class _ItemTileContent extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.bold)),
         ),
-        const SizedBox(width: 6),
+        IconButton(
+          icon: Icon(Icons.info_outline,
+              size: 18, color: AppTheme.textSecondary),
+          splashRadius: 18,
+          padding: const EdgeInsets.all(4),
+          constraints: const BoxConstraints(),
+          tooltip: 'Description',
+          onPressed: () => _showDescription(context),
+        ),
         trailing,
       ]),
     );

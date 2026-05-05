@@ -416,13 +416,13 @@ class _SpellRow extends StatelessWidget {
                 color: const Color(0xFFCB7A48),
                 fontSize: 12,
                 fontWeight: FontWeight.w600)),
-        Text(t,
+        Text(t.toUpperCase(),
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.lato(
-                color: const Color(0xFFCB7A48).withOpacity(0.75),
-                fontSize: 9,
-                fontWeight: FontWeight.w500)),
+                color: const Color(0xFFCB7A48),
+                fontSize: 12,
+                fontWeight: FontWeight.w600)),
       ],
     );
   }

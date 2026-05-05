@@ -510,17 +510,17 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   /// Returns only the kSkills options the character already has proficiency in.
-  /// Falls back to all kSkills if none are selected yet (prevents empty list).
+  /// Returns empty list if none are selected yet (Expertise requires prior proficiency).
   List<DndChoiceOption> get proficientSkillOptions {
     final proficient = _proficientSkillIndices;
-    if (proficient.isEmpty) return kSkills;
+    if (proficient.isEmpty) return const [];
     // Normalize kSkills name to index format: 'Sleight of Hand' → 'sleight-of-hand'
     String toIndex(String name) =>
         name.toLowerCase().replaceAll(' ', '-');
     final filtered = kSkills
         .where((s) => proficient.contains(toIndex(s.name)))
         .toList();
-    return filtered.isEmpty ? kSkills : filtered;
+    return filtered;
   }
 
   // PASO 3: Background
@@ -540,10 +540,31 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     }
   }
 
-  void selectBackground(BackgroundOption b){
+  /// Selects the background and removes any class skill picks that conflict
+  /// (same skill can't come from both class and background in D&D 5e).
+  /// Returns the display names of any skills that were deselected from the class.
+  List<String> selectBackground(BackgroundOption b) {
     selectedBackground = b;
     _markDirty(WizardStep.background);
+
+    // Find class skills that overlap with background skill proficiencies
+    final conflicts = _classSkillIndices
+        .where((idx) => b.skillProficiencies.contains(idx))
+        .toList();
+
+    if (conflicts.isNotEmpty) {
+      for (final idx in conflicts) {
+        _classSkillIndices.remove(idx);
+      }
+      _markDirty(WizardStep.dndClass);
+    }
+
     notifyListeners();
+
+    // Return human-readable display names for the UI to show a warning
+    String toDisplay(String idx) =>
+        idx.split('-').map((w) => w[0].toUpperCase() + w.substring(1)).join(' ');
+    return conflicts.map(toDisplay).toList();
   }
 
   // Características físicas y personales (persistentes entre tabs)

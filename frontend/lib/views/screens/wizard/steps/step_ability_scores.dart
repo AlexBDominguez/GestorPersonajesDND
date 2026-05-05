@@ -60,7 +60,7 @@ class StepAbilityScores extends StatelessWidget {
           const SizedBox(height: 20),
         ] else ...[
           Text(
-            'Enter any value between 3 and 20 for each ability.',
+            'Enter any value between 3 and 18 for each ability.',
             style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 16),
@@ -167,13 +167,12 @@ class _StandardArrayRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final assignedIdx = vm.standardArrayAssignments[ability];
     final racialBonus = vm.racialBonuses[ability] ?? 0;
-    final total = vm.finalScore(ability);
     final mod = vm.abilityModifier(ability);
     final modLabel = mod >= 0 ? '+$mod' : '$mod';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(10),
@@ -234,21 +233,15 @@ class _StandardArrayRow extends StatelessWidget {
               style: GoogleFonts.lato(
                   color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.bold)),
         ],
-        const SizedBox(width: 8),
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text(
-            assignedIdx != null ? '$total' : '—',
-            style: GoogleFonts.cinzel(
-                color: assignedIdx != null ? AppTheme.textPrimary : AppTheme.textSecondary,
-                fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            assignedIdx != null ? modLabel : '',
-            style: GoogleFonts.lato(
-                color: mod >= 0 ? AppTheme.primary : AppTheme.accent,
-                fontSize: 12, fontWeight: FontWeight.bold),
-          ),
-        ]),
+        const Spacer(),
+        Text(
+          assignedIdx != null ? modLabel : '—',
+          style: GoogleFonts.cinzel(
+              color: assignedIdx != null
+                  ? (mod >= 0 ? AppTheme.primary : AppTheme.accent)
+                  : AppTheme.textSecondary,
+              fontSize: 18, fontWeight: FontWeight.bold),
+        ),
       ]),
     );
   }

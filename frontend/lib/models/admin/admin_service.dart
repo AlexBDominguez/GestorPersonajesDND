@@ -30,6 +30,9 @@ class AdminService {
     if (res.statusCode == 201) {
       return UserDto.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
     }
+    if (res.statusCode == 409) {
+      throw Exception('That username already exists. Please choose a different one.');
+    }
     final body = res.body;
     String msg = 'Failed to create user (${res.statusCode})';
     if (body.isNotEmpty) {

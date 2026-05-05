@@ -306,24 +306,6 @@ class _SpellRow extends StatelessWidget {
     return r.replaceAll(' feet', 'ft').replaceAll(' foot', 'ft');
   }
 
-  String _hitDc(CharacterSpell s) {
-    if (s.attackType != null && s.attackType!.isNotEmpty) {
-      return vm.signedInt(vm.character?.spellAttackBonus ?? 0);
-    }
-    if (s.dcType != null && s.dcType!.isNotEmpty) {
-      return '${s.dcType} DC ${vm.character?.spellSaveDC ?? 0}';
-    }
-    return '';
-  }
-
-  String _damage(CharacterSpell s) {
-    final base = s.damageBase;
-    final type = s.damageType;
-    if (base == null || base.isEmpty) return '';
-    if (type == null || type.isEmpty) return base;
-    return '$base $type';
-  }
-
   @override
   Widget build(BuildContext context) {
     final isCantrip = spell.isCantrip;
@@ -371,30 +353,12 @@ class _SpellRow extends StatelessWidget {
               const SizedBox(width: _kColGap),
               SizedBox(
                 width: _kHitDcW,
-                child: Text(
-                  _hitDc(spell),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.lato(
-                    color: const Color(0xFFC8A45A),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: _HitDcCell(spell: spell, vm: vm),
               ),
               const SizedBox(width: _kColGap),
               SizedBox(
                 width: _kDmgW,
-                child: Text(
-                  _damage(spell),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.lato(
-                    color: const Color(0xFFCB7A48),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: _DamageCell(spell: spell),
               ),
               const SizedBox(width: _kCastPad),
               _CastButton(
@@ -638,6 +602,60 @@ class _CastButton extends StatelessWidget {
           style: GoogleFonts.cinzel(fontSize: 9, fontWeight: FontWeight.bold)),
     ),
   );
+}
+
+// ── Damage cell: dice above, type below (same size, uppercase) ────────────────
+class _DamageCell extends StatelessWidget {
+  final CharacterSpell spell;
+  const _DamageCell({required this.spell});
+
+  static const _kColor = Color(0xFFCB7A48);
+
+  @override
+  Widget build(BuildContext context) {
+    final base = spell.damageBase;
+    final type = spell.damageType;
+    if (base == null || base.isEmpty) {
+      return Text('—', textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600));
+    }
+    if (type == null || type.isEmpty) {
+      return Text(base, textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600));
+    }
+    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
+      Text(base, textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600)),
+      Text(type.toUpperCase(), textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600)),
+    ]);
+  }
+}
+
+// ── HIT/DC cell: attack bonus as single line; DC attr above + value below ────
+class _HitDcCell extends StatelessWidget {
+  final CharacterSpell spell;
+  final CharacterSheetViewModel vm;
+  const _HitDcCell({required this.spell, required this.vm});
+
+  static const _kColor = Color(0xFFC8A45A);
+
+  @override
+  Widget build(BuildContext context) {
+    if (spell.attackType != null && spell.attackType!.isNotEmpty) {
+      return Text(
+        vm.signedInt(vm.character?.spellAttackBonus ?? 0),
+        textAlign: TextAlign.center,
+        style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600),
+      );
+    }
+    if (spell.dcType != null && spell.dcType!.isNotEmpty) {
+      return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
+        Text(spell.dcType!.toUpperCase(), textAlign: TextAlign.center,
+            style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600)),
+        Text('DC ${vm.character?.spellSaveDC ?? 0}', textAlign: TextAlign.center,
+            style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600)),
+      ]);
+    }
+    return Text('—', textAlign: TextAlign.center,
+        style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600));
+  }
 }
 
 // - Manage Spells Screen
@@ -1115,7 +1133,7 @@ class _LearnNewTabState extends State<_LearnNewTab> {
       await vm.learnSpell(spell.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('"${spell.name}" added to your spellbook!'),
+          content: Text('Spell learned: "${spell.name}"'),
           backgroundColor: AppTheme.primary.withOpacity(0.9),
           duration: const Duration(seconds: 2),
         ));

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../config/app_theme.dart';
-import '../../../../config/dnd_choice_options.dart';
 import '../../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import '../../../../models/wizard/background_option.dart';
 
@@ -124,7 +123,19 @@ class _StepBackgroundState extends State<StepBackground> {
               onChanged: (id) {
                 if (id == null) return;
                 final chosen = vm.backgrounds.firstWhere((b) => b.id == id);
-                vm.selectBackground(chosen);
+                final removed = vm.selectBackground(chosen);
+                if (removed.isNotEmpty && context.mounted) {
+                  final names = removed.join(', ');
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(
+                      'Conflict: $names ${removed.length == 1 ? 'is' : 'are'} already granted by this background — '
+                      'deselected from your class skills.',
+                    ),
+                    backgroundColor: AppTheme.accent,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 5),
+                  ));
+                }
               },
             ),
           ),
@@ -139,33 +150,9 @@ class _StepBackgroundState extends State<StepBackground> {
         // ── Alignment ─────────────────────────────────────────────
         _SectionTitle('Alignment'),
         const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: vm.alignment != null ? AppTheme.primary : AppTheme.surfaceVariant,
-              width: vm.alignment != null ? 1.5 : 1,
-            ),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              isExpanded: true,
-              dropdownColor: AppTheme.surface,
-              value: vm.alignment,
-              hint: Text('Select alignment…',
-                  style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary, fontSize: 14)),
-              items: kAlignments.map((a) => DropdownMenuItem(
-                value: a,
-                child: Text(a,
-                    style: GoogleFonts.lato(
-                        color: AppTheme.textPrimary, fontSize: 14)),
-              )).toList(),
-              onChanged: vm.setAlignment,
-            ),
-          ),
+        _AlignmentGrid(
+          selected: vm.alignment,
+          onSelected: vm.setAlignment,
         ),
 
         const SizedBox(height: 24),
@@ -485,6 +472,132 @@ class _TextArea extends StatelessWidget {
           ),
         ),
       ),
+    ]);
+  }
+}
+
+// ── Alignment 3×3 grid picker ─────────────────────────────────────────────────
+// Layout: columns = Lawful / Neutral / Chaotic, rows = Good / Neutral / Evil
+
+class _AlignmentGrid extends StatelessWidget {
+  final String? selected;
+  final ValueChanged<String?> onSelected;
+  const _AlignmentGrid({required this.selected, required this.onSelected});
+
+  // Row-major order: [LG, NG, CG, LN, TN, CN, LE, NE, CE]
+  static const _cells = [
+    ('Lawful Good',      'LG'),
+    ('Neutral Good',     'NG'),
+    ('Chaotic Good',     'CG'),
+    ('Lawful Neutral',   'LN'),
+    ('True Neutral',     'TN'),
+    ('Chaotic Neutral',  'CN'),
+    ('Lawful Evil',      'LE'),
+    ('Neutral Evil',     'NE'),
+    ('Chaotic Evil',     'CE'),
+  ];
+
+  static const _rowLabels    = ['Good', 'Neutral', 'Evil'];
+  static const _columnLabels = ['Lawful', 'Neutral', 'Chaotic'];
+
+  Color _cellColor(String value) {
+    if (value == selected) return AppTheme.primary;
+    if (value.contains('Good'))    return const Color(0xFF1A3A2A);
+    if (value.contains('Evil'))    return const Color(0xFF3A1A1A);
+    return AppTheme.surfaceVariant;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      // Column headers
+      Row(children: [
+        const SizedBox(width: 52), // spacer for row labels
+        ..._columnLabels.map((l) => Expanded(
+          child: Center(
+            child: Text(l,
+                style: GoogleFonts.cinzel(
+                    color: AppTheme.textSecondary,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold)),
+          ),
+        )),
+      ]),
+      const SizedBox(height: 4),
+      // Grid rows
+      for (int row = 0; row < 3; row++)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(children: [
+            // Row label
+            SizedBox(
+              width: 52,
+              child: Text(_rowLabels[row],
+                  textAlign: TextAlign.right,
+                  style: GoogleFonts.cinzel(
+                      color: AppTheme.textSecondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(width: 4),
+            // 3 cells
+            for (int col = 0; col < 3; col++) ...[
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    final value = _cells[row * 3 + col].$1;
+                    onSelected(selected == value ? null : value);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    height: 52,
+                    margin: const EdgeInsets.only(right: 4),
+                    decoration: BoxDecoration(
+                      color: _cellColor(_cells[row * 3 + col].$1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: selected == _cells[row * 3 + col].$1
+                            ? AppTheme.primary
+                            : AppTheme.divider,
+                        width: selected == _cells[row * 3 + col].$1 ? 2 : 1,
+                      ),
+                    ),
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                      Text(_cells[row * 3 + col].$2,
+                          style: GoogleFonts.cinzel(
+                              color: selected == _cells[row * 3 + col].$1
+                                  ? Colors.white
+                                  : AppTheme.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text(
+                        _cells[row * 3 + col].$1.split(' ').last,
+                        style: GoogleFonts.lato(
+                            color: selected == _cells[row * 3 + col].$1
+                                ? Colors.white70
+                                : AppTheme.textSecondary,
+                            fontSize: 8),
+                      ),
+                    ]),
+                  ),
+                ),
+              ),
+            ],
+          ]),
+        ),
+      if (selected != null) ...[
+        const SizedBox(height: 6),
+        Center(
+          child: Text('Selected: $selected',
+              style: GoogleFonts.lato(
+                  color: AppTheme.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold)),
+        ),
+      ],
     ]);
   }
 }

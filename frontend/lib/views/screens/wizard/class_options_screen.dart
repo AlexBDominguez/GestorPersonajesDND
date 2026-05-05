@@ -778,23 +778,36 @@ class _MultiPickSectionState extends State<_MultiPickSection> {
 
         // Active slot options (hidden when all done)
         if (!_allDone) ...[
-          Padding(
-            padding: const EdgeInsets.only(top: 6, bottom: 4),
-            child: Text(
-              'Choice ${_activeSlot + 1} of ${widget.config.pickCount}:',
-              style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold),
+          if (widget.config.options.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, bottom: 4),
+              child: Text(
+                'Choose your skill proficiencies first — Expertise can only be applied to skills you already have proficiency in.',
+                style: GoogleFonts.lato(
+                    color: AppTheme.accent,
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic),
+              ),
+            )
+          else ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 6, bottom: 4),
+              child: Text(
+                'Choice ${_activeSlot + 1} of ${widget.config.pickCount}:',
+                style: GoogleFonts.lato(
+                    color: AppTheme.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
-          ...widget.config.options.map((opt) => _InlineOptionTile(
-                label: opt.name,
-                description: opt.description,
-                selected: _choice(_activeSlot) == opt.name,
-                disabled: takenByOthers.contains(opt.name),
-                onTap: () => _select(opt.name),
-              )),
+            ...widget.config.options.map((opt) => _InlineOptionTile(
+                  label: opt.name,
+                  description: opt.description,
+                  selected: _choice(_activeSlot) == opt.name,
+                  disabled: takenByOthers.contains(opt.name),
+                  onTap: () => _select(opt.name),
+                )),
+          ],
         ],
       ],
     );

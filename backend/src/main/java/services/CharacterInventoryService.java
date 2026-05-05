@@ -185,6 +185,7 @@ public class CharacterInventoryService {
         dto.setEquipped(inventory.isEquipped());
         dto.setNotes(inventory.getNotes());
         dto.setRequiresAttunement(inventory.getItem().isRequiresAttunement());
+        dto.setDescription(inventory.getItem().getDescription());
         return dto;
     }
 }

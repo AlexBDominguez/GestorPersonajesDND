@@ -14,6 +14,7 @@ public class CharacterInventoryDto {
     private boolean attuned;
     private boolean requiresAttunement;
     private String notes;
+    private String description;
 
     // Getters y Setters
 
@@ -120,5 +121,13 @@ public class CharacterInventoryDto {
 
     public void setRequiresAttunement(boolean requiresAttunement) {
         this.requiresAttunement = requiresAttunement;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

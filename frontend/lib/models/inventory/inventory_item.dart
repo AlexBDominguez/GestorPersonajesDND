@@ -14,6 +14,7 @@ class InventoryItem {
   final bool attuned;
   final String? notes;
   final bool requiresAttunement;
+  final String? description;
 
   const InventoryItem({
     required this.id,
@@ -27,6 +28,7 @@ class InventoryItem {
     required this.attuned,
     this.notes,
     this.requiresAttunement = false,
+    this.description,
   });
 
   factory InventoryItem.fromJson(Map<String, dynamic> j) => InventoryItem(
@@ -41,6 +43,7 @@ class InventoryItem {
         attuned:            j['attuned'] as bool? ?? false,
         notes:              j['notes'] as String?,
         requiresAttunement: j['requiresAttunement'] as bool? ?? false,
+        description:        j['description'] as String?,
       );
 
   // Icono por tipo

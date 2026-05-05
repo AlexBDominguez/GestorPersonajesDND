@@ -306,6 +306,14 @@ class CharacterSheetViewModel extends ChangeNotifier {
     }
   }
 
+  /// Loads available subclasses for the character's class (used by the
+  /// CHOOSE_SUBCLASS pending task resolver).
+  Future<List<SubclassOption>> loadSubclassOptions() async {
+    final classId = character?.dndClassId;
+    if (classId == null) return [];
+    return _refService.getSubclasses(classId);
+  }
+
   Future<void> _loadRacialTraits() async {
     final raceId = character?.raceId;
     final subraceId = character?.subraceId;

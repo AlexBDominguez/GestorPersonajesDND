@@ -149,10 +149,16 @@ class _FeatureTile extends StatelessWidget {
   /// Map a feature to its task type so we can look up the resolved choice.
   String? get _taskType {
     final n = feature.name.toLowerCase();
-    if (n.contains('fighting style')) return 'FIGHTING_STYLE';
-    if (n.contains('favored enemy'))  return 'FAVORED_ENEMY';
+    if (n.contains('fighting style'))   return 'FIGHTING_STYLE';
+    if (n.contains('favored enemy'))    return 'FAVORED_ENEMY';
     if (n.contains('natural explorer') || n.contains('favored terrain')) return 'FAVORED_TERRAIN';
-    if (n.contains('draconic ancestry')) return 'DRACONIC_ANCESTRY';
+    if (n.contains('draconic ancestry'))  return 'DRACONIC_ANCESTRY';
+    if (n.contains('ability score'))      return 'ASI_OR_FEAT';
+    if (n.contains('expertise'))          return 'EXPERTISE';
+    if (n.contains('extra language'))     return 'EXTRA_LANGUAGE';
+    if (n.contains('tool proficiency'))   return 'TOOL_PROFICIENCY';
+    if (n.contains('metamagic'))          return 'METAMAGIC';
+    if (n.contains('eldritch invocation')) return 'ELDRITCH_INVOCATION';
     return null;
   }
 
@@ -258,11 +264,41 @@ class _FeatureTile extends StatelessWidget {
           iconColor: AppTheme.textSecondary,
           collapsedIconColor: AppTheme.textSecondary,
           children: [
-            Text(feature.description,
-                style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary,
-                  fontSize: 12,
-                  height: 1.5)),
+            if (resolvedChoice != null) ...[
+              // Show the resolved choice prominently
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC8A45A).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFFC8A45A).withOpacity(0.4)),
+                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Chosen:',
+                      style: GoogleFonts.lato(
+                          color: AppTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 2),
+                  Text(resolvedChoice,
+                      style: GoogleFonts.cinzel(
+                          color: const Color(0xFFC8A45A),
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold)),
+                ]),
+              ),
+            ] else if (feature.description.isNotEmpty) ...[
+              Text(feature.description,
+                  style: GoogleFonts.lato(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                    height: 1.5)),
+            ] else ...[
+              Text('No description available.',
+                  style: GoogleFonts.lato(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic)),
+            ],
           ],
         ),
       ),
