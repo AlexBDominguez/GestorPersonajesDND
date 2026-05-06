@@ -237,6 +237,7 @@ class PlayerCharacter{
 
   double get hpPercent => maxHp == 0 ? 0 : (currentHp / maxHp).clamp(0.0, 1.0);
 
-  double get xpPercent => experienceToNextLevel == 0 ? 0 : (experiencePoints / experienceToNextLevel).clamp(0.0, 1.0);
+  // [DISABLED] xpPercent — XP system not active.
+  // double get xpPercent => experienceToNextLevel == 0 ? 0 : (experiencePoints / experienceToNextLevel).clamp(0.0, 1.0);
 
 }

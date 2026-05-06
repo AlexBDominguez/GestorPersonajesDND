@@ -287,12 +287,16 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   // ────────────────────────────────────────────────────────────
 
   String characterName = '';
-  bool useMilestone = true; // true = milestone, false = XP
-  bool useEncumbrance = false;
+  // [DISABLED] XP/Encumbrance — not used. Always milestone, never encumbrance.
+  // bool useMilestone = true;
+  // bool useEncumbrance = false;
+  bool useMilestone = true;      // kept for backend call; always true
+  bool useEncumbrance = false;   // kept for backend call; always false
 
   void setName(String v) {characterName = v; _markDirty(WizardStep.preferences); notifyListeners();}
-  void setMilestone(bool v) {useMilestone = v; _markDirty(WizardStep.preferences); notifyListeners();}
-  void setEncumbrance(bool v) {useEncumbrance = v; _markDirty(WizardStep.preferences); notifyListeners();}
+  // [DISABLED] setMilestone/setEncumbrance — UI removed, no longer called.
+  // void setMilestone(bool v) {useMilestone = v; _markDirty(WizardStep.preferences); notifyListeners();}
+  // void setEncumbrance(bool v) {useEncumbrance = v; _markDirty(WizardStep.preferences); notifyListeners();}
 
   bool get preferencesValid => characterName.trim().isNotEmpty;
 
