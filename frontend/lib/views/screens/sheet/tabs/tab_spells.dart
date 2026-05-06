@@ -817,6 +817,7 @@ class _MySpellsTab extends StatelessWidget {
           context: context,
           builder: (_) => AlertDialog(
             backgroundColor: AppTheme.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text('Remove spell?',
                 style: GoogleFonts.cinzel(color: AppTheme.primary)),
             content: Text(
@@ -830,7 +831,9 @@ class _MySpellsTab extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.accent,
+                    foregroundColor: Colors.white),
                 child: const Text('Remove'),
               ),
             ],
@@ -1124,6 +1127,9 @@ class _LearnNewTabState extends State<_LearnNewTab> {
             onPressed: () => Navigator.pop(context, true),
             icon: const Icon(Icons.add, size: 14),
             label: const Text('Learn'),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white),
           ),
         ],
       ),

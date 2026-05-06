@@ -19,12 +19,14 @@ class AdminService {
   Future<UserDto> createUser({
     required String username,
     required String password,
+    String role = 'USER',
   }) async {
     final res = await _api.post(
       '/api/admin/users',
       body: {
         'username': username,
         'password': password,
+        'role': role,
       },
     );
     if (res.statusCode == 201) {

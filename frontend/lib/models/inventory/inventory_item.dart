@@ -15,6 +15,10 @@ class InventoryItem {
   final String? notes;
   final bool requiresAttunement;
   final String? description;
+  final String? damageDice;
+  final String? damageType;
+  final String? weaponRange;
+  final List<String> weaponProperties;
 
   const InventoryItem({
     required this.id,
@@ -29,6 +33,10 @@ class InventoryItem {
     this.notes,
     this.requiresAttunement = false,
     this.description,
+    this.damageDice,
+    this.damageType,
+    this.weaponRange,
+    this.weaponProperties = const [],
   });
 
   factory InventoryItem.fromJson(Map<String, dynamic> j) => InventoryItem(
@@ -44,6 +52,10 @@ class InventoryItem {
         notes:              j['notes'] as String?,
         requiresAttunement: j['requiresAttunement'] as bool? ?? false,
         description:        j['description'] as String?,
+        damageDice:         j['damageDice'] as String?,
+        damageType:         j['damageType'] as String?,
+        weaponRange:        j['weaponRange'] as String?,
+        weaponProperties:   List<String>.from(j['weaponProperties'] ?? []),
       );
 
   // Icono por tipo

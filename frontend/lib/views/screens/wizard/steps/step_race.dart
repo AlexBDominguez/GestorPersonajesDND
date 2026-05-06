@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
 import 'package:gestor_personajes_dnd/models/wizard/race_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/subrace_option.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -290,6 +291,24 @@ class _RaceChoiceSection extends StatelessWidget {
   final CharacterCreatorViewModel vm;
   const _RaceChoiceSection({required this.vm});
 
+  /// For SKILL_VERSATILITY choices, filter out skills the character already has.
+  List<DndChoiceOption>? _filteredOptions(WizardChoiceConfig c) {
+    if (!c.type.startsWith('SKILL_VERSATILITY')) return null;
+
+    String toDisplay(String idx) =>
+        idx.split('-').map((w) => w.isEmpty ? '' : w[0].toUpperCase() + w.substring(1)).join(' ');
+
+    final excluded = <String>{};
+    for (final idx in vm.classSkillIndices) excluded.add(toDisplay(idx));
+    final bgSkills = vm.selectedBackground?.skillProficiencies ?? const [];
+    for (final idx in bgSkills) excluded.add(toDisplay(idx));
+    if (c.type == 'SKILL_VERSATILITY_2') {
+      final pick1 = vm.featureChoices['SKILL_VERSATILITY_1_1'];
+      if (pick1 != null) excluded.add(pick1);
+    }
+    return c.options.where((opt) => !excluded.contains(opt.name)).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -300,6 +319,7 @@ class _RaceChoiceSection extends StatelessWidget {
                   config: c,
                   selected: vm.featureChoices[c.key],
                   onSelect: (val) => vm.setFeatureChoice(c.key, val),
+                  filteredOptions: _filteredOptions(c),
                 ))
             .toList(),
       ),
@@ -330,19 +350,43 @@ class _SubraceChoiceSection extends StatelessWidget {
   }
 }
 
-class _RaceChoiceBlock extends StatelessWidget {
+class _RaceChoiceBlock extends StatefulWidget {
   final WizardChoiceConfig config;
   final String? selected;
   final ValueChanged<String> onSelect;
+  final List<DndChoiceOption>? filteredOptions;
   const _RaceChoiceBlock({
     required this.config,
     required this.selected,
     required this.onSelect,
+    this.filteredOptions,
   });
 
   @override
+  State<_RaceChoiceBlock> createState() => _RaceChoiceBlockState();
+}
+
+class _RaceChoiceBlockState extends State<_RaceChoiceBlock> {
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.selected == null;
+  }
+
+  @override
+  void didUpdateWidget(_RaceChoiceBlock oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selected != null && widget.selected == null) {
+      _expanded = true;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final done = selected != null;
+    final options = widget.filteredOptions ?? widget.config.options;
+    final done = widget.selected != null;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -358,54 +402,69 @@ class _RaceChoiceBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
-            decoration: BoxDecoration(
-              color: done
-                  ? AppTheme.primary.withOpacity(0.10)
-                  : AppTheme.accent.withOpacity(0.06),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(10)),
-            ),
-            child: Row(children: [
-              Icon(
-                done
-                    ? Icons.check_circle_outline
-                    : Icons.radio_button_unchecked,
-                color: done ? AppTheme.primary : AppTheme.accent,
-                size: 16,
+          // Header (tappable to toggle collapse)
+          GestureDetector(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+              decoration: BoxDecoration(
+                color: done
+                    ? AppTheme.primary.withOpacity(0.10)
+                    : AppTheme.accent.withOpacity(0.06),
+                borderRadius: BorderRadius.vertical(
+                  top: const Radius.circular(10),
+                  bottom: _expanded ? Radius.zero : const Radius.circular(10),
+                ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(config.label,
-                    style: GoogleFonts.cinzel(
-                        color: done ? AppTheme.primary : AppTheme.accent,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold)),
-              ),
-              if (done)
-                Text(selected!,
-                    style: GoogleFonts.lato(
-                        color: AppTheme.primary,
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic)),
-            ]),
-          ),
-          // Options
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              children: config.options
-                  .map((opt) => _RaceOptionTile(
-                        label: opt.name,
-                        description: opt.description,
-                        selected: selected == opt.name,
-                        onTap: () => onSelect(opt.name),
-                      ))
-                  .toList(),
+              child: Row(children: [
+                Icon(
+                  done
+                      ? Icons.check_circle_outline
+                      : Icons.radio_button_unchecked,
+                  color: done ? AppTheme.primary : AppTheme.accent,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(widget.config.label,
+                      style: GoogleFonts.cinzel(
+                          color: done ? AppTheme.primary : AppTheme.accent,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold)),
+                ),
+                if (done)
+                  Text(widget.selected!,
+                      style: GoogleFonts.lato(
+                          color: AppTheme.primary,
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic)),
+                const SizedBox(width: 4),
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  color: done ? AppTheme.primary : AppTheme.accent,
+                  size: 18,
+                ),
+              ]),
             ),
           ),
+          // Options (collapsible)
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                children: options
+                    .map((opt) => _RaceOptionTile(
+                          label: opt.name,
+                          description: opt.description,
+                          selected: widget.selected == opt.name,
+                          onTap: () {
+                            widget.onSelect(opt.name);
+                            setState(() => _expanded = false);
+                          },
+                        ))
+                    .toList(),
+              ),
+            ),
         ],
       ),
     );

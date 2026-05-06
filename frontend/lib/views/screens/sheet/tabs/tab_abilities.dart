@@ -6,7 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 class TabAbilities extends StatelessWidget {
   final PlayerCharacter character;
-  const TabAbilities({super.key, required this.character});
+  final CharacterSheetViewModel vm;
+  const TabAbilities({super.key, required this.character, required this.vm});
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +59,17 @@ class TabAbilities extends StatelessWidget {
         _SenseRow(value: c.passivePerception, label: 'Passive Perception'),
         _SenseRow(value: c.passiveInvestigation, label: 'Passive Investigation'),
         _SenseRow(value: c.passiveInsight, label: 'Passive Insight'),
+        // Darkvision and other special senses from racial traits
+        ...vm.racialTraits
+            .where((t) {
+              final n = t.name.toLowerCase();
+              return n.contains('darkvision') ||
+                  n.contains('blindsight') ||
+                  n.contains('tremorsense') ||
+                  n.contains('truesight') ||
+                  n.contains('superior darkvision');
+            })
+            .map((t) => _SpecialSenseRow(name: t.name, description: t.description)),
         const SizedBox(height: 4),        
         
       ]),
@@ -224,6 +236,46 @@ class _SenseRow extends StatelessWidget {
               style: GoogleFonts.lato(
                 color: AppTheme.textPrimary, fontSize: 13
               )),
+      ]),
+    );
+  }
+}
+
+// Special sense row (Darkvision, Blindsight, etc.) from racial traits
+class _SpecialSenseRow extends StatelessWidget {
+  final String name;
+  final String description;
+  const _SpecialSenseRow({required this.name, required this.description});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+      ),
+      child: Row(children: [
+        const Icon(Icons.visibility_outlined,
+            color: AppTheme.primary, size: 18),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(name,
+                style: GoogleFonts.cinzel(
+                    color: AppTheme.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold)),
+            if (description.isNotEmpty)
+              Text(description,
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary,
+                      fontSize: 11,
+                      height: 1.4)),
+          ]),
+        ),
       ]),
     );
   }

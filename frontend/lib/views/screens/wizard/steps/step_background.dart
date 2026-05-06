@@ -129,11 +129,17 @@ class _StepBackgroundState extends State<StepBackground> {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(
                       'Conflict: $names ${removed.length == 1 ? 'is' : 'are'} already granted by this background — '
-                      'deselected from your class skills.',
+                      'deselected from your class skills. Go back to Edit Class to re-pick your skills.',
                     ),
                     backgroundColor: AppTheme.accent,
                     behavior: SnackBarBehavior.floating,
-                    duration: const Duration(seconds: 5),
+                    duration: const Duration(seconds: 8),
+                    action: SnackBarAction(
+                      label: 'Dismiss',
+                      textColor: Colors.white,
+                      onPressed: () =>
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+                    ),
                   ));
                 }
               },
@@ -148,6 +154,7 @@ class _StepBackgroundState extends State<StepBackground> {
         ],
 
         // ── Alignment ─────────────────────────────────────────────
+        const SizedBox(height: 16),
         _SectionTitle('Alignment'),
         const SizedBox(height: 8),
         _AlignmentGrid(
@@ -512,7 +519,6 @@ class _AlignmentGrid extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       // Column headers
       Row(children: [
-        const SizedBox(width: 52), // spacer for row labels
         ..._columnLabels.map((l) => Expanded(
           child: Center(
             child: Text(l,
@@ -522,6 +528,7 @@ class _AlignmentGrid extends StatelessWidget {
                     fontWeight: FontWeight.bold)),
           ),
         )),
+        const SizedBox(width: 52), // spacer for right-side row labels
       ]),
       const SizedBox(height: 4),
       // Grid rows
@@ -529,17 +536,6 @@ class _AlignmentGrid extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: 4),
           child: Row(children: [
-            // Row label
-            SizedBox(
-              width: 52,
-              child: Text(_rowLabels[row],
-                  textAlign: TextAlign.right,
-                  style: GoogleFonts.cinzel(
-                      color: AppTheme.textSecondary,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(width: 4),
             // 3 cells
             for (int col = 0; col < 3; col++) ...[
               Expanded(
@@ -562,42 +558,31 @@ class _AlignmentGrid extends StatelessWidget {
                         width: selected == _cells[row * 3 + col].$1 ? 2 : 1,
                       ),
                     ),
-                    child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                      Text(_cells[row * 3 + col].$2,
+                    child: Center(
+                      child: Text(_cells[row * 3 + col].$2,
                           style: GoogleFonts.cinzel(
                               color: selected == _cells[row * 3 + col].$1
                                   ? Colors.white
                                   : AppTheme.textPrimary,
                               fontSize: 13,
                               fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 2),
-                      Text(
-                        _cells[row * 3 + col].$1.split(' ').last,
-                        style: GoogleFonts.lato(
-                            color: selected == _cells[row * 3 + col].$1
-                                ? Colors.white70
-                                : AppTheme.textSecondary,
-                            fontSize: 8),
-                      ),
-                    ]),
+                    ),
                   ),
                 ),
               ),
             ],
+            // Row label on the right
+            SizedBox(
+              width: 52,
+              child: Text(_rowLabels[row],
+                  textAlign: TextAlign.left,
+                  style: GoogleFonts.cinzel(
+                      color: AppTheme.textSecondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold)),
+            ),
           ]),
         ),
-      if (selected != null) ...[
-        const SizedBox(height: 6),
-        Center(
-          child: Text('Selected: $selected',
-              style: GoogleFonts.lato(
-                  color: AppTheme.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold)),
-        ),
-      ],
     ]);
   }
 }

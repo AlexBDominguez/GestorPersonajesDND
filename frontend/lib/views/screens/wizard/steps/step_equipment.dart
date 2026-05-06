@@ -23,10 +23,14 @@ class _StepEquipmentState extends State<StepEquipment>
     ('all', 'All'),
     ('weapon', 'Weapons'),
     ('armor', 'Armor'),
-    ('adventuring_gear', 'Gear'),
-    ('mounts_and_vehicles', 'Mounts'),
     ('potion', 'Potions'),
-    ('tool', 'Tools'),
+    ('ring', 'Rings'),
+    ('rod', 'Rods'),
+    ('scroll', 'Scrolls'),
+    ('staff', 'Staves'),
+    ('wand', 'Wands'),
+    ('wondrous_item', 'Wondrous'),
+    ('adventuring_gear', 'Other Gear'),
   ];
   @override
   void initState() {
@@ -51,103 +55,117 @@ class _StepEquipmentState extends State<StepEquipment>
     final vm = context.watch<CharacterCreatorViewModel>();
 
     return Column(children: [
-      // - Header -
+      // ── Header compacto ──────────────────────────────────────────────────
       Container(
         color: AppTheme.surface,
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // Optional banner
-          Container(
-            color: AppTheme.primary.withOpacity(0.08),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          // Título + badge + hint (una sola fila)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
             child: Row(children: [
-              const Icon(Icons.info_outline, color: AppTheme.primary, size: 16),
-              const SizedBox(width: 8),
+              const Icon(Icons.backpack_outlined,
+                  color: AppTheme.primary, size: 16),
+              const SizedBox(width: 6),
               Expanded(
-                child: Text(
-                  'This step is optional — you can add items later from your inventory.',
-                  style: GoogleFonts.lato(color: AppTheme.primary, fontSize: 12),
+                child: Text('Starting Equipment',
+                    style: GoogleFonts.cinzel(
+                        color: AppTheme.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold)),
+              ),
+              if (vm.selectedItemIds.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.primary),
+                  ),
+                  child: Text(
+                    '${vm.selectedItemIds.length} selected',
+                    style: GoogleFonts.cinzel(
+                        color: AppTheme.primary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold),
+                  ),
+                )
+              else
+                Text(
+                  'Optional',
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary, fontSize: 11),
+                ),
+            ]),
+          ),
+          const SizedBox(height: 8),
+
+          // Buscador + filtro inline
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(children: [
+              // Buscador
+              Expanded(
+                child: SizedBox(
+                  height: 36,
+                  child: TextField(
+                    controller: _searchCtrl,
+                    onChanged: (v) => setState(() => _query = v.toLowerCase()),
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textPrimary, fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: 'Search items...',
+                      hintStyle: GoogleFonts.lato(
+                          color: AppTheme.textSecondary, fontSize: 12),
+                      prefixIcon: const Icon(Icons.search,
+                          color: AppTheme.textSecondary, size: 16),
+                      suffixIcon: _query.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close,
+                                  color: AppTheme.textSecondary, size: 14),
+                              padding: EdgeInsets.zero,
+                              onPressed: () {
+                                _searchCtrl.clear();
+                                setState(() => _query = '');
+                              },
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: AppTheme.surfaceVariant,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ]),
           ),
           const SizedBox(height: 8),
-          Row(children: [
-            Expanded(
-              child: Text('Starting Equipment',
-                  style: Theme.of(context).textTheme.displayMedium),
-            ),
-            // Badge contador
-            if (vm.selectedItemIds.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.primary),
-                ),
-                child: Text(
-                  '${vm.selectedItemIds.length} selected',
-                  style: GoogleFonts.cinzel(
-                      color: AppTheme.primary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-          ]),
-          const SizedBox(height: 12),
 
-          // Buscador
-          TextField(
-            controller: _searchCtrl,
-            onChanged: (v) => setState(() => _query = v.toLowerCase()),
-            style: GoogleFonts.lato(
-                color: AppTheme.textPrimary, fontSize: 13),
-            decoration: InputDecoration(
-              hintText: 'Search items...',
-              hintStyle: GoogleFonts.lato(
-                  color: AppTheme.textSecondary, fontSize: 13),
-              prefixIcon: const Icon(Icons.search,
-                  color: AppTheme.textSecondary, size: 18),
-              suffixIcon: _query.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.close,
-                          color: AppTheme.textSecondary, size: 16),
-                      onPressed: () {
-                        _searchCtrl.clear();
-                        setState(() => _query = '');
-                      },
-                    )
-                  : null,
-              filled: true,
-              fillColor: AppTheme.surfaceVariant,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Filtros de tipo
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _typeFilters.map((f) {
+          // Filtros de tipo — scroll horizontal
+          SizedBox(
+            height: 30,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+              children: _typeFilters.map((f) {
                 final active = _typeFilter == f.$1;
                 return GestureDetector(
                   onTap: () => setState(() => _typeFilter = f.$1),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
+                    margin: const EdgeInsets.only(right: 6),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 5),
+                        horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: active
                           ? AppTheme.primary.withOpacity(0.15)
                           : AppTheme.surfaceVariant,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: active
                             ? AppTheme.primary
@@ -159,7 +177,7 @@ class _StepEquipmentState extends State<StepEquipment>
                           color: active
                               ? AppTheme.primary
                               : AppTheme.textSecondary,
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: active
                               ? FontWeight.bold
                               : FontWeight.normal,
@@ -167,8 +185,9 @@ class _StepEquipmentState extends State<StepEquipment>
                   ),
                 );
               }).toList(),
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // Tabs
           TabBar(

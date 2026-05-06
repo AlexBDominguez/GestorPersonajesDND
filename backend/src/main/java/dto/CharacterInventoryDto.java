@@ -15,6 +15,10 @@ public class CharacterInventoryDto {
     private boolean requiresAttunement;
     private String notes;
     private String description;
+    private String damageDice;
+    private String damageType;
+    private String weaponRange;
+    private java.util.List<String> weaponProperties = new java.util.ArrayList<>();
 
     // Getters y Setters
 
@@ -129,5 +133,37 @@ public class CharacterInventoryDto {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getDamageDice() {
+        return damageDice;
+    }
+
+    public void setDamageDice(String damageDice) {
+        this.damageDice = damageDice;
+    }
+
+    public String getDamageType() {
+        return damageType;
+    }
+
+    public void setDamageType(String damageType) {
+        this.damageType = damageType;
+    }
+
+    public String getWeaponRange() {
+        return weaponRange;
+    }
+
+    public void setWeaponRange(String weaponRange) {
+        this.weaponRange = weaponRange;
+    }
+
+    public java.util.List<String> getWeaponProperties() {
+        return weaponProperties;
+    }
+
+    public void setWeaponProperties(java.util.List<String> weaponProperties) {
+        this.weaponProperties = weaponProperties;
     }
 }

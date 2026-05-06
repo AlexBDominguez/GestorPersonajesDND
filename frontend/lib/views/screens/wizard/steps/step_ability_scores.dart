@@ -169,6 +169,7 @@ class _StandardArrayRow extends StatelessWidget {
     final racialBonus = vm.racialBonuses[ability] ?? 0;
     final mod = vm.abilityModifier(ability);
     final modLabel = mod >= 0 ? '+$mod' : '$mod';
+    final base = assignedIdx != null ? kStandardArray[assignedIdx] : null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -176,11 +177,7 @@ class _StandardArrayRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: assignedIdx != null
-              ? AppTheme.primary.withValues(alpha: 0.5)
-              : AppTheme.surfaceVariant,
-        ),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.4)),
       ),
       child: Row(children: [
         SizedBox(
@@ -189,18 +186,18 @@ class _StandardArrayRow extends StatelessWidget {
               style: GoogleFonts.cinzel(
                   color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.bold)),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         Expanded(
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int?>(
               value: assignedIdx,
               dropdownColor: AppTheme.surface,
               hint: Text('Choose',
-                  style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+                  style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 20)),
               items: [
                 const DropdownMenuItem<int?>(
                   value: null,
-                  child: Text('—', style: TextStyle(color: AppTheme.textSecondary)),
+                  child: Text('—', style: TextStyle(color: AppTheme.textSecondary, fontSize: 20)),
                 ),
                 ...List.generate(kStandardArray.length, (idx) {
                   final val = kStandardArray[idx];
@@ -210,9 +207,10 @@ class _StandardArrayRow extends StatelessWidget {
                     value: idx,
                     enabled: !takenByOther,
                     child: Text('$val',
-                        style: GoogleFonts.lato(
+                        style: GoogleFonts.cinzel(
                           color: takenByOther ? AppTheme.textSecondary : AppTheme.textPrimary,
-                          fontSize: 14,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         )),
                   );
                 }),
@@ -228,19 +226,20 @@ class _StandardArrayRow extends StatelessWidget {
           ),
         ),
         if (racialBonus != 0) ...[
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Text('+$racialBonus',
               style: GoogleFonts.lato(
                   color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.bold)),
         ],
         const Spacer(),
         Text(
-          assignedIdx != null ? modLabel : '—',
+          base != null ? modLabel : '—',
           style: GoogleFonts.cinzel(
-              color: assignedIdx != null
+              color: base != null
                   ? (mod >= 0 ? AppTheme.primary : AppTheme.accent)
                   : AppTheme.textSecondary,
-              fontSize: 18, fontWeight: FontWeight.bold),
+              fontSize: 18,
+              fontWeight: FontWeight.bold),
         ),
       ]),
     );

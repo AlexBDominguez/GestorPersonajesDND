@@ -350,6 +350,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     for (final c in classFeatureChoices) {
       featureChoices.remove(c.key);
     }
+    // Also clear individual multi-pick sub-keys (e.g. EXPERTISE_PICK_0_3)
+    featureChoices.removeWhere((k, _) => k.contains('_PICK_'));
     selectedClass = null;
     selectedSubclass = null;
     selectedLevel = 1;
@@ -486,6 +488,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   void toggleClassSkill(String skillIndex) {
     if (_classSkillIndices.contains(skillIndex)) {
       _classSkillIndices.remove(skillIndex);
+      // If this skill had expertise, remove those picks too
+      _removeExpertisePicksForSkill(_skillIndexToDisplay(skillIndex));
     } else {
       final count = _effectiveSkillCount;
       if (_classSkillIndices.length < count) {
@@ -496,15 +500,34 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Converts a hyphenated skill index to a display name.
+  /// e.g. 'sleight-of-hand' → 'Sleight Of Hand'
+  String _skillIndexToDisplay(String idx) =>
+      idx.split('-').map((w) => w.isEmpty ? '' : w[0].toUpperCase() + w.substring(1)).join(' ');
+
+  /// Removes any EXPERTISE_PICK_* featureChoices whose value matches [displayName].
+  void _removeExpertisePicksForSkill(String displayName) {
+    featureChoices.removeWhere(
+      (k, v) => k.contains('EXPERTISE_PICK') && v == displayName,
+    );
+  }
+
+  /// Normalises a skill index from the API: strips the leading 'skill-' prefix
+  /// that background proficiencies carry (e.g. 'skill-insight' → 'insight').
+  static String _normalizeSkillIndex(String s) =>
+      s.startsWith('skill-') ? s.substring(6) : s;
+
   /// Skills the character is already proficient in (class picks + background).
   /// Used to restrict Expertise options to only valid choices per D&D 5e rules.
   Set<String> get _proficientSkillIndices {
     final indices = <String>{};
-    // Class skill picks (already lowercase hyphenated, e.g. 'sleight-of-hand')
+    // Class skill picks (lowercase hyphenated, e.g. 'sleight-of-hand')
     indices.addAll(_classSkillIndices);
-    // Background skill proficiencies (same format from the API)
+    // Background skill proficiencies — normalize 'skill-X' → 'X'
     if (selectedBackground != null) {
-      indices.addAll(selectedBackground!.skillProficiencies);
+      for (final s in selectedBackground!.skillProficiencies) {
+        indices.add(_normalizeSkillIndex(s));
+      }
     }
     return indices;
   }
@@ -547,14 +570,20 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     selectedBackground = b;
     _markDirty(WizardStep.background);
 
-    // Find class skills that overlap with background skill proficiencies
+    // Find class skills that overlap with background skill proficiencies.
+    // Background indices have a 'skill-' prefix (e.g. 'skill-insight'),
+    // class indices do not (e.g. 'insight') — normalise before comparing.
+    final bgNormalised = b.skillProficiencies
+        .map(CharacterCreatorViewModel._normalizeSkillIndex)
+        .toSet();
     final conflicts = _classSkillIndices
-        .where((idx) => b.skillProficiencies.contains(idx))
+        .where((idx) => bgNormalised.contains(idx))
         .toList();
 
     if (conflicts.isNotEmpty) {
       for (final idx in conflicts) {
         _classSkillIndices.remove(idx);
+        _removeExpertisePicksForSkill(_skillIndexToDisplay(idx));
       }
       _markDirty(WizardStep.dndClass);
     }

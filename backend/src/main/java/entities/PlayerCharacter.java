@@ -621,13 +621,18 @@ public class PlayerCharacter {
 
     @Transient
     public int getSpellSaveDC() {
-        if (dndClass == null || dndClass.getSpellcastingAbility() == null) {
-            return 0; // No es lanzador de hechizos
-
+        String spellcastingAbility = null;
+        if (dndClass != null && dndClass.getSpellcastingAbility() != null
+                && !dndClass.getSpellcastingAbility().isEmpty()) {
+            spellcastingAbility = dndClass.getSpellcastingAbility();
+        } else if (subclass != null && subclass.getSpellcastingAbility() != null
+                && !subclass.getSpellcastingAbility().isEmpty()) {
+            spellcastingAbility = subclass.getSpellcastingAbility();
         }
-        String spellcastingAbility = dndClass.getSpellcastingAbility();
+        if (spellcastingAbility == null) {
+            return 0; // No es lanzador de hechizos
+        }
         int abilityModifier = calculateAbilityModifier(spellcastingAbility);
-
         return 8 + proficiencyBonus + abilityModifier;
     }
 
@@ -639,13 +644,18 @@ public class PlayerCharacter {
 
     @Transient
     public int getSpellAttackBonus(){
-        if(dndClass == null || dndClass.getSpellcastingAbility() == null) {
+        String spellcastingAbility = null;
+        if (dndClass != null && dndClass.getSpellcastingAbility() != null
+                && !dndClass.getSpellcastingAbility().isEmpty()) {
+            spellcastingAbility = dndClass.getSpellcastingAbility();
+        } else if (subclass != null && subclass.getSpellcastingAbility() != null
+                && !subclass.getSpellcastingAbility().isEmpty()) {
+            spellcastingAbility = subclass.getSpellcastingAbility();
+        }
+        if (spellcastingAbility == null) {
             return 0; // No es lanzador de hechizos
         }
-
-        String spellcastingAbility = dndClass.getSpellcastingAbility();
         int abilityModifier = calculateAbilityModifier(spellcastingAbility);
-
         return proficiencyBonus + abilityModifier;
     }
 

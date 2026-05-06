@@ -28,13 +28,13 @@ class _WizardBody extends StatelessWidget {
 
   // Metadatos por paso: título e icono
   static const _meta = <WizardStep, ({String title, IconData icon})>{
-    WizardStep.preferences:   (title: 'Prefs',        icon: Icons.settings_outlined),
-    WizardStep.dndClass:      (title: 'Class',        icon: Icons.security_outlined),
-    WizardStep.background:    (title: 'Background',   icon: Icons.menu_book_outlined),
-    WizardStep.race:          (title: 'Race',         icon: Icons.emoji_people_outlined),
-    WizardStep.abilityScores: (title: 'Stats',        icon: Icons.bar_chart),
-    WizardStep.spells:        (title: 'Spells',       icon: Icons.auto_fix_high_outlined),
-    WizardStep.equipment:     (title: 'Equipment',    icon: Icons.backpack_outlined),
+    WizardStep.preferences:   (title: 'Prefs',    icon: Icons.settings_outlined),
+    WizardStep.dndClass:      (title: 'Class',    icon: Icons.security_outlined),
+    WizardStep.background:    (title: 'BG',       icon: Icons.menu_book_outlined),
+    WizardStep.race:          (title: 'Race',     icon: Icons.emoji_people_outlined),
+    WizardStep.abilityScores: (title: 'Stats',    icon: Icons.bar_chart),
+    WizardStep.spells:        (title: 'Spells',   icon: Icons.auto_fix_high_outlined),
+    WizardStep.equipment:     (title: 'Items',    icon: Icons.backpack_outlined),
   };
 
   Widget _stepWidget(WizardStep step) {
@@ -132,7 +132,9 @@ class _WizardBody extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accent,
+                foregroundColor: Colors.white),
             child: const Text('Discard'),
           ),
         ],
@@ -167,9 +169,9 @@ class _StepIndicator extends StatelessWidget {
       color: AppTheme.surface,
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: LayoutBuilder(builder: (context, constraints) {
-        // If each step has less than ~52 px we go icon-only compact mode
+        // If each step has less than ~52 px we switch to compact (smaller) mode
         final perStep = constraints.maxWidth / steps.length;
-        final compact = perStep < 52;
+        final compact = perStep < 56;
         return Row(
           children: List.generate(steps.length, (i) {
             final step = steps[i];
@@ -253,25 +255,23 @@ class _StepDot extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 250),
-          width:  compact ? 28 : 34,
-          height: compact ? 28 : 34,
+          width:  compact ? 26 : 34,
+          height: compact ? 26 : 34,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: bgColor,
             border: Border.all(color: borderColor, width: 2),
           ),
-          child: Icon(dotIcon, color: dotColor, size: compact ? 14 : 17),
+          child: Icon(dotIcon, color: dotColor, size: compact ? 13 : 17),
         ),
-        if (!compact) ...[
-          const SizedBox(height: 3),
-          Text(title,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.lato(
-              color: labelColor,
-              fontSize: 9,
-              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-            )),
-        ],
+        const SizedBox(height: 3),
+        Text(title,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.lato(
+            color: labelColor,
+            fontSize: compact ? 8 : 9,
+            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+          )),
       ]),
     );
   }

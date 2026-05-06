@@ -6,6 +6,7 @@ import '../../../../config/app_theme.dart';
 import '../../../../models/wizard/class_option.dart';
 import '../../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import '../class_detail_screen.dart';
+import '../class_options_screen.dart';
 
 class StepClass extends StatelessWidget {
   const StepClass({super.key});
@@ -41,6 +42,7 @@ class StepClass extends StatelessWidget {
               cls: vm.selectedClass!,
               level: vm.selectedLevel,
               onClear: vm.clearClass,
+              onEdit: () => _openClassEdit(context, vm),
             ),
           ),
         Expanded(
@@ -83,17 +85,41 @@ class StepClass extends StatelessWidget {
       ),
     );
   }
+
+  /// Opens ClassOptionsScreen directly for editing an already-selected class.
+  Future<void> _openClassEdit(
+      BuildContext context, CharacterCreatorViewModel vm) async {
+    final cls = vm.selectedClass!;
+    List<ClassFeature> features = vm.classFeatures;
+    if (features.isEmpty) {
+      await vm.loadClassFeatures(cls.id);
+      features = vm.classFeatures;
+    }
+    if (!context.mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ClassOptionsScreen(
+          classOption: cls,
+          features: features,
+          vm: vm,
+          isEditing: true,
+        ),
+      ),
+    );
+  }
 }
 
 class _SelectedClassBadge extends StatelessWidget {
   final ClassOption cls;
   final int level;
   final VoidCallback onClear;
+  final VoidCallback? onEdit;
 
   const _SelectedClassBadge({
     required this.cls,
     required this.level,
     required this.onClear,
+    this.onEdit,
   });
 
   @override
@@ -124,6 +150,11 @@ class _SelectedClassBadge extends StatelessWidget {
             ),
           ),
         ),
+        GestureDetector(
+          onTap: onEdit,
+          child: const Icon(Icons.edit_outlined, color: AppTheme.textSecondary, size: 18),
+        ),
+        const SizedBox(width: 6),
         GestureDetector(
           onTap: onClear,
           child: const Icon(Icons.close, color: AppTheme.textSecondary, size: 18),

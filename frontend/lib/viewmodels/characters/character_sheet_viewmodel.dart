@@ -5,8 +5,10 @@ import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/character/racial_trait.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
+import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
 import 'package:gestor_personajes_dnd/services/characters/pending_task_service.dart';
+import 'package:gestor_personajes_dnd/services/inventory/inventory_service.dart';
 import 'package:gestor_personajes_dnd/services/spells/spell_service.dart';
 import 'package:gestor_personajes_dnd/services/wizard/wizard_reference_service.dart';
 
@@ -47,6 +49,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
   final SpellService _spellService;
   final WizardReferenceService _refService;
   final PendingTaskService _taskService = PendingTaskService();
+  final InventoryService _inventoryService = InventoryService();
   List<PendingTask> _pendingTasks = [];
   /// Only incomplete tasks — completed ones are displayed elsewhere (Features tab).
   /// Also filters out tasks that are handled outside the pending-tasks flow:
@@ -81,6 +84,12 @@ class CharacterSheetViewModel extends ChangeNotifier {
   int _tabIndex = 0;
   List<RacialTrait> _racialTraits = [];
   List<RacialTrait> get racialTraits => _racialTraits;
+  List<InventoryItem> _inventoryItems = [];
+  List<InventoryItem> get equippedWeapons => _inventoryItems
+      .where((i) => i.equipped &&
+          i.damageDice != null &&
+          i.damageDice!.isNotEmpty)
+      .toList();
 
   bool get isLoading    => _isLoading;
   String? get error     => _errorMessage;
@@ -101,6 +110,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
       character = await _service.getCharacterById(characterId);
       await _loadPendingTasks();
       _initSpellSlots();
+      _loadInventory();
       if (character?.dndClassId != null && _classFeatures.isEmpty) {
         _loadClassFeaturesIfNeeded();
       }
@@ -340,6 +350,13 @@ class CharacterSheetViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _loadInventory() async {
+    try {
+      _inventoryItems = await _inventoryService.getInventory(characterId);
+      notifyListeners();
+    } catch (_) {}
+  }
+
   // ── Consumable feature tracking 
   final Map<String, int> _featureUsesRemaining = {};
 
@@ -525,6 +542,10 @@ class CharacterSheetViewModel extends ChangeNotifier {
 
   bool get alwaysPreparedClass {
     final cls = character?.dndClassName?.toLowerCase() ?? '';
+    final sub = character?.subclassName?.toLowerCase() ?? '';
+    // Eldritch Knight and Arcane Trickster are subclass-based casters:
+    // they do NOT prepare spells (they know a fixed list)
+    if (sub.contains('eldritch knight') || sub.contains('arcane trickster')) return true;
     return cls.contains('bard') || cls.contains('sorcerer') ||
         cls.contains('warlock') || cls.contains('ranger');
   }

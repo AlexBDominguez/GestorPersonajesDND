@@ -186,6 +186,10 @@ public class CharacterInventoryService {
         dto.setNotes(inventory.getNotes());
         dto.setRequiresAttunement(inventory.getItem().isRequiresAttunement());
         dto.setDescription(inventory.getItem().getDescription());
+        dto.setDamageDice(inventory.getItem().getDamageDice());
+        dto.setDamageType(inventory.getItem().getDamageType());
+        dto.setWeaponRange(inventory.getItem().getWeaponRange());
+        dto.setWeaponProperties(inventory.getItem().getWeaponProperties());
         return dto;
     }
 }

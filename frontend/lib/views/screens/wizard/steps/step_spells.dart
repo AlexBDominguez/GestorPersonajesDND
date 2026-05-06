@@ -99,186 +99,224 @@ class _StepSpellsState extends State<StepSpells> {
     final sortedLevels = [-1, ...levels.toList()..sort()];
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // ── Banner informativo ───────────────────────────────────────
-      Container(
-        width: double.infinity,
-        color: AppTheme.primary.withOpacity(0.08),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(children: [
-          const Icon(Icons.info_outline, color: AppTheme.primary, size: 16),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'This step is optional — you can add spells later from your character sheet.',
-              style: GoogleFonts.lato(color: AppTheme.primary, fontSize: 12),
-            ),
-          ),
-        ]),
-      ),
-
-      // ── Contadores de selección ──────────────────────────────────
+      // ── Header compacto ──────────────────────────────────────────────────
       Container(
         color: AppTheme.surface,
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Choose Spells', style: Theme.of(context).textTheme.displayMedium),
-          const SizedBox(height: 8),
-          Wrap(spacing: 8, runSpacing: 6, children: [
-            _SlotCounter(
-              label: 'Cantrips',
-              current: vm.selectedCantripCount,
-              max: vm.maxCantrips,
-            ),
-            _SlotCounter(
-              label: 'Spells',
-              current: vm.selectedSpellCount,
-              max: vm.maxSpellsKnown,
-            ),
-            if (hasMagicalSecrets)
-              _SlotCounter(
-                label: 'Magical Secrets',
-                current: vm.selectedMagicalSecretCount,
-                max: vm.magicalSecretsSlots,
-                highlight: true,
+          // Fila: título + contadores
+          Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+            const Icon(Icons.auto_fix_high,
+                color: AppTheme.primary, size: 16),
+            const SizedBox(width: 6),
+            Text('Choose Spells',
+                style: GoogleFonts.cinzel(
+                    color: AppTheme.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(children: [
+                  _SlotCounter(
+                    label: 'Cantrips',
+                    current: vm.selectedCantripCount,
+                    max: vm.maxCantrips,
+                  ),
+                  const SizedBox(width: 6),
+                  _SlotCounter(
+                    label: 'Spells',
+                    current: vm.selectedSpellCount,
+                    max: vm.maxSpellsKnown,
+                  ),
+                  if (hasMagicalSecrets) ...[
+                    const SizedBox(width: 6),
+                    _SlotCounter(
+                      label: 'Secrets',
+                      current: vm.selectedMagicalSecretCount,
+                      max: vm.magicalSecretsSlots,
+                      highlight: true,
+                    ),
+                  ],
+                  if (hasLoreExtras) ...[
+                    const SizedBox(width: 6),
+                    _SlotCounter(
+                      label: 'Lore Extras',
+                      current: vm.selectedAdditionalMagicalSecretCount,
+                      max: vm.additionalMagicalSecretsSlots,
+                      highlight: true,
+                    ),
+                  ],
+                ]),
               ),
-            if (hasLoreExtras)
-              _SlotCounter(
-                label: 'Lore Extras',
-                current: vm.selectedAdditionalMagicalSecretCount,
-                max: vm.additionalMagicalSecretsSlots,
-                highlight: true,
-              ),
+            ),
           ]),
+          const SizedBox(height: 8),
+
+          // Selector de sección (bardo con Magical Secrets)
+          if (sectionCount > 1) ...[
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(children: [
+                _SectionTab(
+                  label: 'Class Spells',
+                  selected: _activeSection == 0,
+                  onTap: () => _switchSection(0),
+                ),
+                if (hasMagicalSecrets) ...[
+                  const SizedBox(width: 6),
+                  _SectionTab(
+                    label: 'Magical Secrets (${vm.magicalSecretsSlots})',
+                    selected: _activeSection == 1,
+                    onTap: () => _switchSection(1),
+                  ),
+                ],
+                if (hasLoreExtras) ...[
+                  const SizedBox(width: 6),
+                  _SectionTab(
+                    label: 'Lore Extras (2)',
+                    selected: _activeSection == 2,
+                    onTap: () => _switchSection(2),
+                  ),
+                ],
+              ]),
+            ),
+            const SizedBox(height: 6),
+          ],
+
+          // Hint for magical secrets sections (compact)
+          if (_activeSection == 1)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              margin: const EdgeInsets.only(bottom: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(children: [
+                const Icon(Icons.auto_awesome, color: Colors.amber, size: 13),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Choose ${vm.magicalSecretsSlots} spell(s) from any class list.',
+                    style: GoogleFonts.lato(
+                        color: Colors.amber.shade700, fontSize: 11),
+                  ),
+                ),
+              ]),
+            ),
+          if (_activeSection == 2)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              margin: const EdgeInsets.only(bottom: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(children: [
+                const Icon(Icons.auto_awesome, color: Colors.amber, size: 13),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Additional Magical Secrets (College of Lore): 2 free spells.',
+                    style: GoogleFonts.lato(
+                        color: Colors.amber.shade700, fontSize: 11),
+                  ),
+                ),
+              ]),
+            ),
+
+          // Buscador + filtro nivel inline
+          Row(children: [
+            // Buscador
+            Expanded(
+              child: SizedBox(
+                height: 36,
+                child: TextField(
+                  controller: _searchCtrl,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    hintText: _activeSection == 0
+                        ? 'Search spells...'
+                        : 'Search all spells...',
+                    hintStyle: GoogleFonts.lato(
+                        color: AppTheme.textSecondary, fontSize: 12),
+                    prefixIcon: const Icon(Icons.search,
+                        color: AppTheme.primary, size: 16),
+                    suffixIcon: _searchCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 14),
+                            padding: EdgeInsets.zero,
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: AppTheme.surfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          ]),
+          const SizedBox(height: 6),
+
+          // Filtro por nivel — scroll horizontal
+          SizedBox(
+            height: 28,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.zero,
+              children: sortedLevels.map((lvl) {
+                final label = lvl == -1
+                    ? 'All'
+                    : lvl == 0
+                        ? 'Cantrips'
+                        : 'Lv $lvl';
+                final selected = _filterLevel == lvl;
+                return GestureDetector(
+                  onTap: () => setState(() => _filterLevel = lvl),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? AppTheme.primary
+                          : AppTheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: selected
+                            ? AppTheme.primary
+                            : AppTheme.divider,
+                      ),
+                    ),
+                    child: Text(
+                      label,
+                      style: GoogleFonts.cinzel(
+                        color: selected
+                            ? Colors.white
+                            : AppTheme.textSecondary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 6),
         ]),
       ),
-
-      // ── Selector de sección (solo si bardo con Magical Secrets) ──
-      if (sectionCount > 1)
-        Container(
-          color: AppTheme.surface,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-          child: Wrap(spacing: 8, children: [
-            _SectionTab(
-              label: 'Class Spells',
-              selected: _activeSection == 0,
-              onTap: () => _switchSection(0),
-            ),
-            if (hasMagicalSecrets)
-              _SectionTab(
-                label: 'Magical Secrets (${vm.magicalSecretsSlots})',
-                selected: _activeSection == 1,
-                onTap: () => _switchSection(1),
-              ),
-            if (hasLoreExtras)
-              _SectionTab(
-                label: 'Lore Extras (2)',
-                selected: _activeSection == 2,
-                onTap: () => _switchSection(2),
-              ),
-          ]),
-        ),
-
-      // ── Hint for magical secrets sections ───────────────────────
-      if (_activeSection == 1)
-        Container(
-          width: double.infinity,
-          color: Colors.amber.withOpacity(0.08),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(children: [
-            const Icon(Icons.auto_awesome, color: Colors.amber, size: 15),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Magical Secrets: choose ${vm.magicalSecretsSlots} spell(s) from any class list.',
-                style: GoogleFonts.lato(color: Colors.amber.shade700, fontSize: 12),
-              ),
-            ),
-          ]),
-        ),
-      if (_activeSection == 2)
-        Container(
-          width: double.infinity,
-          color: Colors.amber.withOpacity(0.08),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(children: [
-            const Icon(Icons.auto_awesome, color: Colors.amber, size: 15),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Additional Magical Secrets (College of Lore): 2 free spells from any class, not counting against your spells known.',
-                style: GoogleFonts.lato(color: Colors.amber.shade700, fontSize: 12),
-              ),
-            ),
-          ]),
-        ),
-
-      // ── Buscador ─────────────────────────────────────────────────
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-        child: TextField(
-          controller: _searchCtrl,
-          onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
-            hintText: _activeSection == 0 ? 'Search spells...' : 'Search all spells...',
-            hintStyle: GoogleFonts.lato(color: AppTheme.textSecondary),
-            prefixIcon: const Icon(Icons.search, color: AppTheme.primary, size: 20),
-            suffixIcon: _searchCtrl.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear, size: 18),
-                    onPressed: () { _searchCtrl.clear(); setState(() {}); },
-                  )
-                : null,
-            contentPadding: const EdgeInsets.symmetric(vertical: 10),
-          ),
-        ),
-      ),
-
-      // ── Filtro por nivel ─────────────────────────────────────────
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: sortedLevels.map((lvl) {
-            final label = lvl == -1
-                ? 'All'
-                : lvl == 0
-                    ? 'Cantrips'
-                    : 'Lv $lvl';
-            final selected = _filterLevel == lvl;
-            return GestureDetector(
-              onTap: () => setState(() => _filterLevel = lvl),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: selected ? AppTheme.primary : AppTheme.surfaceVariant,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: selected ? AppTheme.primary : AppTheme.divider,
-                  ),
-                  boxShadow: selected ? [
-                    BoxShadow(
-                      color: AppTheme.primary.withOpacity(0.3),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    )
-                  ] : null,
-                ),
-                child: Text(
-                  label,
-                  style: GoogleFonts.cinzel(
-                    color: selected ? Colors.white : AppTheme.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-      const SizedBox(height: 8),
       const Divider(height: 1),
 
       // ── Lista de hechizos ────────────────────────────────────────

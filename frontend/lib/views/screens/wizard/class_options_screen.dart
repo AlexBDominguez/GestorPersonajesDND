@@ -41,12 +41,14 @@ class ClassOptionsScreen extends StatefulWidget {
   final ClassOption classOption;
   final List<ClassFeature> features;
   final CharacterCreatorViewModel vm;
+  final bool isEditing;
 
   const ClassOptionsScreen({
     super.key,
     required this.classOption,
     required this.features,
     required this.vm,
+    this.isEditing = false,
   });
 
   @override
@@ -73,6 +75,14 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
     super.initState();
     _level = widget.vm.selectedLevel;
     _initHpRolls(_level);
+    // When editing, restore previously saved HP rolls
+    if (widget.isEditing) {
+      for (final entry in widget.vm.hpRolls.entries) {
+        if (_hpRolls.containsKey(entry.key)) {
+          _hpRolls[entry.key] = entry.value;
+        }
+      }
+    }
     widget.vm.setClassSkillRequiredCount(widget.classOption.skillChoiceCount);
     widget.vm.addListener(_onVmChanged);
   }
@@ -148,7 +158,9 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
   }
 
   void _onCancel() {
-    widget.vm.clearClass();
+    if (!widget.isEditing) {
+      widget.vm.clearClass();
+    }
     Navigator.of(context).pop();
   }
 
@@ -344,6 +356,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                     ...List.generate(_level - 1, (i) {
                       final lvl = i + 2;
                       return _HpRow(
+                        key: ValueKey('hp_$lvl'),
                         level: lvl,
                         hitDie: cls.hitDie,
                         value: _hpRolls[lvl],
@@ -382,6 +395,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
             canConfirm: _hpComplete && widget.vm.classFeatureChoicesDone && _classSkillsDone,
             onCancel: _onCancel,
             onConfirm: _onConfirm,
+            isEditing: widget.isEditing,
           ),
         ],
       ),
@@ -1112,6 +1126,7 @@ class _HpRow extends StatelessWidget {
   final ValueChanged<int?>? onChanged;
 
   const _HpRow({
+    super.key,
     required this.level,
     required this.hitDie,
     required this.value,
@@ -1196,6 +1211,17 @@ class _HpInputState extends State<_HpInput> {
     super.initState();
     _ctrl = TextEditingController(
         text: widget.value != null ? '${widget.value}' : '');
+  }
+
+  @override
+  void didUpdateWidget(_HpInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value) {
+      final newText = widget.value != null ? '${widget.value}' : '';
+      if (_ctrl.text != newText) {
+        _ctrl.text = newText;
+      }
+    }
   }
 
   @override
@@ -1390,14 +1416,17 @@ class _SubclassChip extends StatelessWidget {
   }
 }
 
-class _BottomButtons extends StatelessWidget {  final bool canConfirm;
+class _BottomButtons extends StatelessWidget {
+  final bool canConfirm;
   final VoidCallback onCancel;
   final VoidCallback onConfirm;
+  final bool isEditing;
 
   const _BottomButtons({
     required this.canConfirm,
     required this.onCancel,
     required this.onConfirm,
+    this.isEditing = false,
   });
 
   @override
@@ -1428,7 +1457,7 @@ class _BottomButtons extends StatelessWidget {  final bool canConfirm;
             onPressed: canConfirm ? onConfirm : null,
             style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14)),
-            child: Text('Add Class',
+            child: Text(isEditing ? 'Accept' : 'Add Class',
                 style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
           ),
         ),

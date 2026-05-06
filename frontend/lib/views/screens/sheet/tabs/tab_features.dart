@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
+import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/character/racial_trait.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
@@ -64,11 +65,17 @@ class TabFeatures extends StatelessWidget {
               ),
             ]),
           ),
-          ...vm.subclassFeatures.map((f) => _FeatureTile(
-            feature: f,
-            vm: vm,
-            showCombatBadge: isCombatRelevant(f.indexName),
-          )),
+          ...() {
+            // Deduplicate: skip subclass features already shown by class features
+            final classIndexNames = vm.classFeatures.map((f) => f.indexName).toSet();
+            return vm.subclassFeatures
+                .where((f) => !classIndexNames.contains(f.indexName))
+                .map((f) => _FeatureTile(
+                      feature: f,
+                      vm: vm,
+                      showCombatBadge: isCombatRelevant(f.indexName),
+                    ));
+          }(),
         ],
 
         const SizedBox(height: 24),
@@ -168,6 +175,11 @@ class _FeatureTile extends StatelessWidget {
     final maxUses = vm.featureMaxUses(feature);
     final remaining = vm.featureUsesRemaining(feature);
     final taskType = _taskType;
+
+    // ASI_OR_FEAT features should not appear in the Class Features section
+    // (ASI shows nothing; chosen feats appear in the Feats section)
+    if (taskType == 'ASI_OR_FEAT') return const SizedBox.shrink();
+
     final resolvedChoice = taskType != null
         ? vm.resolvedChoiceFor(taskType, feature.level)
         : null;
@@ -237,10 +249,10 @@ class _FeatureTile extends StatelessWidget {
             if (isConsumable) ...[
               const SizedBox(width: 8),
               ...List.generate(maxUses, (i) {
-                final isUsed = i >= remaining;
+                final isSpent = i >= remaining;
                 return GestureDetector(
                   onTap: () => 
-                    isUsed ? vm.restoreFeature(feature) :
+                    isSpent ? vm.restoreFeature(feature) :
                     vm.useFeature(feature),
                   child: Padding(
                     padding: const EdgeInsets.only(left: 3),
@@ -249,9 +261,10 @@ class _FeatureTile extends StatelessWidget {
                       width: 12, height: 12,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isUsed ? Colors.transparent : AppTheme.primary,
+                        // Filled = spent, transparent = available
+                        color: isSpent ? AppTheme.primary : Colors.transparent,
                         border: Border.all(
-                          color: isUsed ? AppTheme.textSecondary : AppTheme.primary,
+                          color: isSpent ? AppTheme.primary : AppTheme.textSecondary,
                           width: 1.5
                           ),
                         ),
@@ -418,8 +431,9 @@ class _RacialTraitTile extends StatelessWidget {
                     fontWeight: FontWeight.bold)),
               if (trait.isCombatRelevant)
                 _TypeBadge('combat', AppTheme.primary),
-              // Show the resolved ancestry choice as a gold badge
-              if (ancestrySuffix != null)
+            // Show the resolved ancestry choice — but not as a badge for
+            // Skill Versatility (those skills are shown in the description)
+            if (ancestrySuffix != null && ancestryTaskType != 'SKILL_VERSATILITY')
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
@@ -433,22 +447,37 @@ class _RacialTraitTile extends StatelessWidget {
                       fontSize: 9,
                       fontWeight: FontWeight.bold)),
                 )
-              else if (trait.requiresChoice)
+              else if (trait.requiresChoice && ancestryTaskType != 'SKILL_VERSATILITY')
                 _TypeBadge('choose!', Colors.orange),
             ],
           ),
           iconColor: AppTheme.textSecondary,
           collapsedIconColor: AppTheme.textSecondary,
           children: [
-            Text(
-              trait.description.isNotEmpty
-                  ? trait.description
-                  : 'No description available.',
-              style: GoogleFonts.lato(
-                color: AppTheme.textSecondary,
-                fontSize: 12,
-                height: 1.5),
-            ),
+            if (ancestryTaskType == 'SKILL_VERSATILITY' && ancestrySuffix != null) ...[
+              Text('Skills gained:',
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold)),
+              const SizedBox(height: 2),
+              Text(ancestrySuffix,
+                  style: GoogleFonts.lato(
+                      color: AppTheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+            ],
+            if (!trait.requiresChoice)
+              Text(
+                trait.description.isNotEmpty
+                    ? trait.description
+                    : 'No description available.',
+                style: GoogleFonts.lato(
+                  color: AppTheme.textSecondary,
+                  fontSize: 12,
+                  height: 1.5),
+              ),
           ],
         ),
       ),
@@ -479,8 +508,7 @@ class _TypeBadge extends StatelessWidget {
 }
 
 //-- Feats
-// Placeholder - los feats del personaje vendrán cuando se implemente
-// el endpoint GET /api/characters/{id}/feats
+// Shows feats chosen at ASI levels (4, 8, 12, 16, 19) from resolved pending tasks.
 class _FeatsSection extends StatelessWidget {
   final PlayerCharacter character;
   final CharacterSheetViewModel vm;
@@ -488,9 +516,62 @@ class _FeatsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _EmptyCard(
-      message: 'No feats assigned.',
-      hint: 'Feats can be chosen during level-up (levels 4, 8, 12, 16, 19).',
+    // Collect resolved feat choices from ASI_OR_FEAT tasks
+    const asiLevels = [4, 8, 12, 16, 19];
+    final feats = <({String name, String description})>[];
+    for (final lvl in asiLevels) {
+      final choice = vm.resolvedChoiceFor('ASI_OR_FEAT', lvl);
+      if (choice != null && choice.startsWith('FEAT:')) {
+        final featName = choice.substring(5).trim();
+        final featData = kFeats.where((f) => f.name == featName).firstOrNull;
+        feats.add((name: featName, description: featData?.description ?? ''));
+      }
+    }
+
+    if (feats.isEmpty) {
+      return _EmptyCard(
+        message: 'No feats assigned.',
+        hint: 'Feats can be chosen during level-up (levels 4, 8, 12, 16, 19).',
+      );
+    }
+
+    return Column(
+      children: feats.map((feat) => Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFC8A45A).withOpacity(0.4)),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.fromLTRB(14, 4, 10, 4),
+            childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+            iconColor: AppTheme.textSecondary,
+            collapsedIconColor: AppTheme.textSecondary,
+            title: Text(feat.name,
+                style: GoogleFonts.cinzel(
+                    color: const Color(0xFFC8A45A),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold)),
+            children: [
+              if (feat.description.isNotEmpty)
+                Text(feat.description,
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
+                        height: 1.5))
+              else
+                Text('No description available.',
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic)),
+            ],
+          ),
+        ),
+      )).toList(),
     );
   }
 }

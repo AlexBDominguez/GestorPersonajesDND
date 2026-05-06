@@ -140,7 +140,7 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
       ..._baseTabs.sublist(3),    // Features, Inventory, Info
     ];
     final views = <Widget>[
-      TabAbilities(character: c),
+      TabAbilities(character: c, vm: vm),
       TabSkills(character: c, vm: vm),
       TabCombat(character: c, vm: vm),
       if (_showSpells) TabSpells(character: c, vm: vm),
@@ -158,6 +158,10 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
           
           // Stats header
           _SheetHeader(character: c, vm: vm),
+
+          // Death saves banner — visible when HP = 0 or dying
+          if (c.currentHp <= 0 || c.isDying)
+            _DyingBanner(character: c),
 
           // Tab bar
           Container(
@@ -290,6 +294,90 @@ class _NavBar extends StatelessWidget {
       'Lvl ${character.level}',
     ];
     return parts.join(' · ');
+  }
+}
+
+// ── Dying Banner ──────────────────────────────────────────────────────────────
+
+class _DyingBanner extends StatelessWidget {
+  final PlayerCharacter character;
+  const _DyingBanner({required this.character});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = character;
+    final successes = c.deathSaveSuccesses;
+    final failures  = c.deathSaveFailures;
+    final isStable  = successes >= 3;
+
+    return Container(
+      width: double.infinity,
+      color: isStable
+          ? AppTheme.primary.withOpacity(0.12)
+          : AppTheme.accent.withOpacity(0.12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(children: [
+        Icon(
+          isStable ? Icons.favorite : Icons.warning_amber_rounded,
+          color: isStable ? AppTheme.primary : AppTheme.accent,
+          size: 18,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            isStable ? 'STABLE' : 'DYING — Death Saves',
+            style: GoogleFonts.cinzel(
+              color: isStable ? AppTheme.primary : AppTheme.accent,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        // Successes
+        Row(children: [
+          Text('✓',
+              style: GoogleFonts.lato(
+                  color: AppTheme.primary, fontSize: 10, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 3),
+          ...List.generate(3, (i) => Container(
+            margin: const EdgeInsets.only(right: 3),
+            width: 14, height: 14,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: i < successes
+                  ? AppTheme.primary
+                  : AppTheme.surfaceVariant,
+              border: Border.all(
+                color: AppTheme.primary,
+                width: 1.5,
+              ),
+            ),
+          )),
+        ]),
+        const SizedBox(width: 12),
+        // Failures
+        Row(children: [
+          Text('✗',
+              style: GoogleFonts.lato(
+                  color: AppTheme.accent, fontSize: 10, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 3),
+          ...List.generate(3, (i) => Container(
+            margin: const EdgeInsets.only(right: 3),
+            width: 14, height: 14,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: i < failures
+                  ? AppTheme.accent
+                  : AppTheme.surfaceVariant,
+              border: Border.all(
+                color: AppTheme.accent,
+                width: 1.5,
+              ),
+            ),
+          )),
+        ]),
+      ]),
+    );
   }
 }
 

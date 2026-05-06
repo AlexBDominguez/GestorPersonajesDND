@@ -213,8 +213,9 @@ class _UserMenu extends StatelessWidget {
           context: context,
           builder: (_) => AlertDialog(
             backgroundColor: AppTheme.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text('Delete ${user.username}?',
-                style: GoogleFonts.cinzel(color: AppTheme.textPrimary)),
+                style: GoogleFonts.cinzel(color: AppTheme.accent)),
             content: Text(
               'This will permanently delete the user and all their characters.',
               style: GoogleFonts.lato(color: AppTheme.textSecondary),
@@ -224,10 +225,12 @@ class _UserMenu extends StatelessWidget {
                   onPressed: () => Navigator.pop(context, false),
                   child: Text('Cancel',
                       style: GoogleFonts.lato(color: AppTheme.textSecondary))),
-              TextButton(
+              ElevatedButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: Text('Delete',
-                      style: GoogleFonts.lato(color: Colors.redAccent))),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accent,
+                      foregroundColor: Colors.white),
+                  child: const Text('Delete')),
             ],
           ),
         );
@@ -249,6 +252,7 @@ class _UserMenu extends StatelessWidget {
       context: ctx,
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Reset password — ${user.username}',
             style: GoogleFonts.cinzel(color: AppTheme.primary, fontSize: 14)),
         content: TextField(
@@ -281,8 +285,10 @@ class _UserMenu extends StatelessWidget {
                 if (ctx.mounted) _snack(ctx, e.toString(), error: true);
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-            child: Text('Reset', style: GoogleFonts.cinzel(color: AppTheme.background)),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white),
+            child: const Text('Reset'),
           ),
         ],
       ),
@@ -315,6 +321,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
   final _pwCtrl     = TextEditingController();
   bool _obscure     = true;
   bool _saving      = false;
+  String _role      = 'USER';
   String? _error;
 
   @override
@@ -370,6 +377,20 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                 return null;
               },
           ),
+          const SizedBox(height: 14),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            _RoleChip(
+              label: 'User',
+              selected: _role == 'USER',
+              onTap: () => setState(() => _role = 'USER'),
+            ),
+            const SizedBox(width: 8),
+            _RoleChip(
+              label: 'Admin',
+              selected: _role == 'ADMIN',
+              onTap: () => setState(() => _role = 'ADMIN'),
+            ),
+          ]),
           if (_error != null) ...[
             const SizedBox(height: 10),
             Text(_error!,
@@ -407,6 +428,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
       await widget.service.createUser(
         username: _userCtrl.text.trim(),
         password: _pwCtrl.text,
+        role: _role,
       );
       if (mounted) Navigator.pop(context);
       widget.onCreated();
@@ -545,6 +567,36 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 }
 
 // --Widgets auxliaries
+class _RoleChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _RoleChip({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: selected ? AppTheme.primary.withOpacity(0.15) : AppTheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: selected ? AppTheme.primary : AppTheme.divider,
+          width: selected ? 1.5 : 1,
+        ),
+      ),
+      child: Text(label,
+        style: GoogleFonts.lato(
+          color: selected ? AppTheme.primary : AppTheme.textSecondary,
+          fontSize: 12,
+          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+        )),
+    ),
+  );
+}
+
 class _Badge extends StatelessWidget {
   final String label;
   final Color color;

@@ -3,6 +3,7 @@ import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
+import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -69,6 +70,10 @@ class _TabCombatState extends State<TabCombat> {
         // Standard Actions are actions — show them first inside Actions
         _StandardActionsCard(),
         const SizedBox(height: 8),
+        if (vm.equippedWeapons.isNotEmpty) ...[
+          _WeaponAttackTable(weapons: vm.equippedWeapons, character: c),
+          const SizedBox(height: 8),
+        ],
         if (actionSpells.isNotEmpty) ...[
           _SpellAttackTable(spells: actionSpells, vm: vm),
           const SizedBox(height: 8),
@@ -313,6 +318,172 @@ class _StandardActionsCard extends StatelessWidget {
 
 // ── Spell Attack Table (no CAST button, no per-row slot tracker) ──────────────
 
+// ── Weapon Attack Table ────────────────────────────────────────────────────────
+
+class _WeaponAttackTable extends StatelessWidget {
+  final List<InventoryItem> weapons;
+  final PlayerCharacter character;
+  const _WeaponAttackTable({required this.weapons, required this.character});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.surfaceVariant),
+      ),
+      child: Column(children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: const BoxDecoration(
+            color: Color(0xFF1A1A2E),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+          ),
+          child: Row(children: [
+            const Expanded(
+              flex: 3,
+              child: Text('WEAPON',
+                  style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5)),
+            ),
+            SizedBox(
+              width: _kHitDcW,
+              child: const Text('TO HIT',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5)),
+            ),
+            const SizedBox(width: _kColGap),
+            SizedBox(
+              width: _kDmgW,
+              child: const Text('DAMAGE',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5)),
+            ),
+          ]),
+        ),
+        ...weapons.map((w) => _WeaponRow(weapon: w, character: character)),
+      ]),
+    );
+  }
+}
+
+class _WeaponRow extends StatelessWidget {
+  final InventoryItem weapon;
+  final PlayerCharacter character;
+  const _WeaponRow({required this.weapon, required this.character});
+
+  bool get _isRanged =>
+      weapon.weaponRange?.toLowerCase() == 'ranged';
+
+  bool get _isFinesse =>
+      weapon.weaponProperties.any((p) => p.toLowerCase().contains('finesse'));
+
+  int get _abilityMod {
+    final str = character.modifier('STR');
+    final dex = character.modifier('DEX');
+    if (_isRanged) return dex;
+    if (_isFinesse) return str > dex ? str : dex;
+    return str;
+  }
+
+  int get _attackBonus => character.proficiencyBonus + _abilityMod;
+
+  String get _attackText {
+    final b = _attackBonus;
+    return b >= 0 ? '+$b' : '$b';
+  }
+
+  String get _damageText {
+    final dice = weapon.damageDice ?? '';
+    if (dice.isEmpty) return '—';
+    final mod = _abilityMod;
+    if (mod > 0) return '$dice+$mod';
+    if (mod < 0) return '$dice$mod';
+    return dice;
+  }
+
+  String get _rangeLabel {
+    final range = weapon.weaponRange;
+    if (range == null || range.isEmpty) return 'Melee';
+    return range[0].toUpperCase() + range.substring(1).toLowerCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      decoration: const BoxDecoration(
+        border:
+            Border(bottom: BorderSide(color: Color(0xFF2A2A4A), width: 0.5))),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        Expanded(
+          flex: 3,
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(weapon.name,
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis),
+                Text(_rangeLabel,
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary, fontSize: 10)),
+              ]),
+        ),
+        SizedBox(
+          width: _kHitDcW,
+          child: Text(_attackText,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.lato(
+                  color: const Color(0xFFC8A45A),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600)),
+        ),
+        const SizedBox(width: _kColGap),
+        SizedBox(
+          width: _kDmgW,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_damageText,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lato(
+                      color: const Color(0xFFCB7A48),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600)),
+              if (weapon.damageType != null && weapon.damageType!.isNotEmpty)
+                Text(weapon.damageType!,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3)),
+            ],
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+// ── Spell Attack Table ────────────────────────────────────────────────────────
+
 class _SpellAttackTable extends StatelessWidget {
   final List<CharacterSpell> spells;
   final CharacterSheetViewModel vm;
@@ -379,12 +550,51 @@ class _SpellRow extends StatelessWidget {
   final CharacterSheetViewModel vm;
   const _SpellRow({required this.spell, required this.vm});
 
-  String _hitDc() {
+  String _hitDcText() {
     if (spell.attackType != null && spell.attackType!.isNotEmpty)
       return vm.signedInt(vm.character?.spellAttackBonus ?? 0);
-    if (spell.dcType != null && spell.dcType!.isNotEmpty)
-      return '${spell.dcType} ${vm.character?.spellSaveDC ?? 0}';
     return '—';
+  }
+
+  Widget _buildHitDcCell() {
+    // Spell attack: show bonus as single value
+    if (spell.attackType != null && spell.attackType!.isNotEmpty) {
+      return Text(_hitDcText(),
+          textAlign: TextAlign.center,
+          style: GoogleFonts.lato(
+              color: const Color(0xFFC8A45A),
+              fontSize: 12,
+              fontWeight: FontWeight.w600));
+    }
+    // Save DC: stack ability name over DC value
+    if (spell.dcType != null && spell.dcType!.isNotEmpty) {
+      final dc = vm.character?.spellSaveDC ?? 0;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(spell.dcType!,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.lato(
+                  color: const Color(0xFFC8A45A),
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.3)),
+          Text('DC $dc',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.lato(
+                  color: const Color(0xFFC8A45A),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600)),
+        ],
+      );
+    }
+    return Text('—',
+        textAlign: TextAlign.center,
+        style: GoogleFonts.lato(
+            color: const Color(0xFFC8A45A),
+            fontSize: 12,
+            fontWeight: FontWeight.w600));
   }
 
   Widget _buildDamageCell() {
@@ -425,14 +635,6 @@ class _SpellRow extends StatelessWidget {
                 fontWeight: FontWeight.w600)),
       ],
     );
-  }
-
-  String _damage() {
-    final b = spell.damageBase;
-    final t = spell.damageType;
-    if (b == null || b.isEmpty) return '—';
-    if (t == null || t.isEmpty) return b;
-    return '$b $t';
   }
 
   String _range() {
@@ -481,12 +683,7 @@ class _SpellRow extends StatelessWidget {
           ),
           SizedBox(
             width: _kHitDcW,
-            child: Text(_hitDc(),
-                textAlign: TextAlign.center,
-                style: GoogleFonts.lato(
-                    color: const Color(0xFFC8A45A),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600)),
+            child: _buildHitDcCell(),
           ),
           const SizedBox(width: _kColGap),
           SizedBox(

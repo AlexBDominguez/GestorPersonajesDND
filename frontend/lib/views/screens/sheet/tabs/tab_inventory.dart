@@ -54,6 +54,46 @@ class _TabInventoryState extends State<TabInventory> {
     }
   }
 
+  Future<void> _equipWithUndo(InventoryItem item) async {
+    await _toggleEquipped(item);
+    if (!mounted) return;
+    final wasEquipped = !item.equipped; // after toggle it's the opposite
+    final action = wasEquipped ? 'Equipped' : 'Unequipped';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('$action "${item.name}"',
+          style: GoogleFonts.lato(color: Colors.white)),
+      backgroundColor: AppTheme.surface.withOpacity(0.95),
+      duration: const Duration(seconds: 3),
+      action: SnackBarAction(
+        label: 'Undo',
+        textColor: AppTheme.primary,
+        onPressed: () => _toggleEquipped(item),
+      ),
+    ));
+  }
+
+  Future<void> _attuneWithUndo(InventoryItem item) async {
+    if (!item.requiresAttunement) {
+      _showCannotAttuneMessage(item.name);
+      return;
+    }
+    await _toggleAttuned(item);
+    if (!mounted) return;
+    final wasAttuned = !item.attuned;
+    final action = wasAttuned ? 'Attuned' : 'Removed attunement for';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('$action "${item.name}"',
+          style: GoogleFonts.lato(color: Colors.white)),
+      backgroundColor: AppTheme.surface.withOpacity(0.95),
+      duration: const Duration(seconds: 3),
+      action: SnackBarAction(
+        label: 'Undo',
+        textColor: AppTheme.primary,
+        onPressed: () => _toggleAttuned(item),
+      ),
+    ));
+  }
+
   Future<void> _toggleAttuned(InventoryItem item) async {
     try {
       await _service.toggleAttuned(widget.character.id, item.id);
@@ -70,6 +110,7 @@ class _TabInventoryState extends State<TabInventory> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text ('Remove item?',
           style: GoogleFonts.cinzel(color: AppTheme.primary)),
         content: Text('Remove "${item.name}" from inventory?',
@@ -81,8 +122,9 @@ class _TabInventoryState extends State<TabInventory> {
               style: GoogleFonts.lato(color: AppTheme.textSecondary))),
           ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: AppTheme.accent),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accent,
+                  foregroundColor: Colors.white),
               child: const Text('Remove')),
         ],
       ),
@@ -99,6 +141,24 @@ class _TabInventoryState extends State<TabInventory> {
       backgroundColor: AppTheme.accent,
       duration: const Duration(seconds: 3),
     ));
+  }
+
+  Future<void> _changeQuantity(InventoryItem item, int delta) async {
+    final newQty = (item.quantity + delta).clamp(1, 9999);
+    if (newQty == item.quantity) return;
+    try {
+      final updated = await _service.updateQuantity(
+          widget.character.id, item.id, newQty);
+      if (!mounted) return;
+      if (updated != null) {
+        setState(() {
+          final idx = _items.indexWhere((i) => i.id == item.id);
+          if (idx != -1) _items[idx] = updated;
+        });
+      }
+    } catch (e) {
+      if (mounted) _showError(e.toString().replaceFirst('Exception: ', ''));
+    }
   }
 
   void _showCannotAttuneMessage(String itemName) {
@@ -178,15 +238,10 @@ class _TabInventoryState extends State<TabInventory> {
             items: attuned,
             isDragging: _isDragging,
             showWeight: useEncumbrance,
-            onDropped: (item) {
-              if (!item.requiresAttunement) {
-                _showCannotAttuneMessage(item.name);
-                return;
-              }
-              _toggleAttuned(item);
-            },
+            onDropped: (item) => _attuneWithUndo(item),
             onRemoveAttuned: (item) => _toggleAttuned(item),
             onRemove: (item) => _removeItem(item),
+            onQuantityChanged: (item, delta) => _changeQuantity(item, delta),
           ),
           const SizedBox(height: 24),
 
@@ -195,9 +250,10 @@ class _TabInventoryState extends State<TabInventory> {
             items: equipped,
             isDragging: _isDragging,
             showWeight: useEncumbrance,
-            onDropped: (item) => _toggleEquipped(item),
+            onDropped: (item) => _equipWithUndo(item),
             onUnequip: (item) => _toggleEquipped(item),
             onRemove: (item) => _removeItem(item),
+            onQuantityChanged: (item, delta) => _changeQuantity(item, delta),
           ),
           const SizedBox(height: 24),
 
@@ -254,6 +310,7 @@ class _TabInventoryState extends State<TabInventory> {
             onRemove: () => _removeItem(item),
             onDragStarted: () => setState(() => _isDragging = true),
             onDragEnded: () => setState(() => _isDragging = false),
+            onQuantityChanged: (delta) => _changeQuantity(item, delta),
           )),
         const SizedBox(height: 16),
         ]),
@@ -290,6 +347,7 @@ class _EquippedDropZone extends StatefulWidget {
   final void Function(InventoryItem) onDropped;
   final void Function(InventoryItem) onUnequip;
   final void Function(InventoryItem) onRemove;
+  final void Function(InventoryItem, int delta)? onQuantityChanged;
 
   const _EquippedDropZone({
     required this.items,
@@ -298,6 +356,7 @@ class _EquippedDropZone extends StatefulWidget {
     required this.onDropped,
     required this.onUnequip,
     required this.onRemove,
+    this.onQuantityChanged,
   });
 
   @override
@@ -354,6 +413,9 @@ class _EquippedDropZoneState extends State<_EquippedDropZone> {
                       showWeight: widget.showWeight,
                       onUnequip: () => widget.onUnequip(item),
                       onRemove: () => widget.onRemove(item),
+                      onQuantityChanged: widget.onQuantityChanged != null
+                          ? (delta) => widget.onQuantityChanged!(item, delta)
+                          : null,
                     )),
               ]),
         );
@@ -370,6 +432,7 @@ class _AttunedDropZone extends StatefulWidget {
   final void Function(InventoryItem) onDropped;
   final void Function(InventoryItem) onRemoveAttuned;
   final void Function(InventoryItem) onRemove;
+  final void Function(InventoryItem, int delta)? onQuantityChanged;
 
   const _AttunedDropZone({
     required this.items,
@@ -378,6 +441,7 @@ class _AttunedDropZone extends StatefulWidget {
     required this.onDropped,
     required this.onRemoveAttuned,
     required this.onRemove,
+    this.onQuantityChanged,
   });
 
   @override
@@ -464,6 +528,9 @@ class _AttunedDropZoneState extends State<_AttunedDropZone>{
                     showWeight: widget.showWeight,
                     onRemoveAttuned: () => widget.onRemoveAttuned(item),
                     onRemove: () => widget.onRemove(item),
+                    onQuantityChanged: widget.onQuantityChanged != null
+                        ? (delta) => widget.onQuantityChanged!(item, delta)
+                        : null,
                   )),
           ]),
         );
@@ -479,6 +546,7 @@ class _DraggableItemTile extends StatelessWidget{
   final VoidCallback onRemove;
   final VoidCallback onDragStarted;
   final VoidCallback onDragEnded;
+  final void Function(int delta)? onQuantityChanged;
 
   const _DraggableItemTile({
     required this.item,
@@ -486,6 +554,7 @@ class _DraggableItemTile extends StatelessWidget{
     required this.onRemove,
     required this.onDragStarted,
     required this.onDragEnded,
+    this.onQuantityChanged,
   });
 
   @override
@@ -494,6 +563,8 @@ class _DraggableItemTile extends StatelessWidget{
       item: item,
       showWeight: showWeight,
       dimmed: false,
+      onIncrement: onQuantityChanged != null ? () => onQuantityChanged!(1) : null,
+      onDecrement: onQuantityChanged != null ? () => onQuantityChanged!(-1) : null,
       trailing: PopupMenuButton<String>(
         icon: const Icon(Icons.more_vert,
           color: AppTheme.textSecondary, size: 18),
@@ -570,12 +641,14 @@ class _EquippedItemTile extends StatelessWidget {
   final bool showWeight;
   final VoidCallback onUnequip;
   final VoidCallback onRemove;
+  final void Function(int delta)? onQuantityChanged;
 
   const _EquippedItemTile({
     required this.item,
     required this.showWeight,
     required this.onUnequip,
     required this.onRemove,
+    this.onQuantityChanged,
   });
 
   @override
@@ -584,6 +657,8 @@ class _EquippedItemTile extends StatelessWidget {
       item: item,
       showWeight: showWeight,
       accentBorder: true,
+      onIncrement: onQuantityChanged != null ? () => onQuantityChanged!(1) : null,
+      onDecrement: onQuantityChanged != null ? () => onQuantityChanged!(-1) : null,
       trailing: PopupMenuButton<String>(
         icon: const Icon(Icons.more_vert,
           color: AppTheme.textSecondary, size: 18),
@@ -616,11 +691,13 @@ class _AttunedItemTile extends StatelessWidget {
   final bool showWeight;
   final VoidCallback onRemoveAttuned;
   final VoidCallback onRemove;
+  final void Function(int delta)? onQuantityChanged;
   const _AttunedItemTile({
     required this.item,
     required this.showWeight,
     required this.onRemoveAttuned,
     required this.onRemove,
+    this.onQuantityChanged,
   });
 
   @override
@@ -629,6 +706,8 @@ class _AttunedItemTile extends StatelessWidget {
       item: item,
       showWeight: showWeight,
       attunedBorder: true,
+      onIncrement: onQuantityChanged != null ? () => onQuantityChanged!(1) : null,
+      onDecrement: onQuantityChanged != null ? () => onQuantityChanged!(-1) : null,
       trailing: PopupMenuButton<String>(
         icon: const Icon(Icons.more_vert,
             color: AppTheme.textSecondary, size: 18),
@@ -662,6 +741,8 @@ class _ItemTileContent extends StatelessWidget {
   final bool accentBorder;   // equipped
   final bool attunedBorder;  // attuned
   final Widget trailing;
+  final VoidCallback? onIncrement;
+  final VoidCallback? onDecrement;
 
   const _ItemTileContent({
     required this.item,
@@ -670,6 +751,8 @@ class _ItemTileContent extends StatelessWidget {
     this.accentBorder = false,
     this.attunedBorder = false,
     required this.trailing,
+    this.onIncrement,
+    this.onDecrement,
   });
 
   void _showDescription(BuildContext context) {
@@ -786,18 +869,62 @@ class _ItemTileContent extends StatelessWidget {
             ]),
           ]),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceVariant,
-            borderRadius: BorderRadius.circular(6),
+        // Quantity controls
+        if (onIncrement != null || onDecrement != null)
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            GestureDetector(
+              onTap: item.quantity > 1 ? onDecrement : null,
+              child: Container(
+                width: 22, height: 22,
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Icon(Icons.remove, size: 12,
+                    color: item.quantity > 1
+                        ? AppTheme.textSecondary
+                        : AppTheme.textSecondary.withOpacity(0.3)),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text('${item.quantity}',
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold)),
+            ),
+            GestureDetector(
+              onTap: onIncrement,
+              child: Container(
+                width: 22, height: 22,
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Icon(Icons.add, size: 12,
+                    color: AppTheme.textSecondary),
+              ),
+            ),
+          ])
+        else
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceVariant,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text('x${item.quantity}',
+                style: GoogleFonts.lato(
+                    color: AppTheme.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold)),
           ),
-          child: Text('x${item.quantity}',
-              style: GoogleFonts.lato(
-                  color: AppTheme.textPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold)),
-        ),
         IconButton(
           icon: Icon(Icons.info_outline,
               size: 18, color: AppTheme.textSecondary),
