@@ -573,11 +573,12 @@ public class PlayerCharacter {
             }
         }
         
-        // Escudo (+2 AC si está equipado)
+        // Escudo (bonus AC según el armorClass del item) en offHand
         if (equipment != null && equipment.getOffHand() != null) {
             Item offHand = equipment.getOffHand();
-            if ("Shield".equalsIgnoreCase(offHand.getItemType())) {
-                baseAC += 2;
+            if ("Shield".equalsIgnoreCase(offHand.getArmorType())) {
+                int shieldBonus = offHand.getArmorClass() != null ? offHand.getArmorClass() : 2;
+                baseAC += shieldBonus;
             }
         }
         

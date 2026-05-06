@@ -134,8 +134,10 @@ public class CharacterInventoryService {
         boolean willBeEquipped = !inventory.isEquipped();
         inventory.setEquipped(willBeEquipped);
 
-        // Sincronizar CharacterEquipment para ARMOR -> impulsa el cálculo de AC
+        // Sincronizar CharacterEquipment para ARMOR y SHIELD -> impulsa el cálculo de AC
         String itemType = inventory.getItem().getItemType();
+        String armorType = inventory.getItem().getArmorType();
+        boolean isShield = "Shield".equalsIgnoreCase(armorType);
         if (itemType != null && itemType.equalsIgnoreCase("armor")) {
             CharacterEquipment eq = equipmentRepository
                     .findByCharacter(inventory.getCharacter())
@@ -144,22 +146,41 @@ public class CharacterInventoryService {
                         return equipmentRepository.save(newEq);
                     });
 
-            if (willBeEquipped) {
-                // Desequipar la armadura anterior del CharacterInventory si es un item diferente
-                Item previousArmor = eq.getArmor();
-                if (previousArmor != null && !previousArmor.getId().equals(inventory.getItem().getId())) {
-                    inventoryRepository
-                            .findByCharacterAndItem(inventory.getCharacter(), previousArmor)
-                            .ifPresent(old -> {
-                                old.setEquipped(false);
-                                inventoryRepository.save(old);
-                            });
+            if (isShield) {
+                // Shield va al slot offHand
+                if (willBeEquipped) {
+                    Item previousOffHand = eq.getOffHand();
+                    if (previousOffHand != null && !previousOffHand.getId().equals(inventory.getItem().getId())) {
+                        inventoryRepository
+                                .findByCharacterAndItem(inventory.getCharacter(), previousOffHand)
+                                .ifPresent(old -> {
+                                    old.setEquipped(false);
+                                    inventoryRepository.save(old);
+                                });
+                    }
+                    eq.setOffHand(inventory.getItem());
+                } else {
+                    if (eq.getOffHand() != null && eq.getOffHand().getId().equals(inventory.getItem().getId())) {
+                        eq.setOffHand(null);
+                    }
                 }
-                eq.setArmor(inventory.getItem());
             } else {
-                // Solo limpiar el slot si este item era el que estaba en él
-                if (eq.getArmor() != null && eq.getArmor().getId().equals(inventory.getItem().getId())) {
-                    eq.setArmor(null);
+                // Armadura real va al slot armor
+                if (willBeEquipped) {
+                    Item previousArmor = eq.getArmor();
+                    if (previousArmor != null && !previousArmor.getId().equals(inventory.getItem().getId())) {
+                        inventoryRepository
+                                .findByCharacterAndItem(inventory.getCharacter(), previousArmor)
+                                .ifPresent(old -> {
+                                    old.setEquipped(false);
+                                    inventoryRepository.save(old);
+                                });
+                    }
+                    eq.setArmor(inventory.getItem());
+                } else {
+                    if (eq.getArmor() != null && eq.getArmor().getId().equals(inventory.getItem().getId())) {
+                        eq.setArmor(null);
+                    }
                 }
             }
             equipmentRepository.save(eq);
