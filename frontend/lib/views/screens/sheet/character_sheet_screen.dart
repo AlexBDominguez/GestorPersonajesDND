@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
@@ -270,17 +271,20 @@ class _NavBar extends StatelessWidget {
             ),
 
           const SizedBox(width: 10),
-          
-          // Avatar
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppTheme.surfaceVariant,
-              border: Border.all(color: AppTheme.primary, width: 2),
-            ),
-            child: const Icon(Icons.person, color: AppTheme.primary, size: 30),
+
+          // Rest buttons (replace avatar)
+          _RestButton(
+            icon: Icons.nightlight_round,
+            label: 'Long',
+            color: AppTheme.primary,
+            onTap: () => _showLongRestModal(context, vm),
+          ),
+          const SizedBox(width: 6),
+          _RestButton(
+            icon: Icons.coffee_outlined,
+            label: 'Short',
+            color: const Color(0xFF7B9ECC),
+            onTap: () => _showShortRestModal(context, vm, character),
           ),
         ],
       ),
@@ -294,6 +298,20 @@ class _NavBar extends StatelessWidget {
       'Lvl ${character.level}',
     ];
     return parts.join(' · ');
+  }
+
+  void _showLongRestModal(BuildContext context, CharacterSheetViewModel vm) {
+    showDialog(
+      context: context,
+      builder: (_) => _LongRestModal(vm: vm),
+    );
+  }
+
+  void _showShortRestModal(BuildContext context, CharacterSheetViewModel vm, PlayerCharacter c) {
+    showDialog(
+      context: context,
+      builder: (_) => _ShortRestModal(vm: vm, character: c),
+    );
   }
 }
 
@@ -717,6 +735,270 @@ class _HpField extends StatelessWidget {
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 10),
       ),
+    );
+  }
+}
+
+// ── Rest button (compact icon + label) ────────────────────────────────────────
+
+class _RestButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _RestButton({required this.icon, required this.label, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.5), width: 1),
+        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(height: 2),
+          Text(label, style: GoogleFonts.lato(color: color, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── Long Rest Modal ────────────────────────────────────────────────────────────
+
+class _LongRestModal extends StatefulWidget {
+  final CharacterSheetViewModel vm;
+  const _LongRestModal({required this.vm});
+
+  @override
+  State<_LongRestModal> createState() => _LongRestModalState();
+}
+
+class _LongRestModalState extends State<_LongRestModal> {
+  bool _loading = false;
+
+  Future<void> _confirm() async {
+    setState(() => _loading = true);
+    try {
+      await widget.vm.longRest();
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Long rest completed! HP and all spell slots restored.',
+              style: GoogleFonts.lato(color: Colors.white)),
+          backgroundColor: AppTheme.primary.withOpacity(0.9),
+          duration: const Duration(seconds: 3),
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', ''),
+              style: GoogleFonts.lato(color: Colors.white)),
+          backgroundColor: AppTheme.accent,
+        ));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppTheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Row(children: [
+        const Icon(Icons.nightlight_round, color: AppTheme.primary, size: 22),
+        const SizedBox(width: 8),
+        Text('Long Rest', style: GoogleFonts.cinzel(color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
+      content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Taking a long rest will restore:', style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+        const SizedBox(height: 12),
+        _RestEffect(icon: Icons.favorite, text: 'HP to maximum'),
+        _RestEffect(icon: Icons.auto_fix_high, text: 'All spell slots'),
+        _RestEffect(icon: Icons.sports_esports, text: 'Class resources (Long Rest)'),
+        _RestEffect(icon: Icons.casino, text: 'Hit dice (at least half your level)'),
+        _RestEffect(icon: Icons.healing, text: 'Death saves reset'),
+      ]),
+      actions: [
+        TextButton(
+          onPressed: _loading ? null : () => Navigator.pop(context),
+          child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+        ),
+        ElevatedButton(
+          onPressed: _loading ? null : _confirm,
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+          child: _loading
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Rest'),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Short Rest Modal ───────────────────────────────────────────────────────────
+
+class _ShortRestModal extends StatefulWidget {
+  final CharacterSheetViewModel vm;
+  final PlayerCharacter character;
+  const _ShortRestModal({required this.vm, required this.character});
+
+  @override
+  State<_ShortRestModal> createState() => _ShortRestModalState();
+}
+
+class _ShortRestModalState extends State<_ShortRestModal> {
+  int _diceToSpend = 0;
+  bool _loading = false;
+  int _rolledTotal = 0;
+  bool _hasRolled = false;
+
+  int get _hitDie {
+    final name = widget.character.dndClassName?.toLowerCase() ?? '';
+    if (name.contains('barbarian')) return 12;
+    if (name.contains('fighter') || name.contains('paladin') || name.contains('ranger')) return 10;
+    if (name.contains('monk') || name.contains('druid') || name.contains('cleric') ||
+        name.contains('warlock') || name.contains('rogue')) return 8;
+    return 6; // Bard, Sorcerer, Wizard
+  }
+
+  int get _available => widget.character.availableHitDice;
+
+  void _roll() {
+    final rng = Random();
+    int total = 0;
+    for (int i = 0; i < _diceToSpend; i++) {
+      total += rng.nextInt(_hitDie) + 1;
+    }
+    setState(() { _rolledTotal = total; _hasRolled = true; });
+  }
+
+  Future<void> _confirm() async {
+    if (_diceToSpend == 0) {
+      // Short rest with no dice spent (just class resources)
+      _rolledTotal = 0;
+    }
+    setState(() => _loading = true);
+    try {
+      await widget.vm.shortRest(hitDiceToSpend: _diceToSpend, hitDiceRoll: _rolledTotal);
+      if (mounted) {
+        Navigator.pop(context);
+        final healMsg = _rolledTotal > 0 ? ' Healed $_rolledTotal HP.' : '';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Short rest completed.$healMsg',
+              style: GoogleFonts.lato(color: Colors.white)),
+          backgroundColor: const Color(0xFF7B9ECC).withOpacity(0.9),
+          duration: const Duration(seconds: 3),
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', ''),
+              style: GoogleFonts.lato(color: Colors.white)),
+          backgroundColor: AppTheme.accent,
+        ));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppTheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Row(children: [
+        const Icon(Icons.coffee_outlined, color: Color(0xFF7B9ECC), size: 22),
+        const SizedBox(width: 8),
+        Text('Short Rest', style: GoogleFonts.cinzel(color: const Color(0xFF7B9ECC), fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text('You have $_available / ${widget.character.level} hit dice (d$_hitDie).',
+            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+        const SizedBox(height: 16),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline, color: AppTheme.textSecondary),
+            onPressed: _diceToSpend > 0 ? () => setState(() { _diceToSpend--; _hasRolled = false; }) : null,
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceVariant,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text('$_diceToSpend d$_hitDie',
+                style: GoogleFonts.cinzel(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, color: Color(0xFF7B9ECC)),
+            onPressed: _diceToSpend < _available ? () => setState(() { _diceToSpend++; _hasRolled = false; }) : null,
+          ),
+        ]),
+        if (_diceToSpend > 0) ...[
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: _roll,
+            icon: const Icon(Icons.casino, size: 16),
+            label: const Text('Roll dice'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.surfaceVariant,
+              foregroundColor: const Color(0xFF7B9ECC),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+          if (_hasRolled) ...[
+            const SizedBox(height: 8),
+            Text('Result: +$_rolledTotal HP',
+                style: GoogleFonts.cinzel(color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ],
+        const SizedBox(height: 8),
+        _RestEffect(icon: Icons.sports_esports, text: 'Class resources (Short Rest) restored'),
+      ]),
+      actions: [
+        TextButton(
+          onPressed: _loading ? null : () => Navigator.pop(context),
+          child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+        ),
+        ElevatedButton(
+          onPressed: (_loading || (_diceToSpend > 0 && !_hasRolled)) ? null : _confirm,
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7B9ECC), foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+          child: _loading
+              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Rest'),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Rest effect row ────────────────────────────────────────────────────────────
+
+class _RestEffect extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _RestEffect({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(children: [
+        Icon(icon, color: AppTheme.primary, size: 14),
+        const SizedBox(width: 8),
+        Expanded(child: Text(text, style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 12))),
+      ]),
     );
   }
 }

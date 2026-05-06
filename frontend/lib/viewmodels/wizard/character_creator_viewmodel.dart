@@ -292,8 +292,10 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   // bool useEncumbrance = false;
   bool useMilestone = true;      // kept for backend call; always true
   bool useEncumbrance = false;   // kept for backend call; always false
+  String abilityDisplayMode = 'SCORES_TOP'; // 'SCORES_TOP' or 'MODIFIERS_TOP'
 
   void setName(String v) {characterName = v; _markDirty(WizardStep.preferences); notifyListeners();}
+  void setAbilityDisplayMode(String v) {abilityDisplayMode = v; _markDirty(WizardStep.preferences); notifyListeners();}
   // [DISABLED] setMilestone/setEncumbrance — UI removed, no longer called.
   // void setMilestone(bool v) {useMilestone = v; _markDirty(WizardStep.preferences); notifyListeners();}
   // void setEncumbrance(bool v) {useEncumbrance = v; _markDirty(WizardStep.preferences); notifyListeners();}
@@ -1256,6 +1258,7 @@ void toggleItem(int itemId) {
         height: height.isNotEmpty  ? height  : null,
         weight: weight.isNotEmpty  ? weight  : null,
         useEncumbrance: useEncumbrance,
+        abilityDisplayMode: abilityDisplayMode,
       );
       _createdCharacterId = result.id;
 

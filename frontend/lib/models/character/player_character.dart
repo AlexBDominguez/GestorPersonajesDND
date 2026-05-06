@@ -70,6 +70,8 @@ class PlayerCharacter{
   final int goldPieces;
   final int platinumPieces;
   final bool useEncumbrance;
+  // 'SCORES_TOP' (default) or 'MODIFIERS_TOP'
+  final String abilityDisplayMode;
 
   const PlayerCharacter({
     required this.id,
@@ -138,6 +140,7 @@ class PlayerCharacter{
     required this.goldPieces,
     required this.platinumPieces,
     this.useEncumbrance = false,
+    this.abilityDisplayMode = 'SCORES_TOP',
   });
 
   factory PlayerCharacter.fromJson(Map<String, dynamic> j) {
@@ -221,6 +224,7 @@ class PlayerCharacter{
       goldPieces:          (j['goldPieces']     as num?)?.toInt() ?? 0,
       platinumPieces:      (j['platinumPieces'] as num?)?.toInt() ?? 0,
       useEncumbrance:      (j['useEncumbrance'] as bool?) ?? false,
+      abilityDisplayMode:  j['abilityDisplayMode'] as String? ?? 'SCORES_TOP',
     );
   }
 

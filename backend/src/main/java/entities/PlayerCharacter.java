@@ -139,6 +139,10 @@ public class PlayerCharacter {
     //Preferencia de encumbrance (activado en el wizard)
     private boolean useEncumbrance = false;
 
+    // Preferencia de visualización de ability scores en la ficha
+    // Valores: "SCORES_TOP" (por defecto) o "MODIFIERS_TOP"
+    private String abilityDisplayMode = "SCORES_TOP";
+
 
     //Getters y setters
 
@@ -955,6 +959,13 @@ public class PlayerCharacter {
         return Math.max(0, getExperienceToNextLevel() - experiencePoints);
     }
 
+    public String getAbilityDisplayMode() {
+        return abilityDisplayMode != null ? abilityDisplayMode : "SCORES_TOP";
+    }
+
+    public void setAbilityDisplayMode(String abilityDisplayMode) {
+        this.abilityDisplayMode = abilityDisplayMode;
+    }
 
 }
     

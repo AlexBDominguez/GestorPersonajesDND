@@ -58,6 +58,7 @@ class CharacterService {
     List<int>? magicalSecretSpellIds,
     List<String>? classSkillIndices,
     bool useEncumbrance = false,
+    String abilityDisplayMode = 'SCORES_TOP',
   }) async {
     final body = {
       'name': name,
@@ -67,6 +68,7 @@ class CharacterService {
       'abilityScores': abilityScores,
       'level': level,
       'useEncumbrance': useEncumbrance,
+      'abilityDisplayMode': abilityDisplayMode,
       if (subclassId != null) 'subclassId': subclassId,
       if (personalityTrait != null && personalityTrait.isNotEmpty) 'personalityTrait': personalityTrait,
       if (ideal != null && ideal.isNotEmpty) 'ideal': ideal,
@@ -194,6 +196,31 @@ class CharacterService {
       if (res.statusCode == 403) throw Exception('Access denied');
       if (res.statusCode == 404) throw Exception('No slots for level $level');
       throw Exception('Failed to restore spell slot (${res.statusCode})');
+    }
+
+    // POST long rest
+    Future<PlayerCharacter> longRest(int characterId) async {
+      final res = await _api.post('${ApiConfig.charactersPath}/$characterId/long-rest');
+      if (res.statusCode == 200) {
+        return PlayerCharacter.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      }
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      throw Exception('Long rest failed (${res.statusCode})');
+    }
+
+    // POST short rest
+    Future<PlayerCharacter> shortRest(int characterId, {required int hitDiceToSpend, required int hitDiceRoll}) async {
+      final res = await _api.post(
+        '${ApiConfig.charactersPath}/$characterId/short-rest',
+        body: {'hitDiceToSpend': hitDiceToSpend, 'hitDiceRoll': hitDiceRoll},
+      );
+      if (res.statusCode == 200) {
+        return PlayerCharacter.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      }
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      throw Exception('Short rest failed (${res.statusCode})');
     }
 }
 

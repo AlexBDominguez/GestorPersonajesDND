@@ -259,6 +259,22 @@ class CharacterSheetViewModel extends ChangeNotifier {
   bool _isLoadingFeatures = false;
   bool get isLoadingFeatures => _isLoadingFeatures;
 
+  // ── Long Rest / Short Rest ─────────────────────────────────────────────────
+
+  Future<void> longRest() async {
+    final updated = await _service.longRest(characterId);
+    character = updated;
+    _initSpellSlots();
+    notifyListeners();
+  }
+
+  Future<void> shortRest({required int hitDiceToSpend, required int hitDiceRoll}) async {
+    final updated = await _service.shortRest(characterId,
+        hitDiceToSpend: hitDiceToSpend, hitDiceRoll: hitDiceRoll);
+    character = updated;
+    notifyListeners();
+  }
+
   /// Features de clase filtradas solo para Combat (activables)
   List<ClassFeature> get combatClassFeatures => _classFeatures
       .where((f) => isCombatRelevant(f.indexName))

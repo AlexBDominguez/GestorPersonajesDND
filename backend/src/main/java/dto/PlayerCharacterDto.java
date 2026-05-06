@@ -73,6 +73,7 @@ public class PlayerCharacterDto {
     private List<Long> featIds;
     private List<SpellSlotDto> spellSlots;
     private boolean useEncumbrance = false;
+    private String abilityDisplayMode = "SCORES_TOP";
     private List<CharacterSkillDto> skills;
     private List<CharacterSavingThrowDto> savingThrows;
     private List<String> classSkillIndices; // input: class skill picks from wizard
@@ -655,6 +656,14 @@ public class PlayerCharacterDto {
 
     public void setUseEncumbrance(boolean useEncumbrance) {
         this.useEncumbrance = useEncumbrance;
+    }
+
+    public String getAbilityDisplayMode() {
+        return abilityDisplayMode;
+    }
+
+    public void setAbilityDisplayMode(String abilityDisplayMode) {
+        this.abilityDisplayMode = abilityDisplayMode;
     }
 
 }

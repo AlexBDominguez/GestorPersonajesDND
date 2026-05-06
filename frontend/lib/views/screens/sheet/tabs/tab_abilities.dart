@@ -28,7 +28,7 @@ class TabAbilities extends StatelessWidget {
           mainAxisSpacing: 10,
           childAspectRatio: 0.85,
           children: CharacterSheetViewModel.abilityNames
-              .map((a) => _AbilityCell(ability: a, character: c))
+              .map((a) => _AbilityCell(ability: a, character: c, modifiersTop: c.abilityDisplayMode == 'MODIFIERS_TOP'))
               .toList(),
         ),
         const SizedBox(height: 24),
@@ -81,13 +81,20 @@ class TabAbilities extends StatelessWidget {
 class _AbilityCell extends StatelessWidget{
   final String ability;
   final PlayerCharacter character;
-  const _AbilityCell({required this.ability, required this.character});
+  final bool modifiersTop;
+  const _AbilityCell({required this.ability, required this.character, this.modifiersTop = false});
 
   @override
   Widget build(BuildContext context){
     final score = character.abilityScores[ability] ?? 10;
     final mod = character.modifier(ability);
     final modLbl = mod >= 0 ? '+$mod' : '$mod';
+
+    // Big box: score or modifier depending on preference
+    final bigLabel  = modifiersTop ? modLbl : '$score';
+    final smallLabel = modifiersTop ? '$score' : modLbl;
+    final bigFontSize  = modifiersTop ? 18.0 : 18.0;
+    final smallFontSize = modifiersTop ? 12.0 : 12.0;
 
     return Container(
       decoration: BoxDecoration(
@@ -106,7 +113,7 @@ class _AbilityCell extends StatelessWidget{
               letterSpacing: 1
             )),
           const SizedBox(height: 6),
-          //Score - rectángulo
+          // Primary value — rectangle box
           Container(
             width: 48, height: 34,
             decoration: BoxDecoration(
@@ -115,16 +122,16 @@ class _AbilityCell extends StatelessWidget{
               border: Border.all(color: AppTheme.primary.withOpacity(0.6)),
             ),
             child: Center(
-              child: Text('$score',
+              child: Text(bigLabel,
                 style: GoogleFonts.cinzel(
                   color: AppTheme.textPrimary,
-                  fontSize: 18,
+                  fontSize: bigFontSize,
                   fontWeight: FontWeight.bold
                 )),
             ),
           ),
           const SizedBox(height: 6),
-          //Modifier - elipse
+          // Secondary value — ellipse
           Container(
             width: 38, height: 22,
             decoration: BoxDecoration(
@@ -133,10 +140,10 @@ class _AbilityCell extends StatelessWidget{
               border: Border.all(color: AppTheme.primary, width: 1),
             ),
             child: Center(
-              child: Text(modLbl,
+              child: Text(smallLabel,
                 style: GoogleFonts.lato(
                   color: AppTheme.primary,
-                  fontSize: 12,
+                  fontSize: smallFontSize,
                   fontWeight: FontWeight.bold
                 )),
             ),
