@@ -108,7 +108,8 @@ class CharacterSheetViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       character = await _service.getCharacterById(characterId);
-      await _loadPendingTasks();
+      // TODO(DASH-02): re-enable once level-up flow is redesigned
+      // await _loadPendingTasks();
       _initSpellSlots();
       _loadInventory();
       if (character?.dndClassId != null && _classFeatures.isEmpty) {

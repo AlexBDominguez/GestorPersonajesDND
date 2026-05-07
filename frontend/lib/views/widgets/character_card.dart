@@ -210,24 +210,29 @@ class _MoreMenuButton extends StatelessWidget {
             ],
           ),
         ),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
-                style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.textSecondary,
+              side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              minimumSize: const Size(100, 40),
+            ),
+            child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accent,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8))),
+                minimumSize: const Size(100, 40),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
             onPressed: () {
-              Navigator.pop(context); // cierra el dialog
-              onDelete();             // ejecuta el callback
+              Navigator.pop(context);
+              onDelete();
             },
-            child: Text('Delete',
-                style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+            child: Text('Delete', style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

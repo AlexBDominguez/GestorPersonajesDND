@@ -1304,8 +1304,23 @@ void toggleItem(int itemId) {
       final tasks = await _pendingTaskService.getPendingTasks(characterId);
       for (final task in tasks) {
         final key = '${task.taskType}_${task.relatedLevel}';
-        final choice = featureChoices[key];
-        if (choice != null) {
+
+        // Multi-pick tasks (e.g. EXPERTISE_PICK_0_1, EXPERTISE_PICK_1_1):
+        // aggregate all individual picks into a comma-separated string.
+        final multiKeys = featureChoices.keys
+            .where((k) => k.startsWith('${task.taskType}_PICK_') && k.endsWith('_${task.relatedLevel}'))
+            .toList()
+          ..sort();
+        final multiPicks = multiKeys
+            .map((k) => featureChoices[k])
+            .whereType<String>()
+            .toList();
+
+        final choice = multiPicks.isNotEmpty
+            ? multiPicks.join(',')
+            : featureChoices[key];
+
+        if (choice != null && choice.isNotEmpty) {
           await _pendingTaskService.resolveTask(
             characterId: characterId,
             taskId: task.id,

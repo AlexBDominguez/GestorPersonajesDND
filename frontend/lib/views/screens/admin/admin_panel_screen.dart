@@ -220,16 +220,24 @@ class _UserMenu extends StatelessWidget {
               'This will permanently delete the user and all their characters.',
               style: GoogleFonts.lato(color: AppTheme.textSecondary),
             ),
+            actionsAlignment: MainAxisAlignment.center,
             actions: [
-              TextButton(
+              OutlinedButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: Text('Cancel',
-                      style: GoogleFonts.lato(color: AppTheme.textSecondary))),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.textSecondary,
+                    side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    minimumSize: const Size(100, 40),
+                  ),
+                  child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary))),
               ElevatedButton(
                   onPressed: () => Navigator.pop(context, true),
                   style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.accent,
-                      foregroundColor: Colors.white),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(100, 40),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                   child: const Text('Delete')),
             ],
           ),
@@ -269,11 +277,17 @@ class _UserMenu extends StatelessWidget {
                 borderSide: BorderSide.none),
           ),
         ),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
+          OutlinedButton(
               onPressed: () => Navigator.pop(_),
-              child: Text('Cancel',
-                  style: GoogleFonts.lato(color: AppTheme.textSecondary))),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.textSecondary,
+                side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                minimumSize: const Size(100, 40),
+              ),
+              child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary))),
           ElevatedButton(
             onPressed: () async {
               if (ctrl.text.length < 6) return;
@@ -287,7 +301,9 @@ class _UserMenu extends StatelessWidget {
             },
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white),
+                foregroundColor: Colors.white,
+                minimumSize: const Size(100, 40),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
             child: const Text('Reset'),
           ),
         ],
@@ -399,16 +415,24 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
           ],
         ]),
       ),
+      actionsAlignment: MainAxisAlignment.center,
       actions: [
-        TextButton(
+        OutlinedButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
-                style: GoogleFonts.lato(color: AppTheme.textSecondary))),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.textSecondary,
+              side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              minimumSize: const Size(100, 40),
+            ),
+            child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary))),
         ElevatedButton(
           onPressed: _saving ? null : _submit,
           style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
-              foregroundColor: AppTheme.background),
+              foregroundColor: AppTheme.background,
+              minimumSize: const Size(100, 40),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
           child: _saving
               ? const SizedBox(
                   width: 16, height: 16,

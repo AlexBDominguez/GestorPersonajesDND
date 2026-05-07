@@ -823,17 +823,25 @@ class _MySpellsTab extends StatelessWidget {
             content: Text(
                 'Remove "${spells[i].name}" from your spellbook?',
                 style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+            actionsAlignment: MainAxisAlignment.center,
             actions: [
-              TextButton(
+              OutlinedButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('Cancel',
-                    style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.textSecondary,
+                  side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  minimumSize: const Size(100, 40),
+                ),
+                child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.accent,
-                    foregroundColor: Colors.white),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(100, 40),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                 child: const Text('Remove'),
               ),
             ],
@@ -1117,11 +1125,17 @@ class _LearnNewTabState extends State<_LearnNewTab> {
             ),
           ],
         ]),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel',
-                style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.textSecondary,
+              side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              minimumSize: const Size(100, 40),
+            ),
+            child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
           ),
           ElevatedButton.icon(
             onPressed: () => Navigator.pop(context, true),
