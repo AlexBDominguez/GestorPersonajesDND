@@ -5,6 +5,7 @@ import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 // TODO(DASH-02): re-enable PendingTasksScreen once level-up flow is redesigned
 // import 'package:gestor_personajes_dnd/views/screens/sheet/pending_tasks_screen.dart';
+import 'package:gestor_personajes_dnd/views/screens/wizard/edit_character_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_abilities.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_combat.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_features.dart';
@@ -265,6 +266,9 @@ class _NavBar extends StatelessWidget {
           //     ),
           //     tooltip: '${vm.pendingTasks.length} pending choice(s)',
           //   ),
+
+          // Gear menu — Edit Character + future settings
+          _GearMenuButton(character: character, vm: vm),
 
           const SizedBox(width: 10),
 
@@ -790,6 +794,51 @@ class _RestButton extends StatelessWidget {
           Text(label, style: GoogleFonts.lato(color: color, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
         ]),
       ),
+    );
+  }
+}
+
+// ── Gear Menu Button ──────────────────────────────────────────────────────────
+
+class _GearMenuButton extends StatelessWidget {
+  final PlayerCharacter character;
+  final CharacterSheetViewModel vm;
+  const _GearMenuButton({required this.character, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.settings_outlined, color: AppTheme.textSecondary, size: 22),
+      tooltip: 'Character options',
+      color: AppTheme.surfaceVariant,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: AppTheme.surfaceVariant),
+      ),
+      onSelected: (value) async {
+        if (value == 'edit') {
+          final result = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (_) => EditCharacterScreen(character: character),
+            ),
+          );
+          if (result == true && context.mounted) {
+            await vm.load();
+          }
+        }
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: 'edit',
+          child: Row(children: [
+            const Icon(Icons.edit_outlined, color: AppTheme.primary, size: 18),
+            const SizedBox(width: 10),
+            Text('Edit Character',
+                style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+          ]),
+        ),
+      ],
     );
   }
 }

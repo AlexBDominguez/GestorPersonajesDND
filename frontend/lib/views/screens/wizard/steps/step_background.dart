@@ -106,50 +106,63 @@ class _StepBackgroundState extends State<StepBackground> {
               width: bg != null ? 1.5 : 1,
             ),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<int>(
-              isExpanded: true,
-              dropdownColor: AppTheme.surface,
-              value: bg?.id,
-              hint: Text('Select a background…',
-                  style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary, fontSize: 14)),
-              items: vm.backgrounds.map((b) => DropdownMenuItem(
-                value: b.id,
-                child: Text(b.name,
-                    style: GoogleFonts.cinzel(
-                        color: AppTheme.textPrimary, fontSize: 14)),
-              )).toList(),
-              onChanged: (id) {
-                if (id == null) return;
-                final chosen = vm.backgrounds.firstWhere((b) => b.id == id);
-                final removed = vm.selectBackground(chosen);
-                if (removed.isNotEmpty && context.mounted) {
-                  final names = removed.join(', ');
-                  final messenger = ScaffoldMessenger.of(context);
-                  messenger.showSnackBar(SnackBar(
-                    content: Text(
-                      'Conflict: $names ${removed.length == 1 ? 'is' : 'are'} already granted by this background — '
-                      'deselected from your class skills. Go back to Edit Class to re-pick.',
-                      style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
+          child: vm.isEditMode
+              // Edit mode: show background as read-only text
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(children: [
+                    const Icon(Icons.lock_outline, color: AppTheme.textSecondary, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      bg?.name ?? '—',
+                      style: GoogleFonts.cinzel(color: AppTheme.textSecondary, fontSize: 14),
                     ),
-                    backgroundColor: AppTheme.surface,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: const BorderSide(color: AppTheme.primary, width: 1),
-                    ),
-                    duration: const Duration(seconds: 8),
-                    action: SnackBarAction(
-                      label: 'Dismiss',
-                      textColor: AppTheme.primary,
-                      onPressed: () => messenger.hideCurrentSnackBar(),
-                    ),
-                  ));
-                }
-              },
-            ),
-          ),
+                  ]),
+                )
+              : DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    isExpanded: true,
+                    dropdownColor: AppTheme.surface,
+                    value: bg?.id,
+                    hint: Text('Select a background…',
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary, fontSize: 14)),
+                    items: vm.backgrounds.map((b) => DropdownMenuItem(
+                      value: b.id,
+                      child: Text(b.name,
+                          style: GoogleFonts.cinzel(
+                              color: AppTheme.textPrimary, fontSize: 14)),
+                    )).toList(),
+                    onChanged: (id) {
+                      if (id == null) return;
+                      final chosen = vm.backgrounds.firstWhere((b) => b.id == id);
+                      final removed = vm.selectBackground(chosen);
+                      if (removed.isNotEmpty && context.mounted) {
+                        final names = removed.join(', ');
+                        final messenger = ScaffoldMessenger.of(context);
+                        messenger.showSnackBar(SnackBar(
+                          content: Text(
+                            'Conflict: $names ${removed.length == 1 ? 'is' : 'are'} already granted by this background — '
+                            'deselected from your class skills. Go back to Edit Class to re-pick.',
+                            style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
+                          ),
+                          backgroundColor: AppTheme.surface,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: const BorderSide(color: AppTheme.primary, width: 1),
+                          ),
+                          duration: const Duration(seconds: 8),
+                          action: SnackBarAction(
+                            label: 'Dismiss',
+                            textColor: AppTheme.primary,
+                            onPressed: () => messenger.hideCurrentSnackBar(),
+                          ),
+                        ));
+                      }
+                    },
+                  ),
+                ),
         ),
 
         // ── Detalle del background elegido ────────────────────────

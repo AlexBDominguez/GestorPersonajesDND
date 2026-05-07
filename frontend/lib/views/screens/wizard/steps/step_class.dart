@@ -19,6 +19,37 @@ class StepClass extends StatelessWidget {
       return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
     }
 
+    // Edit mode: class is locked — show compact card + open ClassOptionsScreen directly
+    if (vm.isEditMode && vm.selectedClass != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+            child: Text('Your Class',
+                style: Theme.of(context).textTheme.displayMedium),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Text(
+              'Class is locked. You can change your level, subclass and feature choices below.',
+              style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: _SelectedClassBadge(
+              cls: vm.selectedClass!,
+              level: vm.selectedLevel,
+              onClear: () {}, // locked in edit mode — no-op
+              showClear: false,
+              onEdit: () => _openClassEdit(context, vm),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -114,12 +145,14 @@ class _SelectedClassBadge extends StatelessWidget {
   final int level;
   final VoidCallback onClear;
   final VoidCallback? onEdit;
+  final bool showClear;
 
   const _SelectedClassBadge({
     required this.cls,
     required this.level,
     required this.onClear,
     this.onEdit,
+    this.showClear = true,
   });
 
   @override
@@ -154,11 +187,13 @@ class _SelectedClassBadge extends StatelessWidget {
           onTap: onEdit,
           child: const Icon(Icons.edit_outlined, color: AppTheme.textSecondary, size: 18),
         ),
-        const SizedBox(width: 6),
-        GestureDetector(
-          onTap: onClear,
-          child: const Icon(Icons.close, color: AppTheme.textSecondary, size: 18),
-        ),
+        if (showClear) ...[
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: onClear,
+            child: const Icon(Icons.close, color: AppTheme.textSecondary, size: 18),
+          ),
+        ],
       ]),
     );
   }

@@ -300,4 +300,12 @@ public class PlayerCharacterController {
         playerCharacterService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/profile")
+    public ResponseEntity<PlayerCharacterDto> updateProfile(
+            @PathVariable Long id,
+            @RequestBody dto.CharacterProfileUpdateDto body) {
+        verifyCharacterOwnership(id);
+        return ResponseEntity.ok(playerCharacterService.updateProfile(id, body));
+    }
 }

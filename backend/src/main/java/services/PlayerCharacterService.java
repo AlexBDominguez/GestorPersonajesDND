@@ -296,6 +296,46 @@ public class PlayerCharacterService {
         characterRepository.delete(character);
     }
 
+    // ========== EDIT CHARACTER PROFILE ==========
+
+    @Transactional
+    public PlayerCharacterDto updateProfile(Long characterId, dto.CharacterProfileUpdateDto dto) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Character not found with ID: " + characterId));
+
+        if (dto.getName() != null && !dto.getName().isBlank()) {
+            character.setName(dto.getName().trim());
+        }
+        if (dto.getAlignment() != null)         character.setAlignment(dto.getAlignment());
+        if (dto.getPersonalityTrait() != null)  character.setPersonalityTraits(dto.getPersonalityTrait());
+        if (dto.getIdeal() != null)             character.setIdeals(dto.getIdeal());
+        if (dto.getBond() != null)              character.setBonds(dto.getBond());
+        if (dto.getFlaw() != null)              character.setFlaws(dto.getFlaw());
+        if (dto.getAge() != null)               character.setAge(dto.getAge());
+        if (dto.getHeight() != null)            character.setHeight(dto.getHeight());
+        if (dto.getWeight() != null)            character.setWeight(dto.getWeight());
+        if (dto.getEyes() != null)              character.setEyes(dto.getEyes());
+        if (dto.getSkin() != null)              character.setSkin(dto.getSkin());
+        if (dto.getHair() != null)              character.setHair(dto.getHair());
+        if (dto.getAbilityDisplayMode() != null) character.setAbilityDisplayMode(dto.getAbilityDisplayMode());
+        if (dto.getUseEncumbrance() != null)    character.setUseEncumbrance(dto.getUseEncumbrance());
+
+        if (dto.getSubclassId() != null) {
+            Subclass subclass = subclassRepository.findById(dto.getSubclassId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Subclass not found"));
+            if (!subclass.getDndClass().getId().equals(character.getDndClass().getId())) {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Subclass does not belong to character's class");
+            }
+            character.setSubclass(subclass);
+        }
+
+        characterRepository.save(character);
+        return toDto(character);
+    }
+
     private void applyBackgroundProficiencies(PlayerCharacter character) {
         Background background = character.getBackground();
 

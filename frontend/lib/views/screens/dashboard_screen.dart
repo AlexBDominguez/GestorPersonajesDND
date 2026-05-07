@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/views/screens/admin/admin_panel_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/character_sheet_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/wizard/character_creator_screen.dart';
+import 'package:gestor_personajes_dnd/views/screens/wizard/edit_character_screen.dart';
+import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_theme.dart';
@@ -182,12 +184,29 @@ class _DashboardBody extends StatelessWidget {
             ));
             vm.load();
           },
-          onEdit: (){
-            //TODO: navegar al wizard en modo edición cuando esté implementado
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Edit — coming soon'),
-              backgroundColor: AppTheme.surfaceVariant,
-            ));
+          onEdit: () async {
+            // Fetch full character object (summary has no ability scores etc.)
+            try {
+              final full = await CharacterService().getCharacterById(character.id);
+              if (context.mounted) {
+                final result = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute(
+                    builder: (_) => EditCharacterScreen(character: full),
+                  ),
+                );
+                if (result == true) vm.load();
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(
+                    'Could not open editor: $e',
+                    style: GoogleFonts.lato(color: Colors.white),
+                  ),
+                  backgroundColor: AppTheme.accent,
+                ));
+              }
+            }
           },
           onDelete: () async{
             final name = character.name; //guardar antes de borrar

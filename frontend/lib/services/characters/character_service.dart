@@ -222,5 +222,64 @@ class CharacterService {
       if (res.statusCode == 403) throw Exception('Access denied');
       throw Exception('Short rest failed (${res.statusCode})');
     }
+
+    // POST level-up
+    Future<void> levelUp(int characterId) async {
+      final res = await _api.post('${ApiConfig.charactersPath}/$characterId/level-up');
+      if (res.statusCode == 200) return;
+      if (res.statusCode == 400) {
+        final msg = res.body.isNotEmpty ? res.body : 'Character is already at max level';
+        throw Exception(msg);
+      }
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      throw Exception('Failed to level up (${res.statusCode})');
+    }
+
+    // PATCH profile (edit character metadata)
+    Future<PlayerCharacter> updateProfile({
+      required int id,
+      String? name,
+      String? alignment,
+      String? personalityTrait,
+      String? ideal,
+      String? bond,
+      String? flaw,
+      int? age,
+      String? height,
+      String? weight,
+      String? eyes,
+      String? skin,
+      String? hair,
+      String? abilityDisplayMode,
+      bool? useEncumbrance,
+      int? subclassId,
+    }) async {
+      final body = <String, dynamic>{
+        if (name != null) 'name': name,
+        if (alignment != null) 'alignment': alignment,
+        if (personalityTrait != null) 'personalityTrait': personalityTrait,
+        if (ideal != null) 'ideal': ideal,
+        if (bond != null) 'bond': bond,
+        if (flaw != null) 'flaw': flaw,
+        if (age != null) 'age': age,
+        if (height != null) 'height': height,
+        if (weight != null) 'weight': weight,
+        if (eyes != null) 'eyes': eyes,
+        if (skin != null) 'skin': skin,
+        if (hair != null) 'hair': hair,
+        if (abilityDisplayMode != null) 'abilityDisplayMode': abilityDisplayMode,
+        if (useEncumbrance != null) 'useEncumbrance': useEncumbrance,
+        if (subclassId != null) 'subclassId': subclassId,
+      };
+      final res = await _api.patch('${ApiConfig.charactersPath}/$id/profile', body: body);
+      if (res.statusCode == 200) {
+        return PlayerCharacter.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      }
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      if (res.statusCode == 404) throw Exception('Character not found');
+      throw Exception('Failed to update profile (${res.statusCode})');
+    }
 }
 

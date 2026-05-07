@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
+import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
 import 'package:gestor_personajes_dnd/models/wizard/background_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
@@ -55,6 +56,16 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   final InventoryService      _inventoryService;
   final PendingTaskService    _pendingTaskService;
 
+  // ── Edit mode state ──────────────────────────────────────────────────────
+  bool _editMode = false;
+  bool get isEditMode => _editMode;
+  int? _editCharacterId;
+  int _originalLevel = 1;
+  int? _initialClassId;
+  int? _initialSubclassId;
+  int? _initialBackgroundId;
+  int? _initialRaceId;
+
   CharacterCreatorViewModel({
     WizardReferenceService? refService,
     CharacterService?       charService,
@@ -65,6 +76,46 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         _inventoryService = inventoryService ?? InventoryService(),
         _pendingTaskService = pendingTaskService ?? PendingTaskService();
 
+  /// Named constructor that pre-fills the wizard from an existing character for edit mode.
+  CharacterCreatorViewModel.forEdit(
+    PlayerCharacter char, {
+    WizardReferenceService? refService,
+    CharacterService?       charService,
+    InventoryService?      inventoryService,
+    PendingTaskService?    pendingTaskService,
+  })  : _refService  = refService  ?? WizardReferenceService(),
+        _charService = charService ?? CharacterService(),
+        _inventoryService = inventoryService ?? InventoryService(),
+        _pendingTaskService = pendingTaskService ?? PendingTaskService(),
+        _editMode    = true,
+        _editCharacterId = char.id,
+        _originalLevel   = char.level,
+        _initialClassId  = char.dndClassId,
+        _initialSubclassId  = char.subclassId,
+        _initialBackgroundId = char.backgroundId,
+        _initialRaceId  = char.raceId {
+    // Pre-fill text/value fields immediately
+    characterName    = char.name;
+    selectedLevel    = char.level;
+    alignment        = char.alignment;
+    personality      = char.personalityTrait ?? '';
+    ideals           = char.ideal ?? '';
+    bonds            = char.bond ?? '';
+    flaws            = char.flaw ?? '';
+    hair             = char.hair ?? '';
+    eyes             = char.eyes ?? '';
+    skin             = char.skin ?? '';
+    age              = char.age?.toString() ?? '';
+    height           = char.height ?? '';
+    weight           = char.weight ?? '';
+    abilityDisplayMode = char.abilityDisplayMode;
+    // Ability scores: pre-fill with character's current scores (already include racial bonus)
+    for (final key in kAbilityNames) {
+      abilityScores[key] = char.abilityScores[key] ?? 10;
+    }
+    scoreMethod = AbilityScoreMethod.manual;
+  }
+
 
   //- Navegación ------------------
   WizardStep _currentStep = WizardStep.preferences;
@@ -73,6 +124,10 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   //Los pasos visibles dependen de si el personaje tiene spells
 
   List<WizardStep> get activeSteps {
+    // Edit mode: only Preferences, Class, Background (race/spells/equipment managed elsewhere)
+    if (_editMode) {
+      return [WizardStep.preferences, WizardStep.dndClass, WizardStep.background];
+    }
     final steps = [
       WizardStep.preferences,
       WizardStep.dndClass,
@@ -316,7 +371,16 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try{
-      classes = await _refService.getClasses();      
+      classes = await _refService.getClasses();
+      // Edit mode: auto-select the character's existing class
+      if (_editMode && _initialClassId != null && selectedClass == null) {
+        final matches = classes.where((c) => c.id == _initialClassId);
+        if (matches.isNotEmpty) {
+          selectedClass = matches.first;
+          await loadClassFeatures(selectedClass!.id);
+          await _loadSubclassesFor(selectedClass!.id);
+        }
+      }
     } catch(e) {
       _setError('Error loading classes: $e');
     } finally {
@@ -393,6 +457,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       subclasses = await _refService.getSubclasses(classId);
+      // Edit mode: auto-select the character's existing subclass
+      if (_editMode && _initialSubclassId != null && selectedSubclass == null) {
+        final matches = subclasses.where((s) => s.id == _initialSubclassId);
+        if (matches.isNotEmpty) {
+          selectedSubclass = matches.first;
+          await _loadSubclassFeaturesFor(selectedSubclass!.id);
+        }
+      }
     } catch (_) {
       subclasses = [];
     }
@@ -465,7 +537,10 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     return (base + conMod) + ((base ~/ 2 + 1 + conMod) * (selectedLevel - 1));  
     }
 
-    bool get classValid => selectedClass != null && classFeatureChoicesDone && classSkillPicksDone;
+    bool get classValid {
+      if (_editMode) return selectedClass != null;
+      return selectedClass != null && classFeatureChoicesDone && classSkillPicksDone;
+    }
 
   // Class skill picks
   final Set<String> _classSkillIndices = {};
@@ -571,6 +646,11 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _setError(null);
     try{
       backgrounds = await _refService.getBackgrounds();
+      // Edit mode: auto-select the character's existing background
+      if (_editMode && _initialBackgroundId != null && selectedBackground == null) {
+        final matches = backgrounds.where((b) => b.id == _initialBackgroundId);
+        if (matches.isNotEmpty) selectedBackground = matches.first;
+      }
     } catch(e){
       _setError('Error loading backgrounds: $e');
     } finally {
@@ -636,7 +716,10 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   void setBonds(String v)       { bonds       = v; _markDirty(WizardStep.background); notifyListeners(); }
   void setFlaws(String v)       { flaws       = v; _markDirty(WizardStep.background); notifyListeners(); }
 
-  bool get backgroundValid => selectedBackground != null;
+  bool get backgroundValid {
+    if (_editMode) return selectedBackground != null;
+    return selectedBackground != null;
+  }
 
 
   // PASO 4: Raza
@@ -653,6 +736,11 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _setError(null);
     try{
       races = await _refService.getRaces();
+      // Edit mode: auto-select the character's existing race
+      if (_editMode && _initialRaceId != null && selectedRace == null) {
+        final matches = races.where((r) => r.id == _initialRaceId);
+        if (matches.isNotEmpty) selectedRace = matches.first;
+      }
     } catch(e) {
       _setError('Error loading races: $e');
     } finally {
@@ -695,10 +783,12 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool get raceValid =>
-      selectedRace != null &&
+  bool get raceValid {
+    if (_editMode) return true; // Race locked in edit mode
+    return selectedRace != null &&
       (subraces.isEmpty || selectedSubrace != null) &&
       raceFeatureChoicesDone;
+  }
 
   //PASO 5: Ability Scores
   // ────────────────────────────────────────────────────────────
@@ -1202,12 +1292,14 @@ void toggleItem(int itemId) {
   // Validación global
   // ────────────────────────────────────────────────────────────
 
-  bool get canFinish =>
-    preferencesValid &&
-    classValid &&
-    backgroundValid &&
-    raceValid &&
-    abilityScoresValid;
+  bool get canFinish {
+    if (_editMode) return preferencesValid && classValid && backgroundValid;
+    return preferencesValid &&
+      classValid &&
+      backgroundValid &&
+      raceValid &&
+      abilityScoresValid;
+  }
 
   bool get canProceedCurrentStep {
     // Equipment is optional — it never blocks navigation or creation
@@ -1231,6 +1323,10 @@ void toggleItem(int itemId) {
 
   Future<void> submit() async {
     if (_isSaving) return; // guard contra doble click
+    if (_editMode) {
+      await _submitEdit();
+      return;
+    }
     if (!canFinish) return;
     _isSaving = true;
     _createdCharacterId = null;
@@ -1296,6 +1392,65 @@ void toggleItem(int itemId) {
   }
 
   // Carga automática al cambiar de paso
+
+  /// Pre-loads all reference data needed for edit mode and auto-selects the
+  /// character's existing class, subclass, background and race.
+  Future<void> loadEditData() async {
+    if (!_editMode) return;
+    await loadClasses();     // also triggers _loadSubclassesFor → auto-selects subclass
+    await loadBackgrounds();
+    await loadRaces();
+  }
+
+  /// Submits changes in edit mode: level-ups the character if level increased,
+  /// updates profile fields, then auto-resolves any new feature choices.
+  Future<void> _submitEdit() async {
+    if (_editCharacterId == null) return;
+    _isSaving = true;
+    _error = null;
+    notifyListeners();
+    try {
+      // 1. Level-up if needed (one POST per level gained)
+      final levelsGained = selectedLevel - _originalLevel;
+      if (levelsGained > 0) {
+        for (int i = 0; i < levelsGained; i++) {
+          await _charService.levelUp(_editCharacterId!);
+        }
+      }
+
+      // 2. Update profile metadata
+      await _charService.updateProfile(
+        id: _editCharacterId!,
+        name: characterName.trim(),
+        alignment: alignment,
+        personalityTrait: personality.isNotEmpty ? personality : null,
+        ideal:   ideals.isNotEmpty   ? ideals   : null,
+        bond:    bonds.isNotEmpty    ? bonds    : null,
+        flaw:    flaws.isNotEmpty    ? flaws    : null,
+        hair:    hair.isNotEmpty     ? hair     : null,
+        eyes:    eyes.isNotEmpty     ? eyes     : null,
+        skin:    skin.isNotEmpty     ? skin     : null,
+        age:     age.isNotEmpty      ? int.tryParse(age) : null,
+        height:  height.isNotEmpty   ? height   : null,
+        weight:  weight.isNotEmpty   ? weight   : null,
+        abilityDisplayMode: abilityDisplayMode,
+        useEncumbrance: useEncumbrance,
+        subclassId: selectedSubclass?.id,
+      );
+
+      // 3. Auto-resolve feature choices collected in the wizard (e.g. new level features)
+      if (featureChoices.isNotEmpty) {
+        await _autoResolveFeatureChoices(_editCharacterId!);
+      }
+
+      _saveSuccess = true;
+    } catch (e) {
+      _setError('Error saving changes: $e');
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
 
   /// Loads pending tasks for the newly created character and silently resolves
   /// any task whose key (taskType_relatedLevel) matches a wizard-collected choice.

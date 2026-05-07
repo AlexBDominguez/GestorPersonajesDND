@@ -18,13 +18,14 @@ class CharacterCreatorScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => CharacterCreatorViewModel(),
-      child: const _WizardBody(),
+      child: const CharacterWizardBody(),
     );
   }
 }
 
-class _WizardBody extends StatelessWidget {
-  const _WizardBody();
+/// Public wizard body widget — reusable by [EditCharacterScreen].
+class CharacterWizardBody extends StatelessWidget {
+  const CharacterWizardBody({super.key});
 
   // Metadatos por paso: título e icono
   static const _meta = <WizardStep, ({String title, IconData icon})>{
@@ -53,10 +54,10 @@ class _WizardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.watch<CharacterCreatorViewModel>();
 
-    // Cuando se crea con éxito, volver al dashboard con el ID del personaje
+    // When saved successfully, go back — pass new character ID on create, true on edit
     if (vm.saveSuccess) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pop(vm.createdCharacterId);
+        Navigator.of(context).pop(vm.isEditMode ? true : vm.createdCharacterId);
       });
     }
 
@@ -65,10 +66,10 @@ class _WizardBody extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 48,
-        title: const Text('New Character'),
+        title: Text(vm.isEditMode ? 'Edit Character' : 'New Character'),
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => _confirmDiscard(context),
+          onPressed: () => _confirmDiscard(context, vm.isEditMode),
         ),
       ),
       body: Column(children: [
@@ -114,16 +115,21 @@ class _WizardBody extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDiscard(BuildContext context) async {
+  Future<void> _confirmDiscard(BuildContext context, bool isEditMode) async {
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Discard character?',
-            style: GoogleFonts.cinzel(color: AppTheme.primary)),
-        content: Text('Your progress will be lost.',
-            style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+        title: Text(
+          isEditMode ? 'Discard changes?' : 'Discard character?',
+          style: GoogleFonts.cinzel(color: AppTheme.primary),
+        ),
+        content: Text(
+          isEditMode ? 'Your changes will not be saved.' : 'Your progress will be lost.',
+          style: GoogleFonts.lato(color: AppTheme.textPrimary),
+        ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           OutlinedButton(
@@ -340,7 +346,11 @@ class _NavButtons extends StatelessWidget {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: AppTheme.background))
                   : Icon(isLast ? Icons.check : Icons.arrow_forward, size: 16),
-              label: Text(vm.isSaving ? 'Creating…' : isLast ? 'Create Character' : 'Next'),
+              label: Text(vm.isSaving
+                  ? (vm.isEditMode ? 'Saving...' : 'Creating…')
+                  : isLast
+                      ? (vm.isEditMode ? 'Save Changes' : 'Create Character')
+                      : 'Next'),
               style: ElevatedButton.styleFrom(
                 shape: sharedShape,
                 padding: sharedPadding,
