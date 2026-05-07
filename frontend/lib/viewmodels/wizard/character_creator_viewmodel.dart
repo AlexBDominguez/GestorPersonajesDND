@@ -59,6 +59,10 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   // ── Edit mode state ──────────────────────────────────────────────────────
   bool _editMode = false;
   bool get isEditMode => _editMode;
+  bool _levelUpMode = false;
+  bool get isLevelUpMode => _levelUpMode;
+  /// In level-up mode: the minimum selectable level (originalLevel + 1).
+  int get levelUpMinLevel => _levelUpMode ? _originalLevel + 1 : 1;
   int? _editCharacterId;
   int _originalLevel = 1;
   int? _initialClassId;
@@ -116,6 +120,47 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     scoreMethod = AbilityScoreMethod.manual;
   }
 
+  /// Named constructor for leveling up an existing character.
+  /// Starts the wizard at the Class step with level pre-set to current+1.
+  CharacterCreatorViewModel.forLevelUp(
+    PlayerCharacter char, {
+    WizardReferenceService? refService,
+    CharacterService?       charService,
+    InventoryService?      inventoryService,
+    PendingTaskService?    pendingTaskService,
+  })  : _refService  = refService  ?? WizardReferenceService(),
+        _charService = charService ?? CharacterService(),
+        _inventoryService = inventoryService ?? InventoryService(),
+        _pendingTaskService = pendingTaskService ?? PendingTaskService(),
+        _editMode    = true,
+        _levelUpMode = true,
+        _editCharacterId = char.id,
+        _originalLevel   = char.level,
+        _initialClassId  = char.dndClassId,
+        _initialSubclassId  = char.subclassId,
+        _initialBackgroundId = char.backgroundId,
+        _initialRaceId  = char.raceId {
+    characterName    = char.name;
+    selectedLevel    = char.level + 1;  // Pre-increment: we're leveling UP
+    alignment        = char.alignment;
+    personality      = char.personalityTrait ?? '';
+    ideals           = char.ideal ?? '';
+    bonds            = char.bond ?? '';
+    flaws            = char.flaw ?? '';
+    hair             = char.hair ?? '';
+    eyes             = char.eyes ?? '';
+    skin             = char.skin ?? '';
+    age              = char.age?.toString() ?? '';
+    height           = char.height ?? '';
+    weight           = char.weight ?? '';
+    abilityDisplayMode = char.abilityDisplayMode;
+    for (final key in kAbilityNames) {
+      abilityScores[key] = char.abilityScores[key] ?? 10;
+    }
+    scoreMethod = AbilityScoreMethod.manual;
+    _currentStep = WizardStep.dndClass;
+  }
+
 
   //- Navegación ------------------
   WizardStep _currentStep = WizardStep.preferences;
@@ -124,9 +169,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   //Los pasos visibles dependen de si el personaje tiene spells
 
   List<WizardStep> get activeSteps {
-    // Edit mode: only Preferences, Class, Background (race/spells/equipment managed elsewhere)
+    if (_levelUpMode) {
+      final steps = [WizardStep.dndClass];
+      if (isSpellcaster) steps.add(WizardStep.spells);
+      return steps;
+    }
+    // Edit mode: full wizard (Preferences, Class, Background, Race, Ability Scores)
     if (_editMode) {
-      return [WizardStep.preferences, WizardStep.dndClass, WizardStep.background];
+      return [WizardStep.preferences, WizardStep.dndClass, WizardStep.background, WizardStep.race, WizardStep.abilityScores];
     }
     final steps = [
       WizardStep.preferences,
@@ -784,7 +834,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   bool get raceValid {
-    if (_editMode) return true; // Race locked in edit mode
+    if (_editMode) return selectedRace != null; // Race pre-selected; feature choices already resolved at creation
     return selectedRace != null &&
       (subraces.isEmpty || selectedSubrace != null) &&
       raceFeatureChoicesDone;
@@ -1293,7 +1343,8 @@ void toggleItem(int itemId) {
   // ────────────────────────────────────────────────────────────
 
   bool get canFinish {
-    if (_editMode) return preferencesValid && classValid && backgroundValid;
+    if (_levelUpMode) return classValid;
+    if (_editMode) return preferencesValid && classValid && backgroundValid && raceValid && abilityScoresValid;
     return preferencesValid &&
       classValid &&
       backgroundValid &&
@@ -1402,6 +1453,13 @@ void toggleItem(int itemId) {
     await loadRaces();
   }
 
+  /// Pre-loads class data for level-up mode and auto-selects the existing class.
+  Future<void> loadLevelUpData() async {
+    if (!_levelUpMode) return;
+    await loadClasses(); // auto-selects existing class + subclass
+    if (isSpellcaster) await loadAvailableSpells();
+  }
+
   /// Submits changes in edit mode: level-ups the character if level increased,
   /// updates profile fields, then auto-resolves any new feature choices.
   Future<void> _submitEdit() async {
@@ -1436,11 +1494,30 @@ void toggleItem(int itemId) {
         abilityDisplayMode: abilityDisplayMode,
         useEncumbrance: useEncumbrance,
         subclassId: selectedSubclass?.id,
+        backgroundId: selectedBackground?.id,
+        raceId: selectedRace?.id,
+        subraceId: selectedSubrace?.id,
+        abilityScores: _levelUpMode ? null : {
+          'str': abilityScores['STR'] ?? 10,
+          'dex': abilityScores['DEX'] ?? 10,
+          'con': abilityScores['CON'] ?? 10,
+          'int': abilityScores['INT'] ?? 10,
+          'wis': abilityScores['WIS'] ?? 10,
+          'cha': abilityScores['CHA'] ?? 10,
+        },
       );
 
       // 3. Auto-resolve feature choices collected in the wizard (e.g. new level features)
       if (featureChoices.isNotEmpty) {
         await _autoResolveFeatureChoices(_editCharacterId!);
+      }
+
+      // 4. Sync new spells selected in level-up mode
+      if (_levelUpMode && selectedSpellIds.isNotEmpty) {
+        await _charService.addSpellsToCharacter(
+          id: _editCharacterId!,
+          spellIds: selectedSpellIds.toList(),
+        );
       }
 
       _saveSuccess = true;

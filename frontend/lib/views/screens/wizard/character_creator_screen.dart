@@ -66,7 +66,7 @@ class CharacterWizardBody extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 48,
-        title: Text(vm.isEditMode ? 'Edit Character' : 'New Character'),
+        title: Text(vm.isLevelUpMode ? 'Level Up' : vm.isEditMode ? 'Edit Character' : 'New Character'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => _confirmDiscard(context, vm.isEditMode),
@@ -347,9 +347,9 @@ class _NavButtons extends StatelessWidget {
                           strokeWidth: 2, color: AppTheme.background))
                   : Icon(isLast ? Icons.check : Icons.arrow_forward, size: 16),
               label: Text(vm.isSaving
-                  ? (vm.isEditMode ? 'Saving...' : 'Creating…')
+                  ? (vm.isLevelUpMode ? 'Leveling Up…' : vm.isEditMode ? 'Saving...' : 'Creating…')
                   : isLast
-                      ? (vm.isEditMode ? 'Save Changes' : 'Create Character')
+                      ? (vm.isLevelUpMode ? 'Level Up!' : vm.isEditMode ? 'Save Changes' : 'Create Character')
                       : 'Next'),
               style: ElevatedButton.styleFrom(
                 shape: sharedShape,

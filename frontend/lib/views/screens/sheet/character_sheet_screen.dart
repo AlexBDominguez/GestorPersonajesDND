@@ -6,6 +6,7 @@ import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_view
 // TODO(DASH-02): re-enable PendingTasksScreen once level-up flow is redesigned
 // import 'package:gestor_personajes_dnd/views/screens/sheet/pending_tasks_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/wizard/edit_character_screen.dart';
+import 'package:gestor_personajes_dnd/views/screens/wizard/level_up_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_abilities.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_combat.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_features.dart';
@@ -826,6 +827,47 @@ class _GearMenuButton extends StatelessWidget {
           if (result == true && context.mounted) {
             await vm.load();
           }
+        } else if (value == 'levelup') {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (_) => AlertDialog(
+              backgroundColor: AppTheme.surface,
+              title: Text('Level Up',
+                  style: GoogleFonts.libreBaskerville(
+                      color: AppTheme.primary, fontWeight: FontWeight.bold)),
+              content: Text(
+                'Level up ${character.name} to level ${character.level + 1}?',
+                style: GoogleFonts.lato(color: AppTheme.textPrimary),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text('Cancel',
+                      style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary),
+                  child: Text('Level Up!',
+                      style: GoogleFonts.lato(
+                          color: AppTheme.background,
+                          fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          );
+          if (confirm == true && context.mounted) {
+            final result = await Navigator.push<bool>(
+              context,
+              MaterialPageRoute(
+                builder: (_) => LevelUpScreen(character: character),
+              ),
+            );
+            if (result == true && context.mounted) {
+              await vm.load();
+            }
+          }
         }
       },
       itemBuilder: (_) => [
@@ -835,6 +877,16 @@ class _GearMenuButton extends StatelessWidget {
             const Icon(Icons.edit_outlined, color: AppTheme.primary, size: 18),
             const SizedBox(width: 10),
             Text('Edit Character',
+                style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+          ]),
+        ),
+        PopupMenuItem(
+          value: 'levelup',
+          child: Row(children: [
+            const Icon(Icons.arrow_circle_up_outlined,
+                color: AppTheme.primary, size: 18),
+            const SizedBox(width: 10),
+            Text('Level Up',
                 style: GoogleFonts.lato(color: AppTheme.textPrimary)),
           ]),
         ),

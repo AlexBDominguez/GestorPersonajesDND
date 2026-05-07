@@ -1,5 +1,7 @@
 package dto;
 
+import java.util.Map;
+
 public class CharacterProfileUpdateDto {
     private String name;
     private String alignment;
@@ -16,6 +18,10 @@ public class CharacterProfileUpdateDto {
     private String abilityDisplayMode;
     private Boolean useEncumbrance;
     private Long subclassId;
+    private Long backgroundId;
+    private Long raceId;
+    private Long subraceId;
+    private Map<String, Integer> abilityScores;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -61,4 +67,16 @@ public class CharacterProfileUpdateDto {
 
     public Long getSubclassId() { return subclassId; }
     public void setSubclassId(Long subclassId) { this.subclassId = subclassId; }
+
+    public Long getBackgroundId() { return backgroundId; }
+    public void setBackgroundId(Long backgroundId) { this.backgroundId = backgroundId; }
+
+    public Long getRaceId() { return raceId; }
+    public void setRaceId(Long raceId) { this.raceId = raceId; }
+
+    public Long getSubraceId() { return subraceId; }
+    public void setSubraceId(Long subraceId) { this.subraceId = subraceId; }
+
+    public Map<String, Integer> getAbilityScores() { return abilityScores; }
+    public void setAbilityScores(Map<String, Integer> abilityScores) { this.abilityScores = abilityScores; }
 }

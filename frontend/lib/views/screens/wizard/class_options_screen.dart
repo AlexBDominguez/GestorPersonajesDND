@@ -193,6 +193,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                     icon: icon,
                     level: _level,
                     onChanged: _onLevelChanged,
+                    minLevel: widget.vm.levelUpMinLevel,
                   ),
                   const SizedBox(height: 20),
 
@@ -432,12 +433,14 @@ class _LevelSelector extends StatelessWidget {
   final IconData icon;
   final int level;
   final ValueChanged<int> onChanged;
+  final int minLevel;
 
   const _LevelSelector({
     required this.cls,
     required this.icon,
     required this.level,
     required this.onChanged,
+    this.minLevel = 1,
   });
 
   @override
@@ -493,10 +496,10 @@ class _LevelSelector extends StatelessWidget {
                     fontSize: 20,
                     fontWeight: FontWeight.bold),
                 items: List.generate(
-                  20,
+                  21 - minLevel,
                   (i) => DropdownMenuItem(
-                    value: i + 1,
-                    child: Text('${i + 1}'),
+                    value: i + minLevel,
+                    child: Text('${i + minLevel}'),
                   ),
                 ),
                 onChanged: (v) {
@@ -991,7 +994,13 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
     setState(() { _isAsi = false; });
     widget.vm.featureChoices.remove(_asiaKey);
     widget.vm.featureChoices.remove(_asibKey);
-    widget.vm.featureChoices[_mainKey] = 'Feat';
+    // Only keep the 'Feat' badge if a specific feat was already chosen;
+    // switching mode without selecting a feat should keep the tile in pending (red) state.
+    if (widget.vm.featureChoices[_featKey] == null) {
+      widget.vm.featureChoices.remove(_mainKey);
+    } else {
+      widget.vm.featureChoices[_mainKey] = 'Feat';
+    }
     widget.vm.notify();
   }
 
@@ -1061,6 +1070,7 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
               disabled: alreadyAtOtherLevel,
               onTap: alreadyAtOtherLevel ? null : () {
                 widget.vm.featureChoices[_featKey] = f.name;
+                widget.vm.featureChoices[_mainKey] = 'Feat';
                 widget.vm.notify();
                 widget.onFeatSelected?.call();
               },

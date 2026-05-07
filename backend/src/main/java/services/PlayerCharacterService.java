@@ -332,6 +332,37 @@ public class PlayerCharacterService {
             character.setSubclass(subclass);
         }
 
+        if (dto.getBackgroundId() != null) {
+            Background background = backgroundRepository.findById(dto.getBackgroundId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Background not found"));
+            character.setBackground(background);
+        }
+
+        if (dto.getRaceId() != null) {
+            Race race = raceRepository.findById(dto.getRaceId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Race not found"));
+            if (character.getRace() == null || !dto.getRaceId().equals(character.getRace().getId())) {
+                character.setRace(race);
+                character.setSubrace(null); // clear subrace when race changes
+            }
+        }
+
+        if (dto.getSubraceId() != null) {
+            Subrace subrace = subraceRepository.findById(dto.getSubraceId())
+                    .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Subrace not found"));
+            character.setSubrace(subrace);
+        }
+
+        if (dto.getAbilityScores() != null && !dto.getAbilityScores().isEmpty()) {
+            Map<String, Integer> existingScores = character.getAbilityScores();
+            if (existingScores == null) existingScores = new HashMap<>();
+            existingScores.putAll(dto.getAbilityScores());
+            character.setAbilityScores(existingScores);
+        }
+
         characterRepository.save(character);
         return toDto(character);
     }

@@ -62,7 +62,7 @@ class StepClass extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Text(
             'Your class is the primary definition of what your character does. Tap a class to see all details.',
-            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13),
+            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 12),
           ),
         ),
         // Badge con la clase seleccionada (si hay una)

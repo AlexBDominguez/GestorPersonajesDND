@@ -130,6 +130,33 @@ class CharacterService {
 
 
     // POST toggle prepare/unprepare spell
+    Future<void> addSpellToCharacter({
+      required int characterId,
+      required int spellId,
+    }) async {
+      final res = await _api.post(
+        '${ApiConfig.charactersPath}/$characterId/spells/$spellId',
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201 || res.statusCode == 204) {
+        return;
+      }
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      if (res.statusCode == 404) throw Exception('Character or spell not found');
+      throw Exception('Failed to add spell (${res.statusCode})');
+    }
+
+    Future<void> addSpellsToCharacter({
+      required int id,
+      required List<int> spellIds,
+    }) async {
+      for (final spellId in spellIds) {
+        await addSpellToCharacter(characterId: id, spellId: spellId);
+      }
+    }
+
+    // POST toggle prepare/unprepare spell
     Future<void> togglePrepareSpell({
       required int characterId,
       required int spellId,
@@ -254,6 +281,10 @@ class CharacterService {
       String? abilityDisplayMode,
       bool? useEncumbrance,
       int? subclassId,
+      int? backgroundId,
+      int? raceId,
+      int? subraceId,
+      Map<String, int>? abilityScores,
     }) async {
       final body = <String, dynamic>{
         if (name != null) 'name': name,
@@ -271,6 +302,10 @@ class CharacterService {
         if (abilityDisplayMode != null) 'abilityDisplayMode': abilityDisplayMode,
         if (useEncumbrance != null) 'useEncumbrance': useEncumbrance,
         if (subclassId != null) 'subclassId': subclassId,
+        if (backgroundId != null) 'backgroundId': backgroundId,
+        if (raceId != null) 'raceId': raceId,
+        if (subraceId != null) 'subraceId': subraceId,
+        if (abilityScores != null) 'abilityScores': abilityScores,
       };
       final res = await _api.patch('${ApiConfig.charactersPath}/$id/profile', body: body);
       if (res.statusCode == 200) {

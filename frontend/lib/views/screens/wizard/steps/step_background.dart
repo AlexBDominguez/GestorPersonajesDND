@@ -107,18 +107,34 @@ class _StepBackgroundState extends State<StepBackground> {
             ),
           ),
           child: vm.isEditMode
-              // Edit mode: show background as read-only text
-              ? Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Row(children: [
-                    const Icon(Icons.lock_outline, color: AppTheme.textSecondary, size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      bg?.name ?? '—',
-                      style: GoogleFonts.libreBaskerville(color: AppTheme.textSecondary, fontSize: 14),
-                    ),
-                  ]),
-                )
+              // Edit mode: load backgrounds lazily if not yet loaded
+              ? vm.backgrounds.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text('Loading backgrounds…',
+                          style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+                    )
+                  : DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        isExpanded: true,
+                        dropdownColor: AppTheme.surface,
+                        value: bg?.id,
+                        hint: Text('Select a background…',
+                            style: GoogleFonts.lato(
+                                color: AppTheme.textSecondary, fontSize: 14)),
+                        items: vm.backgrounds.map((b) => DropdownMenuItem(
+                          value: b.id,
+                          child: Text(b.name,
+                              style: GoogleFonts.libreBaskerville(
+                                  color: AppTheme.textPrimary, fontSize: 14)),
+                        )).toList(),
+                        onChanged: (id) {
+                          if (id == null) return;
+                          final chosen = vm.backgrounds.firstWhere((b) => b.id == id);
+                          vm.selectBackground(chosen);
+                        },
+                      ),
+                    )
               : DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     isExpanded: true,

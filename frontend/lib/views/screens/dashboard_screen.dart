@@ -64,7 +64,6 @@ class _DashboardBody extends StatelessWidget {
       // ── FAB: crear personaje ─────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          // Dentro del onPressed del FAB, antes de navegar al wizard:
           if (vm.characters.length >= 10) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text('Character limit reached (10 per account).'),
@@ -86,9 +85,9 @@ class _DashboardBody extends StatelessWidget {
             }
           }
         },
-        backgroundColor: AppTheme.primary,
+        backgroundColor: vm.characters.length >= 10 ? AppTheme.accent : AppTheme.primary,
         foregroundColor: AppTheme.background,
-        icon: const Icon(Icons.add),
+        icon: Icon(vm.characters.length >= 10 ? Icons.block : Icons.add),
         label: Text('New Character (${vm.characters.length} / 10)',
             style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
       ),
