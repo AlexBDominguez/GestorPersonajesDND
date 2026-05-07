@@ -176,7 +176,7 @@ class _SelectedClassBadge extends StatelessWidget {
               children: [
                 TextSpan(
                     text: cls.name,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                         color: AppTheme.primary, fontWeight: FontWeight.bold)),
                 TextSpan(text: '  ·  Level $level'),
               ],
@@ -261,7 +261,7 @@ class _ClassCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(cls.name,
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           color: isSelected
                               ? AppTheme.primary
                               : isDisabled
@@ -309,7 +309,7 @@ class _HitDieBadge extends StatelessWidget {
           border: Border.all(color: AppTheme.primary.withOpacity(0.4)),
         ),
         child: Text('d$hitDie',
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 11,
                 fontWeight: FontWeight.bold)),

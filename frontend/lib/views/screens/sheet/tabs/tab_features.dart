@@ -124,7 +124,7 @@ class _GroupHeader extends StatelessWidget {
         Icon(icon, color: color, size: 16),
         const SizedBox(width: 8),
         Text(label,
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: color,
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
@@ -203,7 +203,7 @@ class _FeatureTile extends StatelessWidget {
             spacing: 6,
             children: [
               Text(feature.name,
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold)),
@@ -293,7 +293,7 @@ class _FeatureTile extends StatelessWidget {
                           color: AppTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 2),
                   Text(resolvedChoice,
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           color: const Color(0xFFC8A45A),
                           fontSize: 13,
                           fontWeight: FontWeight.bold)),
@@ -425,7 +425,7 @@ class _RacialTraitTile extends StatelessWidget {
             spacing: 6,
             children: [
               Text(trait.name,
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold)),
@@ -551,7 +551,7 @@ class _FeatsSection extends StatelessWidget {
             iconColor: AppTheme.textSecondary,
             collapsedIconColor: AppTheme.textSecondary,
             title: Text(feat.name,
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: const Color(0xFFC8A45A),
                     fontSize: 13,
                     fontWeight: FontWeight.bold)),

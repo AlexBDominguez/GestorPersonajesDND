@@ -49,7 +49,7 @@ class StepAbilityScores extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text('$val',
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                         color: isUsed ? AppTheme.textSecondary : AppTheme.primary,
                         fontSize: 16, fontWeight: FontWeight.bold,
                       )),
@@ -183,7 +183,7 @@ class _StandardArrayRow extends StatelessWidget {
         SizedBox(
           width: 44,
           child: Text(ability,
-              style: GoogleFonts.cinzel(
+              style: GoogleFonts.libreBaskerville(
                   color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(width: 8),
@@ -207,7 +207,7 @@ class _StandardArrayRow extends StatelessWidget {
                     value: idx,
                     enabled: !takenByOther,
                     child: Text('$val',
-                        style: GoogleFonts.cinzel(
+                        style: GoogleFonts.libreBaskerville(
                           color: takenByOther ? AppTheme.textSecondary : AppTheme.textPrimary,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -234,7 +234,7 @@ class _StandardArrayRow extends StatelessWidget {
         const Spacer(),
         Text(
           base != null ? modLabel : '—',
-          style: GoogleFonts.cinzel(
+          style: GoogleFonts.libreBaskerville(
               color: base != null
                   ? (mod >= 0 ? AppTheme.primary : AppTheme.accent)
                   : AppTheme.textSecondary,
@@ -274,7 +274,7 @@ class _ManualRow extends StatelessWidget {
         SizedBox(
           width: 44,
           child: Text(ability,
-              style: GoogleFonts.cinzel(
+              style: GoogleFonts.libreBaskerville(
                   color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(width: 8),
@@ -290,7 +290,7 @@ class _ManualRow extends StatelessWidget {
           width: 40,
           child: Center(
             child: Text('$base',
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
                     fontSize: 20, fontWeight: FontWeight.bold)),
           ),
@@ -314,7 +314,7 @@ class _ManualRow extends StatelessWidget {
 
         // ── Modifier ──────────────────────────────────────────
         Text(modLabel,
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: mod >= 0 ? AppTheme.primary : AppTheme.accent,
                 fontSize: 18, fontWeight: FontWeight.bold)),
       ]),

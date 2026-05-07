@@ -68,7 +68,7 @@ class _StepEquipmentState extends State<StepEquipment>
               const SizedBox(width: 6),
               Expanded(
                 child: Text('Starting Equipment',
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                         color: AppTheme.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.bold)),
@@ -84,7 +84,7 @@ class _StepEquipmentState extends State<StepEquipment>
                   ),
                   child: Text(
                     '${vm.selectedItemIds.length} selected',
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                         color: AppTheme.primary,
                         fontSize: 10,
                         fontWeight: FontWeight.bold),
@@ -195,7 +195,7 @@ class _StepEquipmentState extends State<StepEquipment>
             labelColor: AppTheme.primary,
             unselectedLabelColor: AppTheme.textSecondary,
             indicatorColor: AppTheme.primary,
-            labelStyle: GoogleFonts.cinzel(
+            labelStyle: GoogleFonts.libreBaskerville(
                 fontSize: 11, fontWeight: FontWeight.bold),
             tabs: const [
               Tab(text: 'CATALOG'),
@@ -333,7 +333,7 @@ class _SelectedTab extends StatelessWidget {
             color: AppTheme.surfaceVariant, size: 48),
           const SizedBox(height: 16),
           Text ('No items selected yet',
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
               color: AppTheme.textSecondary, fontSize: 14
             )),
           const SizedBox(height: 8),
@@ -438,7 +438,7 @@ class _ItemTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(item.name,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                       color: isSelected
                           ? AppTheme.primary
                           : AppTheme.textPrimary,
@@ -519,7 +519,7 @@ class _ItemTile extends StatelessWidget {
                   ),
                 ),
                 Text(item.name,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                         color: AppTheme.primary,
                         fontSize: 20,
                         fontWeight: FontWeight.bold)),
@@ -553,7 +553,7 @@ class _ItemTile extends StatelessWidget {
                     item.description!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text('Description',
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           color: AppTheme.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.bold)),

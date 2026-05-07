@@ -172,7 +172,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: Text('Customize ${cls.name}',
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary, fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -466,7 +466,7 @@ class _LevelSelector extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(cls.name,
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold)),
@@ -488,7 +488,7 @@ class _LevelSelector extends StatelessWidget {
               child: DropdownButton<int>(
                 value: level,
                 dropdownColor: AppTheme.surface,
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: AppTheme.primary,
                     fontSize: 20,
                     fontWeight: FontWeight.bold),
@@ -517,7 +517,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(title,
-      style: GoogleFonts.cinzel(
+      style: GoogleFonts.libreBaskerville(
           color: AppTheme.primary,
           fontSize: 14,
           fontWeight: FontWeight.bold));
@@ -583,7 +583,7 @@ class _FeatureTile extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text('Lv${feature.level}',
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           color: AppTheme.primary,
                           fontSize: 10,
                           fontWeight: FontWeight.bold)),
@@ -591,7 +591,7 @@ class _FeatureTile extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(feature.name,
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           color: isExpanded
                               ? AppTheme.primary
                               : AppTheme.textPrimary,
@@ -920,7 +920,7 @@ class _InlineOptionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                         color: effectiveColor,
                         fontSize: 12,
                         fontWeight: FontWeight.bold)),
@@ -1091,7 +1091,7 @@ class _AsiToggleButton extends StatelessWidget {
       ),
       child: Center(
         child: Text(label, textAlign: TextAlign.center,
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: selected ? AppTheme.primary : AppTheme.textSecondary,
                 fontSize: 11, fontWeight: FontWeight.bold)),
       ),
@@ -1119,7 +1119,7 @@ class _AbilityDropdown extends StatelessWidget {
         hint: Text(label, style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 12)),
         dropdownColor: AppTheme.surface,
         isExpanded: true,
-        style: GoogleFonts.cinzel(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
+        style: GoogleFonts.libreBaskerville(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
         items: kAbilityScoreNames.map((a) => DropdownMenuItem(value: a.name, child: Text(a.name))).toList(),
         onChanged: (v) { if (v != null) onChanged(v); },
       ),
@@ -1162,7 +1162,7 @@ class _HpRow extends StatelessWidget {
         Container(
           width: 60,
           child: Text('Level $level',
-              style: GoogleFonts.cinzel(
+              style: GoogleFonts.libreBaskerville(
                   color: AppTheme.textPrimary,
                   fontSize: 12,
                   fontWeight: FontWeight.bold)),
@@ -1173,7 +1173,7 @@ class _HpRow extends StatelessWidget {
           child: readOnly
               ? Row(children: [
                   Text('$value',
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           color: AppTheme.primary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold)),
@@ -1248,7 +1248,7 @@ class _HpInputState extends State<_HpInput> {
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         textAlign: TextAlign.center,
-        style: GoogleFonts.cinzel(
+        style: GoogleFonts.libreBaskerville(
             color: AppTheme.primary,
             fontSize: 18,
             fontWeight: FontWeight.bold),
@@ -1402,7 +1402,7 @@ class _SubclassChip extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(subclass.name,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                         color: isSelected
                             ? AppTheme.primary
                             : AppTheme.textPrimary,

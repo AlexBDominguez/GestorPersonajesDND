@@ -57,7 +57,7 @@ class CharacterCard extends StatelessWidget {
                     Flexible(
                       child: Text(
                         character.name,
-                        style: GoogleFonts.cinzel(
+                        style: GoogleFonts.libreBaskerville(
                           color: AppTheme.textPrimary,
                           fontSize: 15,
                           fontWeight: FontWeight.bold),
@@ -123,7 +123,7 @@ class _LevelBadge extends StatelessWidget {
       ),
       child: Text(
         'Lvl $level',
-        style: GoogleFonts.cinzel(
+        style: GoogleFonts.libreBaskerville(
           color: AppTheme.background,
           fontSize: 11,
           fontWeight: FontWeight.bold,
@@ -192,7 +192,7 @@ class _MoreMenuButton extends StatelessWidget {
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Delete Character?',
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: AppTheme.accent,
                 fontSize: 17, fontWeight: FontWeight.bold)),
         content: RichText(
@@ -203,7 +203,7 @@ class _MoreMenuButton extends StatelessWidget {
               const TextSpan(text: 'Are you sure you want to delete '),
               TextSpan(
                   text: character.name,
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                       color: AppTheme.textPrimary,
                       fontWeight: FontWeight.bold)),
               const TextSpan(text: '?\n\nAll data will be lost.'),
@@ -232,7 +232,7 @@ class _MoreMenuButton extends StatelessWidget {
               Navigator.pop(context);
               onDelete();
             },
-            child: Text('Delete', style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+            child: Text('Delete', style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

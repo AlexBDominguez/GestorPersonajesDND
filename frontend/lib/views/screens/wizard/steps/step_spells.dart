@@ -110,7 +110,7 @@ class _StepSpellsState extends State<StepSpells> {
                 color: AppTheme.primary, size: 16),
             const SizedBox(width: 6),
             Text('Choose Spells',
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.bold)),
@@ -301,7 +301,7 @@ class _StepSpellsState extends State<StepSpells> {
                     ),
                     child: Text(
                       label,
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                         color: selected
                             ? Colors.white
                             : AppTheme.textSecondary,
@@ -502,7 +502,7 @@ class _SpellTile extends StatelessWidget {
                   Row(children: [
                     Expanded(
                       child: Text(spell.name,
-                          style: GoogleFonts.cinzel(
+                          style: GoogleFonts.libreBaskerville(
                               color: isBlocked
                                   ? AppTheme.textSecondary
                                   : isSelected
@@ -567,7 +567,7 @@ class _SpellTile extends StatelessWidget {
                 ),
                 // Título y nivel
                 Text(spell.name,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                         color: AppTheme.primary,
                         fontSize: 20,
                         fontWeight: FontWeight.bold)),
@@ -594,7 +594,7 @@ class _SpellTile extends StatelessWidget {
                     spell.description!.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text('Description',
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           color: AppTheme.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.bold)),
@@ -672,7 +672,7 @@ class _LvTag extends StatelessWidget {
           ),
         ),
         child: Text(label,
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 9,
                 fontWeight: FontWeight.bold)),

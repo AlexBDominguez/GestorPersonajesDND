@@ -139,7 +139,7 @@ class _TabCombatState extends State<TabCombat> {
             Text('Hit Dice: ',
                 style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
             Text('${c.availableHitDice}',
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold)),
             const Spacer(),
             const Icon(Icons.directions_run, color: AppTheme.textSecondary, size: 16),
@@ -207,7 +207,7 @@ class _FeatureTile extends StatelessWidget {
           title: Row(children: [
             Expanded(
               child: Text(feature.name,
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold)),
@@ -300,7 +300,7 @@ class _StandardActionsCard extends StatelessWidget {
                 color: AppTheme.primary, size: 18),
             const SizedBox(width: 10),
             Text('Standard Actions',
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold)),
@@ -746,7 +746,7 @@ class _SpellDetailSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(spell.name,
-                        style: GoogleFonts.cinzel(
+                        style: GoogleFonts.libreBaskerville(
                             color: AppTheme.primary,
                             fontSize: 20,
                             fontWeight: FontWeight.bold)),
@@ -787,7 +787,7 @@ class _SpellDetailSheet extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8)),
                   ),
                   child: Text('CAST',
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           fontSize: 11, fontWeight: FontWeight.bold)),
                 ),
               ),
@@ -843,7 +843,7 @@ class _SpellDetailSheet extends StatelessWidget {
           if (spell.description != null && spell.description!.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text('Description',
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold)),
@@ -884,7 +884,7 @@ class _StaticSection extends StatelessWidget {
                     childrenPadding:
                         const EdgeInsets.fromLTRB(14, 0, 14, 12),
                     title: Text(a.name,
-                        style: GoogleFonts.cinzel(
+                        style: GoogleFonts.libreBaskerville(
                             color: AppTheme.textPrimary,
                             fontSize: 13,
                             fontWeight: FontWeight.bold)),
@@ -920,7 +920,7 @@ class _ActionListScreen extends StatelessWidget {
       appBar: AppBar(
         leading: const BackButton(),
         title: Text(title,
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary, fontWeight: FontWeight.bold)),
       ),
       body: ListView.separated(
@@ -946,7 +946,7 @@ class _ActionListScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(a.name,
-                          style: GoogleFonts.cinzel(
+                          style: GoogleFonts.libreBaskerville(
                               color: AppTheme.textPrimary,
                               fontSize: 14,
                               fontWeight: FontWeight.bold)),
@@ -1036,7 +1036,7 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(children: [
         Text(title,
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,

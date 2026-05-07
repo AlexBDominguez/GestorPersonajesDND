@@ -125,7 +125,7 @@ class _StatPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(value,
-              style: GoogleFonts.cinzel(
+              style: GoogleFonts.libreBaskerville(
                   color: AppTheme.primary,
                   fontSize: 22,
                   fontWeight: FontWeight.bold)),
@@ -179,7 +179,7 @@ class _SpellLevelSection extends StatelessWidget {
       // A. Level name + slot tracker + divider (separate from column headers to prevent overflow)
       Row(children: [
         Text(levelName,
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 13,
                 fontWeight: FontWeight.bold)),
@@ -417,7 +417,7 @@ class _SpellRow extends StatelessWidget {
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(spell.name,
-                          style: GoogleFonts.cinzel(
+                          style: GoogleFonts.libreBaskerville(
                               color: AppTheme.primary,
                               fontSize: 20,
                               fontWeight: FontWeight.bold)),
@@ -451,7 +451,7 @@ class _SpellRow extends StatelessWidget {
                           disabledForegroundColor: AppTheme.divider,
                           side: BorderSide(color: canCast2 ? AppTheme.primary : AppTheme.divider),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                        child: Text('CAST', style: GoogleFonts.cinzel(
+                        child: Text('CAST', style: GoogleFonts.libreBaskerville(
                             fontSize: 11, fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -504,7 +504,7 @@ class _SpellRow extends StatelessWidget {
                 if (spell.description != null && spell.description!.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text('Description',
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           color: AppTheme.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.bold)),
@@ -599,7 +599,7 @@ class _CastButton extends StatelessWidget {
         ),
       ),
       child: Text('CAST',
-          style: GoogleFonts.cinzel(fontSize: 9, fontWeight: FontWeight.bold)),
+          style: GoogleFonts.libreBaskerville(fontSize: 9, fontWeight: FontWeight.bold)),
     ),
   );
 }
@@ -724,7 +724,7 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: Text('Manage Spells',
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary, fontWeight: FontWeight.bold)),
         bottom: TabBar(
           controller: _tabCtrl,
@@ -732,8 +732,8 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
           unselectedLabelColor: AppTheme.textSecondary,
           indicatorColor: AppTheme.primary,
           tabs: [
-            Tab(child: Text('My Spells', style: GoogleFonts.cinzel(fontSize: 12))),
-            Tab(child: Text('Learn New',  style: GoogleFonts.cinzel(fontSize: 12))),
+            Tab(child: Text('My Spells', style: GoogleFonts.libreBaskerville(fontSize: 12))),
+            Tab(child: Text('Learn New',  style: GoogleFonts.libreBaskerville(fontSize: 12))),
           ],
         ),
       ),
@@ -819,7 +819,7 @@ class _MySpellsTab extends StatelessWidget {
             backgroundColor: AppTheme.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text('Remove spell?',
-                style: GoogleFonts.cinzel(color: AppTheme.primary)),
+                style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
             content: Text(
                 'Remove "${spells[i].name}" from your spellbook?',
                 style: GoogleFonts.lato(color: AppTheme.textPrimary)),
@@ -896,7 +896,7 @@ class _ManageSpellTile extends StatelessWidget {
           child: Center(
             child: Text(
               isCantrip ? '∞' : '${spell.level}',
-              style: GoogleFonts.cinzel(
+              style: GoogleFonts.libreBaskerville(
                   color: AppTheme.primary,
                   fontSize: isCantrip ? 16 : 13,
                   fontWeight: FontWeight.bold),
@@ -911,7 +911,7 @@ class _ManageSpellTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(spell.name,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                         color: AppTheme.textPrimary,
                         fontSize: 13,
                         fontWeight: FontWeight.bold)),
@@ -1071,7 +1071,7 @@ class _LearnNewTabState extends State<_LearnNewTab> {
                 padding: const EdgeInsets.only(top: 12, bottom: 6),
                 child: Row(children: [
                   Text(levelName,
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           color: AppTheme.primary,
                           fontSize: 13,
                           fontWeight: FontWeight.bold)),
@@ -1099,11 +1099,11 @@ class _LearnNewTabState extends State<_LearnNewTab> {
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Learn spell?',
-            style: GoogleFonts.cinzel(color: AppTheme.primary)),
+            style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
         content: Column(mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(spell.name,
-              style: GoogleFonts.cinzel(
+              style: GoogleFonts.libreBaskerville(
                   color: AppTheme.textPrimary,
                   fontSize: 15,
                   fontWeight: FontWeight.bold)),
@@ -1198,7 +1198,7 @@ class _LearnSpellTile extends StatelessWidget {
           child: Center(
             child: Text(
               spell.isCantrip ? '∞' : '${spell.level}',
-              style: GoogleFonts.cinzel(
+              style: GoogleFonts.libreBaskerville(
                   color: AppTheme.primary,
                   fontSize: spell.isCantrip ? 16 : 13,
                   fontWeight: FontWeight.bold),
@@ -1213,7 +1213,7 @@ class _LearnSpellTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(spell.name,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                         color: AppTheme.textPrimary,
                         fontSize: 13,
                         fontWeight: FontWeight.bold)),
@@ -1275,7 +1275,7 @@ class _EmptyState extends StatelessWidget {
                 color: AppTheme.surfaceVariant, size: 48),
             const SizedBox(height: 16),
             Text('No spells learned yet',
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textSecondary, fontSize: 14)),
             const SizedBox(height: 8),
             Text(

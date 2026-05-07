@@ -175,8 +175,8 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
               tabAlignment: TabAlignment.start,
               labelColor: AppTheme.primary,
               unselectedLabelColor: AppTheme.textSecondary,
-              labelStyle: GoogleFonts.cinzel(fontSize: 12, fontWeight: FontWeight.bold),
-              unselectedLabelStyle: GoogleFonts.cinzel(fontSize: 12),
+              labelStyle: GoogleFonts.libreBaskerville(fontSize: 12, fontWeight: FontWeight.bold),
+              unselectedLabelStyle: GoogleFonts.libreBaskerville(fontSize: 12),
               indicatorColor: AppTheme.primary,
               indicatorWeight: 2,
               tabs: tabs,
@@ -227,7 +227,7 @@ class _NavBar extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     character.name,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                         color: AppTheme.primary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold),
@@ -344,7 +344,7 @@ class _DyingBanner extends StatelessWidget {
         Expanded(
           child: Text(
             isStable ? 'STABLE' : 'DYING — Death Saves',
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
               color: isStable ? AppTheme.primary : AppTheme.accent,
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -436,7 +436,7 @@ class _SheetHeader extends StatelessWidget {
                   RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           fontSize: 13, fontWeight: FontWeight.bold),
                       children: [
                         TextSpan(
@@ -515,7 +515,7 @@ class _ShieldAC extends StatelessWidget {
           child: Align(
             alignment: const Alignment(0, -0.1),
             child: Text('$ac',
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: AppTheme.primary,
                     fontSize: 15,
                     fontWeight: FontWeight.bold)),
@@ -581,7 +581,7 @@ class _StatPill extends StatelessWidget {
         ),
         child: Center(
           child: Text(value,
-              style: GoogleFonts.cinzel(
+              style: GoogleFonts.libreBaskerville(
                   color: AppTheme.primary,
                   fontSize: 14,
                   fontWeight: FontWeight.bold)),
@@ -635,7 +635,7 @@ class _ManageHpSheetState extends State<_ManageHpSheet> {
                 borderRadius: BorderRadius.circular(2))),
         const SizedBox(height: 16),
         Text('Manage HP',
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold)),
@@ -749,7 +749,7 @@ class _HpField extends StatelessWidget {
       controller: controller,
       keyboardType: TextInputType.number,
       textAlign: TextAlign.center,
-      style: GoogleFonts.cinzel(color: color, fontSize: 18),
+      style: GoogleFonts.libreBaskerville(color: color, fontSize: 18),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: GoogleFonts.lato(color: color, fontSize: 11),
@@ -889,7 +889,7 @@ class _LongRestModalState extends State<_LongRestModal> {
       title: Row(children: [
         const Icon(Icons.nightlight_round, color: AppTheme.primary, size: 22),
         const SizedBox(width: 8),
-        Text('Long Rest', style: GoogleFonts.cinzel(color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold)),
+        Text('Long Rest', style: GoogleFonts.libreBaskerville(color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Taking a long rest will restore:', style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
@@ -1001,7 +1001,7 @@ class _ShortRestModalState extends State<_ShortRestModal> {
       title: Row(children: [
         const Icon(Icons.coffee_outlined, color: Color(0xFF7B9ECC), size: 22),
         const SizedBox(width: 8),
-        Text('Short Rest', style: GoogleFonts.cinzel(color: const Color(0xFF7B9ECC), fontSize: 16, fontWeight: FontWeight.bold)),
+        Text('Short Rest', style: GoogleFonts.libreBaskerville(color: const Color(0xFF7B9ECC), fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         Text('You have $_available / ${widget.character.level} hit dice (d$_hitDie).',
@@ -1019,7 +1019,7 @@ class _ShortRestModalState extends State<_ShortRestModal> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text('$_diceToSpend d$_hitDie',
-                style: GoogleFonts.cinzel(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+                style: GoogleFonts.libreBaskerville(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
           ),
           IconButton(
             icon: const Icon(Icons.add_circle_outline, color: Color(0xFF7B9ECC)),
@@ -1041,7 +1041,7 @@ class _ShortRestModalState extends State<_ShortRestModal> {
           if (_hasRolled) ...[
             const SizedBox(height: 8),
             Text('Result: +$_rolledTotal HP',
-                style: GoogleFonts.cinzel(color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold)),
+                style: GoogleFonts.libreBaskerville(color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ],
         const SizedBox(height: 8),

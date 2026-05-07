@@ -36,7 +36,7 @@ class StepPreferences extends StatelessWidget{
 
           // Ability Scores display preference
           Text('Ability Scores display',
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
               color: AppTheme.textPrimary,
               fontSize: 14, fontWeight: FontWeight.bold
             )),
@@ -122,7 +122,7 @@ class _DisplayModeTile extends StatelessWidget {
               border: Border.all(color: selected ? AppTheme.primary : AppTheme.surfaceVariant),
             ),
             child: Text(title,
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                   color: selected ? AppTheme.primary : AppTheme.textPrimary,
                   fontSize: 15, fontWeight: FontWeight.bold)),
           ),

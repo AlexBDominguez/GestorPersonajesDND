@@ -112,7 +112,7 @@ class _TabInventoryState extends State<TabInventory> {
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text ('Remove item?',
-          style: GoogleFonts.cinzel(color: AppTheme.primary)),
+          style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
         content: Text('Remove "${item.name}" from inventory?',
           style: GoogleFonts.lato(color: AppTheme.textPrimary)),
         actionsAlignment: MainAxisAlignment.center,
@@ -624,7 +624,7 @@ class _DraggableItemTile extends StatelessWidget{
             const SizedBox(width: 10),
             Expanded(
               child: Text(item.name,
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                   color: AppTheme.primary,
                   fontSize: 13,
                   fontWeight: FontWeight.bold)),
@@ -794,7 +794,7 @@ class _ItemTileContent extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(item.name,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                         color: AppTheme.primary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold)),
@@ -848,7 +848,7 @@ class _ItemTileContent extends StatelessWidget {
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(item.name,
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: dimmed
                         ? AppTheme.textSecondary
                         : AppTheme.textPrimary,
@@ -1105,7 +1105,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Text('Add Item',
-              style: GoogleFonts.cinzel(
+              style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 16,
                 fontWeight: FontWeight.bold)),
@@ -1151,7 +1151,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 2),
                     title: Text(item.name,
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                         color: AppTheme.textPrimary,
                         fontSize: 13,
                         fontWeight: FontWeight.bold)),
@@ -1269,7 +1269,7 @@ class _CurrencyRowState extends State<_CurrencyRow> {
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
         title: Text('Set ${_coins[index].$1}',
-            style: GoogleFonts.cinzel(color: AppTheme.primary, fontSize: 14)),
+            style: GoogleFonts.libreBaskerville(color: AppTheme.primary, fontSize: 14)),
         content: TextField(
           controller: ctrl,
           autofocus: true,
@@ -1300,7 +1300,7 @@ class _CurrencyRowState extends State<_CurrencyRow> {
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
             child: Text('Set',
-                style: GoogleFonts.cinzel(color: AppTheme.background)),
+                style: GoogleFonts.libreBaskerville(color: AppTheme.background)),
           ),
         ],
       ),
@@ -1343,7 +1343,7 @@ class _CurrencyRowState extends State<_CurrencyRow> {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Column(children: [
                     Text('${_values[i]}',
-                        style: GoogleFonts.cinzel(
+                        style: GoogleFonts.libreBaskerville(
                             color: color,
                             fontSize: 16,
                             fontWeight: FontWeight.bold)),
@@ -1412,7 +1412,7 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(children: [
     Text(title,
-      style: GoogleFonts.cinzel(
+      style: GoogleFonts.libreBaskerville(
         color: AppTheme.primary,
         fontSize: 14,
         fontWeight: FontWeight.bold,
@@ -1429,7 +1429,7 @@ class _SectionTitleInline extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(children: [
     Text(title,
-      style: GoogleFonts.cinzel(
+      style: GoogleFonts.libreBaskerville(
         color: AppTheme.primary,
         fontSize: 14,
         fontWeight: FontWeight.bold,

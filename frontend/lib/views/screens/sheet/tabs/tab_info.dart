@@ -171,7 +171,7 @@ class _SectionTitle extends StatelessWidget{
   @override
   Widget build(BuildContext context) => Row(children: [
     Text(title,
-      style: GoogleFonts.cinzel(
+      style: GoogleFonts.libreBaskerville(
         color: AppTheme.primary,
         fontSize: 13,
         fontWeight: FontWeight.bold,
@@ -203,7 +203,7 @@ class _TraitCard extends StatelessWidget{
           Icon(icon, color: AppTheme.primary, size: 15),
           const SizedBox(width: 6),
           Text(label,
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
               color: AppTheme.primary,
               fontSize: 11,
               fontWeight: FontWeight.bold,

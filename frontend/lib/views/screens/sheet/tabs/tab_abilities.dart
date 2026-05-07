@@ -106,7 +106,7 @@ class _AbilityCell extends StatelessWidget{
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(ability,
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
               color: AppTheme.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.bold,
@@ -123,7 +123,7 @@ class _AbilityCell extends StatelessWidget{
             ),
             child: Center(
               child: Text(bigLabel,
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                   color: AppTheme.textPrimary,
                   fontSize: bigFontSize,
                   fontWeight: FontWeight.bold
@@ -203,7 +203,7 @@ class _SavingThrowRow extends StatelessWidget {
                 fontSize: 12),
           ),
         ),
-            Text(lbl, style: GoogleFonts.cinzel(
+            Text(lbl, style: GoogleFonts.libreBaskerville(
             color: proficient ? AppTheme.primary : AppTheme.textSecondary,
             fontSize: 13,
             fontWeight: proficient ? FontWeight.bold : FontWeight.normal,
@@ -232,7 +232,7 @@ class _SenseRow extends StatelessWidget {
         SizedBox(
           width: 36,
           child: Text('$value',
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
               color: AppTheme.primary,
               fontSize: 16,
               fontWeight: FontWeight.bold),
@@ -271,7 +271,7 @@ class _SpecialSenseRow extends StatelessWidget {
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(name,
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold)),
@@ -296,7 +296,7 @@ class _SectionTitle extends StatelessWidget{
   @override
   Widget build(BuildContext context) => Row(children: [
     Text(title,
-      style: GoogleFonts.cinzel(
+      style: GoogleFonts.libreBaskerville(
         color: AppTheme.primary,
         fontSize: 14,
         fontWeight: FontWeight.bold,

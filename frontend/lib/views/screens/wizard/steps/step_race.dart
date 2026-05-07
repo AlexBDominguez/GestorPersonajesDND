@@ -122,7 +122,7 @@ class _RaceCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(race.name,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                       color: isSelected
                           ? AppTheme.primary
                           : AppTheme.textPrimary,
@@ -255,7 +255,7 @@ class _SubraceChip extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(subrace.name,
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           color: isSelected
                               ? AppTheme.primary
                               : AppTheme.textPrimary,
@@ -427,7 +427,7 @@ class _RaceChoiceBlockState extends State<_RaceChoiceBlock> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(widget.config.label,
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           color: done ? AppTheme.primary : AppTheme.accent,
                           fontSize: 13,
                           fontWeight: FontWeight.bold)),
@@ -523,7 +523,7 @@ class _RaceOptionTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                         color: selected
                             ? AppTheme.primary
                             : AppTheme.textPrimary,

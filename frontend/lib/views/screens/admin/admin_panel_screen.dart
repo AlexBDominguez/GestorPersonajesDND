@@ -42,7 +42,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         backgroundColor: AppTheme.background,
         leading: const BackButton(color: AppTheme.textPrimary),
         title: Text('User Management',
-          style: GoogleFonts.cinzel(
+          style: GoogleFonts.libreBaskerville(
             color: AppTheme.primary, fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
@@ -58,7 +58,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         foregroundColor: AppTheme.background,
         icon: const Icon(Icons.person_add),
         label: Text('New User',
-            style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+            style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
@@ -132,7 +132,7 @@ class _UserTile extends StatelessWidget {
         ),
         title: Row(children: [
           Text(user.username,
-              style: GoogleFonts.cinzel(
+              style: GoogleFonts.libreBaskerville(
                 color: user.active ? AppTheme.textPrimary : AppTheme.textSecondary,
                 fontSize: 13,
                 fontWeight: FontWeight.bold)),
@@ -215,7 +215,7 @@ class _UserMenu extends StatelessWidget {
             backgroundColor: AppTheme.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text('Delete ${user.username}?',
-                style: GoogleFonts.cinzel(color: AppTheme.accent)),
+                style: GoogleFonts.libreBaskerville(color: AppTheme.accent)),
             content: Text(
               'This will permanently delete the user and all their characters.',
               style: GoogleFonts.lato(color: AppTheme.textSecondary),
@@ -262,7 +262,7 @@ class _UserMenu extends StatelessWidget {
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Reset password — ${user.username}',
-            style: GoogleFonts.cinzel(color: AppTheme.primary, fontSize: 14)),
+            style: GoogleFonts.libreBaskerville(color: AppTheme.primary, fontSize: 14)),
         content: TextField(
           controller: ctrl,
           obscureText: true,
@@ -345,7 +345,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
     return AlertDialog(
       backgroundColor: AppTheme.surface,
       title: Text('Create New User',
-          style: GoogleFonts.cinzel(
+          style: GoogleFonts.libreBaskerville(
               color: AppTheme.primary,
               fontWeight: FontWeight.bold,
               fontSize: 15)),
@@ -439,7 +439,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: Colors.white))
               : Text('Create',
-                  style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+                  style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
         ),
       ],
     );
@@ -493,7 +493,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         backgroundColor: AppTheme.background,
         leading: const BackButton(color: AppTheme.textPrimary),
         title: Text('Change Password',
-          style: GoogleFonts.cinzel(
+          style: GoogleFonts.libreBaskerville(
             color: AppTheme.primary, fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
@@ -556,7 +556,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
                     : Text('Update Password',
-                        style: GoogleFonts.cinzel(
+                        style: GoogleFonts.libreBaskerville(
                             fontSize: 14, fontWeight: FontWeight.bold)),
               ),
             ),
@@ -768,7 +768,7 @@ class _EmptyView extends StatelessWidget {
               color: AppTheme.surfaceVariant, size: 52),
           const SizedBox(height: 16),
           Text('No users yet',
-              style: GoogleFonts.cinzel(
+              style: GoogleFonts.libreBaskerville(
                   color: AppTheme.textSecondary, fontSize: 15)),
           const SizedBox(height: 8),
           TextButton.icon(

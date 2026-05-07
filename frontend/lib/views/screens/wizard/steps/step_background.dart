@@ -115,7 +115,7 @@ class _StepBackgroundState extends State<StepBackground> {
                     const SizedBox(width: 8),
                     Text(
                       bg?.name ?? '—',
-                      style: GoogleFonts.cinzel(color: AppTheme.textSecondary, fontSize: 14),
+                      style: GoogleFonts.libreBaskerville(color: AppTheme.textSecondary, fontSize: 14),
                     ),
                   ]),
                 )
@@ -130,7 +130,7 @@ class _StepBackgroundState extends State<StepBackground> {
                     items: vm.backgrounds.map((b) => DropdownMenuItem(
                       value: b.id,
                       child: Text(b.name,
-                          style: GoogleFonts.cinzel(
+                          style: GoogleFonts.libreBaskerville(
                               color: AppTheme.textPrimary, fontSize: 14)),
                     )).toList(),
                     onChanged: (id) {
@@ -234,7 +234,7 @@ class _BackgroundDetail extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Nombre
         Text(bg.name,
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 16,
                 fontWeight: FontWeight.bold)),
@@ -318,7 +318,7 @@ class _FeatureBoxState extends State<_FeatureBox> {
           Row(children: [
             Expanded(
               child: Text('Feature: ${widget.name}',
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary,
                       fontSize: 13,
                       fontWeight: FontWeight.bold)),
@@ -349,7 +349,7 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(title,
-      style: GoogleFonts.cinzel(
+      style: GoogleFonts.libreBaskerville(
           color: AppTheme.primary,
           fontSize: 14,
           fontWeight: FontWeight.bold));
@@ -540,7 +540,7 @@ class _AlignmentGrid extends StatelessWidget {
         ..._columnLabels.map((l) => Expanded(
           child: Center(
             child: Text(l,
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textSecondary,
                     fontSize: 9,
                     fontWeight: FontWeight.bold)),
@@ -578,7 +578,7 @@ class _AlignmentGrid extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(_cells[row * 3 + col].$2,
-                          style: GoogleFonts.cinzel(
+                          style: GoogleFonts.libreBaskerville(
                               color: selected == _cells[row * 3 + col].$1
                                   ? Colors.white
                                   : AppTheme.textPrimary,
@@ -594,7 +594,7 @@ class _AlignmentGrid extends StatelessWidget {
               width: 52,
               child: Text(_rowLabels[row],
                   textAlign: TextAlign.left,
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                       color: AppTheme.textSecondary,
                       fontSize: 9,
                       fontWeight: FontWeight.bold)),

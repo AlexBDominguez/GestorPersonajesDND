@@ -123,7 +123,7 @@ class TabSkills extends StatelessWidget{
 
                 //Bonus
                 Text(bonusLbl,
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                     color: AppTheme.primary,
                     fontSize: 14,
                     fontWeight: FontWeight.bold

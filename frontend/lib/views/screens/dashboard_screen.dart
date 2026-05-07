@@ -90,7 +90,7 @@ class _DashboardBody extends StatelessWidget {
         foregroundColor: AppTheme.background,
         icon: const Icon(Icons.add),
         label: Text('New Character (${vm.characters.length} / 10)',
-            style: GoogleFonts.cinzel(fontWeight: FontWeight.bold)),
+            style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
       ),
 
       // ── Body ─────────────────────────────────────────────────
@@ -122,7 +122,7 @@ class _DashboardBody extends StatelessWidget {
               const Icon(Icons.error_outline, color: AppTheme.accent, size: 48),
               const SizedBox(height: 16),
               Text('Error loading characters',
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                       color: AppTheme.textPrimary, fontSize: 16)),
               const SizedBox(height: 8),
               Text(vm.errorMessage!,
@@ -152,7 +152,7 @@ class _DashboardBody extends StatelessWidget {
               const Icon(Icons.shield, color: AppTheme.surfaceVariant, size: 80),
               const SizedBox(height: 24),
               Text('No adventurers yet',
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary,
                       fontSize: 20,
                       fontWeight: FontWeight.bold)),

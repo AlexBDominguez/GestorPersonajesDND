@@ -63,7 +63,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: Text(cls.name,
-            style: GoogleFonts.cinzel(
+            style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary, fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -181,7 +181,7 @@ class _ClassHeader extends StatelessWidget {
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(cls.name,
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: AppTheme.primary,
                     fontSize: 20,
                     fontWeight: FontWeight.bold)),
@@ -216,7 +216,7 @@ class _StatBadge extends StatelessWidget {
                     color: AppTheme.textSecondary, fontSize: 12)),
             TextSpan(
                 text: value,
-                style: GoogleFonts.cinzel(
+                style: GoogleFonts.libreBaskerville(
                     color: AppTheme.primary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold)),
@@ -231,7 +231,7 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(title,
-      style: GoogleFonts.cinzel(
+      style: GoogleFonts.libreBaskerville(
           color: AppTheme.primary,
           fontSize: 14,
           fontWeight: FontWeight.bold));
@@ -282,7 +282,7 @@ class _LevelSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text('Level $level',
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                       color: AppTheme.background,
                       fontSize: 11,
                       fontWeight: FontWeight.bold)),
@@ -335,7 +335,7 @@ class _FeatureTile extends StatelessWidget {
               child: Row(children: [
                 Expanded(
                   child: Text(feature.name,
-                      style: GoogleFonts.cinzel(
+                      style: GoogleFonts.libreBaskerville(
                           color: isExpanded
                               ? AppTheme.primary
                               : AppTheme.textPrimary,

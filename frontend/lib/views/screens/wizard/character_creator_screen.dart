@@ -124,7 +124,7 @@ class CharacterWizardBody extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           isEditMode ? 'Discard changes?' : 'Discard character?',
-          style: GoogleFonts.cinzel(color: AppTheme.primary),
+          style: GoogleFonts.libreBaskerville(color: AppTheme.primary),
         ),
         content: Text(
           isEditMode ? 'Your changes will not be saved.' : 'Your progress will be lost.',

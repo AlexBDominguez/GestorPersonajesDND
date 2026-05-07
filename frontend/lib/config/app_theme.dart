@@ -39,7 +39,7 @@ class AppTheme {
         backgroundColor: surface,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.cinzel(
+        titleTextStyle: GoogleFonts.libreBaskerville(
           color: primary, fontSize: 20, fontWeight: FontWeight.bold,
         ),
         iconTheme: const IconThemeData(color: primary),
@@ -82,7 +82,7 @@ class AppTheme {
           backgroundColor: primary,
           foregroundColor: background,
           minimumSize: const Size(double.infinity, 48),
-          textStyle: GoogleFonts.cinzel(
+          textStyle: GoogleFonts.libreBaskerville(
             fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.5,
           ),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

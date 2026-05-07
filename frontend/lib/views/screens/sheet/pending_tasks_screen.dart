@@ -20,7 +20,7 @@ class PendingTasksScreen extends StatelessWidget {
           backgroundColor: AppTheme.background,
           leading: const BackButton(color: AppTheme.textPrimary),
           title: Text('Pending Choices',
-              style: GoogleFonts.cinzel(
+              style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 16,
                 fontWeight: FontWeight.bold)),
@@ -37,7 +37,7 @@ class PendingTasksScreen extends StatelessWidget {
                     color: AppTheme.primary, size: 52),
                   const SizedBox(height: 16),
                   Text('All chocies resolved!',
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold)),
@@ -90,7 +90,7 @@ class _TaskCard extends StatelessWidget {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(task.displayName,
-                    style: GoogleFonts.cinzel(
+                    style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary,
                       fontSize: 14,
                       fontWeight: FontWeight.bold)),
@@ -203,7 +203,7 @@ class _OptionListResolverState extends State<_OptionListResolver> {
                   child: CircularProgressIndicator(
                       color: Colors.white, strokeWidth: 2))
               : Text(_selected == null ? 'Select an option above' : 'Confirm: $_selected',
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                       fontSize: 12, fontWeight: FontWeight.bold)),
         ),
       ),
@@ -282,7 +282,7 @@ class _OptionTile extends StatelessWidget {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(label,
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                       color: selected
                           ? AppTheme.primary
                           : AppTheme.textPrimary,
@@ -422,7 +422,7 @@ class _AsiOrFeatResolverState extends State<_AsiOrFeatResolver> {
                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
               : Text(
                   _confirmValue == null ? 'Complete your selection above' : 'Confirm',
-                  style: GoogleFonts.cinzel(fontSize: 12, fontWeight: FontWeight.bold)),
+                  style: GoogleFonts.libreBaskerville(fontSize: 12, fontWeight: FontWeight.bold)),
         ),
       ),
     ]);
@@ -591,7 +591,7 @@ class _FreeTextResolverState extends State<_FreeTextResolver> {
                   child: CircularProgressIndicator(
                       color: Colors.white, strokeWidth: 2))
               : Text('Confirm',
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                       fontSize: 12, fontWeight: FontWeight.bold)),
         ),
       ),
@@ -661,7 +661,7 @@ class _SkillVersatilityResolverState
             const SizedBox(width: 6),
             Expanded(
               child: Text(_selected!,
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary,
                       fontSize: 12,
                       fontWeight: FontWeight.bold)),
@@ -711,7 +711,7 @@ class _SkillVersatilityResolverState
                   child: CircularProgressIndicator(
                       color: Colors.white, strokeWidth: 2))
               : Text(_selected == null ? 'Select a skill above' : 'Confirm: $_selected',
-                  style: GoogleFonts.cinzel(
+                  style: GoogleFonts.libreBaskerville(
                       fontSize: 12, fontWeight: FontWeight.bold)),
         ),
       ),
@@ -805,7 +805,7 @@ class _SubclassResolverState extends State<_SubclassResolver> {
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : Text(
                       _selected == null ? 'Select a subclass above' : 'Confirm: $_selected',
-                      style: GoogleFonts.cinzel(fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: GoogleFonts.libreBaskerville(fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ),
         ]);
@@ -944,7 +944,7 @@ class _ExpertiseResolverState extends State<_ExpertiseResolver> {
                   _selected.length < _maxPicks
                       ? 'Select ${remaining} more skill${remaining == 1 ? '' : 's'}'
                       : 'Confirm: ${_selected.join(', ')}',
-                  style: GoogleFonts.cinzel(fontSize: 12, fontWeight: FontWeight.bold)),
+                  style: GoogleFonts.libreBaskerville(fontSize: 12, fontWeight: FontWeight.bold)),
         ),
       ),
     ]);
