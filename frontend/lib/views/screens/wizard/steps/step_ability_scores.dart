@@ -285,7 +285,6 @@ class _ManualRow extends StatelessWidget {
           icon: const Icon(Icons.remove_circle_outline, size: 22),
           color: atMin ? AppTheme.textSecondary : AppTheme.primary,
           padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
         ),
         SizedBox(
           width: 40,
@@ -301,7 +300,6 @@ class _ManualRow extends StatelessWidget {
           icon: const Icon(Icons.add_circle_outline, size: 22),
           color: atMax ? AppTheme.textSecondary : AppTheme.primary,
           padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
         ),
 
         // ── Racial bonus ───────────────────────────────────────
