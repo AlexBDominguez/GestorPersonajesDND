@@ -126,7 +126,8 @@ class _StepBackgroundState extends State<StepBackground> {
                 final removed = vm.selectBackground(chosen);
                 if (removed.isNotEmpty && context.mounted) {
                   final names = removed.join(', ');
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  final messenger = ScaffoldMessenger.of(context);
+                  messenger.showSnackBar(SnackBar(
                     content: Text(
                       'Conflict: $names ${removed.length == 1 ? 'is' : 'are'} already granted by this background — '
                       'deselected from your class skills. Go back to Edit Class to re-pick.',
@@ -142,8 +143,7 @@ class _StepBackgroundState extends State<StepBackground> {
                     action: SnackBarAction(
                       label: 'Dismiss',
                       textColor: AppTheme.primary,
-                      onPressed: () =>
-                          ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+                      onPressed: () => messenger.hideCurrentSnackBar(),
                     ),
                   ));
                 }

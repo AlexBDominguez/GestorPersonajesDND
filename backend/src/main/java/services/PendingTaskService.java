@@ -12,17 +12,21 @@ import entities.PlayerCharacter;
 import jakarta.transaction.Transactional;
 import repositories.PendingTaskRepository;
 import repositories.PlayerCharacterRepository;
+import services.CharacterSkillService;
 
 @Service
 public class PendingTaskService {
 
     private final PendingTaskRepository taskRepository;
     private final PlayerCharacterRepository characterRepository;
+    private final CharacterSkillService characterSkillService;
 
     public PendingTaskService(PendingTaskRepository taskRepository,
-                              PlayerCharacterRepository characterRepository) {
+                              PlayerCharacterRepository characterRepository,
+                              CharacterSkillService characterSkillService) {
         this.taskRepository = taskRepository;
         this.characterRepository = characterRepository;
+        this.characterSkillService = characterSkillService;
     }
 
     /** Todas las tareas pendientes (sin completar) de un personaje */
@@ -109,9 +113,10 @@ public class PendingTaskService {
                         break;
                 
                 case "EXPERTISE":
-                        //Bard/Rogue nivel 1/3: doblar proficiency en 2 skills elegidas
-                        // La implementación real requeriría actualizar CharacterSkill.expertise
-                        System.out.println("Expertise chosen: " + choice + " for " + character.getName());
+                        // choice = comma-separated skill names, e.g. "Acrobatics,Stealth"
+                        for (String skillName : choice.split(",")) {
+                            characterSkillService.applyExpertiseByName(character, skillName);
+                        }
                         break;
                 
                 case "ASI_OR_FEAT":

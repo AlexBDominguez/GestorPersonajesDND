@@ -141,6 +141,8 @@ class _TaskResolver extends StatelessWidget {
       case 'SKILL_VERSATILITY_1':
       case 'SKILL_VERSATILITY_2':
         return _SkillVersatilityResolver(task: task, vm: vm);
+      case 'EXPERTISE':
+        return _ExpertiseResolver(task: task, vm: vm);
       case 'TOOL_PROFICIENCY':
         return _OptionListResolver(
             task: task, vm: vm, options: kDwarfTools);
@@ -819,6 +821,144 @@ class _SubclassResolverState extends State<_SubclassResolver> {
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Subclass chosen: $_selected!'),
+        backgroundColor: AppTheme.primary,
+        duration: const Duration(seconds: 2),
+      ));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Error saving choice. Try again.'),
+        backgroundColor: AppTheme.accent,
+      ));
+    }
+  }
+}
+
+// ── Expertise resolver (multi-pick: 2 proficient skills) ──────────────────────
+
+class _ExpertiseResolver extends StatefulWidget {
+  final PendingTask task;
+  final CharacterSheetViewModel vm;
+  const _ExpertiseResolver({required this.task, required this.vm});
+
+  @override
+  State<_ExpertiseResolver> createState() => _ExpertiseResolverState();
+}
+
+class _ExpertiseResolverState extends State<_ExpertiseResolver> {
+  final Set<String> _selected = {};
+  bool _saving = false;
+  static const int _maxPicks = 2;
+
+  List<DndChoiceOption> get _eligibleSkills => kSkills.where((opt) =>
+      widget.vm.skillProficient(opt.name) &&
+      !widget.vm.skillExpertise(opt.name)).toList();
+
+  @override
+  Widget build(BuildContext context) {
+    final skills = _eligibleSkills;
+    final remaining = _maxPicks - _selected.length;
+
+    if (skills.isEmpty) {
+      return Text(
+        'No eligible skills found. You need proficiency in a skill before gaining expertise.',
+        style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11, fontStyle: FontStyle.italic),
+      );
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(
+        'Choose 2 skills you are proficient in to double your proficiency bonus.${
+          remaining > 0 ? '  ($remaining remaining)' : ''}',
+        style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 12),
+      ),
+      const SizedBox(height: 10),
+      ...skills.map((opt) {
+        final isSelected = _selected.contains(opt.name);
+        final isDisabled = !isSelected && remaining == 0;
+        return GestureDetector(
+          onTap: isDisabled ? null : () => setState(() {
+            if (isSelected) _selected.remove(opt.name);
+            else _selected.add(opt.name);
+          }),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppTheme.primary.withOpacity(0.12)
+                  : isDisabled
+                      ? AppTheme.surfaceVariant.withOpacity(0.2)
+                      : AppTheme.surfaceVariant.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isSelected ? AppTheme.primary : AppTheme.divider,
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Row(children: [
+              Icon(
+                isSelected ? Icons.check_circle : Icons.circle_outlined,
+                size: 16,
+                color: isSelected
+                    ? AppTheme.primary
+                    : isDisabled
+                        ? AppTheme.textSecondary.withOpacity(0.3)
+                        : AppTheme.textSecondary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(opt.name,
+                    style: GoogleFonts.lato(
+                        color: isSelected
+                            ? AppTheme.primary
+                            : isDisabled
+                                ? AppTheme.textSecondary.withOpacity(0.4)
+                                : AppTheme.textPrimary,
+                        fontSize: 13,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+              ),
+              Text(opt.description,
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary.withOpacity(0.6), fontSize: 10)),
+            ]),
+          ),
+        );
+      }),
+      const SizedBox(height: 12),
+      SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: _selected.length < _maxPicks || _saving ? null : () => _confirm(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primary,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: AppTheme.surfaceVariant,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          child: _saving
+              ? const SizedBox(width: 18, height: 18,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : Text(
+                  _selected.length < _maxPicks
+                      ? 'Select ${remaining} more skill${remaining == 1 ? '' : 's'}'
+                      : 'Confirm: ${_selected.join(', ')}',
+                  style: GoogleFonts.cinzel(fontSize: 12, fontWeight: FontWeight.bold)),
+        ),
+      ),
+    ]);
+  }
+
+  Future<void> _confirm(BuildContext context) async {
+    setState(() => _saving = true);
+    final choice = _selected.join(',');
+    final ok = await widget.vm.resolveTask(widget.task.id, choice);
+    if (!context.mounted) return;
+    setState(() => _saving = false);
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Expertise granted: ${_selected.join(', ')}!'),
         backgroundColor: AppTheme.primary,
         duration: const Duration(seconds: 2),
       ));

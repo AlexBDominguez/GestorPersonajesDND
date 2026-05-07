@@ -164,7 +164,7 @@ class PlayerCharacter{
       abilityScores:       scores,
       maxHp:               (j['maxHp'] as num?)?.toInt() ?? 0,
       currentHp:           (j['currentHp'] as num?)?.toInt() ?? 0,
-      temporaryHp:         (j['temporaryHp'] as num?)?.toInt() ?? 0,
+      temporaryHp:         (j['temporaryHP'] as num?)?.toInt() ?? 0,
       proficiencyBonus:    (j['proficiencyBonus'] as num?)?.toInt() ?? 2,
       armorClass:          (j['armorClass'] as num?)?.toInt() ?? 10,
       initiativeModifier:  (j['initiativeModifier'] as num?)?.toInt() ?? 0,

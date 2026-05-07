@@ -26,9 +26,9 @@ class AppTheme {
         onSurface: textPrimary,
       ),
       textTheme: TextTheme(
-        displayLarge:  GoogleFonts.cinzel(color: primary,    fontSize: 32, fontWeight: FontWeight.bold),
-        displayMedium: GoogleFonts.cinzel(color: primary,    fontSize: 24, fontWeight: FontWeight.bold),
-        titleLarge:    GoogleFonts.cinzel(color: textPrimary, fontSize: 20, fontWeight: FontWeight.w600),
+        displayLarge:  GoogleFonts.libreBaskerville(color: primary,    fontSize: 32, fontWeight: FontWeight.bold),
+        displayMedium: GoogleFonts.libreBaskerville(color: primary,    fontSize: 24, fontWeight: FontWeight.bold),
+        titleLarge:    GoogleFonts.libreBaskerville(color: textPrimary, fontSize: 20, fontWeight: FontWeight.w600),
         bodyLarge:     GoogleFonts.lato(color: textPrimary,  fontSize: 16),
         bodyMedium:    GoogleFonts.lato(color: textPrimary,  fontSize: 14),
         bodySmall:     GoogleFonts.lato(color: textSecondary, fontSize: 12),

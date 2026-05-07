@@ -92,6 +92,21 @@ public class CharacterSkillService {
         characterSkillRepository.save(characterSkill);
     }
 
+    /** Sets expertise=true for the skill with the given display name on the given character. */
+    @Transactional
+    public void applyExpertiseByName(PlayerCharacter character, String skillName) {
+        List<CharacterSkill> skills = characterSkillRepository.findByCharacter(character);
+        for (CharacterSkill cs : skills) {
+            if (cs.getSkill().getName().equalsIgnoreCase(skillName.trim())) {
+                cs.setExpertise(true);
+                characterSkillRepository.save(cs);
+                System.out.println("Applied expertise: " + skillName + " for " + character.getName());
+                return;
+            }
+        }
+        System.out.println("Skill not found for expertise: " + skillName + " on " + character.getName());
+    }
+
 
     @Transactional
 public void applySkillProficiencyByIndex(PlayerCharacter character, String skillIndex) {

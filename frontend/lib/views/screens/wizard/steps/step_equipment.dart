@@ -23,13 +23,13 @@ class _StepEquipmentState extends State<StepEquipment>
     ('all', 'All'),
     ('weapon', 'Weapons'),
     ('armor', 'Armor'),
-    ('potion', 'Potions'),
-    ('ring', 'Rings'),
-    ('rod', 'Rods'),
-    ('scroll', 'Scrolls'),
-    ('staff', 'Staves'),
-    ('wand', 'Wands'),
-    ('wondrous_item', 'Wondrous'),
+    // ('potion', 'Potions'),        // not yet in catalog
+    // ('ring', 'Rings'),            // not yet in catalog
+    // ('rod', 'Rods'),              // not yet in catalog
+    // ('scroll', 'Scrolls'),        // not yet in catalog
+    // ('staff', 'Staves'),          // not yet in catalog
+    // ('wand', 'Wands'),            // not yet in catalog
+    // ('wondrous_item', 'Wondrous'),// not yet in catalog
     ('adventuring_gear', 'Other Gear'),
   ];
   @override
