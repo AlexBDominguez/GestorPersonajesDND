@@ -433,16 +433,29 @@ class _SheetHeader extends StatelessWidget {
                   border: Border.all(color: _hpColor(c), width: 1.5),
                 ),
                 child: Column(children: [
-                  Text('${c.currentHp}/${c.maxHp}',
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
                       style: GoogleFonts.cinzel(
-                          color: _hpColor(c),
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center),
-                  if (c.temporaryHp > 0)
-                    Text('+${c.temporaryHp} tmp',
-                        style: GoogleFonts.lato(
-                            color: Colors.lightBlueAccent, fontSize: 9)),
+                          fontSize: 13, fontWeight: FontWeight.bold),
+                      children: [
+                        TextSpan(
+                          text: c.temporaryHp > 0
+                              ? '${c.currentHp + c.temporaryHp}'
+                              : '${c.currentHp}',
+                          style: TextStyle(
+                            color: c.temporaryHp > 0
+                                ? Colors.lightBlueAccent
+                                : _hpColor(c),
+                          ),
+                        ),
+                        TextSpan(
+                          text: '/${c.maxHp}',
+                          style: TextStyle(color: _hpColor(c)),
+                        ),
+                      ],
+                    ),
+                  ),
                 ]),
               ),
               const SizedBox(height: 2),
@@ -627,10 +640,26 @@ class _ManageHpSheetState extends State<_ManageHpSheet> {
                 fontSize: 18,
                 fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text(
-          '${c.currentHp}/${c.maxHp} HP'
-          '${c.temporaryHp > 0 ? ' +${c.temporaryHp} temp' : ''}',
-          style: GoogleFonts.lato(color: AppTheme.textSecondary),
+        RichText(
+          text: TextSpan(
+            style: GoogleFonts.lato(color: AppTheme.textSecondary),
+            children: [
+              TextSpan(
+                text: c.temporaryHp > 0
+                    ? '${c.currentHp + c.temporaryHp}'
+                    : '${c.currentHp}',
+                style: TextStyle(
+                  color: c.temporaryHp > 0 ? Colors.lightBlueAccent : null,
+                ),
+              ),
+              TextSpan(text: '/${c.maxHp} HP'),
+              if (c.temporaryHp > 0)
+                TextSpan(
+                  text: ' (+${c.temporaryHp} temp)',
+                  style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 11),
+                ),
+            ],
+          ),
         ),
         const SizedBox(height: 20),
         ClipRRect(
@@ -826,15 +855,23 @@ class _LongRestModalState extends State<_LongRestModal> {
         _RestEffect(icon: Icons.casino, text: 'Hit dice (at least half your level)'),
         _RestEffect(icon: Icons.healing, text: 'Death saves reset'),
       ]),
+      actionsAlignment: MainAxisAlignment.center,
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: _loading ? null : () => Navigator.pop(context),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppTheme.textSecondary,
+            side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            minimumSize: const Size(100, 40),
+          ),
           child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
         ),
         ElevatedButton(
           onPressed: _loading ? null : _confirm,
           style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              minimumSize: const Size(100, 40)),
           child: _loading
               ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : const Text('Rest'),
@@ -965,15 +1002,23 @@ class _ShortRestModalState extends State<_ShortRestModal> {
         const SizedBox(height: 8),
         _RestEffect(icon: Icons.sports_esports, text: 'Class resources (Short Rest) restored'),
       ]),
+      actionsAlignment: MainAxisAlignment.center,
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: _loading ? null : () => Navigator.pop(context),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppTheme.textSecondary,
+            side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            minimumSize: const Size(100, 40),
+          ),
           child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
         ),
         ElevatedButton(
           onPressed: (_loading || (_diceToSpend > 0 && !_hasRolled)) ? null : _confirm,
           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7B9ECC), foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              minimumSize: const Size(100, 40)),
           child: _loading
               ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : const Text('Rest'),

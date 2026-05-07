@@ -866,13 +866,13 @@ class _InlineOptionTile extends StatelessWidget {
   final String description;
   final bool selected;
   final bool disabled;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _InlineOptionTile({
     required this.label,
     required this.description,
     required this.selected,
-    required this.onTap,
+    this.onTap,
     this.disabled = false,
   });
   Widget build(BuildContext context) {
@@ -1047,16 +1047,25 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
         ] else ...[
           Text('Choose a feat:', style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11)),
           const SizedBox(height: 8),
-          ...kFeats.map((f) => _InlineOptionTile(
-            label: f.name,
-            description: f.description,
-            selected: feat == f.name,
-            onTap: () {
-              widget.vm.featureChoices[_featKey] = f.name;
-              widget.vm.notify();
-              widget.onFeatSelected?.call();
-            },
-          )),
+          ...kFeats.map((f) {
+            // Block feats already chosen at another ASI level
+            final alreadyAtOtherLevel = widget.vm.featureChoices.entries
+                .where((e) => e.key.startsWith('FEAT_CHOICE_') && e.key != _featKey)
+                .any((e) => e.value == f.name);
+            return _InlineOptionTile(
+              label: f.name,
+              description: alreadyAtOtherLevel
+                  ? '(already chosen at another level)'
+                  : f.description,
+              selected: feat == f.name,
+              disabled: alreadyAtOtherLevel,
+              onTap: alreadyAtOtherLevel ? null : () {
+                widget.vm.featureChoices[_featKey] = f.name;
+                widget.vm.notify();
+                widget.onFeatSelected?.call();
+              },
+            );
+          }),
         ],
       ],
     );
@@ -1524,6 +1533,7 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
   @override
   Widget build(BuildContext context) {
     final count = widget.cls.skillChoiceCount;
+    final bgSkills = widget.vm.backgroundSkillIndices;
     final picked = _picked.length;
     final remaining = count - picked;
 
@@ -1541,41 +1551,65 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
             fontSize: 12,
           ),
         ),
+        if (bgSkills.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Skills from your background are already covered.',
+            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11),
+          ),
+        ],
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: widget.cls.allowedSkillIndices.map((skill) {
             final isSelected = _picked.contains(skill);
-            final isDisabled = !isSelected && remaining == 0;
+            final fromBackground = bgSkills.contains(skill);
+            final isDisabled = fromBackground || (!isSelected && remaining == 0);
             return GestureDetector(
               onTap: isDisabled ? null : () => _toggle(skill),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppTheme.primary
-                      : isDisabled
-                          ? AppTheme.surfaceVariant.withOpacity(0.4)
-                          : AppTheme.surfaceVariant,
+                  color: fromBackground
+                      ? AppTheme.surfaceVariant.withOpacity(0.2)
+                      : isSelected
+                          ? AppTheme.primary
+                          : isDisabled
+                              ? AppTheme.surfaceVariant.withOpacity(0.4)
+                              : AppTheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? AppTheme.primary : AppTheme.divider,
+                    color: fromBackground
+                        ? AppTheme.textSecondary.withOpacity(0.3)
+                        : isSelected ? AppTheme.primary : AppTheme.divider,
                   ),
                 ),
-                child: Text(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                  if (fromBackground) ...[
+                    Icon(Icons.book_outlined,
+                        size: 11,
+                        color: AppTheme.textSecondary.withOpacity(0.5)),
+                    const SizedBox(width: 4),
+                  ],
+                  Text(
                   _formatSkillName(skill),
                   style: GoogleFonts.lato(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isSelected
-                        ? AppTheme.background
-                        : isDisabled
-                            ? AppTheme.textSecondary.withOpacity(0.4)
-                            : AppTheme.textPrimary,
+                    color: fromBackground
+                        ? AppTheme.textSecondary.withOpacity(0.4)
+                        : isSelected
+                            ? AppTheme.background
+                            : isDisabled
+                                ? AppTheme.textSecondary.withOpacity(0.4)
+                                : AppTheme.textPrimary,
                   ),
                 ),
+                  ]),
               ),
             );
           }).toList(),

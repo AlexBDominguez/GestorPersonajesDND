@@ -129,14 +129,19 @@ class _StepBackgroundState extends State<StepBackground> {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(
                       'Conflict: $names ${removed.length == 1 ? 'is' : 'are'} already granted by this background — '
-                      'deselected from your class skills. Go back to Edit Class to re-pick your skills.',
+                      'deselected from your class skills. Go back to Edit Class to re-pick.',
+                      style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
                     ),
-                    backgroundColor: AppTheme.accent,
+                    backgroundColor: AppTheme.surface,
                     behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: AppTheme.primary, width: 1),
+                    ),
                     duration: const Duration(seconds: 8),
                     action: SnackBarAction(
                       label: 'Dismiss',
-                      textColor: Colors.white,
+                      textColor: AppTheme.primary,
                       onPressed: () =>
                           ScaffoldMessenger.of(context).hideCurrentSnackBar(),
                     ),

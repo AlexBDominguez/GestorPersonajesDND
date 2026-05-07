@@ -523,6 +523,15 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   static String _normalizeSkillIndex(String s) =>
       s.startsWith('skill-') ? s.substring(6) : s;
 
+  /// Skills granted by the currently selected background (normalized indices).
+  /// Used by the class skill picker to block already-covered skills.
+  Set<String> get backgroundSkillIndices {
+    if (selectedBackground == null) return const {};
+    return selectedBackground!.skillProficiencies
+        .map(_normalizeSkillIndex)
+        .toSet();
+  }
+
   /// Skills the character is already proficient in (class picks + background).
   /// Used to restrict Expertise options to only valid choices per D&D 5e rules.
   Set<String> get _proficientSkillIndices {

@@ -1456,6 +1456,15 @@ public class PlayerCharacterService {
             dto.setDndClassId(character.getDndClass().getId());
             dto.setDndClassName(character.getDndClass().getName());
         }
+
+        if (character.getSubclass() != null) {
+            dto.setSubclassId(character.getSubclass().getId());
+            dto.setSubclassName(character.getSubclass().getName());
+        }
+
+        dto.setSpellSaveDC(character.getSpellSaveDC());
+        dto.setSpellAttackBonus(character.getSpellAttackBonus());
+        dto.setTemporaryHP(character.getTemporaryHP());
         
         return dto;
     }
