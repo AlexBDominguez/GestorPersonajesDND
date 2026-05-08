@@ -189,6 +189,7 @@ class _MoreMenuButton extends StatelessWidget {
       barrierColor: Colors.black.withOpacity(0.7),
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
+        scrollable: true,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Delete Character?',
@@ -210,29 +211,40 @@ class _MoreMenuButton extends StatelessWidget {
             ],
           ),
         ),
-        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.textSecondary,
-              side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              minimumSize: const Size(100, 40),
+          SizedBox(
+            width: double.infinity,
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textSecondary,
+                      side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      minimumSize: const Size(0, 40),
+                    ),
+                    child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.accent,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onDelete();
+                    },
+                    child: Text('Delete', style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
             ),
-            child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accent,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(100, 40),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-            onPressed: () {
-              Navigator.pop(context);
-              onDelete();
-            },
-            child: Text('Delete', style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

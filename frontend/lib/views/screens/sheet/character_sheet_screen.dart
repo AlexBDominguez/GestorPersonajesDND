@@ -832,6 +832,7 @@ class _GearMenuButton extends StatelessWidget {
             context: context,
             builder: (_) => AlertDialog(
               backgroundColor: AppTheme.surface,
+              scrollable: true,
               title: Text('Level Up',
                   style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary, fontWeight: FontWeight.bold)),
@@ -840,19 +841,40 @@ class _GearMenuButton extends StatelessWidget {
                 style: GoogleFonts.lato(color: AppTheme.textPrimary),
               ),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: Text('Cancel',
-                      style: GoogleFonts.lato(color: AppTheme.textSecondary)),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary),
-                  child: Text('Level Up!',
-                      style: GoogleFonts.lato(
-                          color: AppTheme.background,
-                          fontWeight: FontWeight.bold)),
+                SizedBox(
+                  width: double.infinity,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.textSecondary,
+                            side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            minimumSize: const Size(0, 40),
+                          ),
+                          child: Text('Cancel',
+                              style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primary,
+                            minimumSize: const Size(0, 40),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: Text('Level Up!',
+                              style: GoogleFonts.lato(
+                                  color: AppTheme.background,
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -937,6 +959,7 @@ class _LongRestModalState extends State<_LongRestModal> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppTheme.surface,
+      scrollable: true,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Row(children: [
         const Icon(Icons.nightlight_round, color: AppTheme.primary, size: 22),
@@ -952,26 +975,37 @@ class _LongRestModalState extends State<_LongRestModal> {
         _RestEffect(icon: Icons.casino, text: 'Hit dice (at least half your level)'),
         _RestEffect(icon: Icons.healing, text: 'Death saves reset'),
       ]),
-      actionsAlignment: MainAxisAlignment.center,
       actions: [
-        OutlinedButton(
-          onPressed: _loading ? null : () => Navigator.pop(context),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppTheme.textSecondary,
-            side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            minimumSize: const Size(100, 40),
+        SizedBox(
+          width: double.infinity,
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _loading ? null : () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.textSecondary,
+                    side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    minimumSize: const Size(0, 40),
+                  ),
+                  child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _loading ? null : _confirm,
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      minimumSize: const Size(0, 40)),
+                  child: _loading
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Rest'),
+                ),
+              ),
+            ],
           ),
-          child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
-        ),
-        ElevatedButton(
-          onPressed: _loading ? null : _confirm,
-          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              minimumSize: const Size(100, 40)),
-          child: _loading
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('Rest'),
         ),
       ],
     );
@@ -1049,6 +1083,7 @@ class _ShortRestModalState extends State<_ShortRestModal> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppTheme.surface,
+      scrollable: true,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Row(children: [
         const Icon(Icons.coffee_outlined, color: Color(0xFF7B9ECC), size: 22),
@@ -1099,26 +1134,37 @@ class _ShortRestModalState extends State<_ShortRestModal> {
         const SizedBox(height: 8),
         _RestEffect(icon: Icons.sports_esports, text: 'Class resources (Short Rest) restored'),
       ]),
-      actionsAlignment: MainAxisAlignment.center,
       actions: [
-        OutlinedButton(
-          onPressed: _loading ? null : () => Navigator.pop(context),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppTheme.textSecondary,
-            side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            minimumSize: const Size(100, 40),
+        SizedBox(
+          width: double.infinity,
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _loading ? null : () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.textSecondary,
+                    side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    minimumSize: const Size(0, 40),
+                  ),
+                  child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: (_loading || (_diceToSpend > 0 && !_hasRolled)) ? null : _confirm,
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7B9ECC), foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      minimumSize: const Size(0, 40)),
+                  child: _loading
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Rest'),
+                ),
+              ),
+            ],
           ),
-          child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
-        ),
-        ElevatedButton(
-          onPressed: (_loading || (_diceToSpend > 0 && !_hasRolled)) ? null : _confirm,
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7B9ECC), foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              minimumSize: const Size(100, 40)),
-          child: _loading
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('Rest'),
         ),
       ],
     );

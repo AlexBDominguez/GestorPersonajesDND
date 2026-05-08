@@ -121,6 +121,7 @@ class CharacterWizardBody extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           isEditMode ? 'Discard changes?' : 'Discard character?',
@@ -130,26 +131,42 @@ class CharacterWizardBody extends StatelessWidget {
           isEditMode ? 'Your changes will not be saved.' : 'Your progress will be lost.',
           style: GoogleFonts.lato(color: AppTheme.textPrimary),
         ),
-        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context, false),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.textSecondary,
-              side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              minimumSize: const Size(120, 40),
+          SizedBox(
+            width: double.infinity,
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textSecondary,
+                      side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      minimumSize: const Size(0, 40),
+                    ),
+                    child: Text(
+                      'Keep editing',
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.lato(color: AppTheme.textSecondary),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accent,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(0, 40),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('Discard'),
+                  ),
+                ),
+              ],
             ),
-            child: Text('Keep editing', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accent,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(100, 40),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-            child: const Text('Discard'),
           ),
         ],
       ),

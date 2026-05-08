@@ -817,32 +817,44 @@ class _MySpellsTab extends StatelessWidget {
           context: context,
           builder: (_) => AlertDialog(
             backgroundColor: AppTheme.surface,
+            scrollable: true,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text('Remove spell?',
                 style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
             content: Text(
                 'Remove "${spells[i].name}" from your spellbook?',
                 style: GoogleFonts.lato(color: AppTheme.textPrimary)),
-            actionsAlignment: MainAxisAlignment.center,
             actions: [
-              OutlinedButton(
-                onPressed: () => Navigator.pop(context, false),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.textSecondary,
-                  side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  minimumSize: const Size(100, 40),
+              SizedBox(
+                width: double.infinity,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.textSecondary,
+                          side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          minimumSize: const Size(0, 40),
+                        ),
+                        child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.accent,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 40),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                        child: const Text('Remove'),
+                      ),
+                    ),
+                  ],
                 ),
-                child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.accent,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(100, 40),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                child: const Text('Remove'),
               ),
             ],
           ),
@@ -1097,6 +1109,7 @@ class _LearnNewTabState extends State<_LearnNewTab> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Learn spell?',
             style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
@@ -1125,25 +1138,38 @@ class _LearnNewTabState extends State<_LearnNewTab> {
             ),
           ],
         ]),
-        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context, false),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.textSecondary,
-              side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              minimumSize: const Size(100, 40),
+          SizedBox(
+            width: double.infinity,
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textSecondary,
+                      side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      minimumSize: const Size(0, 40),
+                    ),
+                    child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pop(context, true),
+                    icon: const Icon(Icons.add, size: 14),
+                    label: const Text('Learn'),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                  ),
+                ),
+              ],
             ),
-            child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
-          ),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.pop(context, true),
-            icon: const Icon(Icons.add, size: 14),
-            label: const Text('Learn'),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white),
           ),
         ],
       ),

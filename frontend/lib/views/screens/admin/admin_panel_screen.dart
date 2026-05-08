@@ -213,6 +213,7 @@ class _UserMenu extends StatelessWidget {
           context: context,
           builder: (_) => AlertDialog(
             backgroundColor: AppTheme.surface,
+            scrollable: true,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: Text('Delete ${user.username}?',
                 style: GoogleFonts.libreBaskerville(color: AppTheme.accent)),
@@ -220,25 +221,36 @@ class _UserMenu extends StatelessWidget {
               'This will permanently delete the user and all their characters.',
               style: GoogleFonts.lato(color: AppTheme.textSecondary),
             ),
-            actionsAlignment: MainAxisAlignment.center,
             actions: [
-              OutlinedButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTheme.textSecondary,
-                    side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    minimumSize: const Size(100, 40),
-                  ),
-                  child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary))),
-              ElevatedButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.accent,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(100, 40),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                  child: const Text('Delete')),
+              SizedBox(
+                width: double.infinity,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.textSecondary,
+                            side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            minimumSize: const Size(0, 40),
+                          ),
+                          child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary))),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.accent,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(0, 40),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                          child: const Text('Delete')),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         );
@@ -260,6 +272,7 @@ class _UserMenu extends StatelessWidget {
       context: ctx,
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Reset password — ${user.username}',
             style: GoogleFonts.libreBaskerville(color: AppTheme.primary, fontSize: 14)),
@@ -277,34 +290,45 @@ class _UserMenu extends StatelessWidget {
                 borderSide: BorderSide.none),
           ),
         ),
-        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          OutlinedButton(
-              onPressed: () => Navigator.pop(_),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.textSecondary,
-                side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                minimumSize: const Size(100, 40),
-              ),
-              child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary))),
-          ElevatedButton(
-            onPressed: () async {
-              if (ctrl.text.length < 6) return;
-              Navigator.pop(_);
-              try {
-                await service.resetPassword(user.id, ctrl.text);
-                _snack(ctx, 'Password reset for ${user.username}');
-              } catch (e) {
-                if (ctx.mounted) _snack(ctx, e.toString(), error: true);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(100, 40),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-            child: const Text('Reset'),
+          SizedBox(
+            width: double.infinity,
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                      onPressed: () => Navigator.pop(_),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.textSecondary,
+                        side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        minimumSize: const Size(0, 40),
+                      ),
+                      child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary))),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (ctrl.text.length < 6) return;
+                      Navigator.pop(_);
+                      try {
+                        await service.resetPassword(user.id, ctrl.text);
+                        _snack(ctx, 'Password reset for ${user.username}');
+                      } catch (e) {
+                        if (ctx.mounted) _snack(ctx, e.toString(), error: true);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    child: const Text('Reset'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -344,6 +368,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppTheme.surface,
+      scrollable: true,
       title: Text('Create New User',
           style: GoogleFonts.libreBaskerville(
               color: AppTheme.primary,
@@ -415,31 +440,42 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
           ],
         ]),
       ),
-      actionsAlignment: MainAxisAlignment.center,
       actions: [
-        OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.textSecondary,
-              side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              minimumSize: const Size(100, 40),
-            ),
-            child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary))),
-        ElevatedButton(
-          onPressed: _saving ? null : _submit,
-          style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-              foregroundColor: AppTheme.background,
-              minimumSize: const Size(100, 40),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-          child: _saving
-              ? const SizedBox(
-                  width: 16, height: 16,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white))
-              : Text('Create',
-                  style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
+        SizedBox(
+          width: double.infinity,
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textSecondary,
+                      side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      minimumSize: const Size(0, 40),
+                    ),
+                    child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary))),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: AppTheme.background,
+                      minimumSize: const Size(0, 40),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                  child: _saving
+                      ? const SizedBox(
+                          width: 16, height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : Text('Create',
+                          style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

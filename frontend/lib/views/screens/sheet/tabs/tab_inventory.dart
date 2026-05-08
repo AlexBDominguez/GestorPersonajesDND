@@ -110,30 +110,43 @@ class _TabInventoryState extends State<TabInventory> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text ('Remove item?',
           style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
         content: Text('Remove "${item.name}" from inventory?',
           style: GoogleFonts.lato(color: AppTheme.textPrimary)),
-        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context, false),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.textSecondary,
-              side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              minimumSize: const Size(100, 40),
+          SizedBox(
+            width: double.infinity,
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textSecondary,
+                      side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      minimumSize: const Size(0, 40),
+                    ),
+                    child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.accent,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 40),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                      child: const Text('Remove')),
+                ),
+              ],
             ),
-            child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary))),
-          ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accent,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(100, 40),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-              child: const Text('Remove')),
+          ),
         ],
       ),
     );
@@ -1268,6 +1281,7 @@ class _CurrencyRowState extends State<_CurrencyRow> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
+        scrollable: true,
         title: Text('Set ${_coins[index].$1}',
             style: GoogleFonts.libreBaskerville(color: AppTheme.primary, fontSize: 14)),
         content: TextField(
@@ -1285,22 +1299,44 @@ class _CurrencyRowState extends State<_CurrencyRow> {
           ),
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(_),
-              child: Text('Cancel',
-                  style: GoogleFonts.lato(color: AppTheme.textSecondary))),
-          ElevatedButton(
-            onPressed: () {
-              final v = int.tryParse(ctrl.text) ?? _values[index];
-              Navigator.pop(_);
-              final updated = List<int>.from(_values)..[index] = v.clamp(0, 999999);
-              final body = {for (var i = 0; i < _keys.length; i++) _keys[i]: updated[i]};
-              setState(() => _values = updated);
-              _update(body);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
-            child: Text('Set',
-                style: GoogleFonts.libreBaskerville(color: AppTheme.background)),
+          SizedBox(
+            width: double.infinity,
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                      onPressed: () => Navigator.pop(_),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.textSecondary,
+                        side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        minimumSize: const Size(0, 40),
+                      ),
+                      child: Text('Cancel',
+                          style: GoogleFonts.lato(color: AppTheme.textSecondary))),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final v = int.tryParse(ctrl.text) ?? _values[index];
+                      Navigator.pop(_);
+                      final updated = List<int>.from(_values)..[index] = v.clamp(0, 999999);
+                      final body = {for (var i = 0; i < _keys.length; i++) _keys[i]: updated[i]};
+                      setState(() => _values = updated);
+                      _update(body);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      minimumSize: const Size(0, 40),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: Text('Set',
+                        style: GoogleFonts.libreBaskerville(color: AppTheme.background)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
