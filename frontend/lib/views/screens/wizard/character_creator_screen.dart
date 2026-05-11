@@ -146,7 +146,7 @@ class CharacterWizardBody extends StatelessWidget {
                       minimumSize: const Size(0, 40),
                     ),
                     child: Text(
-                      'Keep editing',
+                      'Cancel',
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.lato(color: AppTheme.textSecondary),
                     ),

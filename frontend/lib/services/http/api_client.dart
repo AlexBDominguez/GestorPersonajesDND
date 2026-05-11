@@ -29,7 +29,10 @@ class ApiClient{
   Uri _uri(String path) => Uri.parse('${ApiConfig.baseUrl}$path');
 
   http.Response _check(http.Response res) {
-    if (res.statusCode == 401 || res.statusCode == 403) {
+    // Only 401 (invalid/expired token) should trigger global logout.
+    // 403 means the server understood the request but forbids it — this is
+    // a permissions error, NOT an expired session, so it must NOT log out.
+    if (res.statusCode == 401) {
       ApiClient.onSessionExpired?.call();
     }
     return res;

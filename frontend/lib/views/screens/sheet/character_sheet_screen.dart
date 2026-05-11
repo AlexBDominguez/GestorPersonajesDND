@@ -17,7 +17,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_info.dart';
 
-// Asegúrate de que esta ruta sea correcta
+// Asegurarse de que esta ruta sea correcta
 // import 'package:gestor_personajes_dnd/views/screens/sheet/pending_tasks_screen.dart'; 
 
 class CharacterSheetScreen extends StatelessWidget {
@@ -242,7 +242,7 @@ class _NavBar extends StatelessWidget {
             ),
           ),
           
-          // TODO(DASH-02): Pending tasks button — disabled until level-up flow is redesigned
+          // TODO(DASH-02): Pending tasks - desactivado hasta rediseñar flow de level-up
           // if (vm.hasPendingTasks)
           //   IconButton(
           //     onPressed: () => Navigator.push(

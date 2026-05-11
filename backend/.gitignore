@@ -24,6 +24,8 @@ backups/
 *_backup*.sql
 backup*.sql
 dnd_backup*.sql
+mis_datos_locales.sql
+base_datos_completa.sql
 
 # IDE
 .idea/

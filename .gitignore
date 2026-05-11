@@ -51,3 +51,6 @@ dnd_backup*.sql
 *.sql.gz
 backups/
 
+seed_subraces_v2.sql
+backend/SEED_EXECUTION_STEPS.md
+backend/SEED_EXECUTION_STEPS.md

@@ -169,8 +169,9 @@ class _DashboardBody extends StatelessWidget {
     }
 
     // Estado: lista con personajes
+    final bottomPad = MediaQuery.of(context).padding.bottom;
     return ListView.builder(
-      padding: const EdgeInsets.only(top: 12, bottom: 100),
+      padding: EdgeInsets.only(top: 12, bottom: bottomPad + 80),
       itemCount: vm.characters.length,
       itemBuilder: (context, index) {
         final character = vm.characters[index];
