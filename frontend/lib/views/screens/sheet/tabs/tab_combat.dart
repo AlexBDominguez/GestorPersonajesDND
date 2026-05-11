@@ -180,17 +180,100 @@ class _FeatureGroup extends StatelessWidget {
   }
 }
 
-// ── Feature tile con contadores circulares ───────────────────────────────────────────
+// ── Feature tile → tap opens detail sheet ─────────────────────────────────────
 class _FeatureTile extends StatelessWidget {
   final ClassFeature feature;
   final CharacterSheetViewModel vm;
   const _FeatureTile({required this.feature, required this.vm});
 
+  void _openSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => _FeatureDetailSheet(feature: feature, vm: vm),
+    );
+  }
+
+  void _showUseModal(BuildContext context) {
+    final remaining = vm.featureUsesRemaining(feature);
+    if (remaining <= 0) return;
+    int amount = 1;
+    showDialog(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          backgroundColor: AppTheme.surface,
+          title: Text(feature.name,
+              style: GoogleFonts.libreBaskerville(
+                  color: AppTheme.primary, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('How many will you use?',
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary, fontSize: 13)),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle_outline,
+                        color: AppTheme.primary),
+                    onPressed: amount > 1 ? () => setS(() => amount--) : null,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text('$amount',
+                        style: GoogleFonts.libreBaskerville(
+                            color: AppTheme.primary,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline,
+                        color: AppTheme.primary),
+                    onPressed:
+                        amount < remaining ? () => setS(() => amount++) : null,
+                  ),
+                ],
+              ),
+              Text('$remaining available',
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary, fontSize: 11)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: Text('Cancel',
+                  style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+              onPressed: () => Navigator.pop(ctx),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary),
+              child: Text('Use',
+                  style: GoogleFonts.lato(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+              onPressed: () {
+                vm.useFeatureN(feature, amount);
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isConsumable = vm.isConsumableFeature(feature);
-    final maxUses = vm.featureMaxUses(feature);
-    final remaining = vm.featureUsesRemaining(feature);
+    final isPool       = isConsumable && vm.isPoolResource(feature);
+    final maxUses      = vm.featureMaxUses(feature);
+    final remaining    = vm.featureUsesRemaining(feature);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -199,65 +282,352 @@ class _FeatureTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppTheme.surfaceVariant),
       ),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.fromLTRB(14, 4, 10, 4),
-          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-          title: Row(children: [
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => _openSheet(context),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+          child: Row(children: [
             Expanded(
-              child: Text(feature.name,
-                  style: GoogleFonts.libreBaskerville(
-                    color: AppTheme.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(feature.name,
+                      style: GoogleFonts.libreBaskerville(
+                          color: AppTheme.textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold)),
+                  Text('Level ${feature.level}',
+                      style: GoogleFonts.lato(
+                          color: AppTheme.textSecondary, fontSize: 10)),
+                ],
+              ),
+            ),
+            if (isConsumable) ...[
+              const SizedBox(width: 8),
+              if (isPool) ...[
+                // Pool resource: counter + USE button
+                Text(
+                  '$remaining/$maxUses',
+                  style: GoogleFonts.lato(
+                      color: remaining == 0
+                          ? AppTheme.textSecondary
+                          : AppTheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: remaining > 0 ? () => _showUseModal(context) : null,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: remaining > 0
+                          ? AppTheme.primary.withOpacity(0.15)
+                          : AppTheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                          color: remaining > 0
+                              ? AppTheme.primary.withOpacity(0.4)
+                              : Colors.transparent),
+                    ),
+                    child: Text('USE',
+                        style: GoogleFonts.lato(
+                            color: remaining > 0
+                                ? AppTheme.primary
+                                : AppTheme.textSecondary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5)),
                   ),
-                  //Contadores circulares
-                  if (isConsumable) ...[
-                    const SizedBox(width: 8),
-                    ...List.generate(maxUses, (i) {
-                      final isUsed = i >= remaining;
-                      return GestureDetector(
-                        onTap: () => 
-                          isUsed ? vm.restoreFeature(feature) :
-                          vm.useFeature(feature),
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            width: 16,
-                            height: 16,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isUsed
-                                  ? Colors.transparent
-                                  : AppTheme.primary,
-                              border: Border.all(
-                                color: isUsed
-                                  ? AppTheme.textSecondary
-                                  : AppTheme.primary,
-                                width: 1.5),
+                ),
+              ] else if (maxUses <= 6) ...[
+                // Circle tracker (small counts) — fills left→right
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(maxUses, (i) {
+                    final isSpent = i < (maxUses - remaining);
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isSpent ? AppTheme.primary : Colors.transparent,
+                          border: Border.all(
+                            color: isSpent
+                                ? AppTheme.primary
+                                : AppTheme.textSecondary,
+                            width: 1.5),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ] else ...[
+                Text('$remaining/$maxUses',
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary, fontSize: 11)),
+              ],
+            ],
+            const SizedBox(width: 6),
+            const Icon(Icons.chevron_right,
+                color: AppTheme.textSecondary, size: 18),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Feature detail sheet ───────────────────────────────────────────────────────
+class _FeatureDetailSheet extends StatelessWidget {
+  final ClassFeature feature;
+  final CharacterSheetViewModel vm;
+  const _FeatureDetailSheet({required this.feature, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: vm,
+      builder: (context, _) => _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    final isConsumable = vm.isConsumableFeature(feature);
+    final isPool       = isConsumable && vm.isPoolResource(feature);
+    final maxUses      = vm.featureMaxUses(feature);
+    final remaining    = vm.featureUsesRemaining(feature);
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.5,
+      maxChildSize: 0.92,
+      builder: (_, ctrl) => SingleChildScrollView(
+        controller: ctrl,
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                  color: AppTheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(2)),
+            ),
+          ),
+          // Title
+          Text(feature.name,
+              style: GoogleFonts.libreBaskerville(
+                  color: AppTheme.primary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text('Level ${feature.level}',
+              style: GoogleFonts.lato(
+                  color: AppTheme.textSecondary, fontSize: 13)),
+          // Usage tracker
+          if (isConsumable) ...[
+            const SizedBox(height: 16),
+            if (isPool) ...[
+              // Pool resource: large counter + use/restore buttons
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    '$remaining',
+                    style: GoogleFonts.libreBaskerville(
+                        color: remaining == 0
+                            ? AppTheme.textSecondary
+                            : AppTheme.primary,
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    ' / $maxUses',
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary, fontSize: 16),
+                  ),
+                  const Spacer(),
+                  if (remaining < maxUses)
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                              color: AppTheme.primary.withOpacity(0.5))),
+                      icon: const Icon(Icons.refresh,
+                          size: 14, color: AppTheme.primary),
+                      label: Text('Restore',
+                          style: GoogleFonts.lato(
+                              color: AppTheme.primary, fontSize: 12)),
+                      onPressed: () => vm.restoreFeatureToFull(feature),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: remaining > 0
+                          ? AppTheme.primary
+                          : AppTheme.surfaceVariant),
+                  onPressed: remaining > 0
+                      ? () {
+                          int amount = 1;
+                          showDialog(
+                            context: context,
+                            builder: (_) => StatefulBuilder(
+                              builder: (ctx, setS) => AlertDialog(
+                                backgroundColor: AppTheme.surface,
+                                title: Text('Use ${feature.name}',
+                                    style: GoogleFonts.libreBaskerville(
+                                        color: AppTheme.primary,
+                                        fontWeight: FontWeight.bold)),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('How many will you use?',
+                                        style: GoogleFonts.lato(
+                                            color: AppTheme.textSecondary,
+                                            fontSize: 13)),
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(
+                                              Icons.remove_circle_outline,
+                                              color: AppTheme.primary),
+                                          onPressed: amount > 1
+                                              ? () => setS(() => amount--)
+                                              : null,
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16),
+                                          child: Text('$amount',
+                                              style:
+                                                  GoogleFonts.libreBaskerville(
+                                                      color: AppTheme.primary,
+                                                      fontSize: 32,
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                              Icons.add_circle_outline,
+                                              color: AppTheme.primary),
+                                          onPressed: amount < remaining
+                                              ? () => setS(() => amount++)
+                                              : null,
+                                        ),
+                                      ],
+                                    ),
+                                    Text('$remaining available',
+                                        style: GoogleFonts.lato(
+                                            color: AppTheme.textSecondary,
+                                            fontSize: 11)),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    child: Text('Cancel',
+                                        style: GoogleFonts.lato(
+                                            color: AppTheme.textSecondary)),
+                                    onPressed: () => Navigator.pop(ctx),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppTheme.primary),
+                                    child: Text('Confirm',
+                                        style: GoogleFonts.lato(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold)),
+                                    onPressed: () {
+                                      vm.useFeatureN(feature, amount);
+                                      Navigator.pop(ctx);
+                                    },
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                        );
-                    }),
-                  ],
-          ]),
-          subtitle: Text('Level ${feature.level}',
-              style: GoogleFonts.lato(
-                color: AppTheme.textSecondary, fontSize: 10)),
-          iconColor: AppTheme.textSecondary,
-          collapsedIconColor: AppTheme.textSecondary,
-          children: [
+                          );
+                        }
+                      : null,
+                  child: Text(
+                    remaining > 0 ? 'Use' : 'No uses left',
+                    style: GoogleFonts.lato(
+                        color: remaining > 0
+                            ? Colors.white
+                            : AppTheme.textSecondary,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ] else ...[
+              // Circle tracker (small counts) — fills left→right
+              Row(children: [
+                Text('Uses',
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.4)),
+                const SizedBox(width: 10),
+                Text('$remaining / $maxUses',
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary, fontSize: 11)),
+              ]),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: List.generate(maxUses, (i) {
+                  final isSpent = i < (maxUses - remaining);
+                  return GestureDetector(
+                    onTap: () => isSpent
+                        ? vm.restoreFeature(feature)
+                        : vm.useFeature(feature),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSpent ? AppTheme.primary : Colors.transparent,
+                        border: Border.all(
+                          color: isSpent
+                              ? AppTheme.primary
+                              : AppTheme.textSecondary,
+                          width: 1.5),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ],
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+          if (feature.description.isNotEmpty)
             Text(feature.description,
                 style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary,
-                  fontSize: 12,
-                  height: 1.5)),
-          ],
-        )
-      )
+                    color: AppTheme.textPrimary, fontSize: 13, height: 1.6))
+          else
+            Text('No description available.',
+                style: GoogleFonts.lato(
+                    color: AppTheme.textSecondary,
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic)),
+        ]),
+      ),
     );
   }
 }

@@ -27,10 +27,11 @@ public class UserService {
 
     public static final int MAX_CHARACTERS_PER_USER = 10;
 
-    // Listar todos los usuarios
+    // Listar todos los usuarios (excluye admins)
     public List<UserDto> getAllUsers() {
         return userRepository.findAll()
                 .stream()
+                .filter(u -> u.getRole() != Role.ADMIN)
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -109,10 +110,12 @@ public class UserService {
     }
     
 
-    // Eliminar un usuario
+    // Eliminar un usuario (no se puede eliminar un admin)
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new RuntimeException("Usuario no encontrado con id: " + id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+        if (user.getRole() == Role.ADMIN) {
+            throw new RuntimeException("Admin accounts cannot be deleted.");
         }
         userRepository.deleteById(id);
     }

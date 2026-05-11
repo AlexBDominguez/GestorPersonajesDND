@@ -172,6 +172,7 @@ class _FeatureTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isConsumable = vm.isConsumableFeature(feature);
+    final isPool    = isConsumable && vm.isPoolResource(feature);
     final maxUses = vm.featureMaxUses(feature);
     final remaining = vm.featureUsesRemaining(feature);
     final taskType = _taskType;
@@ -245,33 +246,53 @@ class _FeatureTile extends StatelessWidget {
             Text('Level ${feature.level}',
                 style: GoogleFonts.lato(
                   color: AppTheme.textSecondary, fontSize: 10)),
-            //Contadores de usos (mismo círculo que en Combat)
+            //Contadores de usos
             if (isConsumable) ...[
               const SizedBox(width: 8),
-              ...List.generate(maxUses, (i) {
-                final isSpent = i >= remaining;
-                return GestureDetector(
-                  onTap: () => 
-                    isSpent ? vm.restoreFeature(feature) :
-                    vm.useFeature(feature),
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 3),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      width: 12, height: 12,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        // Filled = spent, transparent = available
-                        color: isSpent ? AppTheme.primary : Colors.transparent,
-                        border: Border.all(
-                          color: isSpent ? AppTheme.primary : AppTheme.textSecondary,
-                          width: 1.5
-                          ),
+              if (isPool) ...[
+                // Pool resource: compact counter (tap tile to open sheet via expand)
+                GestureDetector(
+                  onTap: () {},
+                  child: Text('$remaining/$maxUses',
+                      style: GoogleFonts.lato(
+                          color: remaining == 0
+                              ? AppTheme.textSecondary
+                              : AppTheme.primary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold)),
+                ),
+              ] else if (maxUses <= 6)
+                ...List.generate(maxUses, (i) {
+                  final isSpent = i < (maxUses - remaining);
+                  return GestureDetector(
+                    onTap: () =>
+                        isSpent ? vm.restoreFeature(feature) : vm.useFeature(feature),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 3),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        width: 12, height: 12,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          // Filled = spent (left→right), transparent = available
+                          color: isSpent ? AppTheme.primary : Colors.transparent,
+                          border: Border.all(
+                            color: isSpent ? AppTheme.primary : AppTheme.textSecondary,
+                            width: 1.5),
                         ),
                       ),
                     ),
                   );
-              }),
+                })
+              else
+                GestureDetector(
+                  onTap: () => remaining > 0
+                      ? vm.useFeature(feature)
+                      : vm.restoreFeature(feature),
+                  child: Text('$remaining/$maxUses',
+                      style: GoogleFonts.lato(
+                          color: AppTheme.textSecondary, fontSize: 10)),
+                ),
             ],
           ]),
           iconColor: AppTheme.textSecondary,

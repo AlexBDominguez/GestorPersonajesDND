@@ -8,6 +8,30 @@ import '../../../models/wizard/class_option.dart';
 import '../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import 'class_detail_screen.dart' show classIcon;
 
+/// Returns the stored (resolved) choice display text for a feature at an old
+/// level in level-up mode, or null if none found.
+String? _displayChoiceForFeature(
+    ClassFeature feature, CharacterCreatorViewModel vm) {
+  for (final c in vm.allClassFeatureChoices) {
+    if (c.level != feature.level) continue;
+    final name = feature.name.toLowerCase();
+    final matches = switch (c.type) {
+      'FIGHTING_STYLE'    => name.contains('fighting style'),
+      'FAVORED_ENEMY'     => name.contains('favored enemy'),
+      'FAVORED_TERRAIN'   => name.contains('natural explorer') ||
+                             name.contains('favored terrain'),
+      'DRACONIC_ANCESTRY' => name.contains('draconic ancestry'),
+      'ASI_OR_FEAT'       => name.contains('ability score improvement'),
+      'EXPERTISE'         => name.contains('expertise'),
+      'METAMAGIC'         => name.contains('metamagic'),
+      'INVOCATION'        => name.contains('eldritch invocation'),
+      _                   => false,
+    };
+    if (matches) return vm.featureChoices[c.key];
+  }
+  return null;
+}
+
 /// Returns the matching [WizardChoiceConfig] for a BASE CLASS feature,
 /// or null if this feature does not require a wizard choice.
 WizardChoiceConfig? _choiceForFeature(
@@ -66,6 +90,8 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
   // Computed locally from cls (widget param) to avoid stale vm.selectedClass data
   bool get _classSkillsDone {
+    // In level-up mode, skills were already chosen at creation — always done
+    if (widget.vm.isLevelUpMode) return true;
     if (cls.skillChoiceCount == 0 || cls.allowedSkillIndices.isEmpty) return true;
     return widget.vm.classSkillIndices.length >= cls.skillChoiceCount;
   }
@@ -96,6 +122,13 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
   }
 
   void _initHpRolls(int level) {
+    if (widget.vm.isLevelUpMode) {
+      // In level-up mode only track the NEW level's HP roll.
+      // Old levels are shown as locked/read-only and do not need input.
+      _hpRolls.clear();
+      _hpRolls[level] = null;
+      return;
+    }
     for (int l = 2; l <= level; l++) {
       _hpRolls.putIfAbsent(l, () => null);
     }
@@ -139,9 +172,12 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
     return features;
   }
 
-  bool get _hpComplete =>
-      _level == 1 ||
-      _hpRolls.values.every((v) => v != null);
+  bool get _hpComplete {
+    if (_level == 1) return true;
+    // In level-up mode, only the new level needs a HP roll
+    if (widget.vm.isLevelUpMode) return _hpRolls[_level] != null;
+    return _hpRolls.values.every((v) => v != null);
+  }
 
   void _onLevelChanged(int newLevel) {
     setState(() {
@@ -197,8 +233,10 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Skill Picks ───────────────────────────────────────────
-                  if (cls.skillChoiceCount > 0 && cls.allowedSkillIndices.isNotEmpty) ...[  
+                  // Skill Picks — hidden in level-up mode (already chosen at creation)
+                  if (cls.skillChoiceCount > 0 &&
+                      cls.allowedSkillIndices.isNotEmpty &&
+                      !widget.vm.isLevelUpMode) ...[
                     _SkillPickerSection(
                       cls: cls,
                       vm: widget.vm,
@@ -216,7 +254,13 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                   _SectionHeader('Class Features'),
                   const SizedBox(height: 8),
                   ..._featuresUpToLevel.map((f) {
-                    final choice = _choiceForFeature(f, widget.vm);
+                    // For old levels in level-up mode: show as read-only with previous choice
+                    final isOldLevel = widget.vm.isLevelUpMode &&
+                        f.level < widget.vm.levelUpMinLevel;
+                    final displayChoice = isOldLevel
+                        ? _displayChoiceForFeature(f, widget.vm)
+                        : null;
+                    final choice = isOldLevel ? null : _choiceForFeature(f, widget.vm);
                     // Compute which options of the same type were already chosen at earlier levels.
                     // For multi-pick choices (e.g. Expertise), collect individual picks by key;
                     // for single-pick choices, collect the single stored value.
@@ -255,6 +299,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                       onChoiceSelected: choice != null
                           ? (value) => widget.vm.setFeatureChoice(choice.key, value)
                           : null,
+                      displayChoice: displayChoice,
                       vm: widget.vm,
                     );
                   }),
@@ -356,13 +401,16 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                   if (_level > 1)
                     ...List.generate(_level - 1, (i) {
                       final lvl = i + 2;
+                      // In level-up mode, all levels below the new one are locked
+                      final isLocked = widget.vm.isLevelUpMode && lvl < widget.vm.selectedLevel;
                       return _HpRow(
                         key: ValueKey('hp_$lvl'),
                         level: lvl,
                         hitDie: cls.hitDie,
-                        value: _hpRolls[lvl],
-                        readOnly: false,
-                        onChanged: (v) =>
+                        value: isLocked ? null : _hpRolls[lvl],
+                        readOnly: isLocked,
+                        locked: isLocked,
+                        onChanged: isLocked ? null : (v) =>
                             setState(() => _hpRolls[lvl] = v),
                       );
                     }),
@@ -535,6 +583,8 @@ class _FeatureTile extends StatelessWidget {
   final Set<String> alreadyTaken;
   final ValueChanged<String>? onChoiceSelected;
   final CharacterCreatorViewModel? vm;
+  /// Read-only choice from a previous level (shown as badge, no interactive picker).
+  final String? displayChoice;
 
   const _FeatureTile({
     required this.feature,
@@ -545,6 +595,7 @@ class _FeatureTile extends StatelessWidget {
     this.alreadyTaken = const {},
     this.onChoiceSelected,
     this.vm,
+    this.displayChoice,
   });
 
   bool get _needsChoice => choice != null;
@@ -601,7 +652,10 @@ class _FeatureTile extends StatelessWidget {
                           fontSize: 13,
                           fontWeight: FontWeight.bold)),
                 ),
-                if (_needsChoice) ...[  
+                if (displayChoice != null) ...[  
+                  _ChoiceBadgeDone(text: displayChoice!),
+                  const SizedBox(width: 6),
+                ] else if (_needsChoice) ...[  
                   if (_choiceDone)
                     _ChoiceBadgeDone(text: currentChoice!)
                   else
@@ -621,7 +675,16 @@ class _FeatureTile extends StatelessWidget {
           // Expanded content
           if (isExpanded) ...[  
             const Divider(height: 1, color: AppTheme.divider),
-            if (_needsChoice && choice!.type == 'ASI_OR_FEAT')
+            // Old-level read-only: just show description
+            if (displayChoice != null) ...[  
+              if (feature.description.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  child: Text(feature.description,
+                      style: GoogleFonts.lato(
+                          color: AppTheme.textSecondary, fontSize: 12)),
+                ),
+            ] else if (_needsChoice && choice!.type == 'ASI_OR_FEAT')
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                 child: _AsiOrFeatSection(
@@ -1142,6 +1205,7 @@ class _HpRow extends StatelessWidget {
   final int hitDie;
   final int? value;
   final bool readOnly;
+  final bool locked;  // true = pre-existing level in level-up mode (show "—")
   final ValueChanged<int?>? onChanged;
 
   const _HpRow({
@@ -1150,6 +1214,7 @@ class _HpRow extends StatelessWidget {
     required this.hitDie,
     required this.value,
     required this.readOnly,
+    this.locked = false,
     this.onChanged,
   });
 
@@ -1182,15 +1247,27 @@ class _HpRow extends StatelessWidget {
         Expanded(
           child: readOnly
               ? Row(children: [
-                  Text('$value',
-                      style: GoogleFonts.libreBaskerville(
-                          color: AppTheme.primary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 6),
-                  Text('(maximum)',
-                      style: GoogleFonts.lato(
-                          color: AppTheme.textSecondary, fontSize: 11)),
+                  if (locked) ...[  
+                    Text('—',
+                        style: GoogleFonts.libreBaskerville(
+                            color: AppTheme.textSecondary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
+                    const SizedBox(width: 6),
+                    Text('(already set)',
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary, fontSize: 11)),
+                  ] else ...[  
+                    Text('$value',
+                        style: GoogleFonts.libreBaskerville(
+                            color: AppTheme.primary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
+                    const SizedBox(width: 6),
+                    Text('(maximum)',
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary, fontSize: 11)),
+                  ],
                 ])
               : _HpInput(
                   hitDie: hitDie,

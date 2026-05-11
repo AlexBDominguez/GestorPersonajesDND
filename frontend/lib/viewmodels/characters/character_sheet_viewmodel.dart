@@ -35,6 +35,14 @@ const _kConsumableFeatures = <String, int>{
   // Paladin
   'channel-divinity':        1,
   'lay-on-hands':            -2,
+  'divine-sense':            -5,   // 1 + CHA mod
+  // Sorcerer
+  'sorcery-points':          -3,   // = level (igual que ki)
+  // Wizard
+  'arcane-recovery':         1,
+  // Fighter (Battle Master subclass)
+  'combat-superiority':      -6,   // superiority dice table
+  'superiority-dice':        -6,
 };
 
 // Prefijos que se resuelven por coincidencia parcial (indexName.startsWith(prefix + '-'))
@@ -395,12 +403,22 @@ class CharacterSheetViewModel extends ChangeNotifier {
     if (raw == -1) return ((character?.abilityScores['cha'] ?? character?.abilityScores['CHA'] ?? 10) - 10) ~/ 2;
     if (raw == -2) return lvl * 5;
     if (raw == -3) return lvl;
-    if (raw == -4) {
+    if (raw == -4) {          // Barbarian rages (PHB table)
       if (lvl >= 17) return 6;
       if (lvl >= 12) return 5;
-      if (lvl >= 8)  return 4;
-      if (lvl >= 6)  return 3;
+      if (lvl >= 6)  return 4;
+      if (lvl >= 3)  return 3;
       return 2;
+    }
+    if (raw == -5) {          // 1 + CHA mod (Divine Sense, etc.)
+      final chaMod = ((character?.abilityScores['cha'] ??
+          character?.abilityScores['CHA'] ?? 10) - 10) ~/ 2;
+      return (1 + chaMod).clamp(1, 99);
+    }
+    if (raw == -6) {          // Battle Master superiority dice
+      if (lvl >= 15) return 6;
+      if (lvl >= 7)  return 5;
+      return 4;
     }
     return raw;
   }
@@ -412,6 +430,25 @@ class CharacterSheetViewModel extends ChangeNotifier {
   }
 
   bool isConsumableFeature(ClassFeature f) => featureMaxUses(f) > 0;
+
+  /// Returns true if this feature uses a pool UI (counter + Use button)
+  /// rather than individual circles.
+  bool isPoolResource(ClassFeature f) {
+    final key = f.indexName.toLowerCase();
+    return key == 'rage'                   ||
+           key == 'ki'                     ||
+           key == 'lay-on-hands'           ||
+           key == 'divine-sense'           ||
+           key == 'sorcery-points'         ||
+           key == 'arcane-recovery'        ||
+           key == 'channel-divinity'       ||
+           key == 'channel-divinity-1-rest'||
+           key == 'channel-divinity-2-rest'||
+           key == 'channel-divinity-3-rest'||
+           key == 'combat-superiority'     ||
+           key == 'superiority-dice'       ||
+           key.startsWith('bardic-inspiration');
+  }
 
   void useFeature(ClassFeature f) {
     final max = featureMaxUses(f);
@@ -428,6 +465,21 @@ class CharacterSheetViewModel extends ChangeNotifier {
     final current = featureUsesRemaining(f);
     if (current >= max) return;
     _featureUsesRemaining[f.indexName] = current + 1;
+    notifyListeners();
+  }
+
+  void useFeatureN(ClassFeature f, int n) {
+    final max = featureMaxUses(f);
+    if (max <= 0 || n <= 0) return;
+    final current = featureUsesRemaining(f);
+    _featureUsesRemaining[f.indexName] = (current - n).clamp(0, max);
+    notifyListeners();
+  }
+
+  void restoreFeatureToFull(ClassFeature f) {
+    final max = featureMaxUses(f);
+    if (max <= 0) return;
+    _featureUsesRemaining[f.indexName] = max;
     notifyListeners();
   }
 

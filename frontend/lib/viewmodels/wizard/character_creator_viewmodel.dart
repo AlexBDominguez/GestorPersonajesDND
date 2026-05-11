@@ -65,6 +65,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   int get levelUpMinLevel => _levelUpMode ? _originalLevel + 1 : 1;
   int? _editCharacterId;
   int _originalLevel = 1;
+  /// Spell IDs the character already had before this level-up session.
+  Set<int> _preExistingSpellIds = {};
   int? _initialClassId;
   int? _initialSubclassId;
   int? _initialBackgroundId;
@@ -118,6 +120,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       abilityScores[key] = char.abilityScores[key] ?? 10;
     }
     scoreMethod = AbilityScoreMethod.manual;
+    // Pre-populate existing spell IDs so the spells step shows them as already selected
+    _preExistingSpellIds = char.characterSpells.map((s) => s.spellId).toSet();
+    selectedSpellIds.addAll(_preExistingSpellIds);
   }
 
   /// Named constructor for leveling up an existing character.
@@ -142,6 +147,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         _initialRaceId  = char.raceId {
     characterName    = char.name;
     selectedLevel    = char.level + 1;  // Pre-increment: we're leveling UP
+    // Pre-populate existing spell IDs so the spells step shows them as already selected
+    _preExistingSpellIds = char.characterSpells.map((s) => s.spellId).toSet();
+    selectedSpellIds.addAll(_preExistingSpellIds);
     alignment        = char.alignment;
     personality      = char.personalityTrait ?? '';
     ideals           = char.ideal ?? '';
@@ -174,9 +182,11 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       if (isSpellcaster) steps.add(WizardStep.spells);
       return steps;
     }
-    // Edit mode: full wizard (Preferences, Class, Background, Race, Ability Scores)
+    // Edit mode: full wizard (Preferences, Class, Background, Race, Ability Scores, + Spells if spellcaster)
     if (_editMode) {
-      return [WizardStep.preferences, WizardStep.dndClass, WizardStep.background, WizardStep.race, WizardStep.abilityScores];
+      final steps = [WizardStep.preferences, WizardStep.dndClass, WizardStep.background, WizardStep.race, WizardStep.abilityScores];
+      if (isSpellcaster) steps.add(WizardStep.spells);
+      return steps;
     }
     final steps = [
       WizardStep.preferences,
@@ -1060,8 +1070,8 @@ void toggleItem(int itemId) {
   // Feature Choices — inline en el step de clase y el step de raza
   // ────────────────────────────────────────────────────────────
 
-  /// Choices requeridas por la clase/subclase al nivel seleccionado.
-  List<WizardChoiceConfig> get classFeatureChoices {
+  /// Raw class feature choices (all levels up to selectedLevel, unfiltered).
+  List<WizardChoiceConfig> _buildClassFeatureChoices() {
     final choices = <WizardChoiceConfig>[];
     final className = selectedClass?.name.toLowerCase() ?? '';
     final subcName  = selectedSubclass?.name.toLowerCase() ?? '';
@@ -1267,6 +1277,20 @@ void toggleItem(int itemId) {
     return choices;
   }
 
+  /// Choices required by the selected class at the selected level.
+  /// In level-up mode only returns choices for NEW levels (> originalLevel).
+  List<WizardChoiceConfig> get classFeatureChoices {
+    final rawChoices = _buildClassFeatureChoices();
+    if (_levelUpMode) {
+      return rawChoices.where((c) => c.level > _originalLevel).toList();
+    }
+    return rawChoices;
+  }
+
+  /// All class feature choices for ALL levels (used in level-up mode to
+  /// look up previously made choices for read-only display).
+  List<WizardChoiceConfig> get allClassFeatureChoices => _buildClassFeatureChoices();
+
   /// Map of choice key (e.g. 'FAVORED_ENEMY_1') → selected option name.
   final Map<String, String> featureChoices = {};
 
@@ -1327,6 +1351,10 @@ void toggleItem(int itemId) {
       ));
     }
 
+    // In level-up mode: only show choices for levels the character didn't have before
+    if (_levelUpMode) {
+      return choices.where((c) => c.level > _originalLevel).toList();
+    }
     return choices;
   }
 
@@ -1451,6 +1479,7 @@ void toggleItem(int itemId) {
     await loadClasses();     // also triggers _loadSubclassesFor → auto-selects subclass
     await loadBackgrounds();
     await loadRaces();
+    if (isSpellcaster) await loadAvailableSpells();
   }
 
   /// Pre-loads class data for level-up mode and auto-selects the existing class.
@@ -1458,6 +1487,18 @@ void toggleItem(int itemId) {
     if (!_levelUpMode) return;
     await loadClasses(); // auto-selects existing class + subclass
     if (isSpellcaster) await loadAvailableSpells();
+    // Pre-populate previously resolved feature choices so the ClassOptionsScreen
+    // can display them as read-only for old levels.
+    if (_editCharacterId != null) {
+      try {
+        final tasks = await _pendingTaskService.getPendingTasks(_editCharacterId!);
+        for (final t in tasks) {
+          if (t.completed && t.resolvedChoice != null) {
+            featureChoices['${t.taskType}_${t.relatedLevel}'] = t.resolvedChoice!;
+          }
+        }
+      } catch (_) {} // silencioso
+    }
   }
 
   /// Submits changes in edit mode: level-ups the character if level increased,
@@ -1512,12 +1553,30 @@ void toggleItem(int itemId) {
         await _autoResolveFeatureChoices(_editCharacterId!);
       }
 
-      // 4. Sync new spells selected in level-up mode
-      if (_levelUpMode && selectedSpellIds.isNotEmpty) {
-        await _charService.addSpellsToCharacter(
-          id: _editCharacterId!,
-          spellIds: selectedSpellIds.toList(),
-        );
+      // 4. Sync spells: level-up adds only new ones; edit mode adds new and removes deselected
+      if (_levelUpMode) {
+        final newSpellIds = selectedSpellIds.difference(_preExistingSpellIds);
+        if (newSpellIds.isNotEmpty) {
+          await _charService.addSpellsToCharacter(
+            id: _editCharacterId!,
+            spellIds: newSpellIds.toList(),
+          );
+        }
+      } else if (isSpellcaster) {
+        final newSpells     = selectedSpellIds.difference(_preExistingSpellIds);
+        final removedSpells = _preExistingSpellIds.difference(selectedSpellIds);
+        if (newSpells.isNotEmpty) {
+          await _charService.addSpellsToCharacter(
+            id: _editCharacterId!,
+            spellIds: newSpells.toList(),
+          );
+        }
+        for (final spellId in removedSpells) {
+          await _charService.removeSpell(
+            characterId: _editCharacterId!,
+            spellId: spellId,
+          );
+        }
       }
 
       _saveSuccess = true;

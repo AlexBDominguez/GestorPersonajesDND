@@ -56,7 +56,60 @@ class _DashboardBody extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
-            onPressed: () => authVm.logout(),
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (_) => AlertDialog(
+                  backgroundColor: AppTheme.surface,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  title: Text('Log out?',
+                      style: GoogleFonts.libreBaskerville(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.bold)),
+                  content: Text(
+                    'Are you sure you want to log out?',
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary, fontSize: 13),
+                  ),
+                  actions: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: Row(children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.textSecondary,
+                              side: const BorderSide(
+                                  color: AppTheme.surfaceVariant, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                              minimumSize: const Size(0, 40),
+                            ),
+                            child: Text('Cancel',
+                                style: GoogleFonts.lato(
+                                    color: AppTheme.textSecondary))),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.accent,
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size(0, 40),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8))),
+                            child: const Text('Log out')),
+                        ),
+                      ]),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true && context.mounted) authVm.logout();
+            },
           ),
         ],
       ),
