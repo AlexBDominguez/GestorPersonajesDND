@@ -1,7 +1,7 @@
 name: gestor_personajes_dnd
 description: Gestor de personajes para D&D 5e inspirado en DNDBeyond
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -37,11 +37,14 @@ dev_dependencies:
   # Code generation para JSON
   build_runner: ^2.4.8
   json_serializable: ^6.7.1
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   
-  # Aquí irán assets (imágenes, iconos, etc.) cuando los tengas
-  # assets:
-  #   - assets/images/
-  #   - assets/icons/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icons/app_icon.png
+  min_sdk_android: 21

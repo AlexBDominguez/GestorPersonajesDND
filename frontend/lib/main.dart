@@ -22,7 +22,7 @@ class DndApp extends StatelessWidget {
       child: MaterialApp(
         title: 'DungeonScroll',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,  
+        theme: AppTheme.darkTheme,
         home: Consumer<AuthViewModel>(
           builder: (context, vm, child) {
             // Register global 401/403 → logout handler
