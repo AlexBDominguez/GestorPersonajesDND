@@ -3,6 +3,7 @@ package services;
 import dto.ClassFeatureDto;
 import dto.DndClassDto;
 import dto.SubclassDto;
+import config.RequestLocaleContext;
 import entities.ClassFeature;
 import entities.DndClass;
 import entities.Subclass;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import repositories.ClassFeatureRepository;
 import repositories.DndClassRepository;
 import repositories.SubclassRepository;
+import utils.LocalizedTextResolver;
 
 import java.util.List;
 import java.util.Objects;
@@ -71,13 +73,14 @@ public class DndClassService {
     }
 
     private DndClassDto toDto(DndClass dndClass) {
+        String locale = RequestLocaleContext.get();
         DndClassDto dto = new DndClassDto();
         dto.setId(dndClass.getId());
         dto.setIndexName(dndClass.getIndexName());
-        dto.setName(dndClass.getName());
+        dto.setName(LocalizedTextResolver.resolve(locale, dndClass.getName(), dndClass.getNameEs(), dndClass.getNameGl()));
         dto.setHitDie(dndClass.getHitDie());
         dto.setProficiencies(dndClass.getProficiencies());
-        dto.setDescription(dndClass.getDescription());
+        dto.setDescription(LocalizedTextResolver.resolve(locale, dndClass.getDescription(), dndClass.getDescriptionEs(), dndClass.getDescriptionGl()));
         dto.setSpellcastingAbility(dndClass.getSpellcastingAbility());
         dto.setSkillChoiceCount(dndClass.getNumSkillChoices());
         dto.setAllowedSkillIndices(dndClass.getSkillChoiceOptions());
@@ -96,13 +99,14 @@ public class DndClassService {
     }
 
     private SubclassDto toSubclassDto(Subclass subclass) {
+        String locale = RequestLocaleContext.get();
         SubclassDto dto = new SubclassDto();
         dto.setId(subclass.getId());
         dto.setIndexName(subclass.getIndexName());
-        dto.setName(subclass.getName());
+        dto.setName(LocalizedTextResolver.resolve(locale, subclass.getName(), subclass.getNameEs(), subclass.getNameGl()));
         dto.setClassId(subclass.getDndClass().getId());
-        dto.setSubclassFlavor(subclass.getSubclassFlavor());
-        dto.setDescription(subclass.getDescription());
+        dto.setSubclassFlavor(LocalizedTextResolver.resolve(locale, subclass.getSubclassFlavor(), subclass.getSubclassFlavorEs(), subclass.getSubclassFlavorGl()));
+        dto.setDescription(LocalizedTextResolver.resolve(locale, subclass.getDescription(), subclass.getDescriptionEs(), subclass.getDescriptionGl()));
         dto.setSpellcastingAbility(subclass.getSpellcastingAbility());
         return dto;
     }

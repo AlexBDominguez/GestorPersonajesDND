@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   
   # UI
   cupertino_icons: ^1.0.6
@@ -27,7 +29,7 @@ dependencies:
   
   # Utilities
   shared_preferences: ^2.2.2  # Para guardar token JWT localmente
-  intl: ^0.18.1               # Formateo de fechas, números, etc.
+  intl: ^0.20.2               # Formateo de fechas, números, etc.
 
 dev_dependencies:
   flutter_test:

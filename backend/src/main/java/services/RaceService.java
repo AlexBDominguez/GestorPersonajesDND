@@ -2,10 +2,12 @@ package services;
 
 import dto.RaceDto;
 import dto.RacialTraitDto;
+import config.RequestLocaleContext;
 import entities.Race;
 import entities.RacialTrait;
 import repositories.RaceRepository;
 import repositories.SubraceRepository;
+import utils.LocalizedTextResolver;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,23 +59,25 @@ public class RaceService {
     }
 
     private RaceDto toDto(Race race) {
+        String locale = RequestLocaleContext.get();
         RaceDto dto = new RaceDto();
         dto.setId(race.getId());
         dto.setIndexName(race.getIndexName());
-        dto.setName(race.getName());
+        dto.setName(LocalizedTextResolver.resolve(locale, race.getName(), race.getNameEs(), race.getNameGl()));
         dto.setSize(race.getSize());
         dto.setSpeed(race.getSpeed());
         dto.setAbilityBonuses(race.getAbilityBonuses());
-        dto.setDescription(race.getDescription());
+        dto.setDescription(LocalizedTextResolver.resolve(locale, race.getDescription(), race.getDescriptionEs(), race.getDescriptionGl()));
         return dto;
     }
 
     private RacialTraitDto traitToDto(RacialTrait t) {
+        String locale = RequestLocaleContext.get();
         RacialTraitDto dto = new RacialTraitDto();
         dto.setId(t.getId());
         dto.setIndexName(t.getIndexName());
-        dto.setName(t.getName());
-        dto.setDescription(t.getDescription());
+        dto.setName(LocalizedTextResolver.resolve(locale, t.getName(), t.getNameEs(), t.getNameGl()));
+        dto.setDescription(LocalizedTextResolver.resolve(locale, t.getDescription(), t.getDescriptionEs(), t.getDescriptionGl()));
         dto.setTraitType(t.getTraitType());
         return dto;
     }

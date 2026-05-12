@@ -14,9 +14,17 @@ public class RacialTrait {
     private String indexName;
 
     private String name;
+    private String nameEs;
+    private String nameGl;
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionEs;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionGl;
 
     // COMBAT si da un bono de ataque, acción activable, etc.
     // PASSIVE para el resto (visión oscura, resistencias, etc.)
@@ -33,8 +41,20 @@ public class RacialTrait {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
+    public String getNameEs() { return nameEs; }
+    public void setNameEs(String nameEs) { this.nameEs = nameEs; }
+
+    public String getNameGl() { return nameGl; }
+    public void setNameGl(String nameGl) { this.nameGl = nameGl; }
+
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getDescriptionEs() { return descriptionEs; }
+    public void setDescriptionEs(String descriptionEs) { this.descriptionEs = descriptionEs; }
+
+    public String getDescriptionGl() { return descriptionGl; }
+    public void setDescriptionGl(String descriptionGl) { this.descriptionGl = descriptionGl; }
 
     public String getTraitType() { return traitType; }
     public void setTraitType(String traitType) { this.traitType = traitType; }

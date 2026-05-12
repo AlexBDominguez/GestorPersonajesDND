@@ -21,15 +21,25 @@ public class Subclass {
     private String indexName;
 
     private String name;
+    private String nameEs;
+    private String nameGl;
 
     @ManyToOne
     @JoinColumn(name = "class_id", nullable = false)
     private DndClass dndClass;
 
     private String subclassFlavor;
+    private String subclassFlavorEs;
+    private String subclassFlavorGl;
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionEs;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionGl;
 
     // Ability Score para spellcasting (puede ser null si no es caster)
     private String spellcastingAbility;
@@ -60,6 +70,22 @@ public class Subclass {
         this.name = name;
     }
 
+    public String getNameEs() {
+        return nameEs;
+    }
+
+    public void setNameEs(String nameEs) {
+        this.nameEs = nameEs;
+    }
+
+    public String getNameGl() {
+        return nameGl;
+    }
+
+    public void setNameGl(String nameGl) {
+        this.nameGl = nameGl;
+    }
+
     public DndClass getDndClass() {
         return dndClass;
     }
@@ -76,12 +102,44 @@ public class Subclass {
         this.subclassFlavor = subclassFlavor;
     }
 
+    public String getSubclassFlavorEs() {
+        return subclassFlavorEs;
+    }
+
+    public void setSubclassFlavorEs(String subclassFlavorEs) {
+        this.subclassFlavorEs = subclassFlavorEs;
+    }
+
+    public String getSubclassFlavorGl() {
+        return subclassFlavorGl;
+    }
+
+    public void setSubclassFlavorGl(String subclassFlavorGl) {
+        this.subclassFlavorGl = subclassFlavorGl;
+    }
+
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getDescriptionEs() {
+        return descriptionEs;
+    }
+
+    public void setDescriptionEs(String descriptionEs) {
+        this.descriptionEs = descriptionEs;
+    }
+
+    public String getDescriptionGl() {
+        return descriptionGl;
+    }
+
+    public void setDescriptionGl(String descriptionGl) {
+        this.descriptionGl = descriptionGl;
     }
 
     public String getSpellcastingAbility() {

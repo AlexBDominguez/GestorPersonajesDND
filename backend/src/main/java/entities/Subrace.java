@@ -31,6 +31,8 @@ public class Subrace {
     private String indexName;
 
     private String name;
+    private String nameEs;
+    private String nameGl;
 
     @ManyToOne
     @JoinColumn(name = "race_id", nullable = false)
@@ -38,6 +40,12 @@ public class Subrace {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionEs;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionGl;
 
 
     //Bonos de ability adicionales que se suman a los de la raza base
@@ -84,6 +92,22 @@ public class Subrace {
         this.name = name;
     }
 
+    public String getNameEs() {
+        return nameEs;
+    }
+
+    public void setNameEs(String nameEs) {
+        this.nameEs = nameEs;
+    }
+
+    public String getNameGl() {
+        return nameGl;
+    }
+
+    public void setNameGl(String nameGl) {
+        this.nameGl = nameGl;
+    }
+
     public Race getRace() {
         return race;
     }
@@ -98,6 +122,22 @@ public class Subrace {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getDescriptionEs() {
+        return descriptionEs;
+    }
+
+    public void setDescriptionEs(String descriptionEs) {
+        this.descriptionEs = descriptionEs;
+    }
+
+    public String getDescriptionGl() {
+        return descriptionGl;
+    }
+
+    public void setDescriptionGl(String descriptionGl) {
+        this.descriptionGl = descriptionGl;
     }
 
     public Map<String, Integer> getAbilityBonuses() {

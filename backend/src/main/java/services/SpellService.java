@@ -8,8 +8,12 @@ import org.springframework.stereotype.Service;
 import repositories.DndClassRepository;
 import repositories.SpellRepository;
 import repositories.SubclassRepository;
+import dto.SpellDto;
+import config.RequestLocaleContext;
+import utils.LocalizedTextResolver;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SpellService {
@@ -26,24 +30,31 @@ public class SpellService {
         this.dndClassRepository = dndClassRepository;
     }
 
-    public List<Spell> getAllSpells() {
-        return spellRepository.findAll();
+    public List<SpellDto> getAllSpells() {
+        return spellRepository.findAll().stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
-    public List<Spell> getSpellsByLevel(int level) {
-        return spellRepository.findByLevel(level);
+    public List<SpellDto> getSpellsByLevel(int level) {
+        return spellRepository.findByLevel(level).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
-    public List<Spell> searchByName(String name) {
-        return spellRepository.findByNameContainingIgnoreCase(name);
+    public List<SpellDto> searchByName(String name) {
+        return spellRepository.findByNameContainingIgnoreCase(name).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
-    public List<Spell> getSpellsByCastingTime(String castingTime){
-        return
-            spellRepository.findByCastingTimeContainingIgnoreCase(castingTime);
+    public List<SpellDto> getSpellsByCastingTime(String castingTime){
+        return spellRepository.findByCastingTimeContainingIgnoreCase(castingTime).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
-    public List<Spell> getAvailableSpells(Long classId, Long subclassId, Integer maxLevel){
+    public List<SpellDto> getAvailableSpells(Long classId, Long subclassId, Integer maxLevel){
         // Check if this class has spells linked (full/half-casters do; Fighter/Rogue don't)
         boolean classHasSpells = classId != null &&
                 !spellRepository.findByDndClassesId(classId).isEmpty();
@@ -67,14 +78,36 @@ public class SpellService {
         }
 
         if (classHasSpells && maxLevel != null) {
-            return spellRepository.findByDndClassesIdAndLevelLessThanEqual(resolvedClassId, maxLevel);
+            return spellRepository.findByDndClassesIdAndLevelLessThanEqual(resolvedClassId, maxLevel)
+                    .stream().map(this::toDto).collect(Collectors.toList());
         }
         if (classHasSpells) {
-            return spellRepository.findByDndClassesId(resolvedClassId);
+            return spellRepository.findByDndClassesId(resolvedClassId)
+                    .stream().map(this::toDto).collect(Collectors.toList());
         }
         if (maxLevel != null) {
-            return spellRepository.findByLevelLessThanEqual(maxLevel);
+            return spellRepository.findByLevelLessThanEqual(maxLevel)
+                    .stream().map(this::toDto).collect(Collectors.toList());
         }
-        return spellRepository.findAll();
+        return spellRepository.findAll().stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    private SpellDto toDto(Spell spell) {
+        String locale = RequestLocaleContext.get();
+        SpellDto dto = new SpellDto();
+        dto.setId(spell.getId());
+        dto.setName(LocalizedTextResolver.resolve(locale, spell.getName(), spell.getNameEs(), spell.getNameGl()));
+        dto.setLevel(spell.getLevel());
+        dto.setSchool(spell.getSchool());
+        dto.setCastingTime(spell.getCastingTime());
+        dto.setRange(spell.getRange());
+        dto.setDuration(spell.getDuration());
+        dto.setComponents(spell.getComponents());
+        dto.setDescription(LocalizedTextResolver.resolve(locale, spell.getDescription(), spell.getDescriptionEs(), spell.getDescriptionGl()));
+        dto.setAttackType(spell.getAttackType());
+        dto.setDcType(spell.getDcType());
+        dto.setDamageType(spell.getDamageType());
+        dto.setDamageBase(spell.getDamageBase());
+        return dto;
     }
 }

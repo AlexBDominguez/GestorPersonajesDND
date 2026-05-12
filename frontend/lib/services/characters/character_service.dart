@@ -225,6 +225,31 @@ class CharacterService {
       throw Exception('Failed to restore spell slot (${res.statusCode})');
     }
 
+    // POST death save (success or failure)
+    Future<PlayerCharacter> recordDeathSave(int id, {required bool success}) async {
+      final res = await _api.post(
+        '${ApiConfig.charactersPath}/$id/death-save',
+        body: {'success': success},
+      );
+      if (res.statusCode == 200) {
+        return PlayerCharacter.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      }
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      throw Exception('Failed to record death save (${res.statusCode})');
+    }
+
+    // POST reset death saves
+    Future<PlayerCharacter> resetDeathSaves(int id) async {
+      final res = await _api.post('${ApiConfig.charactersPath}/$id/reset-death-saves');
+      if (res.statusCode == 200) {
+        return PlayerCharacter.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      }
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      throw Exception('Failed to reset death saves (${res.statusCode})');
+    }
+
     // POST long rest
     Future<PlayerCharacter> longRest(int characterId) async {
       final res = await _api.post('${ApiConfig.charactersPath}/$characterId/long-rest');

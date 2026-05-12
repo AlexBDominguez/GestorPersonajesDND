@@ -17,6 +17,8 @@ public class Spell {
     private String indexApi;
 
     private String name;
+    private String nameEs;
+    private String nameGl;
     private int level;
     private String school;
     private String castingTime;
@@ -29,6 +31,12 @@ public class Spell {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionEs;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionGl;
 
     // Extended combat data (from dnd5eapi)
     private String attackType;   // "ranged", "melee", or null (save-based)
@@ -89,6 +97,22 @@ public class Spell {
             this.name = name;
         }
 
+        public String getNameEs() {
+            return nameEs;
+        }
+
+        public void setNameEs(String nameEs) {
+            this.nameEs = nameEs;
+        }
+
+        public String getNameGl() {
+            return nameGl;
+        }
+
+        public void setNameGl(String nameGl) {
+            this.nameGl = nameGl;
+        }
+
         public int getLevel() {
             return level;
         }
@@ -143,6 +167,22 @@ public class Spell {
 
         public void setDescription(String description) {
             this.description = description;
+        }
+
+        public String getDescriptionEs() {
+            return descriptionEs;
+        }
+
+        public void setDescriptionEs(String descriptionEs) {
+            this.descriptionEs = descriptionEs;
+        }
+
+        public String getDescriptionGl() {
+            return descriptionGl;
+        }
+
+        public void setDescriptionGl(String descriptionGl) {
+            this.descriptionGl = descriptionGl;
         }
 
         public String getAttackType() { return attackType; }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
+import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
@@ -36,6 +37,7 @@ class _TabCombatState extends State<TabCombat> {
   Widget _buildContent(BuildContext context) {
     final c  = widget.character;
     final vm = widget.vm;
+    final loc = AppStrings.of(context);
 
     final actionSpells = c.characterSpells
         .where((s) => _isAction(s) && (s.isCantrip || s.prepared))
@@ -65,7 +67,7 @@ class _TabCombatState extends State<TabCombat> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
         // ── 1. Actions ───────────────────────────────────────────────────────
-        _SectionTitle('Actions'),
+        _SectionTitle(loc.actions),
         const SizedBox(height: 8),
         // Standard Actions are actions — show them first inside Actions
         _StandardActionsCard(),
@@ -85,7 +87,7 @@ class _TabCombatState extends State<TabCombat> {
         const SizedBox(height: 16),
 
         // ── 3. Bonus Actions ─────────────────────────────────────────────────
-        _SectionTitle('Bonus Actions'),
+        _SectionTitle(loc.bonusActions),
         const SizedBox(height: 8),
         if (bonusSpells.isNotEmpty) ...[
           _SpellAttackTable(spells: bonusSpells, vm: vm),
@@ -99,7 +101,7 @@ class _TabCombatState extends State<TabCombat> {
         const SizedBox(height: 16),
 
         // ── 4. Reactions ─────────────────────────────────────────────────────
-        _SectionTitle('Reactions'),
+        _SectionTitle(loc.reactions),
         const SizedBox(height: 8),
         if (reactionSpells.isNotEmpty) ...[
           _SpellAttackTable(spells: reactionSpells, vm: vm),
@@ -114,17 +116,20 @@ class _TabCombatState extends State<TabCombat> {
 
         // ── 5. Death Saves (conditional) ─────────────────────────────────────
         if (!c.isConscious || c.isDying || c.currentHp == 0) ...[
-          _SectionTitle('Death Saving Throws'),
+          _SectionTitle(loc.deathSavingThrows),
           const SizedBox(height: 8),
           _DeathSavesRow(
             successes: c.deathSaveSuccesses,
             failures: c.deathSaveFailures,
+            onSuccessTap: () => vm.recordDeathSave(success: true),
+            onFailureTap: () => vm.recordDeathSave(success: false),
+            onReset: () => vm.resetDeathSaves(),
           ),
           const SizedBox(height: 20),
         ],
 
         // ── 6. Hit Dice & Speed ───────────────────────────────────────────────
-        _SectionTitle('Hit Dice & Speed'),
+        _SectionTitle(loc.hitDiceAndSpeed),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -136,7 +141,7 @@ class _TabCombatState extends State<TabCombat> {
           child: Row(children: [
             const Icon(Icons.casino_outlined, color: AppTheme.primary, size: 20),
             const SizedBox(width: 10),
-            Text('Hit Dice: ',
+            Text('${loc.hitDice}: ',
                 style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
             Text('${c.availableHitDice}',
                 style: GoogleFonts.libreBaskerville(
@@ -200,6 +205,7 @@ class _FeatureTile extends StatelessWidget {
   void _showUseModal(BuildContext context) {
     final remaining = vm.featureUsesRemaining(feature);
     if (remaining <= 0) return;
+    final loc = AppStrings.of(context);
     int amount = 1;
     showDialog(
       context: context,
@@ -212,7 +218,7 @@ class _FeatureTile extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('How many will you use?',
+              Text(loc.howManyUse,
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary, fontSize: 13)),
               const SizedBox(height: 16),
@@ -240,21 +246,21 @@ class _FeatureTile extends StatelessWidget {
                   ),
                 ],
               ),
-              Text('$remaining available',
+              Text(loc.availableCount(remaining),
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary, fontSize: 11)),
             ],
           ),
           actions: [
             TextButton(
-              child: Text('Cancel',
+              child: Text(loc.cancel,
                   style: GoogleFonts.lato(color: AppTheme.textSecondary)),
               onPressed: () => Navigator.pop(ctx),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary),
-              child: Text('Use',
+              child: Text(loc.use,
                   style: GoogleFonts.lato(
                       color: Colors.white, fontWeight: FontWeight.bold)),
               onPressed: () {
@@ -478,6 +484,7 @@ class _FeatureDetailSheet extends StatelessWidget {
                           : AppTheme.surfaceVariant),
                   onPressed: remaining > 0
                       ? () {
+                          final loc = AppStrings.of(context);
                           int amount = 1;
                           showDialog(
                             context: context,
@@ -491,7 +498,7 @@ class _FeatureDetailSheet extends StatelessWidget {
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text('How many will you use?',
+                                    Text(loc.howManyUse,
                                         style: GoogleFonts.lato(
                                             color: AppTheme.textSecondary,
                                             fontSize: 13)),
@@ -529,7 +536,7 @@ class _FeatureDetailSheet extends StatelessWidget {
                                         ),
                                       ],
                                     ),
-                                    Text('$remaining available',
+                                    Text(loc.availableCount(remaining),
                                         style: GoogleFonts.lato(
                                             color: AppTheme.textSecondary,
                                             fontSize: 11)),
@@ -537,7 +544,7 @@ class _FeatureDetailSheet extends StatelessWidget {
                                 ),
                                 actions: [
                                   TextButton(
-                                    child: Text('Cancel',
+                                    child: Text(loc.cancel,
                                         style: GoogleFonts.lato(
                                             color: AppTheme.textSecondary)),
                                     onPressed: () => Navigator.pop(ctx),
@@ -545,7 +552,7 @@ class _FeatureDetailSheet extends StatelessWidget {
                                   ElevatedButton(
                                     style: ElevatedButton.styleFrom(
                                         backgroundColor: AppTheme.primary),
-                                    child: Text('Confirm',
+                                    child: Text(loc.confirm,
                                         style: GoogleFonts.lato(
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold)),
@@ -1421,46 +1428,117 @@ class _SectionTitle extends StatelessWidget {
 class _DeathSavesRow extends StatelessWidget {
   final int successes;
   final int failures;
-  const _DeathSavesRow({required this.successes, required this.failures});
+  final VoidCallback onSuccessTap;
+  final VoidCallback onFailureTap;
+  final VoidCallback onReset;
+  const _DeathSavesRow({
+    required this.successes,
+    required this.failures,
+    required this.onSuccessTap,
+    required this.onFailureTap,
+    required this.onReset,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.accent.withOpacity(0.5)),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppTheme.accent.withOpacity(0.5)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IntrinsicHeight(
+              child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                // ── Success half (fully tappable) ──────────────────────────
+                Expanded(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onSuccessTap,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(AppStrings.of(context).successes,
+                                style: GoogleFonts.lato(
+                                    color: AppTheme.primary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                  3, (i) => _SaveDot(filled: i < successes, color: AppTheme.primary)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // ── Divider ────────────────────────────────────────────────
+                Container(width: 1, color: AppTheme.divider),
+                // ── Failure half (fully tappable) ──────────────────────────
+                Expanded(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onFailureTap,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(AppStrings.of(context).failures,
+                                style: GoogleFonts.lato(
+                                    color: AppTheme.accent,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                  3, (i) => _SaveDot(filled: i < failures, color: AppTheme.accent)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+            // ── Divider ──────────────────────────────────────────────────
+            Container(height: 1, color: AppTheme.divider),
+            // ── RESET button ─────────────────────────────────────────────
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onReset,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 7),
+                  alignment: Alignment.center,
+                  child: Text(
+                    AppStrings.of(context).resetLabel,
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Row(children: [
-        Expanded(
-            child: Column(children: [
-          Text('Successes',
-              style: GoogleFonts.lato(
-                  color: AppTheme.primary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold)),
-          const SizedBox(height: 6),
-          Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                  3, (i) => _SaveDot(filled: i < successes, color: AppTheme.primary))),
-        ])),
-        Container(width: 1, height: 40, color: AppTheme.divider),
-        Expanded(
-            child: Column(children: [
-          Text('Failures',
-              style: GoogleFonts.lato(
-                  color: AppTheme.accent,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold)),
-          const SizedBox(height: 6),
-          Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                  3, (i) => _SaveDot(filled: i < failures, color: AppTheme.accent))),
-        ])),
-      ]),
     );
   }
 }

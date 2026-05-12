@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
 import 'package:gestor_personajes_dnd/views/screens/admin/admin_panel_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/character_sheet_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/wizard/character_creator_screen.dart';
@@ -30,15 +31,16 @@ class _DashboardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final authVm = context.watch<AuthViewModel>();
     final vm     = context.watch<CharacterListViewModel>();
+    final s      = AppStrings.of(context);
 
     return Scaffold(
       // ── AppBar ───────────────────────────────────────────────
       appBar: AppBar(
-        title: const Text('DungeonScroll'),
+        title: Text(s.appTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.lock_reset, color: AppTheme.textSecondary),
-            tooltip: 'Change Password',
+            tooltip: s.changePassword,
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
               builder: (_) => const ChangePasswordScreen()),
             ),
@@ -47,7 +49,7 @@ class _DashboardBody extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.admin_panel_settings_outlined,
                 color: AppTheme.primary),
-              tooltip: 'User Management',
+              tooltip: s.userManagement,
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const AdminPanelScreen()),
@@ -55,7 +57,7 @@ class _DashboardBody extends StatelessWidget {
             ),
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
+            tooltip: s.logout,
             onPressed: () async {
               final confirm = await showDialog<bool>(
                 context: context,
@@ -63,12 +65,12 @@ class _DashboardBody extends StatelessWidget {
                   backgroundColor: AppTheme.surface,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16)),
-                  title: Text('Log out?',
+                  title: Text(s.logoutTitle,
                       style: GoogleFonts.libreBaskerville(
                           color: AppTheme.textPrimary,
                           fontWeight: FontWeight.bold)),
                   content: Text(
-                    'Are you sure you want to log out?',
+                    s.logoutConfirm,
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary, fontSize: 13),
                   ),
@@ -87,7 +89,7 @@ class _DashboardBody extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8)),
                               minimumSize: const Size(0, 40),
                             ),
-                            child: Text('Cancel',
+                            child: Text(s.cancel,
                                 style: GoogleFonts.lato(
                                     color: AppTheme.textSecondary))),
                         ),
@@ -101,7 +103,7 @@ class _DashboardBody extends StatelessWidget {
                                 minimumSize: const Size(0, 40),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8))),
-                            child: const Text('Log out')),
+                            child: Text(s.logout)),
                         ),
                       ]),
                     ),
@@ -118,8 +120,8 @@ class _DashboardBody extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           if (vm.characters.length >= 10) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Character limit reached (10 per account).'),
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(s.newCharacterCount(vm.characters.length, 10)),
               backgroundColor: AppTheme.accent,
             ));
             return;
@@ -141,7 +143,7 @@ class _DashboardBody extends StatelessWidget {
         backgroundColor: vm.characters.length >= 10 ? AppTheme.accent : AppTheme.primary,
         foregroundColor: AppTheme.background,
         icon: Icon(vm.characters.length >= 10 ? Icons.block : Icons.add),
-        label: Text('New Character (${vm.characters.length} / 10)',
+        label: Text(s.newCharacter,
             style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
       ),
 
@@ -156,6 +158,7 @@ class _DashboardBody extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, CharacterListViewModel vm) {
+    final s = AppStrings.of(context);
     // Estado: cargando
     if (vm.isLoading) {
       return const Center(
@@ -173,7 +176,7 @@ class _DashboardBody extends StatelessWidget {
             children: [
               const Icon(Icons.error_outline, color: AppTheme.accent, size: 48),
               const SizedBox(height: 16),
-              Text('Error loading characters',
+              Text(s.errorLoadingCharacters,
                   style: GoogleFonts.libreBaskerville(
                       color: AppTheme.textPrimary, fontSize: 16)),
               const SizedBox(height: 8),
@@ -185,7 +188,7 @@ class _DashboardBody extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: () => vm.load(),
                 icon: const Icon(Icons.refresh),
-                label: const Text('Try again'),
+                label: Text(s.tryAgain),
               ),
             ],
           ),
@@ -203,14 +206,14 @@ class _DashboardBody extends StatelessWidget {
             children: [
               const Icon(Icons.shield, color: AppTheme.surfaceVariant, size: 80),
               const SizedBox(height: 24),
-              Text('No adventurers yet',
+              Text(s.noCharacters,
                   style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary,
                       fontSize: 20,
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               Text(
-                'Create your first character\nto start the adventure.',
+                s.noCharactersHint,
                 style: GoogleFonts.lato(
                     color: AppTheme.textSecondary, fontSize: 14),
                 textAlign: TextAlign.center,

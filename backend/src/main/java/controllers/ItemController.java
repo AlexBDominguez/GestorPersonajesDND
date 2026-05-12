@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import dto.ItemDto;
+import config.RequestLocaleContext;
 import entities.Item;
 import repositories.ItemRepository;
+import utils.LocalizedTextResolver;
 
 @RestController
 @RequestMapping("/api/items")
@@ -62,12 +64,12 @@ public class ItemController {
         ItemDto dto = new ItemDto();
         dto.setId(item.getId());
         dto.setIndexName(item.getIndexName());
-        dto.setName(item.getName());
+        dto.setName(LocalizedTextResolver.resolve(RequestLocaleContext.get(), item.getName(), item.getNameEs(), item.getNameGl()));
         dto.setItemType(item.getItemType());
         dto.setCategory(item.getCategory());
         dto.setWeight(item.getWeight());
         dto.setCostInCopper(item.getCostInCopper());
-        dto.setDescription(item.getDescription());
+        dto.setDescription(LocalizedTextResolver.resolve(RequestLocaleContext.get(), item.getDescription(), item.getDescriptionEs(), item.getDescriptionGl()));
         dto.setDamageDice(item.getDamageDice());
         dto.setDamageType(item.getDamageType());
         dto.setWeaponRange(item.getWeaponRange());

@@ -15,6 +15,8 @@ import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_skills.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_spells.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
+import 'package:gestor_personajes_dnd/viewmodels/locale_viewmodel.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_info.dart';
 
 // Asegurarse de que esta ruta sea correcta
@@ -45,19 +47,12 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
   // Direct reference to the ViewModel so we can add/remove a listener.
   CharacterSheetViewModel? _vmRef;
 
-  static const _baseTabs = [
-    Tab(text: 'Abilities'),
-    Tab(text: 'Skills'),
-    Tab(text: 'Combat'),
-    Tab(text: 'Features'),
-    Tab(text: 'Inventory'),
-    Tab(text: 'Info'),
-  ];
+  static const int _baseTabCount = 6;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _baseTabs.length, vsync: this);
+    _tabController = TabController(length: _baseTabCount, vsync: this);
   }
 
   /// Called whenever an InheritedWidget above us changes — which includes the
@@ -95,7 +90,7 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
     // setState here is safe: we are inside a ChangeNotifier listener, which
     // fires outside of any build() call.
     setState(() {
-      final newLength = showSpells ? _baseTabs.length + 1 : _baseTabs.length;
+      final newLength = showSpells ? _baseTabCount + 1 : _baseTabCount;
       final clampedIndex = _tabController.index.clamp(0, newLength - 1);
       _tabController.dispose();
       _showSpells = showSpells;
@@ -116,7 +111,7 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
 
     if (vm.error != null || vm.character == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Character Sheet')),
+      appBar: AppBar(title: Text(AppStrings.of(context).characterSheet)),
         body: Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.error_outline, color: AppTheme.accent, size: 48),
@@ -127,7 +122,7 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
             ElevatedButton(
               onPressed: vm.load,
               style: ElevatedButton.styleFrom(minimumSize: const Size(160, 44)),
-              child: const Text('Retry'),
+              child: Text(AppStrings.of(context).retry),
             ),
           ]),
         ),
@@ -138,10 +133,15 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
 
     // _showSpells is kept in sync with _tabController by _onVmChanged.
     // Both are always consistent here — no postFrameCallback needed.
+    final s = AppStrings.of(context);
     final tabs = [
-      ..._baseTabs.sublist(0, 3), // Abilities, Skills, Combat
-      if (_showSpells) const Tab(text: 'Spells'),
-      ..._baseTabs.sublist(3),    // Features, Inventory, Info
+      Tab(text: s.tabAbilities),
+      Tab(text: s.tabSkills),
+      Tab(text: s.tabCombat),
+      if (_showSpells) Tab(text: s.tabSpells),
+      Tab(text: s.tabFeatures),
+      Tab(text: s.tabInventory),
+      Tab(text: s.tabInfo),
     ];
     final views = <Widget>[
       TabAbilities(character: c, vm: vm),
@@ -162,10 +162,6 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
           
           // Stats header
           _SheetHeader(character: c, vm: vm),
-
-          // Death saves banner — visible when HP = 0 or dying
-          if (c.currentHp <= 0 || c.isDying)
-            _DyingBanner(character: c),
 
           // Tab bar
           Container(
@@ -207,6 +203,7 @@ class _NavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       color: AppTheme.surface,
       padding: const EdgeInsets.fromLTRB(4, 6, 10, 6),
@@ -276,14 +273,14 @@ class _NavBar extends StatelessWidget {
           // Rest buttons (replace avatar)
           _RestButton(
             icon: Icons.nightlight_round,
-            label: 'Long',
+            label: s.longRest,
             color: AppTheme.primary,
             onTap: () => _showLongRestModal(context, vm),
           ),
           const SizedBox(width: 6),
           _RestButton(
             icon: Icons.coffee_outlined,
-            label: 'Short',
+            label: s.shortRest,
             color: const Color(0xFF7B9ECC),
             onTap: () => _showShortRestModal(context, vm, character),
           ),
@@ -411,6 +408,7 @@ class _SheetHeader extends StatelessWidget {
     final c = character;
     final initLabel = vm.signedInt(c.initiativeModifier);
     final profLabel = vm.signedInt(c.proficiencyBonus);
+    final s = AppStrings.of(context);
 
     return Container(
       color: AppTheme.surface,
@@ -420,9 +418,9 @@ class _SheetHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           _ShieldAC(ac: c.armorClass),
-          _StatPill(label: 'Initiative', value: initLabel),
-          _StatPill(label: 'Speed', value: '${c.currentSpeed}'),
-          _StatPill(label: 'Proficiency', value: profLabel),
+          _StatPill(label: s.initiative, value: initLabel),
+          _StatPill(label: s.speed, value: '${c.currentSpeed}'),
+          _StatPill(label: s.proficiency, value: profLabel),
           GestureDetector(
             onTap: () => _showManageHpModal(context),
             child: Column(children: [
@@ -461,7 +459,7 @@ class _SheetHeader extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Row(mainAxisSize: MainAxisSize.min, children: [
-                Text('HP',
+                Text(s.hp,
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary,
                         fontSize: 9,
@@ -524,7 +522,7 @@ class _ShieldAC extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 2),
-      Text('AC',
+      Text(AppStrings.of(context).ac,
           style: GoogleFonts.lato(
               color: AppTheme.textSecondary, fontSize: 9, letterSpacing: 1)),
     ]);
@@ -619,6 +617,7 @@ class _ManageHpSheetState extends State<_ManageHpSheet> {
   Widget build(BuildContext context) {
     final vm = context.watch<CharacterSheetViewModel>();
     final c = vm.character!;
+    final s = AppStrings.of(context);;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -635,7 +634,7 @@ class _ManageHpSheetState extends State<_ManageHpSheet> {
                 color: AppTheme.surfaceVariant,
                 borderRadius: BorderRadius.circular(2))),
         const SizedBox(height: 16),
-        Text('Manage HP',
+        Text(s.manageHp,
             style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 18,
@@ -683,21 +682,21 @@ class _ManageHpSheetState extends State<_ManageHpSheet> {
           Expanded(
               child: _HpField(
                   controller: _damageCtrl,
-                  label: 'Damage',
+                  label: s.damage,
                   icon: Icons.remove_circle_outline,
                   color: AppTheme.accent)),
           const SizedBox(width: 10),
           Expanded(
               child: _HpField(
                   controller: _healCtrl,
-                  label: 'Heal',
+                  label: s.heal,
                   icon: Icons.add_circle_outline,
                   color: Colors.green)),
           const SizedBox(width: 10),
           Expanded(
               child: _HpField(
                   controller: _tempCtrl,
-                  label: 'Temp HP',
+                  label: s.tempHp,
                   icon: Icons.shield_outlined,
                   color: Colors.lightBlueAccent)),
         ]),
@@ -726,7 +725,7 @@ class _ManageHpSheetState extends State<_ManageHpSheet> {
                   width: 20,
                   child: CircularProgressIndicator(
                       strokeWidth: 2, color: AppTheme.background))
-              : const Text('Apply'),
+              : Text(s.apply),
         ),
       ]),
     );
@@ -799,7 +798,7 @@ class _RestButton extends StatelessWidget {
   }
 }
 
-// ── Gear Menu Button ──────────────────────────────────────────────────────────
+// ── Gear Menu Button (opens Settings modal) ───────────────────────────────────
 
 class _GearMenuButton extends StatelessWidget {
   final PlayerCharacter character;
@@ -808,113 +807,264 @@ class _GearMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.settings_outlined, color: AppTheme.textSecondary, size: 22),
-      tooltip: 'Character options',
-      color: AppTheme.surfaceVariant,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: AppTheme.surfaceVariant),
-      ),
-      onSelected: (value) async {
-        if (value == 'edit') {
+    final s = AppStrings.of(context);
+    return IconButton(
+      icon: const Icon(Icons.settings_outlined,
+          color: AppTheme.textSecondary, size: 22),
+      tooltip: s.settings,
+      onPressed: () => _showSettingsModal(context),
+    );
+  }
+
+  void _showSettingsModal(BuildContext outerCtx) {
+    showDialog(
+      context: outerCtx,
+      builder: (dialogCtx) => _SettingsDialog(
+        character: character,
+        onEditCharacter: () async {
+          Navigator.pop(dialogCtx);
           final result = await Navigator.push<bool>(
-            context,
+            outerCtx,
             MaterialPageRoute(
-              builder: (_) => EditCharacterScreen(character: character),
-            ),
+                builder: (_) => EditCharacterScreen(character: character)),
           );
-          if (result == true && context.mounted) {
-            await vm.load();
-          }
-        } else if (value == 'levelup') {
+          if (result == true && outerCtx.mounted) await vm.load();
+        },
+        onLevelUp: () async {
+          Navigator.pop(dialogCtx);
+          final s = AppStrings.of(outerCtx);
           final confirm = await showDialog<bool>(
-            context: context,
+            context: outerCtx,
             builder: (_) => AlertDialog(
               backgroundColor: AppTheme.surface,
               scrollable: true,
-              title: Text('Level Up',
+              title: Text(s.levelUp,
                   style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary, fontWeight: FontWeight.bold)),
               content: Text(
-                'Level up ${character.name} to level ${character.level + 1}?',
+                s.levelUpContent(character.name, character.level + 1),
                 style: GoogleFonts.lato(color: AppTheme.textPrimary),
               ),
               actions: [
                 SizedBox(
                   width: double.infinity,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.textSecondary,
-                            side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            minimumSize: const Size(0, 40),
-                          ),
-                          child: Text('Cancel',
-                              style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                  child: Row(children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(outerCtx, false),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.textSecondary,
+                          side: const BorderSide(
+                              color: AppTheme.surfaceVariant, width: 1.5),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          minimumSize: const Size(0, 40),
                         ),
+                        child: Text(s.cancel,
+                            style: GoogleFonts.lato(
+                                color: AppTheme.textSecondary)),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primary,
-                            minimumSize: const Size(0, 40),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                          child: Text('Level Up!',
-                              style: GoogleFonts.lato(
-                                  color: AppTheme.background,
-                                  fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(outerCtx, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          minimumSize: const Size(0, 40),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
                         ),
+                        child: Text(s.levelUpButton,
+                            style: GoogleFonts.lato(
+                                color: AppTheme.background,
+                                fontWeight: FontWeight.bold)),
                       ),
-                    ],
-                  ),
+                    ),
+                  ]),
                 ),
               ],
             ),
           );
-          if (confirm == true && context.mounted) {
+          if (confirm == true && outerCtx.mounted) {
             final result = await Navigator.push<bool>(
-              context,
+              outerCtx,
               MaterialPageRoute(
-                builder: (_) => LevelUpScreen(character: character),
-              ),
+                  builder: (_) => LevelUpScreen(character: character)),
             );
-            if (result == true && context.mounted) {
-              await vm.load();
-            }
+            if (result == true && outerCtx.mounted) await vm.load();
           }
-        }
-      },
-      itemBuilder: (_) => [
-        PopupMenuItem(
-          value: 'edit',
-          child: Row(children: [
-            const Icon(Icons.edit_outlined, color: AppTheme.primary, size: 18),
-            const SizedBox(width: 10),
-            Text('Edit Character',
-                style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+        },
+      ),
+    );
+  }
+}
+
+// ── Settings Dialog ───────────────────────────────────────────────────────────
+
+class _SettingsDialog extends StatelessWidget {
+  final PlayerCharacter character;
+  final VoidCallback onEditCharacter;
+  final VoidCallback onLevelUp;
+  const _SettingsDialog({
+    required this.character,
+    required this.onEditCharacter,
+    required this.onLevelUp,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final localeVm = context.watch<LocaleViewModel>();
+
+    return AlertDialog(
+      backgroundColor: AppTheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      contentPadding: EdgeInsets.zero,
+      actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      title: Row(children: [
+        const Icon(Icons.settings_outlined, color: AppTheme.primary, size: 20),
+        const SizedBox(width: 8),
+        Text(s.settings,
+            style: GoogleFonts.libreBaskerville(
+                color: AppTheme.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 18)),
+      ]),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        const SizedBox(height: 8),
+        // Edit Character
+        _SettingsTile(
+          icon: Icons.edit_outlined,
+          label: s.editCharacter,
+          onTap: onEditCharacter,
+        ),
+        const Divider(
+            height: 1,
+            indent: 16,
+            endIndent: 16,
+            color: AppTheme.surfaceVariant),
+        // Level Up
+        _SettingsTile(
+          icon: Icons.arrow_circle_up_outlined,
+          label: s.levelUp,
+          onTap: onLevelUp,
+        ),
+        const Divider(height: 1, color: AppTheme.surfaceVariant),
+        const SizedBox(height: 14),
+        // Language selector
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.language,
+                  color: AppTheme.textSecondary, size: 14),
+              const SizedBox(width: 6),
+              Text(s.language.toUpperCase(),
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0)),
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
+              _LangChip(
+                label: s.langEnglish,
+                selected: localeVm.locale.languageCode == 'en',
+                onTap: () => localeVm.setLocale('en'),
+              ),
+              const SizedBox(width: 6),
+              _LangChip(
+                label: s.langSpanish,
+                selected: localeVm.locale.languageCode == 'es',
+                onTap: () => localeVm.setLocale('es'),
+              ),
+              const SizedBox(width: 6),
+              _LangChip(
+                label: s.langGalician,
+                selected: localeVm.locale.languageCode == 'gl',
+                onTap: () => localeVm.setLocale('gl'),
+              ),
+            ]),
           ]),
         ),
-        PopupMenuItem(
-          value: 'levelup',
-          child: Row(children: [
-            const Icon(Icons.arrow_circle_up_outlined,
-                color: AppTheme.primary, size: 18),
-            const SizedBox(width: 10),
-            Text('Level Up',
-                style: GoogleFonts.lato(color: AppTheme.textPrimary)),
-          ]),
+        const SizedBox(height: 16),
+      ]),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(s.close,
+              style: GoogleFonts.lato(color: AppTheme.textSecondary)),
         ),
       ],
     );
   }
+}
+
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _SettingsTile(
+      {required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          child: Row(children: [
+            Icon(icon, color: AppTheme.primary, size: 18),
+            const SizedBox(width: 12),
+            Text(label,
+                style:
+                    GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 14)),
+          ]),
+        ),
+      );
+}
+
+class _LangChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _LangChip(
+      {required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppTheme.primary.withOpacity(0.15)
+                  : AppTheme.surfaceVariant.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: selected ? AppTheme.primary : Colors.transparent,
+                width: 1.5,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                label,
+                style: GoogleFonts.lato(
+                  color:
+                      selected ? AppTheme.primary : AppTheme.textSecondary,
+                  fontSize: 11,
+                  fontWeight:
+                      selected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
 }
 
 // ── Long Rest Modal ────────────────────────────────────────────────────────────
@@ -964,7 +1114,9 @@ class _LongRestModalState extends State<_LongRestModal> {
       title: Row(children: [
         const Icon(Icons.nightlight_round, color: AppTheme.primary, size: 22),
         const SizedBox(width: 8),
-        Text('Long Rest', style: GoogleFonts.libreBaskerville(color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(AppStrings.of(context).longRestTitle,
+            style: GoogleFonts.libreBaskerville(
+                color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Taking a long rest will restore:', style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
@@ -989,7 +1141,8 @@ class _LongRestModalState extends State<_LongRestModal> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     minimumSize: const Size(0, 40),
                   ),
-                  child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                  child: Text(AppStrings.of(context).cancel,
+                      style: GoogleFonts.lato(color: AppTheme.textSecondary)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1001,7 +1154,7 @@ class _LongRestModalState extends State<_LongRestModal> {
                       minimumSize: const Size(0, 40)),
                   child: _loading
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Rest'),
+                      : Text(AppStrings.of(context).rest),
                 ),
               ),
             ],
@@ -1088,9 +1241,9 @@ class _ShortRestModalState extends State<_ShortRestModal> {
       title: Row(children: [
         const Icon(Icons.coffee_outlined, color: Color(0xFF7B9ECC), size: 22),
         const SizedBox(width: 8),
-        Text('Short Rest', style: GoogleFonts.libreBaskerville(color: const Color(0xFF7B9ECC), fontSize: 16, fontWeight: FontWeight.bold)),
-      ]),
-      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(AppStrings.of(context).shortRestTitle,
+            style: GoogleFonts.libreBaskerville(color: const Color(0xFF7B9ECC), fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),      content: Column(mainAxisSize: MainAxisSize.min, children: [
         Text('You have $_available / ${widget.character.level} hit dice (d$_hitDie).',
             style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
         const SizedBox(height: 16),
@@ -1118,7 +1271,7 @@ class _ShortRestModalState extends State<_ShortRestModal> {
           ElevatedButton.icon(
             onPressed: _roll,
             icon: const Icon(Icons.casino, size: 16),
-            label: const Text('Roll dice'),
+            label: Text(AppStrings.of(context).rollDice),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.surfaceVariant,
               foregroundColor: const Color(0xFF7B9ECC),
@@ -1148,7 +1301,8 @@ class _ShortRestModalState extends State<_ShortRestModal> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     minimumSize: const Size(0, 40),
                   ),
-                  child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                  child: Text(AppStrings.of(context).cancel,
+                      style: GoogleFonts.lato(color: AppTheme.textSecondary)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1160,7 +1314,7 @@ class _ShortRestModalState extends State<_ShortRestModal> {
                       minimumSize: const Size(0, 40)),
                   child: _loading
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Rest'),
+                      : Text(AppStrings.of(context).rest),
                 ),
               ),
             ],

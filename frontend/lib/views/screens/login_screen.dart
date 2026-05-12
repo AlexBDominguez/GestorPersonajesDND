@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_theme.dart';
+import '../../l10n/app_strings.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -34,6 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AuthViewModel>();
+    final s = AppStrings.of(context);
 
     return Scaffold(
       body: Container(
@@ -64,9 +66,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Icon(Icons.shield, size: 52, color: AppTheme.primary),
                   ),
                   const SizedBox(height: 20),
-                  Text('DungeonScroll', style: Theme.of(context).textTheme.displayMedium),
+                  Text(s.appTitle, style: Theme.of(context).textTheme.displayMedium),
                   const SizedBox(height: 6),
-                  Text('Gestor de Personajes D&D', style: Theme.of(context).textTheme.bodySmall),
+                  Text(s.appSubtitle, style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 48),
 
                   // Formulario
@@ -76,12 +78,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         TextFormField(
                           controller: _usernameCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Usuario',
-                            prefixIcon: Icon(Icons.person_outline, color: AppTheme.textSecondary),
+                          decoration: InputDecoration(
+                            labelText: s.username,
+                            prefixIcon: const Icon(Icons.person_outline, color: AppTheme.textSecondary),
                           ),
                           validator: (v) =>
-                              (v == null || v.isEmpty) ? 'Please enter your username' : null,
+                              (v == null || v.isEmpty) ? s.usernameRequired : null,
                           textInputAction: TextInputAction.next,
                         ),
                         const SizedBox(height: 16),
@@ -89,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _passwordCtrl,
                           obscureText: _obscure,
                           decoration: InputDecoration(
-                            labelText: 'Password',
+                            labelText: s.password,
                             prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.textSecondary),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -100,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           validator: (v) =>
-                              (v == null || v.isEmpty) ? 'Please enter your password' : null,
+                              (v == null || v.isEmpty) ? s.passwordRequired : null,
                           onFieldSubmitted: (_) => _onLoginPressed(vm),
                         ),
                         const SizedBox(height: 24),
@@ -137,13 +139,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   strokeWidth: 2,
                                   color: AppTheme.background),
                                 )
-                                : const Text('Login'),
+                                : Text(s.loginButton),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 32),
-            Text('Only the Dungeon Master can add new players', style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+            Text(s.onlyDmCanAddPlayers, style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
           ],
               ),
             ),

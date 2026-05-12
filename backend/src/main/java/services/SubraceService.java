@@ -5,11 +5,13 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import config.RequestLocaleContext;
 import dto.SubraceDto;
 import entities.Race;
 import entities.Subrace;
 import repositories.RaceRepository;
 import repositories.SubraceRepository;
+import utils.LocalizedTextResolver;
 
 @Service
 public class SubraceService {
@@ -48,17 +50,20 @@ public class SubraceService {
     }
 
     private SubraceDto toDto(Subrace s) {
+        String locale = RequestLocaleContext.get();
         SubraceDto dto = new SubraceDto();
         dto.setId(s.getId());
         dto.setIndexName(s.getIndexName());
-        dto.setName(s.getName());
+        dto.setName(LocalizedTextResolver.resolve(locale, s.getName(), s.getNameEs(), s.getNameGl()));
         dto.setRaceId(s.getRace().getId());
-        dto.setRaceName(s.getRace().getName());
-        dto.setDescription(s.getDescription());
+        dto.setRaceName(LocalizedTextResolver.resolve(locale, s.getRace().getName(), s.getRace().getNameEs(), s.getRace().getNameGl()));
+        dto.setDescription(LocalizedTextResolver.resolve(locale, s.getDescription(), s.getDescriptionEs(), s.getDescriptionGl()));
         dto.setAbilityBonuses(s.getAbilityBonuses() != null
                 ? s.getAbilityBonuses() : new java.util.HashMap<>());
         dto.setTraits(s.getTraits() != null
-                ? s.getTraits().stream().map(t -> t.getName()).collect(Collectors.toList())
+            ? s.getTraits().stream()
+                .map(t -> LocalizedTextResolver.resolve(locale, t.getName(), t.getNameEs(), t.getNameGl()))
+                .collect(Collectors.toList())
                 : new java.util.ArrayList<>());
         return dto;        
     }

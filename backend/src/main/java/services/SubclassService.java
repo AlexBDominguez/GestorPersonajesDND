@@ -3,6 +3,7 @@ package services;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import config.RequestLocaleContext;
 import entities.DndClass;
 import entities.Subclass;
 
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import dto.SubclassDto;
 import repositories.DndClassRepository;
 import repositories.SubclassRepository;
+import utils.LocalizedTextResolver;
 
 @Service
 public class SubclassService {
@@ -62,17 +64,21 @@ public class SubclassService {
     }
 
     private SubclassDto toDto(Subclass subclass) {
+        String locale = RequestLocaleContext.get();
         SubclassDto dto = new SubclassDto();
         dto.setId(subclass.getId());
         dto.setIndexName(subclass.getIndexName());
-        dto.setName(subclass.getName());
-        dto.setSubclassFlavor(subclass.getSubclassFlavor());
-        dto.setDescription(subclass.getDescription());
+        dto.setName(LocalizedTextResolver.resolve(locale, subclass.getName(), subclass.getNameEs(), subclass.getNameGl()));
+        dto.setSubclassFlavor(LocalizedTextResolver.resolve(locale, subclass.getSubclassFlavor(), subclass.getSubclassFlavorEs(), subclass.getSubclassFlavorGl()));
+        dto.setDescription(LocalizedTextResolver.resolve(locale, subclass.getDescription(), subclass.getDescriptionEs(), subclass.getDescriptionGl()));
         dto.setSpellcastingAbility(subclass.getSpellcastingAbility());
 
         if(subclass.getDndClass() != null) {
             dto.setClassId(subclass.getDndClass().getId());
-            dto.setClassName(subclass.getDndClass().getName());
+            dto.setClassName(LocalizedTextResolver.resolve(locale,
+                    subclass.getDndClass().getName(),
+                    subclass.getDndClass().getNameEs(),
+                    subclass.getDndClass().getNameGl()));
         }
         return dto;
     }

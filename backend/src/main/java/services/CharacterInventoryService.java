@@ -1,6 +1,7 @@
 package services;
 
 import dto.CharacterInventoryDto;
+import config.RequestLocaleContext;
 import entities.CharacterEquipment;
 import entities.CharacterInventory;
 import entities.PlayerCharacter;
@@ -17,6 +18,7 @@ import repositories.ItemRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import utils.LocalizedTextResolver;
 
 @Service
 public class CharacterInventoryService {
@@ -197,7 +199,11 @@ public class CharacterInventoryService {
         dto.setCharacterId(inventory.getCharacter().getId());
         dto.setCharacterName(inventory.getCharacter().getName());
         dto.setItemId(inventory.getItem().getId());
-        dto.setItemName(inventory.getItem().getName());
+        dto.setItemName(LocalizedTextResolver.resolve(
+            RequestLocaleContext.get(),
+            inventory.getItem().getName(),
+            inventory.getItem().getNameEs(),
+            inventory.getItem().getNameGl()));
         dto.setItemType(inventory.getItem().getItemType());
         dto.setQuantity(inventory.getQuantity());
         dto.setWeight(inventory.getItem().getWeight());
@@ -206,7 +212,11 @@ public class CharacterInventoryService {
         dto.setEquipped(inventory.isEquipped());
         dto.setNotes(inventory.getNotes());
         dto.setRequiresAttunement(inventory.getItem().isRequiresAttunement());
-        dto.setDescription(inventory.getItem().getDescription());
+        dto.setDescription(LocalizedTextResolver.resolve(
+            RequestLocaleContext.get(),
+            inventory.getItem().getDescription(),
+            inventory.getItem().getDescriptionEs(),
+            inventory.getItem().getDescriptionGl()));
         dto.setDamageDice(inventory.getItem().getDamageDice());
         dto.setDamageType(inventory.getItem().getDamageType());
         dto.setWeaponRange(inventory.getItem().getWeaponRange());

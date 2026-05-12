@@ -5,6 +5,7 @@ import dto.SpellSlotDto;
 import dto.CharacterSavingThrowDto;
 import dto.CharacterSkillDto;
 import dto.CharacterSpellSummaryDto;
+import config.RequestLocaleContext;
 import entities.*;
 import enumeration.FeatureType;
 import jakarta.transaction.Transactional;
@@ -21,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import utils.LocalizedTextResolver;
 
 @Service
 public class PlayerCharacterService {
@@ -378,6 +380,7 @@ public class PlayerCharacterService {
     }
 
     private PlayerCharacterDto toDto(PlayerCharacter playerCharacter) {
+        String locale = RequestLocaleContext.get();
         PlayerCharacterDto dto = new PlayerCharacterDto();
 
         dto.setId(playerCharacter.getId());
@@ -464,14 +467,14 @@ public class PlayerCharacterService {
             Spell s = characterSpell.getSpell();
             CharacterSpellSummaryDto spellDto = new CharacterSpellSummaryDto();
             spellDto.setId(s.getId());
-            spellDto.setName(s.getName());
+            spellDto.setName(LocalizedTextResolver.resolve(locale, s.getName(), s.getNameEs(), s.getNameGl()));
             spellDto.setLevel(s.getLevel());
             spellDto.setSchool(s.getSchool());
             spellDto.setCastingTime(s.getCastingTime());
             spellDto.setRange(s.getRange());
             spellDto.setDuration(s.getDuration());
             spellDto.setComponents(s.getComponents());
-            spellDto.setDescription(s.getDescription());
+            spellDto.setDescription(LocalizedTextResolver.resolve(locale, s.getDescription(), s.getDescriptionEs(), s.getDescriptionGl()));
             spellDto.setPrepared(characterSpell.isPrepared());
             spellDto.setLearned(characterSpell.isLearned());
             spellDto.setSpellSource(characterSpell.getSpellSource());
@@ -485,12 +488,18 @@ public class PlayerCharacterService {
 
         if (playerCharacter.getRace() != null) {
             dto.setRaceId(playerCharacter.getRace().getId());
-            dto.setRaceName(playerCharacter.getRace().getName());
+            dto.setRaceName(LocalizedTextResolver.resolve(locale,
+                    playerCharacter.getRace().getName(),
+                    playerCharacter.getRace().getNameEs(),
+                    playerCharacter.getRace().getNameGl()));
         }
 
         if (playerCharacter.getDndClass() != null) {
             dto.setDndClassId(playerCharacter.getDndClass().getId());
-            dto.setDndClassName(playerCharacter.getDndClass().getName());
+            dto.setDndClassName(LocalizedTextResolver.resolve(locale,
+                    playerCharacter.getDndClass().getName(),
+                    playerCharacter.getDndClass().getNameEs(),
+                    playerCharacter.getDndClass().getNameGl()));
         }
 
         if(playerCharacter.getBackground() != null){
@@ -500,12 +509,18 @@ public class PlayerCharacterService {
 
         if(playerCharacter.getSubclass() != null) {
             dto.setSubclassId(playerCharacter.getSubclass().getId());
-            dto.setSubclassName(playerCharacter.getSubclass().getName());
+            dto.setSubclassName(LocalizedTextResolver.resolve(locale,
+                    playerCharacter.getSubclass().getName(),
+                    playerCharacter.getSubclass().getNameEs(),
+                    playerCharacter.getSubclass().getNameGl()));
         }
 
         if (playerCharacter.getSubrace() != null) {
             dto.setSubraceId(playerCharacter.getSubrace().getId());
-            dto.setSubraceName(playerCharacter.getSubrace().getName());
+            dto.setSubraceName(LocalizedTextResolver.resolve(locale,
+                    playerCharacter.getSubrace().getName(),
+                    playerCharacter.getSubrace().getNameEs(),
+                    playerCharacter.getSubrace().getNameGl()));
         }
 
         dto.setPersonalityTrait(playerCharacter.getPersonalityTraits());
@@ -572,14 +587,29 @@ public class PlayerCharacterService {
     }
 
     @Transactional
-    public void learnSpell(Long characterId, Long spellId) {
+    public void learnSpell(Long characterId, Long spellId, boolean prepared) {
         PlayerCharacter character = characterRepository.findById(characterId)
                 .orElseThrow(() -> new RuntimeException("Character not found"));
 
         Spell spell = spellRepository.findById(spellId)
                 .orElseThrow(() -> new RuntimeException("Spell not found"));
 
+        // When learning as prepared, validate the prepare limit
+        if (prepared && spell.getLevel() > 0) {
+            int maxPrepared = character.getMaxPreparedSpells();
+            if (maxPrepared > 0) {
+                int currentPrepared = characterSpellRepository.countPreparedNonCantripsByCharacterId(characterId);
+                if (currentPrepared >= maxPrepared) {
+                    throw new ResponseStatusException(
+                        HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Spell preparation limit reached (" + maxPrepared + "/" + maxPrepared + ")");
+                }
+            }
+        }
+
         CharacterSpell characterSpell = new CharacterSpell(character, spell);
+        // Cantrips are always prepared; non-cantrips respect the 'prepared' flag
+        characterSpell.setPrepared(spell.getLevel() == 0 || prepared);
         characterSpellRepository.save(characterSpell);
     }
 
@@ -1492,6 +1522,7 @@ public class PlayerCharacterService {
 
     // Método auxiliar para convertir entity a DTO
     private PlayerCharacterDto convertToDto(PlayerCharacter character) {
+        String locale = RequestLocaleContext.get();
         PlayerCharacterDto dto = new PlayerCharacterDto();
         dto.setId(character.getId());
         dto.setName(character.getName());
@@ -1520,17 +1551,26 @@ public class PlayerCharacterService {
         
         if (character.getRace() != null) {
             dto.setRaceId(character.getRace().getId());
-            dto.setRaceName(character.getRace().getName());
+            dto.setRaceName(LocalizedTextResolver.resolve(locale,
+                    character.getRace().getName(),
+                    character.getRace().getNameEs(),
+                    character.getRace().getNameGl()));
         }
         
         if (character.getDndClass() != null) {
             dto.setDndClassId(character.getDndClass().getId());
-            dto.setDndClassName(character.getDndClass().getName());
+            dto.setDndClassName(LocalizedTextResolver.resolve(locale,
+                    character.getDndClass().getName(),
+                    character.getDndClass().getNameEs(),
+                    character.getDndClass().getNameGl()));
         }
 
         if (character.getSubclass() != null) {
             dto.setSubclassId(character.getSubclass().getId());
-            dto.setSubclassName(character.getSubclass().getName());
+            dto.setSubclassName(LocalizedTextResolver.resolve(locale,
+                    character.getSubclass().getName(),
+                    character.getSubclass().getNameEs(),
+                    character.getSubclass().getNameGl()));
         }
 
         dto.setSpellSaveDC(character.getSpellSaveDC());

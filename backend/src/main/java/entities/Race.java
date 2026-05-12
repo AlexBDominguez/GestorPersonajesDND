@@ -16,6 +16,8 @@ public class Race {
 
     private String indexName;
     private String name;
+    private String nameEs;
+    private String nameGl;
     private String size;
     private int speed;
 
@@ -45,6 +47,12 @@ public class Race {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(columnDefinition = "TEXT")
+    private String descriptionEs;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionGl;
+
     public Race() {
     }
 
@@ -70,6 +78,22 @@ public class Race {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getNameEs() {
+        return nameEs;
+    }
+
+    public void setNameEs(String nameEs) {
+        this.nameEs = nameEs;
+    }
+
+    public String getNameGl() {
+        return nameGl;
+    }
+
+    public void setNameGl(String nameGl) {
+        this.nameGl = nameGl;
     }
 
     public String getSize() {
@@ -102,6 +126,22 @@ public class Race {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getDescriptionEs() {
+        return descriptionEs;
+    }
+
+    public void setDescriptionEs(String descriptionEs) {
+        this.descriptionEs = descriptionEs;
+    }
+
+    public String getDescriptionGl() {
+        return descriptionGl;
+    }
+
+    public void setDescriptionGl(String descriptionGl) {
+        this.descriptionGl = descriptionGl;
     }
 
     public List<Spell> getGrantedSpells() {

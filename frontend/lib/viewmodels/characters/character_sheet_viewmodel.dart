@@ -197,7 +197,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
       final preparedCount = character!.characterSpells.where((s) => s.prepared && !s.isCantrip).length;
       final max = character!.maxPreparedSpells;
       if (max > 0 && preparedCount >= max) {
-        _errorMessage = ': Prepared spell limit reached ($preparedCount/$max). Unprepare a spell first.';
+        _errorMessage = 'Prepared spell limit reached ($preparedCount/$max). Unprepare a spell first.';
         notifyListeners();
         return;
       }
@@ -254,8 +254,34 @@ class CharacterSheetViewModel extends ChangeNotifier {
 
   Future<void> learnSpell(int spellId) async {
     try {
-      await _spellService.learnSpell(characterId: characterId, spellId: spellId);
+      await _spellService.learnSpell(
+        characterId: characterId,
+        spellId: spellId,
+        prepared: alwaysPreparedClass,
+      );
       await load();
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception', '');
+      notifyListeners();
+    }
+  }
+
+  Future<void> recordDeathSave({required bool success}) async {
+    try {
+      final updated = await _service.recordDeathSave(characterId, success: success);
+      character = updated;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception', '');
+      notifyListeners();
+    }
+  }
+
+  Future<void> resetDeathSaves() async {
+    try {
+      final updated = await _service.resetDeathSaves(characterId);
+      character = updated;
+      notifyListeners();
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception', '');
       notifyListeners();

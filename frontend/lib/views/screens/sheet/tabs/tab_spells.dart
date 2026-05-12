@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
+import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
@@ -46,7 +47,7 @@ class TabSpells extends StatelessWidget{
               ),
             )),
             icon: const Icon(Icons.library_books_outlined, size: 16),
-            label: const Text('Manage Spells'),
+            label: Text(AppStrings.of(context).manageSpells),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
@@ -94,18 +95,18 @@ class _SpellStatsHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _StatPill(
-            label: 'SAVE DC',
+            label: AppStrings.of(context).saveDC,
             value: '${c.spellSaveDC}',
           ),
           _VertDivider(),
           _StatPill(
-            label: 'ATTACK',
+            label: AppStrings.of(context).attack,
             value: vm.signedInt(c.spellAttackBonus),
           ),
           if (!vm.alwaysPreparedClass) ...[
             _VertDivider(),
             _StatPill(
-              label: 'PREPARED',
+              label: AppStrings.of(context).prepared,
               value: '${c.characterSpells.where((s) => s.prepared && !s.isCantrip).length}/${c.maxPreparedSpells}',
             ),
           ],
@@ -598,7 +599,7 @@ class _CastButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
         ),
       ),
-      child: Text('CAST',
+      child: Text(AppStrings.of(context).castButton,
           style: GoogleFonts.libreBaskerville(fontSize: 9, fontWeight: FontWeight.bold)),
     ),
   );
@@ -723,7 +724,7 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: Text('Manage Spells',
+        title: Text(AppStrings.of(context).manageSpells,
             style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary, fontWeight: FontWeight.bold)),
         bottom: TabBar(
@@ -732,8 +733,8 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
           unselectedLabelColor: AppTheme.textSecondary,
           indicatorColor: AppTheme.primary,
           tabs: [
-            Tab(child: Text('My Spells', style: GoogleFonts.libreBaskerville(fontSize: 12))),
-            Tab(child: Text('Learn New',  style: GoogleFonts.libreBaskerville(fontSize: 12))),
+            Tab(child: Text(AppStrings.of(context).mySpells, style: GoogleFonts.libreBaskerville(fontSize: 12))),
+            Tab(child: Text(AppStrings.of(context).learnNew, style: GoogleFonts.libreBaskerville(fontSize: 12))),
           ],
         ),
       ),
@@ -819,10 +820,10 @@ class _MySpellsTab extends StatelessWidget {
             backgroundColor: AppTheme.surface,
             scrollable: true,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Text('Remove spell?',
+            title: Text(AppStrings.of(context).removeSpellTitle,
                 style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
             content: Text(
-                'Remove "${spells[i].name}" from your spellbook?',
+                AppStrings.of(context).removeSpellContent(spells[i].name),
                 style: GoogleFonts.lato(color: AppTheme.textPrimary)),
             actions: [
               SizedBox(
@@ -838,7 +839,7 @@ class _MySpellsTab extends StatelessWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           minimumSize: const Size(0, 40),
                         ),
-                        child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                        child: Text(AppStrings.of(context).cancel, style: GoogleFonts.lato(color: AppTheme.textSecondary)),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -850,7 +851,7 @@ class _MySpellsTab extends StatelessWidget {
                             foregroundColor: Colors.white,
                             minimumSize: const Size(0, 40),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                        child: const Text('Remove'),
+                        child: Text(AppStrings.of(context).removeButton),
                       ),
                     ),
                   ],
@@ -861,7 +862,7 @@ class _MySpellsTab extends StatelessWidget {
         );
         if (confirm == true) {
           await vm.removeSpell(spells[i].spellId);
-          if (context.mounted) Navigator.of(context).pop(); // cerrar manage screen
+          // Stay on Manage Spells — the viewmodel reload will update the list
         }
       },
       onTogglePrepare: (_) async {
@@ -962,7 +963,7 @@ class _ManageSpellTile extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.delete_outline,
               color: AppTheme.accent, size: 20),
-          tooltip: 'Remove spell',
+          tooltip: AppStrings.of(context).removeSpellTitle,
           onPressed: onDelete,
         ),
       ]),
@@ -1111,7 +1112,7 @@ class _LearnNewTabState extends State<_LearnNewTab> {
         backgroundColor: AppTheme.surface,
         scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Learn spell?',
+        title: Text(AppStrings.of(context).learnSpellTitle,
             style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
         content: Column(mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1152,20 +1153,22 @@ class _LearnNewTabState extends State<_LearnNewTab> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       minimumSize: const Size(0, 40),
                     ),
-                    child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                    child: Text(AppStrings.of(context).cancel, style: GoogleFonts.lato(color: AppTheme.textSecondary)),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
                     onPressed: () => Navigator.pop(context, true),
-                    icon: const Icon(Icons.add, size: 14),
-                    label: const Text('Learn'),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primary,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(0, 40),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    child: Text(AppStrings.of(context).learnButton,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -1179,7 +1182,7 @@ class _LearnNewTabState extends State<_LearnNewTab> {
       await vm.learnSpell(spell.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Spell learned: "${spell.name}"'),
+          content: Text(AppStrings.of(context).spellLearned(spell.name)),
           backgroundColor: AppTheme.primary.withOpacity(0.9),
           duration: const Duration(seconds: 2),
         ));
@@ -1281,7 +1284,7 @@ class _LearnSpellTile extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.add_circle_outline,
                 color: AppTheme.primary, size: 22),
-            tooltip: 'Learn spell',
+            tooltip: AppStrings.of(context).learnSpellTitle,
             onPressed: onLearn,
           ),
       ]),

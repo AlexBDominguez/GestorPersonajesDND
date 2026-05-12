@@ -86,10 +86,12 @@ public class PlayerCharacterController {
     @PostMapping("/{characterId}/learn-spell/{spellId}")
     public void learnSpell(
         @PathVariable Long characterId,
-        @PathVariable Long spellId) {
+        @PathVariable Long spellId,
+        @RequestBody(required = false) Map<String, Object> body) {
 
         verifyCharacterOwnership(characterId);
-        playerCharacterService.learnSpell(characterId, spellId);
+        boolean prepared = body != null && Boolean.TRUE.equals(body.get("prepared"));
+        playerCharacterService.learnSpell(characterId, spellId, prepared);
     }
 
     @PostMapping("/{characterId}/spells/{spellId}/prepare")

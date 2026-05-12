@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:gestor_personajes_dnd/config/api_config.dart';
 import 'package:gestor_personajes_dnd/services/storage/token_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient{
   /// Called when the server returns 401 or 403 — signals the app to log out.
@@ -13,6 +14,8 @@ class ApiClient{
 
   Future<Map<String, String>> _buildHeaders({bool jsonBody = true}) async {
     final token = await _tokenStorage.getToken();
+    final prefs = await SharedPreferences.getInstance();
+    final locale = prefs.getString('app_locale') ?? 'en';
 
     final headers = <String, String>{};
 
@@ -23,6 +26,7 @@ class ApiClient{
     if(token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
     }
+    headers['Accept-Language'] = locale;
     return headers;
   }
 
