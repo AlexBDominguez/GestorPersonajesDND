@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../config/app_theme.dart';
@@ -7,15 +8,23 @@ import '../../../../viewmodels/wizard/character_creator_viewmodel.dart';
 class StepAbilityScores extends StatelessWidget {
   const StepAbilityScores({super.key});
 
+  static String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+    final code = Localizations.localeOf(context).languageCode;
+    if (code == 'es') return es;
+    if (code == 'gl') return gl;
+    return en;
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<CharacterCreatorViewModel>();
+    final s = AppStrings.of(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SizedBox(height: 4),
-        Text('Ability Scores', style: Theme.of(context).textTheme.displayMedium),
+        Text(s.abilityScores, style: Theme.of(context).textTheme.displayMedium),
         const SizedBox(height: 12),
 
         // ── Mode toggle ─────────────────────────────────────────
@@ -24,7 +33,7 @@ class StepAbilityScores extends StatelessWidget {
 
         if (vm.scoreMethod == AbilityScoreMethod.standardArray) ...[
           // ── Standard array helper chips ──────────────────────
-          Text('Available values:',
+            Text(_tr(context, en: 'Available values:', es: 'Valores disponibles:', gl: 'Valores dispoñibles:'),
               style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
                   fontSize: 12, fontWeight: FontWeight.bold)),
@@ -60,7 +69,7 @@ class StepAbilityScores extends StatelessWidget {
           const SizedBox(height: 20),
         ] else ...[
           Text(
-            'Enter any value between 3 and 18 for each ability.',
+            _tr(context, en: 'Enter any value between 3 and 18 for each ability.', es: 'Introduce un valor entre 3 y 18 para cada atributo.', gl: 'Introduce un valor entre 3 e 18 para cada atributo.'),
             style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 16),
@@ -77,7 +86,7 @@ class StepAbilityScores extends StatelessWidget {
           Row(children: [
             const Icon(Icons.check_circle, color: AppTheme.primary, size: 16),
             const SizedBox(width: 6),
-            Text('All scores assigned!',
+            Text(_tr(context, en: 'All scores assigned!', es: 'Todos los atributos asignados!', gl: 'Todos os atributos asignados!'),
                 style: GoogleFonts.lato(
                     color: AppTheme.primary,
                     fontSize: 13, fontWeight: FontWeight.bold)),
@@ -105,13 +114,13 @@ class _ModeToggle extends StatelessWidget {
       padding: const EdgeInsets.all(3),
       child: Row(children: [
         _Tab(
-          label: 'Standard Array',
+          label: StepAbilityScores._tr(context, en: 'Standard Array', es: 'Array estandar', gl: 'Array estandar'),
           icon: Icons.view_list_outlined,
           selected: current == AbilityScoreMethod.standardArray,
           onTap: () => onChange(AbilityScoreMethod.standardArray),
         ),
         _Tab(
-          label: 'Manual Entry',
+          label: StepAbilityScores._tr(context, en: 'Manual Entry', es: 'Entrada manual', gl: 'Entrada manual'),
           icon: Icons.edit_outlined,
           selected: current == AbilityScoreMethod.manual,
           onTap: () => onChange(AbilityScoreMethod.manual),
@@ -192,7 +201,7 @@ class _StandardArrayRow extends StatelessWidget {
             child: DropdownButton<int?>(
               value: assignedIdx,
               dropdownColor: AppTheme.surface,
-              hint: Text('Choose',
+                hint: Text(StepAbilityScores._tr(context, en: 'Choose', es: 'Elegir', gl: 'Escoller'),
                   style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 20)),
               items: [
                 const DropdownMenuItem<int?>(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../config/app_theme.dart';
@@ -10,6 +11,13 @@ import '../class_options_screen.dart';
 
 class StepClass extends StatelessWidget {
   const StepClass({super.key});
+
+  static String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+    final code = Localizations.localeOf(context).languageCode;
+    if (code == 'es') return es;
+    if (code == 'gl') return gl;
+    return en;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,13 +34,18 @@ class StepClass extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-            child: Text('Your Class',
+            child: Text(_tr(context, en: 'Your Class', es: 'Tu clase', gl: 'A tua clase'),
                 style: Theme.of(context).textTheme.displayMedium),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Text(
-              'Class is locked. You can change your level, subclass and feature choices below.',
+              _tr(
+                context,
+                en: 'Class is locked. You can change your level, subclass and feature choices below.',
+                es: 'La clase esta bloqueada. Puedes cambiar nivel, subclase y elecciones de rasgos abajo.',
+                gl: 'A clase esta bloqueada. Podes cambiar nivel, subclase e eleccions de trazos abaixo.',
+              ),
               style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13),
             ),
           ),
@@ -55,13 +68,18 @@ class StepClass extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-          child: Text('Choose your Class',
+          child: Text(_tr(context, en: 'Choose your Class', es: 'Elige tu clase', gl: 'Escolle a tua clase'),
               style: Theme.of(context).textTheme.displayMedium),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Text(
-            'Your class is the primary definition of what your character does. Tap a class to see all details.',
+            _tr(
+              context,
+              en: 'Your class is the primary definition of what your character does. Tap a class to see all details.',
+              es: 'Tu clase define principalmente lo que hace el personaje. Pulsa una clase para ver los detalles.',
+              gl: 'A tua clase define principalmente o que fai o personaxe. Preme unha clase para ver os detalles.',
+            ),
             style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 12),
           ),
         ),
@@ -175,10 +193,10 @@ class _SelectedClassBadge extends StatelessWidget {
                   color: AppTheme.textPrimary, fontSize: 13),
               children: [
                 TextSpan(
-                    text: cls.name,
+                  text: localizeKnownName(context, cls.name),
                     style: GoogleFonts.libreBaskerville(
                         color: AppTheme.primary, fontWeight: FontWeight.bold)),
-                TextSpan(text: '  ·  Level $level'),
+                TextSpan(text: '  ·  ${StepClass._tr(context, en: 'Level', es: 'Nivel', gl: 'Nivel')} $level'),
               ],
             ),
           ),
@@ -260,7 +278,7 @@ class _ClassCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(cls.name,
+                    Text(localizeKnownName(context, cls.name),
                       style: GoogleFonts.libreBaskerville(
                           color: isSelected
                               ? AppTheme.primary
@@ -271,7 +289,7 @@ class _ClassCard extends StatelessWidget {
                           fontWeight: FontWeight.bold)),
                   if (cls.description.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text(cls.description,
+                    Text(localizeClassDescription(context, cls.indexName, cls.description),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.lato(

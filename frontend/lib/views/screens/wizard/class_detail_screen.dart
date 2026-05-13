@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
 import '../../../config/app_theme.dart';
 import '../../../models/wizard/class_option.dart';
 import '../../../viewmodels/wizard/character_creator_viewmodel.dart';
@@ -24,6 +26,13 @@ final Map<String, IconData> kClassIcons = {
 
 IconData classIcon(String indexName) =>
     kClassIcons[indexName.toLowerCase()] ?? MdiIcons.diceD6;
+
+String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+  final code = Localizations.localeOf(context).languageCode;
+  if (code == 'es') return es;
+  if (code == 'gl') return gl;
+  return en;
+}
 
 /// Pantalla de detalle de una clase. Muestra toda la información de la clase
 /// antes de que el usuario decida añadirla o cancelar.
@@ -62,7 +71,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: Text(cls.name,
+        title: Text(localizeKnownName(context, cls.name),
             style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary, fontWeight: FontWeight.bold)),
         leading: IconButton(
@@ -84,7 +93,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                   // Descripción
                   if (cls.description.isNotEmpty) ...[
-                    Text(cls.description,
+                    Text(localizeClassDescription(context, cls.indexName, cls.description),
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary, fontSize: 13)),
                     const SizedBox(height: 20),
@@ -92,7 +101,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                   // Proficiencies
                   if (cls.proficiencies.isNotEmpty) ...[
-                    _SectionTitle('Proficiencies'),
+                    _SectionTitle(_tr(context, en: 'Proficiencies', es: 'Competencias', gl: 'Competencias')),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 6, runSpacing: 6,
@@ -104,10 +113,10 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                   ],
 
                   // Features por nivel
-                  _SectionTitle('Class Features (Levels 1–20)'),
+                  _SectionTitle(_tr(context, en: 'Class Features (Levels 1-20)', es: 'Rasgos de clase (Niveles 1-20)', gl: 'Trazos de clase (Niveis 1-20)')),
                   const SizedBox(height: 8),
                   if (widget.features.isEmpty)
-                    Text('No features loaded.',
+                    Text(_tr(context, en: 'No features loaded.', es: 'No hay rasgos cargados.', gl: 'Non hai trazos cargados.'),
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary, fontSize: 13))
                   else
@@ -180,14 +189,14 @@ class _ClassHeader extends StatelessWidget {
         const SizedBox(width: 16),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(cls.name,
+            Text(localizeKnownName(context, cls.name),
                 style: GoogleFonts.libreBaskerville(
                     color: AppTheme.primary,
                     fontSize: 20,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 6),
             Row(children: [
-              _StatBadge(label: 'Hit Die', value: 'd${cls.hitDie}'),
+              _StatBadge(label: _tr(context, en: 'Hit Die', es: 'Dado de golpe', gl: 'Dado de golpe'), value: 'd${cls.hitDie}'),
             ]),
           ]),
         ),
@@ -281,7 +290,7 @@ class _LevelSection extends StatelessWidget {
                 color: AppTheme.primary,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Text('Level $level',
+              child: Text('${_tr(context, en: 'Level', es: 'Nivel', gl: 'Nivel')} $level',
                   style: GoogleFonts.libreBaskerville(
                       color: AppTheme.background,
                       fontSize: 11,
@@ -375,6 +384,7 @@ class _BottomButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: const BoxDecoration(
@@ -390,7 +400,7 @@ class _BottomButtons extends StatelessWidget {
               side: const BorderSide(color: AppTheme.surfaceVariant),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            child: Text('Cancel',
+            child: Text(s.cancel,
                 style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
           ),
         ),
@@ -401,7 +411,7 @@ class _BottomButtons extends StatelessWidget {
             onPressed: onAdd,
             style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14)),
-            child: Text('Choose Class',
+            child: Text(_tr(context, en: 'Choose Class', es: 'Elegir clase', gl: 'Escoller clase'),
                 style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
           ),
         ),

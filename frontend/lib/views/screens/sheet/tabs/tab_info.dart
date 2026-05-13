@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+  final code = Localizations.localeOf(context).languageCode;
+  if (code == 'es') return es;
+  if (code == 'gl') return gl;
+  return en;
+}
 
 class TabInfo extends StatelessWidget{
   final PlayerCharacter character;
@@ -16,74 +24,74 @@ class TabInfo extends StatelessWidget{
       CrossAxisAlignment.start, children: [
 
         //Personal Characteristics
-        _SectionTitle('Personal Characteristics'),
+        _SectionTitle(_tr(context, en: 'Personal Characteristics', es: 'Rasgos personales', gl: 'Trazos persoais')),
         const SizedBox(height: 12),
 
         _TraitCard(
           icon: Icons.psychology_outlined,
-          label: 'Personality Traits',
+          label: _tr(context, en: 'Personality Traits', es: 'Rasgos de personalidad', gl: 'Rasgos de personalidade'),
           children: [
             if (c.personalityTrait != null && c.personalityTrait!.isNotEmpty)
               _TraitText(c.personalityTrait!)
             else
-              _EmptyHint('No personality trait recorded.'),
+              _EmptyHint(_tr(context, en: 'No personality trait recorded.', es: 'No hay rasgo de personalidad registrado.', gl: 'Non hai rasgo de personalidade rexistrado.')),
           ],
         ),
         const SizedBox(height: 10),
 
         _TraitCard(
           icon: Icons.star_border_outlined,
-          label: 'Ideals',
+          label: _tr(context, en: 'Ideals', es: 'Ideales', gl: 'Ideais'),
           children: [
             c.ideal != null && c.ideal!.isNotEmpty
               ? _TraitText(c.ideal!)
-              : _EmptyHint('No ideal recorded.'),
+              : _EmptyHint(_tr(context, en: 'No ideal recorded.', es: 'No hay ideal registrado.', gl: 'Non hai ideal rexistrado.')),
           ],
         ),
         const SizedBox(height: 10),
 
         _TraitCard(
           icon: Icons.link_outlined,
-          label: 'Bonds',
+          label: _tr(context, en: 'Bonds', es: 'Vinculos', gl: 'Vinculos'),
           children: [
             c.bond != null && c.bond!.isNotEmpty
               ? _TraitText(c.bond!)
-              : _EmptyHint('No bond recorded.'),
+              : _EmptyHint(_tr(context, en: 'No bond recorded.', es: 'No hay vinculo registrado.', gl: 'Non hai vinculo rexistrado.')),
           ],
         ),
         const SizedBox(height: 10),
 
         _TraitCard(
           icon: Icons.healing_outlined,
-          label: 'Flaws',
+          label: _tr(context, en: 'Flaws', es: 'Defectos', gl: 'Defectos'),
           children: [
             c.flaw != null && c.flaw!.isNotEmpty
               ? _TraitText(c.flaw!)
-              : _EmptyHint('No flaw recorded.'),
+              : _EmptyHint(_tr(context, en: 'No flaw recorded.', es: 'No hay defecto registrado.', gl: 'Non hai defecto rexistrado.')),
           ],          
         ),
         const SizedBox(height: 24),
 
         //Background and Alignment
-        _SectionTitle('Identity'),
+        _SectionTitle(_tr(context, en: 'Identity', es: 'Identidad', gl: 'Identidade')),
         const SizedBox(height: 12),
 
         Row(children: [
           Expanded(
             child: _InfoPill(
-              label: 'Race',
+              label: _tr(context, en: 'Race', es: 'Raza', gl: 'Raza'),
               value: c.subraceName != null
-                  ? '${c.raceName ?? '—'} (${c.subraceName})'
-                  : c.raceName ?? '—',
+                  ? '${c.raceName != null ? localizeKnownName(context, c.raceName!) : '—'} (${localizeKnownName(context, c.subraceName!)})'
+                  : (c.raceName != null ? localizeKnownName(context, c.raceName!) : '—'),
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: _InfoPill(
-              label: 'Class',
+              label: _tr(context, en: 'Class', es: 'Clase', gl: 'Clase'),
               value: c.subclassName != null
-                  ? '${c.dndClassName ?? '—'} · ${c.subclassName}'
-                  : c.dndClassName ?? '—',
+                  ? '${c.dndClassName != null ? localizeKnownName(context, c.dndClassName!) : '—'} · ${localizeKnownName(context, c.subclassName!)}'
+                  : (c.dndClassName != null ? localizeKnownName(context, c.dndClassName!) : '—'),
             ),
           ),
         ]),
@@ -91,22 +99,22 @@ class TabInfo extends StatelessWidget{
         Row(children: [
           Expanded(
             child: _InfoPill(
-              label: 'Background',
-              value: c.backgroundName ?? '—',
+              label: _tr(context, en: 'Background', es: 'Trasfondo', gl: 'Trasfondo'),
+              value: c.backgroundName != null ? localizeKnownName(context, c.backgroundName!) : '—',
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: _InfoPill(
-              label: 'Alignment',
-              value: c.alignment ?? '—',
+              label: _tr(context, en: 'Alignment', es: 'Alineamiento', gl: 'Aliñamento'),
+              value: c.alignment != null ? localizeAlignment(context, c.alignment!) : '—',
             ),
           ),
         ]),
         const SizedBox(height: 24),
 
         //Physical Characteristics
-        _SectionTitle('Physical Characteristics'),
+        _SectionTitle(_tr(context, en: 'Physical Characteristics', es: 'Caracteristicas fisicas', gl: 'Caracteristicas fisicas')),
         const SizedBox(height: 12),
 
         GridView.count(
@@ -117,19 +125,19 @@ class TabInfo extends StatelessWidget{
           mainAxisSpacing: 8,
           childAspectRatio: 2.2,
           children: [
-            _PhysCell(label: 'Age', value: c.age != null ? '${c.age}' : '—'),
-            _PhysCell(label: 'Height', value: c.height ?? '—'),
-            _PhysCell(label: 'Weight', value: c.weight ?? '—'),
-            _PhysCell(label: 'Eyes', value: c.eyes ?? '—'),
-            _PhysCell(label: 'Skin', value: c.skin ?? '—'),
-            _PhysCell(label: 'Hair', value: c.hair ?? '—'),
+            _PhysCell(label: _tr(context, en: 'Age', es: 'Edad', gl: 'Idade'), value: c.age != null ? '${c.age}' : '—'),
+            _PhysCell(label: _tr(context, en: 'Height', es: 'Altura', gl: 'Altura'), value: c.height ?? '—'),
+            _PhysCell(label: _tr(context, en: 'Weight', es: 'Peso', gl: 'Peso'), value: c.weight ?? '—'),
+            _PhysCell(label: _tr(context, en: 'Eyes', es: 'Ojos', gl: 'Ollos'), value: c.eyes ?? '—'),
+            _PhysCell(label: _tr(context, en: 'Skin', es: 'Piel', gl: 'Pel'), value: c.skin ?? '—'),
+            _PhysCell(label: _tr(context, en: 'Hair', es: 'Pelo', gl: 'Pelo'), value: c.hair ?? '—'),
           ],
         ),
         const SizedBox(height: 24),
 
         //Backstory
         if (c.backstory != null && c.backstory!.isNotEmpty) ...[
-          _SectionTitle('Backstory'),
+          _SectionTitle(_tr(context, en: 'Backstory', es: 'Trasfondo narrativo', gl: 'Historia')),
           const SizedBox(height: 12),
           _LongTextCard(c.backstory!),
           const SizedBox(height: 24),
@@ -137,7 +145,7 @@ class TabInfo extends StatelessWidget{
 
         //Appearance
         if (c.appearance != null && c.appearance!.isNotEmpty) ...[
-          _SectionTitle('Appearance'),
+          _SectionTitle(_tr(context, en: 'Appearance', es: 'Apariencia', gl: 'Aparencia')),
           const SizedBox(height: 12),
           _LongTextCard(c.appearance!),
           const SizedBox(height: 24),
@@ -145,7 +153,7 @@ class TabInfo extends StatelessWidget{
 
         //Character History
         if(c.characterHistory != null && c.characterHistory!.isNotEmpty) ...[
-          _SectionTitle('Character History'),
+          _SectionTitle(_tr(context, en: 'Character History', es: 'Historia del personaje', gl: 'Historia do personaxe')),
           const SizedBox(height: 12),
           _LongTextCard(c.characterHistory!),
           const SizedBox(height: 24),
@@ -153,7 +161,7 @@ class TabInfo extends StatelessWidget{
 
         //Allies and Organizations
         if(c.alliesAndOrganizations != null && c.alliesAndOrganizations!.isNotEmpty) ...[
-          _SectionTitle('Allies and Organizations'),
+          _SectionTitle(_tr(context, en: 'Allies and Organizations', es: 'Aliados y organizaciones', gl: 'Aliados e organizacions')),
           const SizedBox(height: 12),
           _LongTextCard(c.alliesAndOrganizations!),
           const SizedBox(height: 24),

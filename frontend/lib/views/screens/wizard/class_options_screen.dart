@@ -2,11 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import '../../../config/app_theme.dart';
 import '../../../config/dnd_choice_options.dart';
 import '../../../models/wizard/class_option.dart';
 import '../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import 'class_detail_screen.dart' show classIcon;
+
+String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+  final code = Localizations.localeOf(context).languageCode;
+  if (code == 'es') return es;
+  if (code == 'gl') return gl;
+  return en;
+}
 
 /// Returns the stored (resolved) choice display text for a feature at an old
 /// level in level-up mode, or null if none found.
@@ -207,7 +216,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: Text('Customize ${cls.name}',
+        title: Text('${_tr(context, en: 'Customize', es: 'Personalizar', gl: 'Personalizar')} ${cls.name}',
             style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary, fontWeight: FontWeight.bold)),
         leading: IconButton(
@@ -251,7 +260,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                   ),
 
                   // Class Features ───────────────────────────────────
-                  _SectionHeader('Class Features'),
+                  _SectionHeader(_tr(context, en: 'Class Features', es: 'Rasgos de clase', gl: 'Trazos de clase')),
                   const SizedBox(height: 8),
                   ..._featuresUpToLevel.map((f) {
                     // For old levels in level-up mode: show as read-only with previous choice
@@ -308,7 +317,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                   // Always shown after class features for consistent layout.
                   if (widget.vm.selectedSubclass != null) ...[
                     const SizedBox(height: 12),
-                    _SectionHeader('${widget.vm.selectedSubclass!.name} Features'),
+                    _SectionHeader('${widget.vm.selectedSubclass!.name} ${_tr(context, en: 'Features', es: 'Rasgos', gl: 'Trazos')}'),
                     const SizedBox(height: 8),
 
                     // Hardcoded interactive choices (e.g. Hunter's Prey, Totem Spirit…)
@@ -318,7 +327,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                           final synth = ClassFeature(
                             id: c.level * 10000 + c.type.hashCode.abs() % 10000,
                             indexName: c.type.toLowerCase(),
-                            name: c.label,
+                            name: localizeWizardChoiceLabel(context, c.label),
                             level: c.level,
                             description: '',
                           );
@@ -382,10 +391,15 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                   const SizedBox(height: 20),
 
                   // HP ────────────────────────────────────────────────────────
-                  _SectionHeader('Manage HP'),
+                  _SectionHeader(_tr(context, en: 'Manage HP', es: 'Gestionar PG', gl: 'Xestionar PG')),
                   const SizedBox(height: 4),
                   Text(
-                    'Level 1 HP is always maximum (${cls.hitDie} + CON modifier).',
+                    _tr(
+                      context,
+                      en: 'Level 1 HP is always maximum (${cls.hitDie} + CON modifier).',
+                      es: 'Los PG de nivel 1 siempre son maximos (${cls.hitDie} + modificador CON).',
+                      gl: 'Os PG de nivel 1 sempre son maximos (${cls.hitDie} + modificador CON).',
+                    ),
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary, fontSize: 12),
                   ),
@@ -428,12 +442,17 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                 children: [
                   if (!_classSkillsDone)
                     _BlockerHint(
-                      '${widget.vm.classSkillIndices.length}/${cls.skillChoiceCount} skill proficiencies chosen — scroll to the top to pick them',
+                      _tr(
+                        context,
+                        en: '${widget.vm.classSkillIndices.length}/${cls.skillChoiceCount} skill proficiencies chosen - scroll to the top to pick them',
+                        es: '${widget.vm.classSkillIndices.length}/${cls.skillChoiceCount} competencias de habilidad elegidas - sube para seleccionar',
+                        gl: '${widget.vm.classSkillIndices.length}/${cls.skillChoiceCount} competencias de habilidade escollidas - sobe para seleccionar',
+                      ),
                     ),
                   if (!_hpComplete)
-                    const _BlockerHint('All HP rolls must be filled'),
+                    _BlockerHint(_tr(context, en: 'All HP rolls must be filled', es: 'Debes completar todas las tiradas de PG', gl: 'Debes completar todas as tiradas de PG')),
                   if (!widget.vm.classFeatureChoicesDone)
-                    const _BlockerHint('Some required feature choices are pending'),
+                    _BlockerHint(_tr(context, en: 'Some required feature choices are pending', es: 'Faltan elecciones obligatorias de rasgos', gl: 'Faltan eleccions obrigatorias de trazos')),
                 ],
               ),
             ),
@@ -532,8 +551,8 @@ class _LevelSelector extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text('Level',
-                style: GoogleFonts.lato(
+            Text(_tr(context, en: 'Level', es: 'Nivel', gl: 'Nivel'),
+                  style: GoogleFonts.lato(
                     color: AppTheme.textSecondary, fontSize: 11)),
             DropdownButtonHideUnderline(
               child: DropdownButton<int>(
@@ -707,16 +726,26 @@ class _FeatureTile extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                 child: Column(
                   children: choice!.options
-                      .map((opt) => _InlineOptionTile(
-                            label: opt.name,
-                            description: opt.description,
-                            selected: currentChoice == opt.name,
-                            disabled: alreadyTaken.contains(opt.name),
-                            onTap: () {
-                              onChoiceSelected?.call(opt.name);
-                              onToggle();
-                            },
-                          ))
+                      .map((opt) {
+                        final isSkillChoice = choice!.type == 'EXPERTISE' ||
+                            choice!.type == 'LORE_BONUS_PROF' ||
+                            choice!.type.startsWith('SKILL_VERSATILITY');
+                        final displayName = isSkillChoice
+                            ? localizeSkillOrProficiency(context, opt.name)
+                            : localizeOptionName(context, opt.name);
+                        final rawDesc = localizeOptionDescription(context, opt.name);
+                        final displayDesc = rawDesc.isNotEmpty ? rawDesc : opt.description;
+                        return _InlineOptionTile(
+                              label: displayName,
+                              description: displayDesc,
+                              selected: currentChoice == opt.name,
+                              disabled: alreadyTaken.contains(opt.name),
+                              onTap: () {
+                                onChoiceSelected?.call(opt.name);
+                                onToggle();
+                              },
+                            );
+                      })
                       .toList(),
                 ),
               )
@@ -759,7 +788,7 @@ class _ChoiceBadgePending extends StatelessWidget {
           color: AppTheme.accent.withOpacity(0.15),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: Text('Choose!',
+        child: Text(_tr(context, en: 'Choose!', es: 'Elegir!', gl: 'Escoller!'),
             style: GoogleFonts.lato(
                 color: AppTheme.accent,
                 fontSize: 10,
@@ -862,7 +891,12 @@ class _MultiPickSectionState extends State<_MultiPickSection> {
             Padding(
               padding: const EdgeInsets.only(top: 6, bottom: 4),
               child: Text(
-                'Choose your skill proficiencies first — Expertise can only be applied to skills you already have proficiency in.',
+                _tr(
+                  context,
+                  en: 'Choose your skill proficiencies first - Expertise can only be applied to skills you already have proficiency in.',
+                  es: 'Primero elige tus competencias de habilidad: Expertise solo se puede aplicar a habilidades en las que ya seas competente.',
+                  gl: 'Primeiro escolle as competencias de habilidade: Expertise so se pode aplicar a habilidades nas que xa sexas competente.',
+                ),
                 style: GoogleFonts.lato(
                     color: AppTheme.accent,
                     fontSize: 11,
@@ -873,20 +907,35 @@ class _MultiPickSectionState extends State<_MultiPickSection> {
             Padding(
               padding: const EdgeInsets.only(top: 6, bottom: 4),
               child: Text(
-                'Choice ${_activeSlot + 1} of ${widget.config.pickCount}:',
+                _tr(
+                  context,
+                  en: 'Choice ${_activeSlot + 1} of ${widget.config.pickCount}:',
+                  es: 'Eleccion ${_activeSlot + 1} de ${widget.config.pickCount}:',
+                  gl: 'Eleccion ${_activeSlot + 1} de ${widget.config.pickCount}:',
+                ),
                 style: GoogleFonts.lato(
                     color: AppTheme.textSecondary,
                     fontSize: 11,
                     fontWeight: FontWeight.bold),
               ),
             ),
-            ...widget.config.options.map((opt) => _InlineOptionTile(
-                  label: opt.name,
-                  description: opt.description,
-                  selected: _choice(_activeSlot) == opt.name,
-                  disabled: takenByOthers.contains(opt.name),
-                  onTap: () => _select(opt.name),
-                )),
+            ...widget.config.options.map((opt) {
+                  final isSkillChoice = widget.config.type == 'EXPERTISE' ||
+                      widget.config.type == 'LORE_BONUS_PROF' ||
+                      widget.config.type.startsWith('SKILL_VERSATILITY');
+                  final displayName = isSkillChoice
+                      ? localizeSkillOrProficiency(context, opt.name)
+                      : localizeOptionName(context, opt.name);
+                  final rawDesc = localizeOptionDescription(context, opt.name);
+                  final displayDesc = rawDesc.isNotEmpty ? rawDesc : opt.description;
+                  return _InlineOptionTile(
+                    label: displayName,
+                    description: displayDesc,
+                    selected: _choice(_activeSlot) == opt.name,
+                    disabled: takenByOthers.contains(opt.name),
+                    onTap: () => _select(opt.name),
+                  );
+                }),
           ],
         ],
       ],
@@ -992,7 +1041,7 @@ class _InlineOptionTile extends StatelessWidget {
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
                 Text(
-                  disabled ? '(already chosen)' : description,
+                  disabled ? _tr(context, en: '(already chosen)', es: '(ya elegido)', gl: '(xa escollido)') : description,
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary.withOpacity(disabled ? 0.4 : 1.0),
                       fontSize: 10,
@@ -1086,17 +1135,17 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
       children: [
         // Toggle row
         Row(children: [
-          Expanded(child: _AsiToggleButton(label: 'Ability Score\nImprovement', selected: _isAsi, onTap: _pickAsi)),
+          Expanded(child: _AsiToggleButton(label: _tr(context, en: 'Ability Score\nImprovement', es: 'Mejora de\nAtributo', gl: 'Mellora de\nAtributo'), selected: _isAsi, onTap: _pickAsi)),
           const SizedBox(width: 8),
-          Expanded(child: _AsiToggleButton(label: 'Take a Feat', selected: !_isAsi, onTap: _pickFeat)),
+          Expanded(child: _AsiToggleButton(label: _tr(context, en: 'Take a Feat', es: 'Elegir dote', gl: 'Escoller dote'), selected: !_isAsi, onTap: _pickFeat)),
         ]),
         const SizedBox(height: 10),
         if (_isAsi) ...[
-          Text('Choose two ability scores to increase by +1 each (or the same twice for +2):',
+          Text(_tr(context, en: 'Choose two ability scores to increase by +1 each (or the same twice for +2):', es: 'Elige dos atributos para aumentar +1 cada uno (o el mismo dos veces para +2):', gl: 'Escolle dous atributos para aumentar +1 cada un (ou o mesmo duas veces para +2):'),
               style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11)),
           const SizedBox(height: 8),
           _AbilityDropdown(
-            label: 'First ability',
+            label: _tr(context, en: 'First ability', es: 'Primer atributo', gl: 'Primeiro atributo'),
             value: asiA,
             onChanged: (v) {
               widget.vm.featureChoices[_asiaKey] = v;
@@ -1107,7 +1156,7 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
           ),
           const SizedBox(height: 6),
           _AbilityDropdown(
-            label: 'Second ability',
+            label: _tr(context, en: 'Second ability', es: 'Segundo atributo', gl: 'Segundo atributo'),
             value: asiB,
             onChanged: (v) {
               widget.vm.featureChoices[_asibKey] = v;
@@ -1117,7 +1166,7 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
             },
           ),
         ] else ...[
-          Text('Choose a feat:', style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11)),
+          Text(_tr(context, en: 'Choose a feat:', es: 'Elige una dote:', gl: 'Escolle unha dote:'), style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11)),
           const SizedBox(height: 8),
           ...kFeats.map((f) {
             // Block feats already chosen at another ASI level
@@ -1127,7 +1176,7 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
             return _InlineOptionTile(
               label: f.name,
               description: alreadyAtOtherLevel
-                  ? '(already chosen at another level)'
+                  ? _tr(context, en: '(already chosen at another level)', es: '(ya elegida en otro nivel)', gl: '(xa escollida noutro nivel)')
                   : f.description,
               selected: feat == f.name,
               disabled: alreadyAtOtherLevel,
@@ -1236,7 +1285,7 @@ class _HpRow extends StatelessWidget {
         // Badge nivel
         Container(
           width: 60,
-          child: Text('Level $level',
+          child: Text('${_tr(context, en: 'Level', es: 'Nivel', gl: 'Nivel')} $level',
               style: GoogleFonts.libreBaskerville(
                   color: AppTheme.textPrimary,
                   fontSize: 12,
@@ -1254,7 +1303,7 @@ class _HpRow extends StatelessWidget {
                             fontSize: 18,
                             fontWeight: FontWeight.bold)),
                     const SizedBox(width: 6),
-                    Text('(already set)',
+                    Text(_tr(context, en: '(already set)', es: '(ya definido)', gl: '(xa definido)'),
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary, fontSize: 11)),
                   ] else ...[  
@@ -1264,7 +1313,7 @@ class _HpRow extends StatelessWidget {
                             fontSize: 18,
                             fontWeight: FontWeight.bold)),
                     const SizedBox(width: 6),
-                    Text('(maximum)',
+                    Text(_tr(context, en: '(maximum)', es: '(maximo)', gl: '(maximo)'),
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary, fontSize: 11)),
                   ],
@@ -1340,7 +1389,7 @@ class _HpInputState extends State<_HpInput> {
             fontSize: 18,
             fontWeight: FontWeight.bold),
         decoration: InputDecoration(
-          hintText: '1–${widget.hitDie}',
+          hintText: '1-${widget.hitDie}',
           hintStyle: GoogleFonts.lato(
               color: AppTheme.textSecondary, fontSize: 12),
           contentPadding:
@@ -1411,12 +1460,12 @@ class _SubclassSelectorSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader('Subclass (optional)'),
+        _SectionHeader(_tr(context, en: 'Subclass (optional)', es: 'Subclase (opcional)', gl: 'Subclase (opcional)')),
         const SizedBox(height: 6),
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: Text(
-            'Choosing a subclass is optional — you can assign one later.',
+            _tr(context, en: 'Choosing a subclass is optional - you can assign one later.', es: 'Elegir una subclase es opcional: puedes asignarla mas tarde.', gl: 'Escoller unha subclase e opcional: podes asignala mais tarde.'),
             style: GoogleFonts.lato(
                 color: AppTheme.textSecondary, fontSize: 12),
           ),
@@ -1527,6 +1576,7 @@ class _BottomButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: const BoxDecoration(
@@ -1542,7 +1592,7 @@ class _BottomButtons extends StatelessWidget {
               side: const BorderSide(color: AppTheme.surfaceVariant),
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            child: Text('Cancel',
+            child: Text(s.cancel,
                 style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
           ),
         ),
@@ -1553,7 +1603,9 @@ class _BottomButtons extends StatelessWidget {
             onPressed: canConfirm ? onConfirm : null,
             style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14)),
-            child: Text(isEditing ? 'Accept' : 'Add Class',
+            child: Text(isEditing
+              ? _tr(context, en: 'Accept', es: 'Aceptar', gl: 'Aceptar')
+              : _tr(context, en: 'Add Class', es: 'Anadir clase', gl: 'Engadir clase'),
                 style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
           ),
         ),
@@ -1563,13 +1615,6 @@ class _BottomButtons extends StatelessWidget {
 }
 
 // ── Skill Picker ─────────────────────────────────────────────────────────────
-
-String _formatSkillName(String indexName) {
-  return indexName
-      .split('-')
-      .map((w) => w.isEmpty ? '' : w[0].toUpperCase() + w.substring(1))
-      .join(' ');
-}
 
 class _SkillPickerSection extends StatefulWidget {
   final ClassOption cls;
@@ -1627,12 +1672,12 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader('Skill Proficiencies'),
+        _SectionHeader(_tr(context, en: 'Skill Proficiencies', es: 'Competencias de habilidad', gl: 'Competencias de habilidade')),
         const SizedBox(height: 4),
         Text(
           remaining > 0
-              ? 'Choose $count skills — $remaining remaining'
-              : 'All $count skills chosen ✓',
+              ? _tr(context, en: 'Choose $count skills - $remaining remaining', es: 'Elige $count habilidades - $remaining restantes', gl: 'Escolle $count habilidades - $remaining restantes')
+              : _tr(context, en: 'All $count skills chosen ✓', es: 'Todas las $count habilidades elegidas ✓', gl: 'Todas as $count habilidades escollidas ✓'),
           style: GoogleFonts.lato(
             color: remaining > 0 ? AppTheme.textSecondary : AppTheme.primary,
             fontSize: 12,
@@ -1641,15 +1686,21 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
         if (bgSkills.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(
-            'Skills from your background are already covered.',
+            _tr(context, en: 'Skills from your background are already covered.', es: 'Las habilidades de tu trasfondo ya estan cubiertas.', gl: 'As habilidades do teu trasfondo xa estan cubertas.'),
             style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11),
           ),
         ],
         const SizedBox(height: 10),
+        ...() {
+          final sorted = [...widget.cls.allowedSkillIndices]
+            ..sort((a, b) => localizeSkillOrProficiency(context, a)
+                .toLowerCase()
+                .compareTo(localizeSkillOrProficiency(context, b).toLowerCase()));
+          return [
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: widget.cls.allowedSkillIndices.map((skill) {
+          children: sorted.map((skill) {
             final isSelected = _picked.contains(skill);
             final fromBackground = bgSkills.contains(skill);
             final isDisabled = fromBackground || (!isSelected && remaining == 0);
@@ -1683,7 +1734,7 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
                     const SizedBox(width: 4),
                   ],
                   Text(
-                  _formatSkillName(skill),
+                  localizeSkillOrProficiency(context, skill),
                   style: GoogleFonts.lato(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -1701,6 +1752,8 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
             );
           }).toList(),
         ),
+          ];
+        }(),
       ],
     );
   }

@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
 import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/character/racial_trait.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+  final code = Localizations.localeOf(context).languageCode;
+  if (code == 'es') return es;
+  if (code == 'gl') return gl;
+  return en;
+}
 
 class TabFeatures extends StatelessWidget {
   final PlayerCharacter character;
@@ -30,7 +38,7 @@ class TabFeatures extends StatelessWidget {
 
         //-- Class Features
         _GroupHeader(
-          label: 'Class Features',
+          label: _tr(context, en: 'Class Features', es: 'Rasgos de clase', gl: 'Trazos de clase'),
           sublabel: character.dndClassName,
           icon: Icons.auto_fix_high_outlined,
           color: AppTheme.primary,
@@ -39,7 +47,7 @@ class TabFeatures extends StatelessWidget {
         if (isLoading)
           const _LoadingRow()
         else if (vm.classFeatures.isEmpty)
-          _EmptyCard(message: 'No class features loaded.')
+          _EmptyCard(message: _tr(context, en: 'No class features loaded.', es: 'No hay rasgos de clase cargados.', gl: 'Non hai trazos de clase cargados.'))
         else
           ...vm.classFeatures.map((f) => _FeatureTile(
             feature: f,
@@ -56,7 +64,7 @@ class TabFeatures extends StatelessWidget {
               const Icon(Icons.arrow_right,
                 color: AppTheme.textSecondary, size: 16),
               Text(
-                character.subclassName ?? 'Subclass',
+                character.subclassName ?? _tr(context, en: 'Subclass', es: 'Subclase', gl: 'Subclase'),
                 style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
                   fontSize: 11, 
@@ -82,7 +90,7 @@ class TabFeatures extends StatelessWidget {
 
         //-- Racial Traits
         _GroupHeader(
-          label: 'Racial Traits',
+          label: _tr(context, en: 'Racial Traits', es: 'Rasgos raciales', gl: 'Trazos raciais'),
           sublabel: character.raceName,
           icon: Icons.nature_people_outlined,
           color: Color(0xFF7FAACC),
@@ -94,7 +102,7 @@ class TabFeatures extends StatelessWidget {
 
         //-- Feats
         _GroupHeader(
-          label: 'Feats',
+          label: _tr(context, en: 'Feats', es: 'Dotes', gl: 'Dotes'),
           sublabel: null,
           icon: Icons.star_outline,
           color: const Color(0xFFC8A45A),
@@ -218,7 +226,7 @@ class _FeatureTile extends StatelessWidget {
                     border: Border.all(
                       color: AppTheme.primary.withOpacity(0.4)),
                   ),
-                  child: Text('combat',
+                  child: Text(_tr(context, en: 'combat', es: 'combate', gl: 'combate'),
                     style: GoogleFonts.lato(
                       color: AppTheme.primary,
                       fontSize: 9,
@@ -243,7 +251,7 @@ class _FeatureTile extends StatelessWidget {
             ],
           ),
           subtitle: Row(children: [
-            Text('Level ${feature.level}',
+            Text('${_tr(context, en: 'Level', es: 'Nivel', gl: 'Nivel')} ${feature.level}',
                 style: GoogleFonts.lato(
                   color: AppTheme.textSecondary, fontSize: 10)),
             //Contadores de usos
@@ -309,7 +317,7 @@ class _FeatureTile extends StatelessWidget {
                   border: Border.all(color: const Color(0xFFC8A45A).withOpacity(0.4)),
                 ),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Chosen:',
+                  Text(_tr(context, en: 'Chosen:', es: 'Elegido:', gl: 'Escollido:'),
                       style: GoogleFonts.lato(
                           color: AppTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 2),
@@ -327,7 +335,7 @@ class _FeatureTile extends StatelessWidget {
                     fontSize: 12,
                     height: 1.5)),
             ] else ...[
-              Text('No description available.',
+              Text(_tr(context, en: 'No description available.', es: 'No hay descripcion disponible.', gl: 'Non hai descricion dispoñible.'),
                   style: GoogleFonts.lato(
                     color: AppTheme.textSecondary,
                     fontSize: 12,
@@ -366,7 +374,7 @@ class _RacialTraitsSection extends StatelessWidget {
     final traits = vm.racialTraits;
 
     if(traits.isEmpty){
-      return _EmptyCard(message: 'No racial traits loaded.');
+      return _EmptyCard(message: _tr(context, en: 'No racial traits loaded.', es: 'No hay rasgos raciales cargados.', gl: 'Non hai trazos raciais cargados.'));
     }
 
     return Column(
@@ -445,13 +453,13 @@ class _RacialTraitTile extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 6,
             children: [
-              Text(trait.name,
+              Text(localizeKnownName(context, trait.name),
                   style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold)),
               if (trait.isCombatRelevant)
-                _TypeBadge('combat', AppTheme.primary),
+                _TypeBadge(_tr(context, en: 'combat', es: 'combate', gl: 'combate'), AppTheme.primary),
             // Show the resolved ancestry choice — but not as a badge for
             // Skill Versatility (those skills are shown in the description)
             if (ancestrySuffix != null && ancestryTaskType != 'SKILL_VERSATILITY')
@@ -469,20 +477,23 @@ class _RacialTraitTile extends StatelessWidget {
                       fontWeight: FontWeight.bold)),
                 )
               else if (trait.requiresChoice && ancestryTaskType != 'SKILL_VERSATILITY')
-                _TypeBadge('choose!', Colors.orange),
+                _TypeBadge(_tr(context, en: 'choose!', es: 'elegir!', gl: 'escoller!'), Colors.orange),
             ],
           ),
           iconColor: AppTheme.textSecondary,
           collapsedIconColor: AppTheme.textSecondary,
           children: [
             if (ancestryTaskType == 'SKILL_VERSATILITY' && ancestrySuffix != null) ...[
-              Text('Skills gained:',
+              Text(_tr(context, en: 'Skills gained:', es: 'Habilidades obtenidas:', gl: 'Habilidades obtidas:'),
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary,
                       fontSize: 11,
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 2),
-              Text(ancestrySuffix,
+                Text(ancestrySuffix
+                  .split(' · ')
+                  .map((s) => localizeSkillOrProficiency(context, s))
+                  .join(' · '),
                   style: GoogleFonts.lato(
                       color: AppTheme.primary,
                       fontSize: 12,
@@ -493,7 +504,7 @@ class _RacialTraitTile extends StatelessWidget {
               Text(
                 trait.description.isNotEmpty
                     ? trait.description
-                    : 'No description available.',
+                  : _tr(context, en: 'No description available.', es: 'No hay descripcion disponible.', gl: 'Non hai descricion dispoñible.'),
                 style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
                   fontSize: 12,
@@ -551,8 +562,8 @@ class _FeatsSection extends StatelessWidget {
 
     if (feats.isEmpty) {
       return _EmptyCard(
-        message: 'No feats assigned.',
-        hint: 'Feats can be chosen during level-up (levels 4, 8, 12, 16, 19).',
+        message: _tr(context, en: 'No feats assigned.', es: 'No hay dotes asignadas.', gl: 'Non hai dotes asignadas.'),
+        hint: _tr(context, en: 'Feats can be chosen during level-up (levels 4, 8, 12, 16, 19).', es: 'Las dotes se eligen al subir de nivel (niveles 4, 8, 12, 16 y 19).', gl: 'As dotes escollense ao subir de nivel (niveis 4, 8, 12, 16 e 19).'),
       );
     }
 
@@ -584,7 +595,7 @@ class _FeatsSection extends StatelessWidget {
                         fontSize: 12,
                         height: 1.5))
               else
-                Text('No description available.',
+                Text(_tr(context, en: 'No description available.', es: 'No hay descripcion disponible.', gl: 'Non hai descricion dispoñible.'),
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary,
                         fontSize: 12,

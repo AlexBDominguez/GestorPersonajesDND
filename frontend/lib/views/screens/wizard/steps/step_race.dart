@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import 'package:gestor_personajes_dnd/models/wizard/race_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/subrace_option.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +10,19 @@ import '../../../../viewmodels/wizard/character_creator_viewmodel.dart';
 
 class StepRace extends StatelessWidget {
   const StepRace({super.key});
+
+  static String _bonusText(BuildContext context, Map<String, int> bonuses) {
+    return bonuses.entries
+        .map((e) => '+${e.value} ${localizeAbilityCode(context, e.key)}')
+        .join(', ');
+  }
+
+  static String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+    final code = Localizations.localeOf(context).languageCode;
+    if (code == 'es') return es;
+    if (code == 'gl') return gl;
+    return en;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,12 +46,12 @@ class StepRace extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-          child: Text('Choose your Race',
+          child: Text(_tr(context, en: 'Choose your Race', es: 'Elige tu raza', gl: 'Escolle a tua raza'),
               style: Theme.of(context).textTheme.displayMedium),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Text('Your race determines your innate abilities and traits.',
+          child: Text(_tr(context, en: 'Your race determines your innate abilities and traits.', es: 'Tu raza determina tus habilidades y rasgos innatos.', gl: 'A tua raza determina as habilidades e trazos innatos.'),
               style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
         ),
 
@@ -121,7 +135,7 @@ class _RaceCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(race.name,
+                  Text(localizeKnownName(context, race.name),
                     style: GoogleFonts.libreBaskerville(
                       color: isSelected
                           ? AppTheme.primary
@@ -130,13 +144,13 @@ class _RaceCard extends StatelessWidget {
                       fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Row(children: [
-                    _Tag('Speed ${race.speed} ft.'),
+                      _Tag('${StepRace._tr(context, en: 'Speed', es: 'Velocidad', gl: 'Velocidade')} ${race.speed} ft.'),
                     const SizedBox(width: 6),
                     _Tag(race.size),
                   ]),
                   if (race.abilityBonuses.isNotEmpty) ...[
                     const SizedBox(height: 6),
-                    Text(race.bonusText,
+                    Text(StepRace._bonusText(context, race.abilityBonuses),
                       style: GoogleFonts.lato(
                         color: AppTheme.primary,
                         fontSize: 12,
@@ -187,7 +201,7 @@ class _SubraceSelector extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
-              'Choose a subrace (required)',
+              StepRace._tr(context, en: 'Choose a subrace (required)', es: 'Elige una subraza (obligatorio)', gl: 'Escolle unha subraza (obrigatorio)'),
               style: GoogleFonts.lato(
                   color: AppTheme.textSecondary, fontSize: 12),
             ),
@@ -254,7 +268,7 @@ class _SubraceChip extends StatelessWidget {
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(subrace.name,
+                    Text(localizeKnownName(context, subrace.name),
                       style: GoogleFonts.libreBaskerville(
                           color: isSelected
                               ? AppTheme.primary
@@ -263,7 +277,7 @@ class _SubraceChip extends StatelessWidget {
                           fontWeight: FontWeight.bold)),
                   if (subrace.bonusText.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(subrace.bonusText,
+                    Text(StepRace._bonusText(context, subrace.abilityBonuses),
                         style: GoogleFonts.lato(
                             color: AppTheme.primary,
                             fontSize: 11,
@@ -271,7 +285,7 @@ class _SubraceChip extends StatelessWidget {
                   ],
                   if (subrace.traits.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(subrace.traits.join(' · '),
+                    Text(subrace.traits.map((t) => localizeKnownName(context, t)).join(' · '),
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary, fontSize: 11),
                         maxLines: 1,
@@ -369,6 +383,72 @@ class _RaceChoiceBlock extends StatefulWidget {
 class _RaceChoiceBlockState extends State<_RaceChoiceBlock> {
   late bool _expanded;
 
+  String _labelForChoiceType(BuildContext context, String type, String fallback) {
+    return switch (type) {
+      'DRACONIC_ANCESTRY' => StepRace._tr(context,
+          en: 'Draconic Ancestry', es: 'Ascendencia dracónica', gl: 'Ascendencia dracónica'),
+      'TOOL_PROFICIENCY' => StepRace._tr(context,
+          en: 'Tool Proficiency', es: 'Competencia con herramientas', gl: 'Competencia con ferramentas'),
+      'EXTRA_LANGUAGE' => StepRace._tr(context,
+          en: 'Extra Language', es: 'Idioma adicional', gl: 'Idioma adicional'),
+      'HIGH_ELF_CANTRIP' => StepRace._tr(context,
+          en: 'High Elf Cantrip', es: 'Truco de elfo de las alturas', gl: 'Truco de elfo das alturas'),
+      'SKILL_VERSATILITY_1' || 'SKILL_VERSATILITY_2' => StepRace._tr(context,
+          en: 'Skill Versatility', es: 'Versatilidad de habilidades', gl: 'Versatilidade de habilidades'),
+      _ => localizeKnownName(context, fallback),
+    };
+  }
+
+  String _optionLabel(BuildContext context, DndChoiceOption option) {
+    if (widget.config.type.startsWith('SKILL_VERSATILITY')) {
+      return localizeSkillOrProficiency(context, option.name);
+    }
+    if (widget.config.type == 'EXTRA_LANGUAGE') {
+      return localizeLanguageName(context, option.name);
+    }
+    return localizeKnownName(context, option.name);
+  }
+
+  String _optionDescription(BuildContext context, DndChoiceOption option) {
+    if (widget.config.type == 'DRACONIC_ANCESTRY') {
+      final key = option.name.toLowerCase();
+      switch (key) {
+        case 'black':
+          return StepRace._tr(context, en: 'Acid - Line 5x30 ft, DC Con', es: 'Ácido - Línea 5x30 pies, CD Con', gl: 'Ácido - Liña 5x30 pés, CD Con');
+        case 'blue':
+          return StepRace._tr(context, en: 'Lightning - Line 5x30 ft, DC Dex', es: 'Relámpago - Línea 5x30 pies, CD Des', gl: 'Lóstrego - Liña 5x30 pés, CD Des');
+        case 'brass':
+          return StepRace._tr(context, en: 'Fire - Line 5x30 ft, DC Dex', es: 'Fuego - Línea 5x30 pies, CD Des', gl: 'Lume - Liña 5x30 pés, CD Des');
+        case 'bronze':
+          return StepRace._tr(context, en: 'Lightning - Line 5x30 ft, DC Dex', es: 'Relámpago - Línea 5x30 pies, CD Des', gl: 'Lóstrego - Liña 5x30 pés, CD Des');
+        case 'copper':
+          return StepRace._tr(context, en: 'Acid - Line 5x30 ft, DC Dex', es: 'Ácido - Línea 5x30 pies, CD Des', gl: 'Ácido - Liña 5x30 pés, CD Des');
+        case 'gold':
+          return StepRace._tr(context, en: 'Fire - Cone 15 ft, DC Dex', es: 'Fuego - Cono 15 pies, CD Des', gl: 'Lume - Cono 15 pés, CD Des');
+        case 'green':
+          return StepRace._tr(context, en: 'Poison - Cone 15 ft, DC Con', es: 'Veneno - Cono 15 pies, CD Con', gl: 'Veleno - Cono 15 pés, CD Con');
+        case 'red':
+          return StepRace._tr(context, en: 'Fire - Cone 15 ft, DC Dex', es: 'Fuego - Cono 15 pies, CD Des', gl: 'Lume - Cono 15 pés, CD Des');
+        case 'silver':
+          return StepRace._tr(context, en: 'Cold - Cone 15 ft, DC Con', es: 'Frío - Cono 15 pies, CD Con', gl: 'Frío - Cono 15 pés, CD Con');
+        case 'white':
+          return StepRace._tr(context, en: 'Cold - Cone 15 ft, DC Con', es: 'Frío - Cono 15 pies, CD Con', gl: 'Frío - Cono 15 pés, CD Con');
+      }
+    }
+    return option.description;
+  }
+
+  String _optionDescriptionLocalized(BuildContext context, DndChoiceOption option) {
+    if (widget.config.type == 'EXTRA_LANGUAGE') {
+      return localizeLanguageDescription(context, option.name);
+    }
+    if (widget.config.type.startsWith('SKILL_VERSATILITY')) {
+      final localized = localizeSkillDescription(context, option.name);
+      return localized.isNotEmpty ? localized : option.description;
+    }
+    return _optionDescription(context, option);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -385,7 +465,12 @@ class _RaceChoiceBlockState extends State<_RaceChoiceBlock> {
 
   @override
   Widget build(BuildContext context) {
-    final options = widget.filteredOptions ?? widget.config.options;
+    final options = [...(widget.filteredOptions ?? widget.config.options)];
+    if (widget.config.type.startsWith('SKILL_VERSATILITY')) {
+      options.sort((a, b) => _optionLabel(context, a)
+          .toLowerCase()
+          .compareTo(_optionLabel(context, b).toLowerCase()));
+    }
     final done = widget.selected != null;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -426,14 +511,14 @@ class _RaceChoiceBlockState extends State<_RaceChoiceBlock> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(widget.config.label,
+                  child: Text(_labelForChoiceType(context, widget.config.type, widget.config.label),
                       style: GoogleFonts.libreBaskerville(
                           color: done ? AppTheme.primary : AppTheme.accent,
                           fontSize: 13,
                           fontWeight: FontWeight.bold)),
                 ),
                 if (done)
-                  Text(widget.selected!,
+                  Text(localizeKnownName(context, widget.selected!),
                       style: GoogleFonts.lato(
                           color: AppTheme.primary,
                           fontSize: 11,
@@ -454,8 +539,8 @@ class _RaceChoiceBlockState extends State<_RaceChoiceBlock> {
               child: Column(
                 children: options
                     .map((opt) => _RaceOptionTile(
-                          label: opt.name,
-                          description: opt.description,
+                          label: _optionLabel(context, opt),
+                          description: _optionDescriptionLocalized(context, opt),
                           selected: widget.selected == opt.name,
                           onTap: () {
                             widget.onSelect(opt.name);

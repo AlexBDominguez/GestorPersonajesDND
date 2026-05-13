@@ -6,6 +6,13 @@ import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+  final code = Localizations.localeOf(context).languageCode;
+  if (code == 'es') return es;
+  if (code == 'gl') return gl;
+  return en;
+}
+
 
 // ---- Entry Point
 class PendingTasksScreen extends StatelessWidget {
@@ -19,7 +26,7 @@ class PendingTasksScreen extends StatelessWidget {
       appBar: AppBar(
           backgroundColor: AppTheme.background,
           leading: const BackButton(color: AppTheme.textPrimary),
-          title: Text('Pending Choices',
+          title: Text(_tr(context, en: 'Pending Choices', es: 'Elecciones pendientes', gl: 'Eleccions pendentes'),
               style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 16,
@@ -36,13 +43,13 @@ class PendingTasksScreen extends StatelessWidget {
                   const Icon(Icons.check_circle_outline,
                     color: AppTheme.primary, size: 52),
                   const SizedBox(height: 16),
-                  Text('All chocies resolved!',
+                  Text(_tr(context, en: 'All choices resolved!', es: 'Todas las elecciones resueltas!', gl: 'Todas as eleccions resoltas!'),
                     style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Text('Your character sheet is complete.',
+                  Text(_tr(context, en: 'Your character sheet is complete.', es: 'Tu hoja de personaje esta completa.', gl: 'A tua folla de personaxe esta completa.'),
                     style: GoogleFonts.lato(
                       color: AppTheme.textSecondary, fontSize: 13)),
                 ]),
@@ -94,7 +101,7 @@ class _TaskCard extends StatelessWidget {
                       color: AppTheme.primary,
                       fontSize: 14,
                       fontWeight: FontWeight.bold)),
-                  Text('Level ${task.relatedLevel}',
+                  Text('${_tr(context, en: 'Level', es: 'Nivel', gl: 'Nivel')} ${task.relatedLevel}',
                     style: GoogleFonts.lato(
                       color: AppTheme.textSecondary, fontSize: 10)),
                 ]),
@@ -202,7 +209,9 @@ class _OptionListResolverState extends State<_OptionListResolver> {
                   width: 18, height: 18,
                   child: CircularProgressIndicator(
                       color: Colors.white, strokeWidth: 2))
-              : Text(_selected == null ? 'Select an option above' : 'Confirm: $_selected',
+              : Text(_selected == null
+                ? _tr(context, en: 'Select an option above', es: 'Selecciona una opcion arriba', gl: 'Selecciona unha opcion arriba')
+                : '${_tr(context, en: 'Confirm', es: 'Confirmar', gl: 'Confirmar')}: $_selected',
                   style: GoogleFonts.libreBaskerville(
                       fontSize: 12, fontWeight: FontWeight.bold)),
         ),
@@ -217,13 +226,13 @@ class _OptionListResolverState extends State<_OptionListResolver> {
     setState(() => _saving = false);
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('${widget.task.displayName}: $_selected confirmed!'),
+        content: Text('${widget.task.displayName}: ${_tr(context, en: 'confirmed', es: 'confirmado', gl: 'confirmado')}!'),
         backgroundColor: AppTheme.primary,
         duration: const Duration(seconds: 2),
       ));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Error saving choice. Try again.'),
+        content: Text(_tr(context, en: 'Error saving choice. Try again.', es: 'Error al guardar la eleccion. Intentalo de nuevo.', gl: 'Erro ao gardar a eleccion. Tenta de novo.')),
         backgroundColor: AppTheme.accent,
       ));
     }
@@ -348,14 +357,14 @@ class _AsiOrFeatResolverState extends State<_AsiOrFeatResolver> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       // ── Top-level choice ─────────────────────────────────────────
       _OptionTile(
-        label: 'Ability Score Improvement',
-        description: '+2 to one ability score, or +1 to two different ability scores.',
+        label: _tr(context, en: 'Ability Score Improvement', es: 'Mejora de atributo', gl: 'Mellora de atributo'),
+        description: _tr(context, en: '+2 to one ability score, or +1 to two different ability scores.', es: '+2 a un atributo, o +1 a dos atributos distintos.', gl: '+2 a un atributo, ou +1 a dous atributos distintos.'),
         selected: _topChoice == 'ASI',
         onTap: () => setState(() { _topChoice = 'ASI'; _selectedFeat = null; }),
       ),
       _OptionTile(
-        label: 'Take a Feat',
-        description: 'Choose a feat from the available list.',
+        label: _tr(context, en: 'Take a Feat', es: 'Elegir dote', gl: 'Escoller dote'),
+        description: _tr(context, en: 'Choose a feat from the available list.', es: 'Elige una dote de la lista disponible.', gl: 'Escolle unha dote da lista dispoñible.'),
         selected: _topChoice == 'FEAT',
         onTap: () => setState(() { _topChoice = 'FEAT'; _asiMode = null; _asiAbility1 = null; _asiAbility2 = null; }),
       ),
@@ -363,16 +372,18 @@ class _AsiOrFeatResolverState extends State<_AsiOrFeatResolver> {
       // ── ASI sub-pickers ──────────────────────────────────────────
       if (_topChoice == 'ASI') ...[
         const SizedBox(height: 10),
-        _SubSectionLabel('How to apply the +2?'),
+        _SubSectionLabel(_tr(context, en: 'How to apply the +2?', es: 'Como aplicar el +2?', gl: 'Como aplicar o +2?')),
         const SizedBox(height: 6),
-        _AsiModeChip(label: '+2 to one ability', selected: _asiMode == '+2',
+        _AsiModeChip(label: _tr(context, en: '+2 to one ability', es: '+2 a un atributo', gl: '+2 a un atributo'), selected: _asiMode == '+2',
             onTap: () => setState(() { _asiMode = '+2'; _asiAbility2 = null; })),
         const SizedBox(height: 4),
-        _AsiModeChip(label: '+1 to two different abilities', selected: _asiMode == '+1+1',
+        _AsiModeChip(label: _tr(context, en: '+1 to two different abilities', es: '+1 a dos atributos distintos', gl: '+1 a dous atributos distintos'), selected: _asiMode == '+1+1',
             onTap: () => setState(() => _asiMode = '+1+1')),
         if (_asiMode != null) ...[
           const SizedBox(height: 10),
-          _SubSectionLabel(_asiMode == '+2' ? 'Choose ability (+2):' : 'First ability (+1):'),
+          _SubSectionLabel(_asiMode == '+2'
+            ? _tr(context, en: 'Choose ability (+2):', es: 'Elige atributo (+2):', gl: 'Escolle atributo (+2):')
+            : _tr(context, en: 'First ability (+1):', es: 'Primer atributo (+1):', gl: 'Primeiro atributo (+1):')),
           const SizedBox(height: 6),
           _AbilityDropdown(
             value: _asiAbility1,
@@ -381,7 +392,7 @@ class _AsiOrFeatResolverState extends State<_AsiOrFeatResolver> {
           ),
           if (_asiMode == '+1+1') ...[
             const SizedBox(height: 8),
-            _SubSectionLabel('Second ability (+1):'),
+            _SubSectionLabel(_tr(context, en: 'Second ability (+1):', es: 'Segundo atributo (+1):', gl: 'Segundo atributo (+1):')),
             const SizedBox(height: 6),
             _AbilityDropdown(
               value: _asiAbility2,
@@ -395,7 +406,7 @@ class _AsiOrFeatResolverState extends State<_AsiOrFeatResolver> {
       // ── Feat list ────────────────────────────────────────────────
       if (_topChoice == 'FEAT') ...[
         const SizedBox(height: 10),
-        _SubSectionLabel('Choose a feat:'),
+        _SubSectionLabel(_tr(context, en: 'Choose a feat:', es: 'Elige una dote:', gl: 'Escolle unha dote:')),
         const SizedBox(height: 6),
         ...kFeats.map((f) => _OptionTile(
               label: f.name,
@@ -421,7 +432,9 @@ class _AsiOrFeatResolverState extends State<_AsiOrFeatResolver> {
               ? const SizedBox(width: 18, height: 18,
                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
               : Text(
-                  _confirmValue == null ? 'Complete your selection above' : 'Confirm',
+                  _confirmValue == null
+                    ? _tr(context, en: 'Complete your selection above', es: 'Completa tu seleccion arriba', gl: 'Completa a tua seleccion arriba')
+                    : _tr(context, en: 'Confirm', es: 'Confirmar', gl: 'Confirmar'),
                   style: GoogleFonts.libreBaskerville(fontSize: 12, fontWeight: FontWeight.bold)),
         ),
       ),
@@ -435,13 +448,13 @@ class _AsiOrFeatResolverState extends State<_AsiOrFeatResolver> {
     setState(() => _saving = false);
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('${widget.task.displayName}: confirmed!'),
+        content: Text('${widget.task.displayName}: ${_tr(context, en: 'confirmed', es: 'confirmado', gl: 'confirmado')}!'),
         backgroundColor: AppTheme.primary,
         duration: const Duration(seconds: 2),
       ));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Error saving choice. Try again.'),
+        content: Text('Error'),
         backgroundColor: AppTheme.accent,
       ));
     }
@@ -522,7 +535,7 @@ class _AbilityDropdown extends StatelessWidget {
           isExpanded: true,
           dropdownColor: AppTheme.surface,
           value: value,
-          hint: Text('Select ability…',
+            hint: Text(_tr(context, en: 'Select ability...', es: 'Selecciona atributo...', gl: 'Selecciona atributo...'),
               style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
           items: kAbilityScoreNames
               .where((a) => !exclude.contains(a.name))
@@ -561,7 +574,7 @@ class _FreeTextResolverState extends State<_FreeTextResolver> {
         controller: _ctrl,
         style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
         decoration: InputDecoration(
-          hintText: 'Enter your choice...',
+          hintText: _tr(context, en: 'Enter your choice...', es: 'Introduce tu eleccion...', gl: 'Introduce a tua eleccion...'),
           hintStyle: GoogleFonts.lato(
               color: AppTheme.textSecondary, fontSize: 13),
           filled: true,
@@ -590,7 +603,7 @@ class _FreeTextResolverState extends State<_FreeTextResolver> {
                   width: 18, height: 18,
                   child: CircularProgressIndicator(
                       color: Colors.white, strokeWidth: 2))
-              : Text('Confirm',
+              : Text(_tr(context, en: 'Confirm', es: 'Confirmar', gl: 'Confirmar'),
                   style: GoogleFonts.libreBaskerville(
                       fontSize: 12, fontWeight: FontWeight.bold)),
         ),
@@ -607,7 +620,7 @@ class _FreeTextResolverState extends State<_FreeTextResolver> {
     setState(() => _saving = false);
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('${widget.task.displayName}: confirmed!'),
+        content: Text('${widget.task.displayName}: ${_tr(context, en: 'confirmed', es: 'confirmado', gl: 'confirmado')}!'),
         backgroundColor: AppTheme.primary,
         duration: const Duration(seconds: 2),
       ));
@@ -677,7 +690,7 @@ class _SkillVersatilityResolverState
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       if (skills.isEmpty)
-        Text('All skills are already proficient.',
+        Text(_tr(context, en: 'All skills are already proficient.', es: 'Todas las habilidades ya son competentes.', gl: 'Todas as habilidades xa son competentes.'),
             style: GoogleFonts.lato(
                 color: AppTheme.textSecondary,
                 fontSize: 11,
@@ -710,7 +723,9 @@ class _SkillVersatilityResolverState
                   width: 18, height: 18,
                   child: CircularProgressIndicator(
                       color: Colors.white, strokeWidth: 2))
-              : Text(_selected == null ? 'Select a skill above' : 'Confirm: $_selected',
+              : Text(_selected == null
+                  ? _tr(context, en: 'Select a skill above', es: 'Selecciona una habilidad arriba', gl: 'Selecciona unha habilidade arriba')
+                  : '${_tr(context, en: 'Confirm', es: 'Confirmar', gl: 'Confirmar')}: $_selected',
                   style: GoogleFonts.libreBaskerville(
                       fontSize: 12, fontWeight: FontWeight.bold)),
         ),
@@ -725,13 +740,13 @@ class _SkillVersatilityResolverState
     setState(() => _saving = false);
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('${widget.task.displayName}: $_selected confirmed!'),
+        content: Text('${widget.task.displayName}: ${_tr(context, en: 'confirmed', es: 'confirmado', gl: 'confirmado')}!'),
         backgroundColor: AppTheme.primary,
         duration: const Duration(seconds: 2),
       ));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Error saving choice. Try again.'),
+        content: Text('Error'),
         backgroundColor: AppTheme.accent,
       ));
     }
@@ -774,7 +789,7 @@ class _SubclassResolverState extends State<_SubclassResolver> {
           );
         }
         if (snap.hasError || !snap.hasData || snap.data!.isEmpty) {
-          return Text('Could not load subclasses. Try again later.',
+          return Text(_tr(context, en: 'Could not load subclasses. Try again later.', es: 'No se pudieron cargar las subclases. Intentalo mas tarde.', gl: 'Non se puideron cargar as subclases. Tentao mais tarde.'),
               style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
                   fontSize: 11,
@@ -804,7 +819,9 @@ class _SubclassResolverState extends State<_SubclassResolver> {
                   ? const SizedBox(width: 18, height: 18,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : Text(
-                      _selected == null ? 'Select a subclass above' : 'Confirm: $_selected',
+                      _selected == null
+                        ? _tr(context, en: 'Select a subclass above', es: 'Selecciona una subclase arriba', gl: 'Selecciona unha subclase arriba')
+                        : '${_tr(context, en: 'Confirm', es: 'Confirmar', gl: 'Confirmar')}: $_selected',
                       style: GoogleFonts.libreBaskerville(fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ),
@@ -820,13 +837,13 @@ class _SubclassResolverState extends State<_SubclassResolver> {
     setState(() => _saving = false);
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Subclass chosen: $_selected!'),
+        content: Text('${_tr(context, en: 'Subclass chosen', es: 'Subclase elegida', gl: 'Subclase escollida')}: $_selected!'),
         backgroundColor: AppTheme.primary,
         duration: const Duration(seconds: 2),
       ));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Error saving choice. Try again.'),
+        content: Text('Error'),
         backgroundColor: AppTheme.accent,
       ));
     }
@@ -860,15 +877,14 @@ class _ExpertiseResolverState extends State<_ExpertiseResolver> {
 
     if (skills.isEmpty) {
       return Text(
-        'No eligible skills found. You need proficiency in a skill before gaining expertise.',
+        _tr(context, en: 'No eligible skills found. You need proficiency in a skill before gaining expertise.', es: 'No hay habilidades validas. Necesitas competencia en una habilidad antes de ganar Expertise.', gl: 'Non hai habilidades validas. Necesitas competencia nunha habilidade antes de gañar Expertise.'),
         style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11, fontStyle: FontStyle.italic),
       );
     }
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(
-        'Choose 2 skills you are proficient in to double your proficiency bonus.${
-          remaining > 0 ? '  ($remaining remaining)' : ''}',
+        '${_tr(context, en: 'Choose 2 skills you are proficient in to double your proficiency bonus.', es: 'Elige 2 habilidades en las que seas competente para doblar tu bonificador de competencia.', gl: 'Escolle 2 habilidades nas que sexas competente para dobrar o teu bonificador de competencia.')}${remaining > 0 ? '  (${_tr(context, en: '$remaining remaining', es: '$remaining restantes', gl: '$remaining restantes')})' : ''}',
         style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 12),
       ),
       const SizedBox(height: 10),
@@ -942,8 +958,8 @@ class _ExpertiseResolverState extends State<_ExpertiseResolver> {
                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
               : Text(
                   _selected.length < _maxPicks
-                      ? 'Select ${remaining} more skill${remaining == 1 ? '' : 's'}'
-                      : 'Confirm: ${_selected.join(', ')}',
+                    ? _tr(context, en: 'Select ${remaining} more skill${remaining == 1 ? '' : 's'}', es: 'Selecciona ${remaining} habilidad${remaining == 1 ? '' : 'es'} mas', gl: 'Selecciona ${remaining} habilidade${remaining == 1 ? '' : 's'} mais')
+                    : '${_tr(context, en: 'Confirm', es: 'Confirmar', gl: 'Confirmar')}: ${_selected.join(', ')}',
                   style: GoogleFonts.libreBaskerville(fontSize: 12, fontWeight: FontWeight.bold)),
         ),
       ),
@@ -958,13 +974,13 @@ class _ExpertiseResolverState extends State<_ExpertiseResolver> {
     setState(() => _saving = false);
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Expertise granted: ${_selected.join(', ')}!'),
+        content: Text('${_tr(context, en: 'Expertise granted', es: 'Expertise concedida', gl: 'Expertise concedida')}: ${_selected.join(', ')}!'),
         backgroundColor: AppTheme.primary,
         duration: const Duration(seconds: 2),
       ));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Error saving choice. Try again.'),
+        content: Text('Error'),
         backgroundColor: AppTheme.accent,
       ));
     }

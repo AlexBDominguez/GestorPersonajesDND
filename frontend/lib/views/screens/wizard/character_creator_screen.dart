@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
 import 'package:gestor_personajes_dnd/views/screens/wizard/steps/step_equipment.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -27,6 +28,13 @@ class CharacterCreatorScreen extends StatelessWidget {
 class CharacterWizardBody extends StatelessWidget {
   const CharacterWizardBody({super.key});
 
+  static String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+    final code = Localizations.localeOf(context).languageCode;
+    if (code == 'es') return es;
+    if (code == 'gl') return gl;
+    return en;
+  }
+
   // Metadatos por paso: título e icono
   static const _meta = <WizardStep, ({String title, IconData icon})>{
     WizardStep.preferences:   (title: 'Prefs',    icon: Icons.settings_outlined),
@@ -37,6 +45,18 @@ class CharacterWizardBody extends StatelessWidget {
     WizardStep.spells:        (title: 'Spells',   icon: Icons.auto_fix_high_outlined),
     WizardStep.equipment:     (title: 'Items',    icon: Icons.backpack_outlined),
   };
+
+  String _stepTitle(BuildContext context, WizardStep step) {
+    return switch (step) {
+      WizardStep.preferences => _tr(context, en: 'Prefs', es: 'Prefs', gl: 'Prefs'),
+      WizardStep.dndClass => _tr(context, en: 'Class', es: 'Clase', gl: 'Clase'),
+      WizardStep.background => _tr(context, en: 'BG', es: 'Fondo', gl: 'Fondo'),
+      WizardStep.race => _tr(context, en: 'Race', es: 'Raza', gl: 'Raza'),
+      WizardStep.abilityScores => _tr(context, en: 'Stats', es: 'Atrib.', gl: 'Atrib.'),
+      WizardStep.spells => AppStrings.of(context).tabSpells,
+      WizardStep.equipment => _tr(context, en: 'Items', es: 'Objetos', gl: 'Obxectos'),
+    };
+  }
 
   Widget _stepWidget(WizardStep step) {
     switch (step) {
@@ -62,11 +82,16 @@ class CharacterWizardBody extends StatelessWidget {
     }
 
     final activeSteps = vm.activeSteps;
+    final s = AppStrings.of(context);
 
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 48,
-        title: Text(vm.isLevelUpMode ? 'Level Up' : vm.isEditMode ? 'Edit Character' : 'New Character'),
+        title: Text(vm.isLevelUpMode
+          ? s.levelUp
+          : vm.isEditMode
+            ? s.editCharacter
+            : s.newCharacter),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => _confirmDiscard(context, vm.isEditMode),
@@ -77,7 +102,10 @@ class CharacterWizardBody extends StatelessWidget {
         _StepIndicator(
           steps:       activeSteps,
           current:     vm.currentStepIndex,
-          meta:        _meta,
+          meta:        {
+            for (final e in _meta.entries)
+              e.key: (title: _stepTitle(context, e.key), icon: e.value.icon),
+          },
           isCompleted: (step) => vm.isStepCompleted(step),
           isPartial:   (step) => vm.isStepPartial(step),
           onTap:       (step) => vm.goToStep(step),
@@ -117,6 +145,7 @@ class CharacterWizardBody extends StatelessWidget {
 
   Future<void> _confirmDiscard(BuildContext context, bool isEditMode) async {
 
+    final s = AppStrings.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -124,11 +153,15 @@ class CharacterWizardBody extends StatelessWidget {
         scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          isEditMode ? 'Discard changes?' : 'Discard character?',
+          isEditMode
+              ? _tr(context, en: 'Discard changes?', es: 'Descartar cambios?', gl: 'Descartar cambios?')
+              : _tr(context, en: 'Discard character?', es: 'Descartar personaje?', gl: 'Descartar personaxe?'),
           style: GoogleFonts.libreBaskerville(color: AppTheme.primary),
         ),
         content: Text(
-          isEditMode ? 'Your changes will not be saved.' : 'Your progress will be lost.',
+          isEditMode
+              ? _tr(context, en: 'Your changes will not be saved.', es: 'Tus cambios no se guardaran.', gl: 'Os teus cambios non se gardaran.')
+              : _tr(context, en: 'Your progress will be lost.', es: 'Se perdera tu progreso.', gl: 'Perderase o teu progreso.'),
           style: GoogleFonts.lato(color: AppTheme.textPrimary),
         ),
         actions: [
@@ -146,7 +179,7 @@ class CharacterWizardBody extends StatelessWidget {
                       minimumSize: const Size(0, 40),
                     ),
                     child: Text(
-                      'Cancel',
+                      s.cancel,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.lato(color: AppTheme.textSecondary),
                     ),
@@ -162,7 +195,7 @@ class CharacterWizardBody extends StatelessWidget {
                       minimumSize: const Size(0, 40),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
-                    child: const Text('Discard'),
+                    child: Text(_tr(context, en: 'Discard', es: 'Descartar', gl: 'Descartar')),
                   ),
                 ),
               ],
@@ -316,6 +349,7 @@ class _NavButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     final isLast     = vm.isLastStep;
     final canProceed = vm.canProceedCurrentStep && !vm.isSaving;
     final bottom     = MediaQuery.of(context).padding.bottom;
@@ -336,7 +370,7 @@ class _NavButtons extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: vm.previousStep,
               icon: const Icon(Icons.arrow_back, size: 16),
-              label: const Text('Back'),
+              label: Text(s.back),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.textSecondary,
                 side: const BorderSide(color: AppTheme.surfaceVariant),
@@ -352,7 +386,7 @@ class _NavButtons extends StatelessWidget {
         Expanded(
           flex: 2,
           child: Tooltip(
-            message: canProceed ? '' : 'Some steps are incomplete',
+            message: canProceed ? '' : CharacterWizardBody._tr(context, en: 'Some steps are incomplete', es: 'Hay pasos incompletos', gl: 'Hai pasos incompletos'),
             child: ElevatedButton.icon(
               onPressed: canProceed
                   ? () => isLast ? vm.submit() : vm.nextStep()
@@ -364,10 +398,18 @@ class _NavButtons extends StatelessWidget {
                           strokeWidth: 2, color: AppTheme.background))
                   : Icon(isLast ? Icons.check : Icons.arrow_forward, size: 16),
               label: Text(vm.isSaving
-                  ? (vm.isLevelUpMode ? 'Leveling Up…' : vm.isEditMode ? 'Saving...' : 'Creating…')
+                  ? (vm.isLevelUpMode
+                    ? CharacterWizardBody._tr(context, en: 'Leveling Up…', es: 'Subiendo nivel…', gl: 'Subindo nivel…')
+                    : vm.isEditMode
+                      ? CharacterWizardBody._tr(context, en: 'Saving...', es: 'Guardando...', gl: 'Gardando...')
+                      : CharacterWizardBody._tr(context, en: 'Creating…', es: 'Creando…', gl: 'Creando…'))
                   : isLast
-                      ? (vm.isLevelUpMode ? 'Level Up!' : vm.isEditMode ? 'Save Changes' : 'Create Character')
-                      : 'Next'),
+                    ? (vm.isLevelUpMode
+                      ? s.levelUpButton
+                      : vm.isEditMode
+                        ? CharacterWizardBody._tr(context, en: 'Save Changes', es: 'Guardar cambios', gl: 'Gardar cambios')
+                        : CharacterWizardBody._tr(context, en: 'Create Character', es: 'Crear personaje', gl: 'Crear personaxe'))
+                    : s.next),
               style: ElevatedButton.styleFrom(
                 shape: sharedShape,
                 padding: sharedPadding,

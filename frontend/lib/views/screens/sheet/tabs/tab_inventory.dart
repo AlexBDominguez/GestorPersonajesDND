@@ -7,6 +7,13 @@ import 'package:gestor_personajes_dnd/services/inventory/inventory_service.dart'
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart' show GoogleFonts;
 
+String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+  final code = Localizations.localeOf(context).languageCode;
+  if (code == 'es') return es;
+  if (code == 'gl') return gl;
+  return en;
+}
+
 class TabInventory extends StatefulWidget {
   final PlayerCharacter character;
   final CharacterSheetViewModel vm;
@@ -58,14 +65,16 @@ class _TabInventoryState extends State<TabInventory> {
     await _toggleEquipped(item);
     if (!mounted) return;
     final wasEquipped = !item.equipped; // after toggle it's the opposite
-    final action = wasEquipped ? 'Equipped' : 'Unequipped';
+    final action = wasEquipped
+        ? _tr(context, en: 'Equipped', es: 'Equipado', gl: 'Equipado')
+        : _tr(context, en: 'Unequipped', es: 'Desequipado', gl: 'Desequipado');
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('$action "${item.name}"',
           style: GoogleFonts.lato(color: Colors.white)),
       backgroundColor: AppTheme.surface.withOpacity(0.95),
       duration: const Duration(seconds: 3),
       action: SnackBarAction(
-        label: 'Undo',
+        label: _tr(context, en: 'Undo', es: 'Deshacer', gl: 'Desfacer'),
         textColor: AppTheme.primary,
         onPressed: () => _toggleEquipped(item),
       ),
@@ -80,14 +89,16 @@ class _TabInventoryState extends State<TabInventory> {
     await _toggleAttuned(item);
     if (!mounted) return;
     final wasAttuned = !item.attuned;
-    final action = wasAttuned ? 'Attuned' : 'Removed attunement for';
+    final action = wasAttuned
+        ? _tr(context, en: 'Attuned', es: 'Sintonizado', gl: 'Sintonizado')
+        : _tr(context, en: 'Removed attunement for', es: 'Sintonia retirada de', gl: 'Sintonia retirada de');
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('$action "${item.name}"',
           style: GoogleFonts.lato(color: Colors.white)),
       backgroundColor: AppTheme.surface.withOpacity(0.95),
       duration: const Duration(seconds: 3),
       action: SnackBarAction(
-        label: 'Undo',
+        label: _tr(context, en: 'Undo', es: 'Deshacer', gl: 'Desfacer'),
         textColor: AppTheme.primary,
         onPressed: () => _toggleAttuned(item),
       ),
@@ -112,9 +123,9 @@ class _TabInventoryState extends State<TabInventory> {
         backgroundColor: AppTheme.surface,
         scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text ('Remove item?',
+        title: Text (_tr(context, en: 'Remove item?', es: 'Eliminar objeto?', gl: 'Eliminar obxecto?'),
           style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
-        content: Text('Remove "${item.name}" from inventory?',
+        content: Text(_tr(context, en: 'Remove "${item.name}" from inventory?', es: 'Eliminar "${item.name}" del inventario?', gl: 'Eliminar "${item.name}" do inventario?'),
           style: GoogleFonts.lato(color: AppTheme.textPrimary)),
         actions: [
           SizedBox(
@@ -130,7 +141,7 @@ class _TabInventoryState extends State<TabInventory> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       minimumSize: const Size(0, 40),
                     ),
-                    child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                    child: Text(_tr(context, en: 'Cancel', es: 'Cancelar', gl: 'Cancelar'), style: GoogleFonts.lato(color: AppTheme.textSecondary)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -142,7 +153,7 @@ class _TabInventoryState extends State<TabInventory> {
                           foregroundColor: Colors.white,
                           minimumSize: const Size(0, 40),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                      child: const Text('Remove')),
+                      child: Text(_tr(context, en: 'Remove', es: 'Eliminar', gl: 'Eliminar'))),
                 ),
               ],
             ),
@@ -190,7 +201,12 @@ class _TabInventoryState extends State<TabInventory> {
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            '"$itemName" does not require attunement and cannot be attuned.',
+            _tr(
+              context,
+              en: '"$itemName" does not require attunement and cannot be attuned.',
+              es: '"$itemName" no requiere sintonia y no se puede sintonizar.',
+              gl: '"$itemName" non require sintonia e non se pode sintonizar.',
+            ),
             style: GoogleFonts.lato(color: Colors.white, fontSize: 13),
           ),
         ),
@@ -218,7 +234,7 @@ class _TabInventoryState extends State<TabInventory> {
           OutlinedButton.icon(
             onPressed: _load,
             icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('Retry'),
+            label: Text(_tr(context, en: 'Retry', es: 'Reintentar', gl: 'Reintentar')),
             style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.primary,
                 side: const BorderSide(color: AppTheme.primary)),
@@ -249,7 +265,7 @@ class _TabInventoryState extends State<TabInventory> {
           ],
 
           //Currency
-          _SectionTitle('Currency'),
+          _SectionTitle(_tr(context, en: 'Currency', es: 'Moneda', gl: 'Moeda')),
           const SizedBox(height: 10),
           _CurrencyRow(character: widget.character),
           const SizedBox(height: 24),
@@ -281,7 +297,7 @@ class _TabInventoryState extends State<TabInventory> {
 
           //Backpack
           Row(children: [
-            const Expanded(child: _SectionTitleInline('Backpack')),
+            Expanded(child: _SectionTitleInline(_tr(context, en: 'Backpack', es: 'Mochila', gl: 'Mochila'))),
             // Add item button
             GestureDetector(
               onTap: () => _showAddItemSheet(context),
@@ -297,7 +313,7 @@ class _TabInventoryState extends State<TabInventory> {
                   const Icon(Icons.add,
                   color: AppTheme.primary, size: 14),
                   const SizedBox(width: 4),
-                  Text('Add item',
+                  Text(_tr(context, en: 'Add item', es: 'Anadir objeto', gl: 'Engadir obxecto'),
                   style: GoogleFonts.lato(
                     color: AppTheme.primary,
                     fontSize: 11,
@@ -315,7 +331,7 @@ class _TabInventoryState extends State<TabInventory> {
               const Icon(Icons.drag_indicator,
                 color: AppTheme.textSecondary, size: 14),
               const SizedBox(width: 4),
-              Text('Long-press an item to drag it to Equipped or Attuned',
+              Text(_tr(context, en: 'Long-press an item to drag it to Equipped or Attuned', es: 'Manten pulsado un objeto para arrastrarlo a Equipado o Sintonizado', gl: 'Mantem premido un obxecto para arrastralo a Equipado ou Sintonizado'),
                 style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
                   fontSize: 11,
@@ -323,7 +339,7 @@ class _TabInventoryState extends State<TabInventory> {
             ]),
           ),
           if (backpack.isEmpty)
-            _EmptySlot(message: 'Backpack is empty')
+            _EmptySlot(message: _tr(context, en: 'Backpack is empty', es: 'La mochila esta vacia', gl: 'A mochila esta baleira'))
           else
           ...backpack.map((item) => _DraggableItemTile(
             item: item,
@@ -419,16 +435,16 @@ class _EquippedDropZoneState extends State<_EquippedDropZone> {
           child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SectionTitle('Equipped'),
+                _SectionTitle(_tr(context, en: 'Equipped', es: 'Equipado', gl: 'Equipado')),
                 if (widget.isDragging)
                   _DropHint(
-                    label: 'Drop here to equip',
+                    label: _tr(context, en: 'Drop here to equip', es: 'Suelta aqui para equipar', gl: 'Solta aqui para equipar'),
                     active: isHovering,
                     icon: Icons.shield_outlined,
                   ),
                 const SizedBox(height: 8),
                 if (widget.items.isEmpty && !widget.isDragging)
-                  _EmptySlot(message: 'No equipped items'),
+                  _EmptySlot(message: _tr(context, en: 'No equipped items', es: 'No hay objetos equipados', gl: 'Non hai obxectos equipados')),
                 ...widget.items.map((item) => _EquippedItemTile(
                       item: item,
                       showWeight: widget.showWeight,
@@ -515,7 +531,7 @@ class _AttunedDropZoneState extends State<_AttunedDropZone>{
               Row(children: [
                 Expanded(
                   child: _SectionTitle(
-                    'Attuned (${widget.items.length}/3)'),
+                    '${_tr(context, en: 'Attuned', es: 'Sintonizado', gl: 'Sintonizado')} (${widget.items.length}/3)'),
                   ),
                   if (invalidHover)
                     Padding(
@@ -524,7 +540,7 @@ class _AttunedDropZoneState extends State<_AttunedDropZone>{
                         const Icon(Icons.block,
                           color: AppTheme.accent, size: 14),
                         const SizedBox(width: 4),
-                        Text('Cannot attune',
+                        Text(_tr(context, en: 'Cannot attune', es: 'No se puede sintonizar', gl: 'Non se pode sintonizar'),
                           style: GoogleFonts.lato(
                             color: AppTheme.accent,
                             fontSize: 11,
@@ -535,15 +551,15 @@ class _AttunedDropZoneState extends State<_AttunedDropZone>{
               if (widget.isDragging)
                 _DropHint(
                   label: invalidHover
-                    ? 'This item cannot be attuned'
-                    : 'Drop here to attune',
+                    ? _tr(context, en: 'This item cannot be attuned', es: 'Este objeto no se puede sintonizar', gl: 'Este obxecto non se pode sintonizar')
+                    : _tr(context, en: 'Drop here to attune', es: 'Suelta aqui para sintonizar', gl: 'Solta aqui para sintonizar'),
                   active: isHovering,
                   isError: invalidHover,
                   icon: Icons.auto_awesome_outlined,
                 ),
               const SizedBox(height: 8),
               if (widget.items.isEmpty && !widget.isDragging)
-                _EmptySlot(message: 'No attuned items'),
+                _EmptySlot(message: _tr(context, en: 'No attuned items', es: 'No hay objetos sintonizados', gl: 'Non hai obxectos sintonizados')),
               ...widget.items.map((item) => _AttunedItemTile(
                     item: item,
                     showWeight: widget.showWeight,
@@ -594,7 +610,7 @@ class _DraggableItemTile extends StatelessWidget{
         itemBuilder: (_) => [
           PopupMenuItem(
             value: 'remove',
-            child: Text('Remove',
+            child: Text(_tr(context, en: 'Remove', es: 'Eliminar', gl: 'Eliminar'),
               style: GoogleFonts.lato(color: AppTheme.accent)),
           ),
         ],
@@ -691,12 +707,12 @@ class _EquippedItemTile extends StatelessWidget {
         itemBuilder: (_) => [
           PopupMenuItem(
             value: 'unequip',
-            child: Text('Unequip',
+            child: Text(_tr(context, en: 'Unequip', es: 'Desequipar', gl: 'Desequipar'),
               style: GoogleFonts.lato(color: AppTheme.primary)),
           ),
           PopupMenuItem(
             value: 'remove',
-            child: Text('Remove',
+            child: Text(_tr(context, en: 'Remove', es: 'Eliminar', gl: 'Eliminar'),
               style: GoogleFonts.lato(color: AppTheme.accent)),
           ),
         ],
@@ -740,12 +756,12 @@ class _AttunedItemTile extends StatelessWidget {
         itemBuilder: (_) => [
           PopupMenuItem(
             value: 'unattune',
-            child: Text('Remove attunement',
+            child: Text(_tr(context, en: 'Remove attunement', es: 'Quitar sintonia', gl: 'Quitar sintonia'),
                 style: GoogleFonts.lato(color: AppTheme.textPrimary)),
           ),
           PopupMenuItem(
             value: 'remove',
-            child: Text('Remove',
+            child: Text(_tr(context, en: 'Remove', es: 'Eliminar', gl: 'Eliminar'),
                 style: GoogleFonts.lato(color: AppTheme.accent)),
           ),
         ],
@@ -815,7 +831,7 @@ class _ItemTileContent extends StatelessWidget {
             ]),
             const SizedBox(height: 4),
             if (item.itemType != null)
-              Text(_formatItemType(item.itemType!),
+              Text(_formatItemType(context, item.itemType!),
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary, fontSize: 12)),
             const SizedBox(height: 16),
@@ -826,7 +842,7 @@ class _ItemTileContent extends StatelessWidget {
                       fontSize: 13,
                       height: 1.6))
             else
-              Text('No description available.',
+              Text(_tr(context, en: 'No description available.', es: 'No hay descripcion disponible.', gl: 'Non hai descricion dispoñible.'),
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary,
                       fontSize: 13,
@@ -870,7 +886,7 @@ class _ItemTileContent extends StatelessWidget {
             const SizedBox(height: 2),
             Row(children: [
               if (item.itemType != null)
-                Text(_formatItemType(item.itemType!),
+                Text(_formatItemType(context, item.itemType!),
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary, fontSize: 11)),
               if (showWeight)
@@ -881,7 +897,7 @@ class _ItemTileContent extends StatelessWidget {
                 const Text('  ·  ',
                     style: TextStyle(
                         color: AppTheme.textSecondary, fontSize: 11)),
-                Text('Attuned',
+                Text(_tr(context, en: 'Attuned', es: 'Sintonizado', gl: 'Sintonizado'),
                     style: GoogleFonts.lato(
                         color: const Color(0xFFB07DFF),
                         fontSize: 11,
@@ -952,7 +968,7 @@ class _ItemTileContent extends StatelessWidget {
           splashRadius: 18,
           padding: const EdgeInsets.all(4),
           constraints: const BoxConstraints(),
-          tooltip: 'Description',
+          tooltip: _tr(context, en: 'Description', es: 'Descripcion', gl: 'Descricion'),
           onPressed: () => _showDescription(context),
         ),
         trailing,
@@ -1031,7 +1047,7 @@ class _WeightBar extends StatelessWidget {
             : AppTheme.primary;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row (children: [
-        Text('Carry Weight',
+        Text(_tr(context, en: 'Carry Weight', es: 'Carga transportada', gl: 'Carga transportada'),
           style: GoogleFonts.lato(
             color: AppTheme.textSecondary,
             fontSize: 11,
@@ -1117,7 +1133,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Text('Add Item',
+            child: Text(_tr(context, en: 'Add Item', es: 'Anadir objeto', gl: 'Engadir obxecto'),
               style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 16,
@@ -1132,7 +1148,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
               style: GoogleFonts.lato(
                 color: AppTheme.textPrimary, fontSize: 13),
               decoration: InputDecoration(
-                hintText: 'Search items...',
+                hintText: _tr(context, en: 'Search items...', es: 'Buscar objetos...', gl: 'Buscar obxectos...'),
                 hintStyle: GoogleFonts.lato(
                   color: AppTheme.textSecondary, fontSize: 13),
                 prefixIcon: const Icon(Icons.search,
@@ -1169,7 +1185,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                         fontSize: 13,
                         fontWeight: FontWeight.bold)),
                     subtitle: Text(
-                      [if (item.itemType != null) _formatItemType(item.itemType!), item.statSummary]
+                      [if (item.itemType != null) _formatItemType(context, item.itemType!), item.statSummary]
                           .where((s) => s.isNotEmpty)
                           .join(' · '),
                       style: GoogleFonts.lato(
@@ -1186,8 +1202,12 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                 content: Text(
-                                  'Cannot add "${item.name}": would exceed carry capacity '
-                                  '(${newTotal.toStringAsFixed(1)} / ${widget.maxCarry.toStringAsFixed(0)} lb)'),
+                                  _tr(
+                                    context,
+                                    en: 'Cannot add "${item.name}": would exceed carry capacity (${newTotal.toStringAsFixed(1)} / ${widget.maxCarry.toStringAsFixed(0)} lb)',
+                                    es: 'No se puede anadir "${item.name}": superaria la capacidad de carga (${newTotal.toStringAsFixed(1)} / ${widget.maxCarry.toStringAsFixed(0)} lb)',
+                                    gl: 'Non se pode engadir "${item.name}": superaria a capacidade de carga (${newTotal.toStringAsFixed(1)} / ${widget.maxCarry.toStringAsFixed(0)} lb)',
+                                  )),
                                 backgroundColor: AppTheme.accent,
                                 duration: const Duration(seconds: 3)));
                             }
@@ -1282,7 +1302,7 @@ class _CurrencyRowState extends State<_CurrencyRow> {
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
         scrollable: true,
-        title: Text('Set ${_coins[index].$1}',
+        title: Text('${_tr(context, en: 'Set', es: 'Fijar', gl: 'Fixar')} ${_coins[index].$1}',
             style: GoogleFonts.libreBaskerville(color: AppTheme.primary, fontSize: 14)),
         content: TextField(
           controller: ctrl,
@@ -1312,7 +1332,7 @@ class _CurrencyRowState extends State<_CurrencyRow> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         minimumSize: const Size(0, 40),
                       ),
-                      child: Text('Cancel',
+                      child: Text(_tr(context, en: 'Cancel', es: 'Cancelar', gl: 'Cancelar'),
                           style: GoogleFonts.lato(color: AppTheme.textSecondary))),
                 ),
                 const SizedBox(width: 8),
@@ -1331,7 +1351,7 @@ class _CurrencyRowState extends State<_CurrencyRow> {
                       minimumSize: const Size(0, 40),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
-                    child: Text('Set',
+                    child: Text(_tr(context, en: 'Set', es: 'Fijar', gl: 'Fixar'),
                         style: GoogleFonts.libreBaskerville(color: AppTheme.background)),
                   ),
                 ),
@@ -1476,10 +1496,12 @@ class _SectionTitleInline extends StatelessWidget {
 }
 
 /// Converts raw backend itemType (e.g. ADVENTURING_GEAR) to a readable label.
-String _formatItemType(String raw) {
+String _formatItemType(BuildContext context, String raw) {
   switch (raw.toUpperCase()) {
-    case 'ADVENTURING_GEAR': return 'Adventuring Gear';
-    case 'MOUNTS_AND_VEHICLES': return 'Mounts & Vehicles';
+    case 'ADVENTURING_GEAR':
+      return _tr(context, en: 'Adventuring Gear', es: 'Equipo de aventura', gl: 'Equipo de aventura');
+    case 'MOUNTS_AND_VEHICLES':
+      return _tr(context, en: 'Mounts & Vehicles', es: 'Monturas y vehiculos', gl: 'Monturas e vehiculos');
     default:
       return raw
           .toLowerCase()

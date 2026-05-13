@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import '../../config/app_theme.dart';
 import '../../models/character/player_character_summary.dart';
 
@@ -19,6 +21,7 @@ class CharacterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -65,13 +68,13 @@ class CharacterCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    _LevelBadge(level: character.level),
+                    _LevelBadge(level: character.level, levelLabel: s.level),
                   ]),
                   const SizedBox(height: 2),
                   //Raza (o subrace si la hubiese)
                   if(character.raceName != null) 
                     Text(
-                      character.raceName!,
+                      localizeKnownName(context, character.raceName!),
                       style: GoogleFonts.lato(
                         color: AppTheme.textSecondary,
                         fontSize: 12),
@@ -80,7 +83,7 @@ class CharacterCard extends StatelessWidget {
                         //Clase | Subclase
                         if (character.dndClassName != null)
                           Text(
-                            _classLine(),
+                            _classLine(context),
                             style: GoogleFonts.lato(
                               color: AppTheme.textSecondary,
                               fontSize: 12),
@@ -99,9 +102,11 @@ class CharacterCard extends StatelessWidget {
     );
   }
 
-  String _classLine() {
+  String _classLine(BuildContext context) {
     final parts = <String>[];
-    if (character.dndClassName != null) parts.add(character.dndClassName!);
+    if (character.dndClassName != null) {
+      parts.add(localizeKnownName(context, character.dndClassName!));
+    }
     //subclassName no está en el summary aún - se puede añadir después
     return parts.join(' | ');
   }
@@ -111,7 +116,8 @@ class CharacterCard extends StatelessWidget {
 
 class _LevelBadge extends StatelessWidget {
   final int level;
-  const _LevelBadge({required this.level});
+  final String levelLabel;
+  const _LevelBadge({required this.level, required this.levelLabel});
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +128,7 @@ class _LevelBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        'Lvl $level',
+        '$levelLabel $level',
         style: GoogleFonts.libreBaskerville(
           color: AppTheme.background,
           fontSize: 11,
@@ -148,6 +154,7 @@ class _MoreMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert, color: AppTheme.textSecondary),
       color: AppTheme.surfaceVariant,
@@ -165,7 +172,7 @@ class _MoreMenuButton extends StatelessWidget {
             const Icon(Icons.edit_outlined,
                 color: AppTheme.primary, size: 18),
             const SizedBox(width: 10),
-            Text('Edit',
+            Text(s.edit,
                 style: GoogleFonts.lato(color: AppTheme.textPrimary)),
           ]),
         ),
@@ -175,7 +182,7 @@ class _MoreMenuButton extends StatelessWidget {
           child: Row(children: [
             const Icon(Icons.delete_outline, color: AppTheme.accent, size: 18),
             const SizedBox(width: 10),
-            Text('Delete',
+            Text(s.remove,
                 style: GoogleFonts.lato(color: AppTheme.accent)),
           ]),
         ),
@@ -184,6 +191,23 @@ class _MoreMenuButton extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context) {
+    final s = AppStrings.of(context);
+    final code = Localizations.localeOf(context).languageCode;
+    final deleteTitle = code == 'es'
+      ? '¿Eliminar personaje?'
+      : code == 'gl'
+        ? 'Eliminar personaxe?'
+        : 'Delete character?';
+    final deleteBodyPrefix = code == 'es'
+      ? '¿Seguro que quieres eliminar '
+      : code == 'gl'
+        ? 'Seguro que queres eliminar '
+        : 'Are you sure you want to delete ';
+    final deleteBodySuffix = code == 'es'
+      ? '?\n\nSe perderan todos los datos.'
+      : code == 'gl'
+        ? '?\n\nPerderanse todos os datos.'
+        : '?\n\nAll data will be lost.';
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.7),
@@ -192,7 +216,7 @@ class _MoreMenuButton extends StatelessWidget {
         scrollable: true,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Delete Character?',
+        title: Text(deleteTitle,
             style: GoogleFonts.libreBaskerville(
                 color: AppTheme.accent,
                 fontSize: 17, fontWeight: FontWeight.bold)),
@@ -201,13 +225,13 @@ class _MoreMenuButton extends StatelessWidget {
             style: GoogleFonts.lato(
                 color: AppTheme.textSecondary, fontSize: 14),
             children: [
-              const TextSpan(text: 'Are you sure you want to delete '),
+              TextSpan(text: deleteBodyPrefix),
               TextSpan(
                   text: character.name,
                   style: GoogleFonts.libreBaskerville(
                       color: AppTheme.textPrimary,
                       fontWeight: FontWeight.bold)),
-              const TextSpan(text: '?\n\nAll data will be lost.'),
+              TextSpan(text: deleteBodySuffix),
             ],
           ),
         ),
@@ -225,7 +249,7 @@ class _MoreMenuButton extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       minimumSize: const Size(0, 40),
                     ),
-                    child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                    child: Text(s.cancel, style: GoogleFonts.lato(color: AppTheme.textSecondary)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -240,7 +264,7 @@ class _MoreMenuButton extends StatelessWidget {
                       Navigator.pop(context);
                       onDelete();
                     },
-                    child: Text('Delete', style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
+                    child: Text(s.remove, style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],

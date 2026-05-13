@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import '../../../../config/app_theme.dart';
 import '../../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import '../../../../models/wizard/background_option.dart';
+
+String _trText(BuildContext context, {required String en, required String es, required String gl}) {
+  final code = Localizations.localeOf(context).languageCode;
+  if (code == 'es') return es;
+  if (code == 'gl') return gl;
+  return en;
+}
 
 class StepBackground extends StatefulWidget {
   const StepBackground({super.key});
@@ -13,6 +21,12 @@ class StepBackground extends StatefulWidget {
 }
 
 class _StepBackgroundState extends State<StepBackground> {
+  String _tr({required String en, required String es, required String gl}) {
+    final code = Localizations.localeOf(context).languageCode;
+    if (code == 'es') return es;
+    if (code == 'gl') return gl;
+    return en;
+  }
   // Controladores para los campos de texto libre
   final _hairCtrl       = TextEditingController();
   final _eyesCtrl       = TextEditingController();
@@ -84,17 +98,21 @@ class _StepBackgroundState extends State<StepBackground> {
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SizedBox(height: 4),
-        Text('Choose your Background',
+        Text(_tr(en: 'Choose your Background', es: 'Elige tu trasfondo', gl: 'Escolle o teu trasfondo'),
             style: Theme.of(context).textTheme.displayMedium),
         const SizedBox(height: 4),
         Text(
-          'Your background reveals where you came from and your place in the world.',
+          _tr(
+            en: 'Your background reveals where you came from and your place in the world.',
+            es: 'Tu trasfondo revela de donde vienes y tu lugar en el mundo.',
+            gl: 'O teu trasfondo revela de onde vens e o teu lugar no mundo.',
+          ),
           style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13),
         ),
         const SizedBox(height: 20),
 
         // ── Dropdown de selección ──────────────────────────────────
-        _SectionTitle('Background'),
+        _SectionTitle(_tr(en: 'Background', es: 'Trasfondo', gl: 'Trasfondo')),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -110,8 +128,8 @@ class _StepBackgroundState extends State<StepBackground> {
               // Edit mode: load backgrounds lazily if not yet loaded
               ? vm.backgrounds.isEmpty
                   ? Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text('Loading backgrounds…',
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text(_tr(en: 'Loading backgrounds…', es: 'Cargando trasfondos…', gl: 'Cargando trasfondos…'),
                           style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
                     )
                   : DropdownButtonHideUnderline(
@@ -119,12 +137,12 @@ class _StepBackgroundState extends State<StepBackground> {
                         isExpanded: true,
                         dropdownColor: AppTheme.surface,
                         value: bg?.id,
-                        hint: Text('Select a background…',
+                        hint: Text(_tr(en: 'Select a background…', es: 'Selecciona un trasfondo…', gl: 'Selecciona un trasfondo…'),
                             style: GoogleFonts.lato(
                                 color: AppTheme.textSecondary, fontSize: 14)),
                         items: vm.backgrounds.map((b) => DropdownMenuItem(
                           value: b.id,
-                          child: Text(b.name,
+                          child: Text(localizeKnownName(context, b.name),
                               style: GoogleFonts.libreBaskerville(
                                   color: AppTheme.textPrimary, fontSize: 14)),
                         )).toList(),
@@ -140,12 +158,12 @@ class _StepBackgroundState extends State<StepBackground> {
                     isExpanded: true,
                     dropdownColor: AppTheme.surface,
                     value: bg?.id,
-                    hint: Text('Select a background…',
+                    hint: Text(_tr(en: 'Select a background…', es: 'Selecciona un trasfondo…', gl: 'Selecciona un trasfondo…'),
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary, fontSize: 14)),
                     items: vm.backgrounds.map((b) => DropdownMenuItem(
                       value: b.id,
-                      child: Text(b.name,
+                      child: Text(localizeKnownName(context, b.name),
                           style: GoogleFonts.libreBaskerville(
                               color: AppTheme.textPrimary, fontSize: 14)),
                     )).toList(),
@@ -158,8 +176,11 @@ class _StepBackgroundState extends State<StepBackground> {
                         final messenger = ScaffoldMessenger.of(context);
                         messenger.showSnackBar(SnackBar(
                           content: Text(
-                            'Conflict: $names ${removed.length == 1 ? 'is' : 'are'} already granted by this background — '
-                            'deselected from your class skills. Go back to Edit Class to re-pick.',
+                            _tr(
+                              en: 'Conflict: $names ${removed.length == 1 ? 'is' : 'are'} already granted by this background — deselected from your class skills. Go back to Edit Class to re-pick.',
+                              es: 'Conflicto: $names ${removed.length == 1 ? 'ya esta' : 'ya estan'} otorgado por este trasfondo. Se deselecciono en tus habilidades de clase. Vuelve a Editar clase para elegir de nuevo.',
+                              gl: 'Conflito: $names ${removed.length == 1 ? 'xa esta' : 'xa estan'} outorgado por este trasfondo. Deseleccionouse nas habilidades da clase. Volve a Editar clase para escoller de novo.',
+                            ),
                             style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
                           ),
                           backgroundColor: AppTheme.surface,
@@ -170,7 +191,7 @@ class _StepBackgroundState extends State<StepBackground> {
                           ),
                           duration: const Duration(seconds: 8),
                           action: SnackBarAction(
-                            label: 'Dismiss',
+                            label: _tr(en: 'Dismiss', es: 'Cerrar', gl: 'Pechar'),
                             textColor: AppTheme.primary,
                             onPressed: () => messenger.hideCurrentSnackBar(),
                           ),
@@ -189,7 +210,7 @@ class _StepBackgroundState extends State<StepBackground> {
 
         // ── Alignment ─────────────────────────────────────────────
         const SizedBox(height: 16),
-        _SectionTitle('Alignment'),
+        _SectionTitle(_tr(en: 'Alignment', es: 'Alineamiento', gl: 'Aliñamento')),
         const SizedBox(height: 8),
         _AlignmentGrid(
           selected: vm.alignment,
@@ -199,32 +220,32 @@ class _StepBackgroundState extends State<StepBackground> {
         const SizedBox(height: 24),
 
         // ── Características físicas ────────────────────────────────
-        _SectionTitle('Physical Characteristics'),
+        _SectionTitle(_tr(en: 'Physical Characteristics', es: 'Caracteristicas fisicas', gl: 'Caracteristicas fisicas')),
         const SizedBox(height: 10),
-        _TextRow(label: 'Hair',   ctrl: _hairCtrl,   hint: 'e.g. Brown'),
-        _TextRow(label: 'Eyes',   ctrl: _eyesCtrl,   hint: 'e.g. Blue'),
-        _TextRow(label: 'Skin',   ctrl: _skinCtrl,   hint: 'e.g. Tan'),
-        _TextRow(label: 'Age',    ctrl: _ageCtrl,    hint: 'e.g. 25',
+        _TextRow(label: _tr(en: 'Hair', es: 'Pelo', gl: 'Pelo'),   ctrl: _hairCtrl,   hint: _tr(en: 'e.g. Brown', es: 'ej. Castano', gl: 'ex. Castano')),
+        _TextRow(label: _tr(en: 'Eyes', es: 'Ojos', gl: 'Ollos'),   ctrl: _eyesCtrl,   hint: _tr(en: 'e.g. Blue', es: 'ej. Azules', gl: 'ex. Azuis')),
+        _TextRow(label: _tr(en: 'Skin', es: 'Piel', gl: 'Pel'),   ctrl: _skinCtrl,   hint: _tr(en: 'e.g. Tan', es: 'ej. Morena', gl: 'ex. Morena')),
+        _TextRow(label: _tr(en: 'Age', es: 'Edad', gl: 'Idade'),    ctrl: _ageCtrl,    hint: _tr(en: 'e.g. 25', es: 'ej. 25', gl: 'ex. 25'),
             keyboardType: TextInputType.number),
-        _TextRow(label: 'Height', ctrl: _heightCtrl, hint: "e.g. 5'10\""),
-        _TextRow(label: 'Weight', ctrl: _weightCtrl, hint: 'e.g. 160 lbs'),
+        _TextRow(label: _tr(en: 'Height', es: 'Altura', gl: 'Altura'), ctrl: _heightCtrl, hint: _tr(en: "e.g. 5'10\"", es: 'ej. 1,78 m', gl: 'ex. 1,78 m')),
+        _TextRow(label: _tr(en: 'Weight', es: 'Peso', gl: 'Peso'), ctrl: _weightCtrl, hint: _tr(en: 'e.g. 160 lbs', es: 'ej. 72 kg', gl: 'ex. 72 kg')),
 
         const SizedBox(height: 24),
 
         // ── Características personales ─────────────────────────────
-        _SectionTitle('Personal Characteristics'),
+        _SectionTitle(_tr(en: 'Personal Characteristics', es: 'Rasgos personales', gl: 'Trazos persoais')),
         const SizedBox(height: 10),
-        _TextArea(label: 'Personality Traits', ctrl: _personalityCtrl,
-            hint: 'Describe your character\'s personality…'),
+        _TextArea(label: _tr(en: 'Personality Traits', es: 'Rasgos de personalidad', gl: 'Rasgos de personalidade'), ctrl: _personalityCtrl,
+          hint: _tr(en: 'Describe your character\'s personality…', es: 'Describe la personalidad del personaje…', gl: 'Describe a personalidade do personaxe…')),
         const SizedBox(height: 10),
-        _TextArea(label: 'Ideals', ctrl: _idealsCtrl,
-            hint: 'What are your ideals?'),
+        _TextArea(label: _tr(en: 'Ideals', es: 'Ideales', gl: 'Ideais'), ctrl: _idealsCtrl,
+          hint: _tr(en: 'What are your ideals?', es: 'Cuales son tus ideales?', gl: 'Cales son os teus ideais?')),
         const SizedBox(height: 10),
-        _TextArea(label: 'Bonds', ctrl: _bondsCtrl,
-            hint: 'What bonds tie you to the world?'),
+        _TextArea(label: _tr(en: 'Bonds', es: 'Vinculos', gl: 'Vinculos'), ctrl: _bondsCtrl,
+          hint: _tr(en: 'What bonds tie you to the world?', es: 'Que vinculos te atan al mundo?', gl: 'Que vinculos te atan ao mundo?')),
         const SizedBox(height: 10),
-        _TextArea(label: 'Flaws', ctrl: _flawsCtrl,
-            hint: 'What are your character\'s flaws?'),
+        _TextArea(label: _tr(en: 'Flaws', es: 'Defectos', gl: 'Defectos'), ctrl: _flawsCtrl,
+          hint: _tr(en: 'What are your character\'s flaws?', es: 'Cuales son los defectos del personaje?', gl: 'Cales son os defectos do personaxe?')),
         const SizedBox(height: 24),
       ]),
     );
@@ -249,7 +270,7 @@ class _BackgroundDetail extends StatelessWidget {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Nombre
-        Text(bg.name,
+        Text(localizeKnownName(context, bg.name),
             style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 16,
@@ -266,29 +287,29 @@ class _BackgroundDetail extends StatelessWidget {
         // Skill proficiencies
         if (bg.skillProficiencies.isNotEmpty) ...[
           const SizedBox(height: 14),
-          _DetailSubtitle('Skill Proficiencies'),
+          _DetailSubtitle(_trText(context, en: 'Skill Proficiencies', es: 'Competencias de habilidad', gl: 'Competencias de habilidade')),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6, runSpacing: 6,
-            children: bg.skillProficiencies.map((s) => _Chip(_formatProficiency(s))).toList(),
+            children: bg.skillProficiencies.map((s) => _Chip(localizeSkillOrProficiency(context, s))).toList(),
           ),
         ],
 
         // Tool proficiencies
         if (bg.toolProficiencies.isNotEmpty) ...[
           const SizedBox(height: 14),
-          _DetailSubtitle('Tool Proficiencies'),
+          _DetailSubtitle(_trText(context, en: 'Tool Proficiencies', es: 'Competencias de herramientas', gl: 'Competencias de ferramentas')),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6, runSpacing: 6,
-            children: bg.toolProficiencies.map((s) => _Chip(_formatProficiency(s))).toList(),
+            children: bg.toolProficiencies.map((s) => _Chip(localizeSkillOrProficiency(context, s))).toList(),
           ),
         ],
 
         // Languages
         if (bg.languages.isNotEmpty) ...[
           const SizedBox(height: 14),
-          _DetailSubtitle('Languages'),
+          _DetailSubtitle(_trText(context, en: 'Languages', es: 'Idiomas', gl: 'Idiomas')),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6, runSpacing: 6,
@@ -333,7 +354,7 @@ class _FeatureBoxState extends State<_FeatureBox> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Expanded(
-              child: Text('Feature: ${widget.name}',
+              child: Text('${_trText(context, en: 'Feature', es: 'Rasgo', gl: 'Rasgo')}: ${widget.name}',
                   style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary,
                       fontSize: 13,
@@ -381,13 +402,6 @@ class _DetailSubtitle extends StatelessWidget {
           color: AppTheme.textSecondary,
           fontSize: 11,
           fontWeight: FontWeight.bold));
-}
-
-String _formatProficiency(String raw) {
-  // Strip known prefixes like "skill-", "tool-"
-  final stripped = raw.replaceFirst(RegExp(r'^(skill|tool)-'), '');
-  // Replace remaining hyphens with spaces and capitalise each word
-  return stripped.split('-').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
 }
 
 class _Chip extends StatelessWidget {
@@ -555,7 +569,7 @@ class _AlignmentGrid extends StatelessWidget {
       Row(children: [
         ..._columnLabels.map((l) => Expanded(
           child: Center(
-            child: Text(l,
+            child: Text(localizeAlignment(context, l),
                 style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textSecondary,
                     fontSize: 9,
@@ -608,7 +622,7 @@ class _AlignmentGrid extends StatelessWidget {
             // Row label on the right
             SizedBox(
               width: 52,
-              child: Text(_rowLabels[row],
+              child: Text(localizeAlignment(context, _rowLabels[row]),
                   textAlign: TextAlign.left,
                   style: GoogleFonts.libreBaskerville(
                       color: AppTheme.textSecondary,

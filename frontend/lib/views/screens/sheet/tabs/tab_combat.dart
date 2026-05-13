@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
 import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
@@ -13,6 +14,75 @@ import 'package:google_fonts/google_fonts.dart';
 const double _kHitDcW = 62.0;
 const double _kDmgW   = 80.0;
 const double _kColGap =  8.0;
+
+String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+  final code = Localizations.localeOf(context).languageCode;
+  if (code == 'es') return es;
+  if (code == 'gl') return gl;
+  return en;
+}
+
+String _spellDetailLabel(BuildContext context, String key) {
+  return switch (key) {
+    'castingTime' => _tr(context, en: 'Casting Time', es: 'Tiempo de lanzamiento', gl: 'Tempo de lanzamento'),
+    'range' => _tr(context, en: 'Range', es: 'Alcance', gl: 'Alcance'),
+    'duration' => _tr(context, en: 'Duration', es: 'Duracion', gl: 'Duracion'),
+    'components' => _tr(context, en: 'Components', es: 'Componentes', gl: 'Componentes'),
+    'status' => _tr(context, en: 'Status', es: 'Estado', gl: 'Estado'),
+    'description' => _tr(context, en: 'Description', es: 'Descripcion', gl: 'Descricion'),
+    'prepared' => _tr(context, en: 'Prepared ✓', es: 'Preparado ✓', gl: 'Preparado ✓'),
+    'learned' => _tr(context, en: 'Learned', es: 'Aprendido', gl: 'Aprendido'),
+    _ => key,
+  };
+}
+
+String _actionNameLocalized(BuildContext context, String name) {
+  return switch (name) {
+    'Attack' => _tr(context, en: 'Attack', es: 'Ataque', gl: 'Ataque'),
+    'Dash' => _tr(context, en: 'Dash', es: 'Desplazarse', gl: 'Desprazarse'),
+    'Disengage' => _tr(context, en: 'Disengage', es: 'Retirada', gl: 'Retirada'),
+    'Dodge' => _tr(context, en: 'Dodge', es: 'Esquivar', gl: 'Esquivar'),
+    'Grapple' => _tr(context, en: 'Grapple', es: 'Agarrar', gl: 'Agarre'),
+    'Help' => _tr(context, en: 'Help', es: 'Ayudar', gl: 'Axudar'),
+    'Hide' => _tr(context, en: 'Hide', es: 'Ocultarse', gl: 'Agocharse'),
+    'Improvise' => _tr(context, en: 'Improvise', es: 'Improvisar', gl: 'Improvisar'),
+    'Influence' => _tr(context, en: 'Influence', es: 'Influir', gl: 'Influir'),
+    'Magic' => _tr(context, en: 'Magic', es: 'Magia', gl: 'Maxia'),
+    'Ready' => _tr(context, en: 'Ready', es: 'Preparar', gl: 'Preparar'),
+    'Search' => _tr(context, en: 'Search', es: 'Buscar', gl: 'Buscar'),
+    'Shove' => _tr(context, en: 'Shove', es: 'Empujar', gl: 'Empurrar'),
+    'Study' => _tr(context, en: 'Study', es: 'Estudiar', gl: 'Estudar'),
+    'Utilize' => _tr(context, en: 'Utilize', es: 'Utilizar', gl: 'Utilizar'),
+    'Off-Hand Attack' => _tr(context, en: 'Off-Hand Attack', es: 'Ataque con mano torpe', gl: 'Ataque coa man torpe'),
+    'Opportunity Attack' => _tr(context, en: 'Opportunity Attack', es: 'Ataque de oportunidad', gl: 'Ataque de oportunidade'),
+    'Readied Action' => _tr(context, en: 'Readied Action', es: 'Acción preparada', gl: 'Acción preparada'),
+    _ => name,
+  };
+}
+
+String _actionDescLocalized(BuildContext context, _ActionEntry action) {
+  return switch (action.name) {
+    'Attack' => _tr(context, en: action.desc, es: 'Realiza un ataque de arma. Los ataques extra de clase pueden permitir más.', gl: 'Realiza un ataque de arma. Os ataques extra de clase poden permitir máis.'),
+    'Dash' => _tr(context, en: action.desc, es: 'Ganas movimiento adicional igual a tu velocidad en este turno.', gl: 'Gañas movemento adicional igual á túa velocidade nesta quenda.'),
+    'Disengage' => _tr(context, en: action.desc, es: 'Tu movimiento no provoca ataques de oportunidad hasta el final del turno.', gl: 'O teu movemento non provoca ataques de oportunidade ata o final da quenda.'),
+    'Dodge' => _tr(context, en: action.desc, es: 'Hasta tu próximo turno, los ataques contra ti tienen desventaja y tú tienes ventaja en salvaciones de Destreza.', gl: 'Ata a túa próxima quenda, os ataques contra ti teñen desvantaxe e ti tes vantaxe en salvacións de Destreza.'),
+    'Grapple' => _tr(context, en: action.desc, es: 'Ataque cuerpo a cuerpo especial. Prueba enfrentada: tu Atletismo contra su Atletismo o Acrobacias.', gl: 'Ataque corpo a corpo especial. Proba enfrontada: o teu Atletismo contra o seu Atletismo ou Acrobacias.'),
+    'Help' => _tr(context, en: action.desc, es: 'Concedes ventaja a un aliado en la siguiente prueba de habilidad o tirada de ataque contra una criatura a 5 pies.', gl: 'Concedes vantaxe a un aliado na seguinte proba de habilidade ou tirada de ataque contra unha criatura a 5 pés.'),
+    'Hide' => _tr(context, en: action.desc, es: 'Haz una prueba de Sigilo. Si tiene éxito, permaneces oculto hasta atacar o ser detectado.', gl: 'Fai unha proba de Sixilo. Se ten éxito, permaneces agochado ata atacar ou ser detectado.'),
+    'Improvise' => _tr(context, en: action.desc, es: 'Haz algo no cubierto por otras acciones. El DM decide el resultado.', gl: 'Fai algo non cuberto por outras accións. O DM decide o resultado.'),
+    'Influence' => _tr(context, en: action.desc, es: 'Haz una prueba de Persuasión, Engaño o Intimidación para influir en la actitud de una criatura.', gl: 'Fai unha proba de Persuasión, Engaño ou Intimidación para influír na actitude dunha criatura.'),
+    'Magic' => _tr(context, en: action.desc, es: 'Lanza un conjuro con tiempo de lanzamiento de 1 acción o usa un objeto mágico.', gl: 'Lanza un conxuro con tempo de lanzamento de 1 acción ou usa un obxecto máxico.'),
+    'Ready' => _tr(context, en: action.desc, es: 'Preparas una reacción para un desencadenante concreto. Declara acción y desencadenante.', gl: 'Preparas unha reacción para un desencadeante concreto. Declara acción e desencadeante.'),
+    'Search' => _tr(context, en: action.desc, es: 'Haz una prueba de Percepción o Investigación para encontrar algo no evidente.', gl: 'Fai unha proba de Percepción ou Investigación para atopar algo non evidente.'),
+    'Shove' => _tr(context, en: action.desc, es: 'Ataque cuerpo a cuerpo especial para empujar a una criatura 5 pies o derribarla.', gl: 'Ataque corpo a corpo especial para empurrar unha criatura 5 pés ou derrubala.'),
+    'Study' => _tr(context, en: action.desc, es: 'Haz una prueba de Inteligencia para recordar conocimientos o analizar algo.', gl: 'Fai unha proba de Intelixencia para lembrar coñecementos ou analizar algo.'),
+    'Utilize' => _tr(context, en: action.desc, es: 'Usa un objeto o activa un dispositivo (trampa, cerradura u objeto especial).', gl: 'Usa un obxecto ou activa un dispositivo (trampa, pechadura ou obxecto especial).'),
+    'Off-Hand Attack' => _tr(context, en: action.desc, es: 'Al hacer la acción Atacar con un arma ligera cuerpo a cuerpo, puedes usar una acción adicional para atacar con otra arma ligera en la otra mano.', gl: 'Ao facer a acción Atacar cunha arma lixeira corpo a corpo, podes usar unha acción adicional para atacar con outra arma lixeira na outra man.'),
+    'Opportunity Attack' => _tr(context, en: action.desc, es: 'Cuando una criatura que ves sale de tu alcance, puedes hacer un ataque cuerpo a cuerpo como reacción.', gl: 'Cando unha criatura que ves sae do teu alcance, podes facer un ataque corpo a corpo como reacción.'),
+    'Readied Action' => _tr(context, en: action.desc, es: 'Realiza la acción que preparaste cuando ocurra el desencadenante declarado.', gl: 'Realiza a acción que preparaches cando ocorra o desencadeante declarado.'),
+    _ => action.desc,
+  };
+}
 
 // ── Tab Combat ────────────────────────────────────────────────────────────────
 
@@ -303,7 +373,7 @@ class _FeatureTile extends StatelessWidget {
                           color: AppTheme.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.bold)),
-                  Text('Level ${feature.level}',
+                    Text(_tr(context, en: 'Level ${feature.level}', es: 'Nivel ${feature.level}', gl: 'Nivel ${feature.level}'),
                       style: GoogleFonts.lato(
                           color: AppTheme.textSecondary, fontSize: 10)),
                 ],
@@ -338,7 +408,7 @@ class _FeatureTile extends StatelessWidget {
                               ? AppTheme.primary.withOpacity(0.4)
                               : Colors.transparent),
                     ),
-                    child: Text('USE',
+                    child: Text(AppStrings.of(context).use,
                         style: GoogleFonts.lato(
                             color: remaining > 0
                                 ? AppTheme.primary
@@ -434,7 +504,7 @@ class _FeatureDetailSheet extends StatelessWidget {
                   fontSize: 20,
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text('Level ${feature.level}',
+            Text(_tr(context, en: 'Level ${feature.level}', es: 'Nivel ${feature.level}', gl: 'Nivel ${feature.level}'),
               style: GoogleFonts.lato(
                   color: AppTheme.textSecondary, fontSize: 13)),
           // Usage tracker
@@ -467,7 +537,7 @@ class _FeatureDetailSheet extends StatelessWidget {
                               color: AppTheme.primary.withOpacity(0.5))),
                       icon: const Icon(Icons.refresh,
                           size: 14, color: AppTheme.primary),
-                      label: Text('Restore',
+                      label: Text(AppStrings.of(context).restore,
                           style: GoogleFonts.lato(
                               color: AppTheme.primary, fontSize: 12)),
                       onPressed: () => vm.restoreFeatureToFull(feature),
@@ -491,7 +561,7 @@ class _FeatureDetailSheet extends StatelessWidget {
                             builder: (_) => StatefulBuilder(
                               builder: (ctx, setS) => AlertDialog(
                                 backgroundColor: AppTheme.surface,
-                                title: Text('Use ${feature.name}',
+                                title: Text('${AppStrings.of(context).use} ${feature.name}',
                                     style: GoogleFonts.libreBaskerville(
                                         color: AppTheme.primary,
                                         fontWeight: FontWeight.bold)),
@@ -568,7 +638,9 @@ class _FeatureDetailSheet extends StatelessWidget {
                         }
                       : null,
                   child: Text(
-                    remaining > 0 ? 'Use' : 'No uses left',
+                    remaining > 0
+                      ? AppStrings.of(context).use
+                      : _tr(context, en: 'No uses left', es: 'Sin usos', gl: 'Sen usos'),
                     style: GoogleFonts.lato(
                         color: remaining > 0
                             ? Colors.white
@@ -580,7 +652,7 @@ class _FeatureDetailSheet extends StatelessWidget {
             ] else ...[
               // Circle tracker (small counts) — fills left→right
               Row(children: [
-                Text('Uses',
+                Text(_tr(context, en: 'Uses', es: 'Usos', gl: 'Usos'),
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary,
                         fontSize: 11,
@@ -628,7 +700,7 @@ class _FeatureDetailSheet extends StatelessWidget {
                 style: GoogleFonts.lato(
                     color: AppTheme.textPrimary, fontSize: 13, height: 1.6))
           else
-            Text('No description available.',
+            Text(_tr(context, en: 'No description available.', es: 'Sin descripcion disponible.', gl: 'Sen descricion dispoñible.'),
                 style: GoogleFonts.lato(
                     color: AppTheme.textSecondary,
                     fontSize: 13,
@@ -662,7 +734,7 @@ class _StandardActionsCard extends StatelessWidget {
   Widget build(BuildContext context) => InkWell(
         onTap: () => Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => _ActionListScreen(
-              title: 'Standard Actions', actions: kStandardActions),
+              title: AppStrings.of(context).standardActions, actions: kStandardActions),
         )),
         borderRadius: BorderRadius.circular(10),
         child: Container(
@@ -676,13 +748,13 @@ class _StandardActionsCard extends StatelessWidget {
             const Icon(Icons.list_alt_outlined,
                 color: AppTheme.primary, size: 18),
             const SizedBox(width: 10),
-            Text('Standard Actions',
+            Text(AppStrings.of(context).standardActions,
                 style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold)),
             const Spacer(),
-            Text('${kStandardActions.length} actions',
+            Text(_tr(context, en: '${kStandardActions.length} actions', es: '${kStandardActions.length} acciones', gl: '${kStandardActions.length} accions'),
                 style:
                     GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11)),
             const SizedBox(width: 6),
@@ -718,10 +790,10 @@ class _WeaponAttackTable extends StatelessWidget {
             borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
           ),
           child: Row(children: [
-            const Expanded(
+            Expanded(
               flex: 3,
-              child: Text('WEAPON',
-                  style: TextStyle(
+              child: Text(_tr(context, en: 'WEAPON', es: 'ARMA', gl: 'ARMA'),
+                style: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
@@ -729,9 +801,9 @@ class _WeaponAttackTable extends StatelessWidget {
             ),
             SizedBox(
               width: _kHitDcW,
-              child: const Text('TO HIT',
+              child: Text(_tr(context, en: 'TO HIT', es: 'ATAQUE', gl: 'ATAQUE'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                style: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
@@ -740,9 +812,9 @@ class _WeaponAttackTable extends StatelessWidget {
             const SizedBox(width: _kColGap),
             SizedBox(
               width: _kDmgW,
-              child: const Text('DAMAGE',
+              child: Text(_tr(context, en: 'DAMAGE', es: 'DANO', gl: 'DANO'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                style: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
@@ -844,7 +916,7 @@ class _WeaponRow extends StatelessWidget {
                       fontSize: 12,
                       fontWeight: FontWeight.w600)),
               if (weapon.damageType != null && weapon.damageType!.isNotEmpty)
-                Text(weapon.damageType!,
+                Text(localizeDamageType(context, weapon.damageType!),
                     textAlign: TextAlign.center,
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary,
@@ -882,10 +954,10 @@ class _SpellAttackTable extends StatelessWidget {
             borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
           ),
           child: Row(children: [
-            const Expanded(
+            Expanded(
               flex: 3,
-              child: Text('NAME',
-                  style: TextStyle(
+              child: Text(_tr(context, en: 'NAME', es: 'NOMBRE', gl: 'NOME'),
+                  style: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
@@ -904,9 +976,9 @@ class _SpellAttackTable extends StatelessWidget {
             const SizedBox(width: _kColGap),
             SizedBox(
               width: _kDmgW,
-              child: const Text('DAMAGE',
+              child: Text(_tr(context, en: 'DAMAGE', es: 'DANO', gl: 'DANO'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                style: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
@@ -933,7 +1005,7 @@ class _SpellRow extends StatelessWidget {
     return '—';
   }
 
-  Widget _buildHitDcCell() {
+  Widget _buildHitDcCell(BuildContext context) {
     // Spell attack: show bonus as single value
     if (spell.attackType != null && spell.attackType!.isNotEmpty) {
       return Text(_hitDcText(),
@@ -950,7 +1022,7 @@ class _SpellRow extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(spell.dcType!,
+            Text(localizeAbilityCode(context, spell.dcType!),
               textAlign: TextAlign.center,
               style: GoogleFonts.lato(
                   color: const Color(0xFFC8A45A),
@@ -974,7 +1046,7 @@ class _SpellRow extends StatelessWidget {
             fontWeight: FontWeight.w600));
   }
 
-  Widget _buildDamageCell() {
+  Widget _buildDamageCell(BuildContext context) {
     final b = spell.damageBase;
     final t = spell.damageType;
     if (b == null || b.isEmpty) {
@@ -1003,7 +1075,7 @@ class _SpellRow extends StatelessWidget {
                 color: const Color(0xFFCB7A48),
                 fontSize: 12,
                 fontWeight: FontWeight.w600)),
-        Text(t.toUpperCase(),
+        Text(localizeDamageType(context, t).toUpperCase(),
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.lato(
@@ -1060,12 +1132,12 @@ class _SpellRow extends StatelessWidget {
           ),
           SizedBox(
             width: _kHitDcW,
-            child: _buildHitDcCell(),
+            child: _buildHitDcCell(context),
           ),
           const SizedBox(width: _kColGap),
           SizedBox(
             width: _kDmgW,
-            child: _buildDamageCell(),
+            child: _buildDamageCell(context),
           ),
         ]),
       ),
@@ -1089,6 +1161,7 @@ class _SpellDetailSheet extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context) {
+    final loc = AppStrings.of(context);
     final isCantrip = spell.isCantrip;
     final level     = spell.level;
     final maxSl     = vm.maxSlots(level);
@@ -1130,7 +1203,7 @@ class _SpellDetailSheet extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${spell.levelLabel}'
-                      '${spell.school != null ? ' · ${spell.school}' : ''}',
+                      '${spell.school != null ? ' · ${localizeSpellSchool(context, spell.school!)}' : ''}',
                       style: GoogleFonts.lato(
                           color: AppTheme.textSecondary, fontSize: 13),
                     ),
@@ -1139,7 +1212,7 @@ class _SpellDetailSheet extends StatelessWidget {
             if (!isCantrip) ...[
               const SizedBox(width: 12),
               SizedBox(
-                width: 72,
+                width: 88,
                 height: 38,
                 child: OutlinedButton(
                   onPressed: canCast
@@ -1147,7 +1220,7 @@ class _SpellDetailSheet extends StatelessWidget {
                           final ok = await vm.castSpell(level);
                           if (!ok && context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text('No slots for level $level'),
+                              content: Text(_tr(context, en: 'No slots for level $level', es: 'Sin espacios de nivel $level', gl: 'Sen ocos de nivel $level')),
                               backgroundColor: AppTheme.accent,
                               duration: const Duration(seconds: 2),
                             ));
@@ -1155,7 +1228,7 @@ class _SpellDetailSheet extends StatelessWidget {
                         }
                       : null,
                   style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
                     foregroundColor: AppTheme.primary,
                     disabledForegroundColor: AppTheme.divider,
                     side: BorderSide(
@@ -1163,9 +1236,12 @@ class _SpellDetailSheet extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: Text('CAST',
-                      style: GoogleFonts.libreBaskerville(
-                          fontSize: 11, fontWeight: FontWeight.bold)),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(loc.castButton,
+                        style: GoogleFonts.libreBaskerville(
+                            fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
                 ),
               ),
             ],
@@ -1175,7 +1251,7 @@ class _SpellDetailSheet extends StatelessWidget {
           if (!isCantrip && maxSl > 0) ...[
             const SizedBox(height: 12),
             Row(children: [
-              Text('Slots Lv.$level',
+              Text(_tr(context, en: 'Slots Lv.$level', es: 'Espacios Nv.$level', gl: 'Ocos Nv.$level'),
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary,
                       fontSize: 11,
@@ -1210,16 +1286,21 @@ class _SpellDetailSheet extends StatelessWidget {
           const Divider(),
           const SizedBox(height: 8),
           if (spell.castingTime != null)
-            _DetailRow('Casting Time', spell.castingTime!),
-          if (spell.range != null) _DetailRow('Range', spell.range!),
-          if (spell.duration != null) _DetailRow('Duration', spell.duration!),
+            _DetailRow(_spellDetailLabel(context, 'castingTime'), spell.castingTime!),
+          if (spell.range != null) _DetailRow(_spellDetailLabel(context, 'range'), spell.range!),
+          if (spell.duration != null) _DetailRow(_spellDetailLabel(context, 'duration'), spell.duration!),
           if (spell.components != null)
-            _DetailRow('Components', spell.components!),
+            _DetailRow(_spellDetailLabel(context, 'components'), spell.components!),
           if (!isCantrip)
-            _DetailRow('Status', spell.prepared ? 'Prepared ✓' : 'Learned'),
+            _DetailRow(
+              _spellDetailLabel(context, 'status'),
+              spell.prepared
+                  ? _spellDetailLabel(context, 'prepared')
+                  : _spellDetailLabel(context, 'learned'),
+            ),
           if (spell.description != null && spell.description!.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text('Description',
+            Text(_spellDetailLabel(context, 'description'),
                 style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
                     fontSize: 13,
@@ -1260,7 +1341,7 @@ class _StaticSection extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
                     childrenPadding:
                         const EdgeInsets.fromLTRB(14, 0, 14, 12),
-                    title: Text(a.name,
+                    title: Text(_actionNameLocalized(context, a.name),
                         style: GoogleFonts.libreBaskerville(
                             color: AppTheme.textPrimary,
                             fontSize: 13,
@@ -1322,13 +1403,13 @@ class _ActionListScreen extends StatelessWidget {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(a.name,
+                        Text(_actionNameLocalized(context, a.name),
                           style: GoogleFonts.libreBaskerville(
                               color: AppTheme.textPrimary,
                               fontSize: 14,
                               fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
-                      Text(a.desc,
+                      Text(_actionDescLocalized(context, a),
                           style: GoogleFonts.lato(
                               color: AppTheme.textSecondary,
                               fontSize: 12,

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../config/app_theme.dart';
 import '../../l10n/app_strings.dart';
 import '../../viewmodels/auth/auth_viewmodel.dart';
+import '../../viewmodels/locale_viewmodel.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -69,6 +70,32 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(s.appTitle, style: Theme.of(context).textTheme.displayMedium),
                   const SizedBox(height: 6),
                   Text(s.appSubtitle, style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 32),
+
+                  // Language Selector
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppTheme.textSecondary, width: 1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Consumer<LocaleViewModel>(
+                      builder: (context, localeVm, _) => DropdownButton<String>(
+                        value: localeVm.locale.languageCode,
+                        underline: const SizedBox(),
+                        isExpanded: true,
+                        isDense: true,
+                        items: [
+                          DropdownMenuItem(value: 'en', child: Text(s.langEnglish)),
+                          DropdownMenuItem(value: 'es', child: Text(s.langSpanish)),
+                          DropdownMenuItem(value: 'gl', child: Text(s.langGalician)),
+                        ],
+                        onChanged: (v) {
+                          if (v != null) localeVm.setLocale(v);
+                        },
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 48),
 
                   // Formulario

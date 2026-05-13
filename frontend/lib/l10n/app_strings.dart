@@ -121,6 +121,18 @@ abstract class AppStrings {
   String get langSpanish;
   String get langGalician;
 
+  // Ability attributes
+  String get abilityScores;
+  String get savingThrows;
+  String get str;
+  String get dex;
+  String get con;
+  String get intAttr;
+  String get wis;
+  String get cha;
+  String get level;
+  String get standardActions;
+
   // Dynamic / parametrised
   String levelUpContent(String name, int nextLevel);
   String removeSpellContent(String spellName);
@@ -232,6 +244,17 @@ class _EnStrings extends AppStrings {
   @override String get langEnglish => 'English';
   @override String get langSpanish => 'Castellano';
   @override String get langGalician => 'Galego';
+
+  @override String get abilityScores => 'Ability Scores';
+  @override String get savingThrows => 'Saving Throws';
+  @override String get str => 'STR';
+  @override String get dex => 'DEX';
+  @override String get con => 'CON';
+  @override String get intAttr => 'INT';
+  @override String get wis => 'WIS';
+  @override String get cha => 'CHA';
+  @override String get level => 'Level';
+  @override String get standardActions => 'Standard Actions';
 
   @override String levelUpContent(String name, int nextLevel) =>
       'Level up $name to level $nextLevel?';
@@ -347,6 +370,17 @@ class _EsStrings extends AppStrings {
   @override String get langSpanish => 'Castellano';
   @override String get langGalician => 'Galego';
 
+  @override String get abilityScores => 'Puntuaciones de Atributos';
+  @override String get savingThrows => 'Tiradas de Salvación';
+  @override String get str => 'FUE';
+  @override String get dex => 'DES';
+  @override String get con => 'CON';
+  @override String get intAttr => 'INT';
+  @override String get wis => 'SAB';
+  @override String get cha => 'CAR';
+  @override String get level => 'Nivel';
+  @override String get standardActions => 'Acciones estándar';
+
   @override String levelUpContent(String name, int nextLevel) =>
       '¿Subir de nivel a $name hasta el nivel $nextLevel?';
   @override String removeSpellContent(String spellName) =>
@@ -460,6 +494,17 @@ class _GlStrings extends AppStrings {
   @override String get langEnglish => 'English';
   @override String get langSpanish => 'Castellano';
   @override String get langGalician => 'Galego';
+
+  @override String get abilityScores => 'Puntuacións de Atributos';
+  @override String get savingThrows => 'Tiradas de Salvación';
+  @override String get str => 'FUE';
+  @override String get dex => 'DES';
+  @override String get con => 'CON';
+  @override String get intAttr => 'INT';
+  @override String get wis => 'SAB';
+  @override String get cha => 'CAR';
+  @override String get level => 'Nivel';
+  @override String get standardActions => 'Accións estándar';
 
   @override String levelUpContent(String name, int nextLevel) =>
       'Subir de nivel a $name ata o nivel $nextLevel?';

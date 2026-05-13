@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import 'package:gestor_personajes_dnd/viewmodels/wizard/character_creator_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+
+String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+  final code = Localizations.localeOf(context).languageCode;
+  if (code == 'es') return es;
+  if (code == 'gl') return gl;
+  return en;
+}
 
 class StepEquipment extends StatefulWidget {
   const StepEquipment({super.key});
@@ -20,9 +28,9 @@ class _StepEquipmentState extends State<StepEquipment>
   String _typeFilter = 'all';
 
   static const _typeFilters = [
-    ('all', 'All'),
-    ('weapon', 'Weapons'),
-    ('armor', 'Armor'),
+    'all',
+    'weapon',
+    'armor',
     // ('potion', 'Potions'),        // not yet in catalog
     // ('ring', 'Rings'),            // not yet in catalog
     // ('rod', 'Rods'),              // not yet in catalog
@@ -30,7 +38,7 @@ class _StepEquipmentState extends State<StepEquipment>
     // ('staff', 'Staves'),          // not yet in catalog
     // ('wand', 'Wands'),            // not yet in catalog
     // ('wondrous_item', 'Wondrous'),// not yet in catalog
-    ('adventuring_gear', 'Other Gear'),
+    'adventuring_gear',
   ];
   @override
   void initState() {
@@ -67,7 +75,7 @@ class _StepEquipmentState extends State<StepEquipment>
                   color: AppTheme.primary, size: 16),
               const SizedBox(width: 6),
               Expanded(
-                child: Text('Starting Equipment',
+                child: Text(_tr(context, en: 'Starting Equipment', es: 'Equipo inicial', gl: 'Equipo inicial'),
                     style: GoogleFonts.libreBaskerville(
                         color: AppTheme.textPrimary,
                         fontSize: 14,
@@ -83,7 +91,7 @@ class _StepEquipmentState extends State<StepEquipment>
                     border: Border.all(color: AppTheme.primary),
                   ),
                   child: Text(
-                    '${vm.selectedItemIds.length} selected',
+                    '${vm.selectedItemIds.length} ${_tr(context, en: 'selected', es: 'seleccionados', gl: 'seleccionados')}',
                     style: GoogleFonts.libreBaskerville(
                         color: AppTheme.primary,
                         fontSize: 10,
@@ -92,7 +100,7 @@ class _StepEquipmentState extends State<StepEquipment>
                 )
               else
                 Text(
-                  'Optional',
+                  _tr(context, en: 'Optional', es: 'Opcional', gl: 'Opcional'),
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary, fontSize: 11),
                 ),
@@ -114,7 +122,7 @@ class _StepEquipmentState extends State<StepEquipment>
                     style: GoogleFonts.lato(
                         color: AppTheme.textPrimary, fontSize: 13),
                     decoration: InputDecoration(
-                      hintText: 'Search items...',
+                      hintText: _tr(context, en: 'Search items...', es: 'Buscar objetos...', gl: 'Buscar obxectos...'),
                       hintStyle: GoogleFonts.lato(
                           color: AppTheme.textSecondary, fontSize: 12),
                       prefixIcon: const Icon(Icons.search,
@@ -153,9 +161,16 @@ class _StepEquipmentState extends State<StepEquipment>
               padding: const EdgeInsets.symmetric(horizontal: 16),
               scrollDirection: Axis.horizontal,
               children: _typeFilters.map((f) {
-                final active = _typeFilter == f.$1;
+                final active = _typeFilter == f;
+                final label = switch (f) {
+                  'all' => _tr(context, en: 'All', es: 'Todos', gl: 'Todos'),
+                  'weapon' => _tr(context, en: 'Weapons', es: 'Armas', gl: 'Armas'),
+                  'armor' => _tr(context, en: 'Armor', es: 'Armadura', gl: 'Armadura'),
+                  'adventuring_gear' => _tr(context, en: 'Other Gear', es: 'Otro equipo', gl: 'Outro equipo'),
+                  _ => f,
+                };
                 return GestureDetector(
-                  onTap: () => setState(() => _typeFilter = f.$1),
+                  onTap: () => setState(() => _typeFilter = f),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     margin: const EdgeInsets.only(right: 6),
@@ -172,7 +187,7 @@ class _StepEquipmentState extends State<StepEquipment>
                             : Colors.transparent,
                       ),
                     ),
-                    child: Text(f.$2,
+                    child: Text(label,
                         style: GoogleFonts.lato(
                           color: active
                               ? AppTheme.primary
@@ -197,9 +212,9 @@ class _StepEquipmentState extends State<StepEquipment>
             indicatorColor: AppTheme.primary,
             labelStyle: GoogleFonts.libreBaskerville(
                 fontSize: 11, fontWeight: FontWeight.bold),
-            tabs: const [
-              Tab(text: 'CATALOG'),
-              Tab(text: 'SELECTED'),
+            tabs: [
+              Tab(text: _tr(context, en: 'CATALOG', es: 'CATALOGO', gl: 'CATALOGO')),
+              Tab(text: _tr(context, en: 'SELECTED', es: 'SELECCIONADO', gl: 'SELECCIONADO')),
             ],
           ),
         ]),
@@ -255,7 +270,7 @@ class _CatalogTab extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: vm.loadItemCatalog,
               icon: const Icon (Icons.refresh, size: 16),
-              label: const Text('Retry'),
+              label: Text(_tr(context, en: 'Retry', es: 'Reintentar', gl: 'Reintentar')),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.primary,
                 side: const BorderSide(color: AppTheme.primary)),
@@ -269,13 +284,13 @@ class _CatalogTab extends StatelessWidget {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           const Icon(Icons.inventory_2_outlined, color: AppTheme.surfaceVariant, size: 48),
           const SizedBox(height: 12),
-          Text('No items available.',
+          Text(_tr(context, en: 'No items available.', es: 'No hay objetos disponibles.', gl: 'Non hai obxectos dispoñibles.'),
               style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
           const SizedBox(height: 16),
           OutlinedButton.icon(
             onPressed: vm.loadItemCatalog,
             icon: const Icon(Icons.refresh, size: 16),
-            label: const Text('Retry'),
+            label: Text(_tr(context, en: 'Retry', es: 'Reintentar', gl: 'Reintentar')),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppTheme.primary,
               side: const BorderSide(color: AppTheme.primary)),
@@ -296,7 +311,7 @@ class _CatalogTab extends StatelessWidget {
     if (filtered.isEmpty) {
       return Center(
         child: Text(
-          'No items found.',
+          _tr(context, en: 'No items found.', es: 'No se encontraron objetos.', gl: 'Non se atoparon obxectos.'),
           style: GoogleFonts.lato(
             color: AppTheme.textSecondary, fontSize: 13),
           ),
@@ -332,12 +347,12 @@ class _SelectedTab extends StatelessWidget {
           const Icon(Icons.inventory_2_outlined,
             color: AppTheme.surfaceVariant, size: 48),
           const SizedBox(height: 16),
-          Text ('No items selected yet',
+          Text (_tr(context, en: 'No items selected yet', es: 'Aun no hay objetos seleccionados', gl: 'Ainda non hai obxectos seleccionados'),
             style: GoogleFonts.libreBaskerville(
               color: AppTheme.textSecondary, fontSize: 14
             )),
           const SizedBox(height: 8),
-          Text('Go to the Catalog tab to add starting gear.',
+          Text(_tr(context, en: 'Go to the Catalog tab to add starting gear.', es: 'Ve a la pestana Catalogo para anadir equipo inicial.', gl: 'Vai a pestana Catalogo para engadir equipo inicial.'),
             style: GoogleFonts.lato(
               color: AppTheme.textSecondary, fontSize: 12,
               fontStyle: FontStyle.italic
@@ -357,7 +372,7 @@ class _SelectedTab extends StatelessWidget {
           const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         color: AppTheme.surfaceVariant.withOpacity(0.4),
         child: Text(
-          '${selected.length} items · ${totalWeight.toStringAsFixed(1)} lb total',
+          '${selected.length} ${_tr(context, en: 'items', es: 'objetos', gl: 'obxectos')} · ${totalWeight.toStringAsFixed(1)} lb ${_tr(context, en: 'total', es: 'total', gl: 'total')}',
           style: GoogleFonts.lato(
             color: AppTheme.textSecondary, fontSize: 12),
         ),
@@ -449,7 +464,7 @@ class _ItemTile extends StatelessWidget {
                 Row(children: [
                   if (item.itemType != null)
                     Text(
-                      _formatItemType(item.itemType!),
+                      _formatItemType(context, item.itemType!),
                       style: GoogleFonts.lato(
                         color: AppTheme.textSecondary, fontSize: 11)),
                   if (item.statSummary.isNotEmpty) ...[
@@ -526,8 +541,7 @@ class _ItemTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   [
-                    if (item.itemType != null) item.itemType,
-                    if (item.category != null) item.category,
+                    if (item.itemType != null) _formatItemType(context, item.itemType!),
                     if (item.rarity != null) item.rarity,
                   ].whereType<String>().join(' · '),
                   style: GoogleFonts.lato(
@@ -536,23 +550,23 @@ class _ItemTile extends StatelessWidget {
                 const SizedBox(height: 16),
                 const Divider(),
                 const SizedBox(height: 8),
-                _DetailRow('Cost', item.costDisplay),
-                _DetailRow('Weight', '${item.weight} lb'),
+                _DetailRow(_tr(context, en: 'Cost', es: 'Costo', gl: 'Custo'), item.costDisplay),
+                _DetailRow(_tr(context, en: 'Weight', es: 'Peso', gl: 'Peso'), '${item.weight} lb'),
                 if (item.damageDice != null)
-                  _DetailRow('Damage',
-                      '${item.damageDice} ${item.damageType ?? ''}'),
+                  _DetailRow(_tr(context, en: 'Damage', es: 'Dano', gl: 'Dano'),
+                      '${item.damageDice} ${item.damageType != null ? localizeDamageType(context, item.damageType!) : ''}'),
                 if (item.armorClass != null)
-                  _DetailRow('Armor Class',
+                  _DetailRow(_tr(context, en: 'Armor Class', es: 'Clase de armadura', gl: 'Clase de armadura'),
                       '${item.armorClass}${item.armorType != null ? ' (${item.armorType})' : ''}'),
                 if (item.weaponProperties.isNotEmpty)
-                  _DetailRow('Properties',
-                      item.weaponProperties.join(', ')),
+                  _DetailRow(_tr(context, en: 'Properties', es: 'Propiedades', gl: 'Propiedades'),
+                      item.weaponProperties.map((p) => localizeWeaponProperty(context, p)).join(', ')),
                 if (item.requiresAttunement)
-                  _DetailRow('Attunement', 'Required'),
+                  _DetailRow(_tr(context, en: 'Attunement', es: 'Sintonizacion', gl: 'Sintonizacion'), _tr(context, en: 'Required', es: 'Requerido', gl: 'Requirido')),
                 if (item.description != null &&
                     item.description!.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  Text('Description',
+                  Text(_tr(context, en: 'Description', es: 'Descripcion', gl: 'Descricion'),
                       style: GoogleFonts.libreBaskerville(
                           color: AppTheme.textPrimary,
                           fontSize: 13,
@@ -598,10 +612,12 @@ class _DetailRow extends StatelessWidget {
 }
 
 /// Converts raw backend itemType (e.g. ADVENTURING_GEAR) to a readable label.
-String _formatItemType(String raw) {
+String _formatItemType(BuildContext context, String raw) {
   switch (raw.toUpperCase()) {
-    case 'ADVENTURING_GEAR': return 'Adventuring Gear';
-    case 'MOUNTS_AND_VEHICLES': return 'Mounts & Vehicles';
+    case 'ADVENTURING_GEAR':
+      return _tr(context, en: 'Adventuring Gear', es: 'Equipo de aventura', gl: 'Equipo de aventura');
+    case 'MOUNTS_AND_VEHICLES':
+      return _tr(context, en: 'Mounts & Vehicles', es: 'Monturas y vehiculos', gl: 'Monturas e vehiculos');
     default:
       return raw
           .toLowerCase()

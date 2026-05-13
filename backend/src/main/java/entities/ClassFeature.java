@@ -23,12 +23,20 @@ public class ClassFeature {
 
     private String indexName;
     private String name;
+    private String nameEs;
+    private String nameGl;
 
     //nivel al que se obtiene la característica
     private int level;
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionEs;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionGl;
 
     //URL de la API para obtener detalles adicionales
     private String apiUrl;
@@ -69,6 +77,12 @@ public class ClassFeature {
         this.name = name;
     }
 
+    public String getNameEs() { return nameEs; }
+    public void setNameEs(String nameEs) { this.nameEs = nameEs; }
+
+    public String getNameGl() { return nameGl; }
+    public void setNameGl(String nameGl) { this.nameGl = nameGl; }
+
     public int getLevel() {
         return level;
     }
@@ -84,6 +98,12 @@ public class ClassFeature {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public String getDescriptionEs() { return descriptionEs; }
+    public void setDescriptionEs(String descriptionEs) { this.descriptionEs = descriptionEs; }
+
+    public String getDescriptionGl() { return descriptionGl; }
+    public void setDescriptionGl(String descriptionGl) { this.descriptionGl = descriptionGl; }
 
     public String getApiUrl() {
         return apiUrl;

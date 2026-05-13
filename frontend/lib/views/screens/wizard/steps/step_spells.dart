@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
+import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/viewmodels/wizard/character_creator_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+
+String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+  final code = Localizations.localeOf(context).languageCode;
+  if (code == 'es') return es;
+  if (code == 'gl') return gl;
+  return en;
+}
 
 class StepSpells extends StatefulWidget {
   const StepSpells({super.key});
@@ -35,6 +44,7 @@ class _StepSpellsState extends State<StepSpells> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<CharacterCreatorViewModel>();
+    final s = AppStrings.of(context);
 
     final bool hasMagicalSecrets = vm.magicalSecretsSlots > 0;
     final bool hasLoreExtras = vm.additionalMagicalSecretsSlots > 0;
@@ -109,7 +119,7 @@ class _StepSpellsState extends State<StepSpells> {
             const Icon(Icons.auto_fix_high,
                 color: AppTheme.primary, size: 16),
             const SizedBox(width: 6),
-            Text('Choose Spells',
+            Text(_tr(context, en: 'Choose Spells', es: 'Elegir conjuros', gl: 'Escoller conxuros'),
                 style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
                     fontSize: 14,
@@ -120,20 +130,20 @@ class _StepSpellsState extends State<StepSpells> {
                 scrollDirection: Axis.horizontal,
                 child: Row(children: [
                   _SlotCounter(
-                    label: 'Cantrips',
+                    label: _tr(context, en: 'Cantrips', es: 'Trucos', gl: 'Trucos'),
                     current: vm.selectedCantripCount,
                     max: vm.maxCantrips,
                   ),
                   const SizedBox(width: 6),
                   _SlotCounter(
-                    label: 'Spells',
+                    label: s.tabSpells,
                     current: vm.selectedSpellCount,
                     max: vm.maxSpellsKnown,
                   ),
                   if (hasMagicalSecrets) ...[
                     const SizedBox(width: 6),
                     _SlotCounter(
-                      label: 'Secrets',
+                      label: _tr(context, en: 'Secrets', es: 'Secretos', gl: 'Segredos'),
                       current: vm.selectedMagicalSecretCount,
                       max: vm.magicalSecretsSlots,
                       highlight: true,
@@ -142,7 +152,7 @@ class _StepSpellsState extends State<StepSpells> {
                   if (hasLoreExtras) ...[
                     const SizedBox(width: 6),
                     _SlotCounter(
-                      label: 'Lore Extras',
+                      label: _tr(context, en: 'Lore Extras', es: 'Extras de Saber', gl: 'Extras de Saber'),
                       current: vm.selectedAdditionalMagicalSecretCount,
                       max: vm.additionalMagicalSecretsSlots,
                       highlight: true,
@@ -160,14 +170,14 @@ class _StepSpellsState extends State<StepSpells> {
               scrollDirection: Axis.horizontal,
               child: Row(children: [
                 _SectionTab(
-                  label: 'Class Spells',
+                  label: _tr(context, en: 'Class Spells', es: 'Conjuros de clase', gl: 'Conxuros de clase'),
                   selected: _activeSection == 0,
                   onTap: () => _switchSection(0),
                 ),
                 if (hasMagicalSecrets) ...[
                   const SizedBox(width: 6),
                   _SectionTab(
-                    label: 'Magical Secrets (${vm.magicalSecretsSlots})',
+                    label: '${_tr(context, en: 'Magical Secrets', es: 'Secretos magicos', gl: 'Segredos maxicos')} (${vm.magicalSecretsSlots})',
                     selected: _activeSection == 1,
                     onTap: () => _switchSection(1),
                   ),
@@ -175,7 +185,7 @@ class _StepSpellsState extends State<StepSpells> {
                 if (hasLoreExtras) ...[
                   const SizedBox(width: 6),
                   _SectionTab(
-                    label: 'Lore Extras (2)',
+                    label: '${_tr(context, en: 'Lore Extras', es: 'Extras de Saber', gl: 'Extras de Saber')} (2)',
                     selected: _activeSection == 2,
                     onTap: () => _switchSection(2),
                   ),
@@ -199,7 +209,12 @@ class _StepSpellsState extends State<StepSpells> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Choose ${vm.magicalSecretsSlots} spell(s) from any class list.',
+                    _tr(
+                      context,
+                      en: 'Choose ${vm.magicalSecretsSlots} spell(s) from any class list.',
+                      es: 'Elige ${vm.magicalSecretsSlots} conjuro(s) de cualquier lista de clase.',
+                      gl: 'Escolle ${vm.magicalSecretsSlots} conxuro(s) de calquera lista de clase.',
+                    ),
                     style: GoogleFonts.lato(
                         color: Colors.amber.shade700, fontSize: 11),
                   ),
@@ -219,7 +234,12 @@ class _StepSpellsState extends State<StepSpells> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Additional Magical Secrets (College of Lore): 2 free spells.',
+                    _tr(
+                      context,
+                      en: 'Additional Magical Secrets (College of Lore): 2 free spells.',
+                      es: 'Secretos Magicos adicionales (Colegio del Saber): 2 conjuros libres.',
+                      gl: 'Segredos Maxicos adicionais (Colexio do Saber): 2 conxuros libres.',
+                    ),
                     style: GoogleFonts.lato(
                         color: Colors.amber.shade700, fontSize: 11),
                   ),
@@ -238,8 +258,8 @@ class _StepSpellsState extends State<StepSpells> {
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: _activeSection == 0
-                        ? 'Search spells...'
-                        : 'Search all spells...',
+                        ? _tr(context, en: 'Search spells...', es: 'Buscar conjuros...', gl: 'Buscar conxuros...')
+                        : _tr(context, en: 'Search all spells...', es: 'Buscar todos los conjuros...', gl: 'Buscar todos os conxuros...'),
                     hintStyle: GoogleFonts.lato(
                         color: AppTheme.textSecondary, fontSize: 12),
                     prefixIcon: const Icon(Icons.search,
@@ -276,9 +296,9 @@ class _StepSpellsState extends State<StepSpells> {
               padding: EdgeInsets.zero,
               children: sortedLevels.map((lvl) {
                 final label = lvl == -1
-                    ? 'All'
+                  ? _tr(context, en: 'All', es: 'Todos', gl: 'Todos')
                     : lvl == 0
-                        ? 'Cantrips'
+                    ? _tr(context, en: 'Cantrips', es: 'Trucos', gl: 'Trucos')
                         : 'Lv $lvl';
                 final selected = _filterLevel == lvl;
                 return GestureDetector(
@@ -323,7 +343,7 @@ class _StepSpellsState extends State<StepSpells> {
       Expanded(
         child: filtered.isEmpty
             ? Center(
-                child: Text('No spells found',
+            child: Text(_tr(context, en: 'No spells found', es: 'No se encontraron conjuros', gl: 'Non se atoparon conxuros'),
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary, fontSize: 14)))
             : ListView.separated(
@@ -515,10 +535,12 @@ class _SpellTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(children: [
                     _LvTag(
-                      label: spell.isCantrip ? 'Cantrip' : 'Lv ${spell.level}',
+                      label: spell.isCantrip
+                          ? _tr(context, en: 'Cantrip', es: 'Truco', gl: 'Truco')
+                          : 'Lv ${spell.level}',
                       isCantrip: spell.isCantrip,
                     ),
-                    if (spell.school != null) ...[const SizedBox(width: 4), _Tag(spell.school!)],
+                    if (spell.school != null) ...[const SizedBox(width: 4), _Tag(localizeSpellSchool(context, spell.school!))],
                     if (spell.castingTime != null) ...[const SizedBox(width: 4), _Tag(spell.castingTime!)],
                   ]),
                 ]),
@@ -529,7 +551,7 @@ class _SpellTile extends StatelessWidget {
             icon: const Icon(Icons.info_outline, color: AppTheme.textSecondary, size: 20),
             padding: const EdgeInsets.only(left: 8),
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            tooltip: 'View details',
+            tooltip: _tr(context, en: 'View details', es: 'Ver detalles', gl: 'Ver detalles'),
             onPressed: () => _showDetail(context),
           ),
         ]),
@@ -573,8 +595,8 @@ class _SpellTile extends StatelessWidget {
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 Text(
-                  '${spell.isCantrip ? 'Cantrip' : 'Level ${spell.level} spell'}'
-                  '${spell.school != null ? ' · ${spell.school}' : ''}',
+                  '${spell.isCantrip ? _tr(context, en: 'Cantrip', es: 'Truco', gl: 'Truco') : '${_tr(context, en: 'Level', es: 'Nivel', gl: 'Nivel')} ${spell.level} ${_tr(context, en: 'spell', es: 'conjuro', gl: 'conxuro')}'}'
+                  '${spell.school != null ? ' · ${localizeSpellSchool(context, spell.school!)}' : ''}',
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary, fontSize: 13),
                 ),
@@ -583,17 +605,17 @@ class _SpellTile extends StatelessWidget {
                 const SizedBox(height: 12),
                 // Propiedades
                 if (spell.castingTime != null)
-                  _DetailRow('Casting Time', spell.castingTime!),
+                  _DetailRow(_tr(context, en: 'Casting Time', es: 'Tiempo de lanzamiento', gl: 'Tempo de lanzamento'), spell.castingTime!),
                 if (spell.range != null)
-                  _DetailRow('Range', spell.range!),
+                  _DetailRow(_tr(context, en: 'Range', es: 'Alcance', gl: 'Alcance'), spell.range!),
                 if (spell.duration != null)
-                  _DetailRow('Duration', spell.duration!),
+                  _DetailRow(_tr(context, en: 'Duration', es: 'Duracion', gl: 'Duracion'), spell.duration!),
                 if (spell.components != null)
-                  _DetailRow('Components', spell.components!),
+                  _DetailRow(_tr(context, en: 'Components', es: 'Componentes', gl: 'Compoñentes'), spell.components!),
                 if (spell.description != null &&
                     spell.description!.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  Text('Description',
+                  Text(_tr(context, en: 'Description', es: 'Descripcion', gl: 'Descricion'),
                       style: GoogleFonts.libreBaskerville(
                           color: AppTheme.textPrimary,
                           fontSize: 13,

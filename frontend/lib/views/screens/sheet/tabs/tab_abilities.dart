@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
+import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,6 +12,7 @@ class TabAbilities extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppStrings.of(context);
     final c = character;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -18,7 +20,7 @@ class TabAbilities extends StatelessWidget {
         
         // 1.1 Ability Scores
         // ────────────────────────────────
-        _SectionTitle('Ability Scores'),
+        _SectionTitle(loc.abilityScores),
         const SizedBox(height: 12),
         GridView.count(
           crossAxisCount: 3,
@@ -28,14 +30,18 @@ class TabAbilities extends StatelessWidget {
           mainAxisSpacing: 10,
           childAspectRatio: 0.85,
           children: CharacterSheetViewModel.abilityNames
-              .map((a) => _AbilityCell(ability: a, character: c, modifiersTop: c.abilityDisplayMode == 'MODIFIERS_TOP'))
+                .map((a) => _AbilityCell(
+                  ability: a,
+                  character: c,
+                  modifiersTop: c.abilityDisplayMode == 'MODIFIERS_TOP',
+                ))
               .toList(),
         ),
         const SizedBox(height: 24),
 
         //1.2 Saving Throws
         // ────────────────────────────────
-        _SectionTitle('Saving Throws'),
+        _SectionTitle(loc.savingThrows),
         const SizedBox(height: 12),
         // 3 filas x 2 columnas
         ...List.generate(3, (row){
@@ -54,16 +60,18 @@ class TabAbilities extends StatelessWidget {
 
         // 1.3 Senses
         // ────────────────────────────────
-        _SectionTitle('Senses'),
+        _SectionTitle(_senseTitle(context)),
         const SizedBox(height: 12),
-        _SenseRow(value: c.passivePerception, label: 'Passive Perception'),
-        _SenseRow(value: c.passiveInvestigation, label: 'Passive Investigation'),
-        _SenseRow(value: c.passiveInsight, label: 'Passive Insight'),
+        _SenseRow(value: c.passivePerception, label: _passivePerception(context)),
+        _SenseRow(value: c.passiveInvestigation, label: _passiveInvestigation(context)),
+        _SenseRow(value: c.passiveInsight, label: _passiveInsight(context)),
         // Darkvision and other special senses from racial traits
         ...vm.racialTraits
             .where((t) {
               final n = t.name.toLowerCase();
-              return n.contains('darkvision') ||
+                return n.contains('darkvision') ||
+                  n.contains('visión en la oscuridad') ||
+                  n.contains('vision na escuridade') ||
                   n.contains('blindsight') ||
                   n.contains('tremorsense') ||
                   n.contains('truesight') ||
@@ -74,6 +82,34 @@ class TabAbilities extends StatelessWidget {
         
       ]),
     );
+  }
+
+  static String _senseTitle(BuildContext context) {
+    final code = Localizations.localeOf(context).languageCode;
+    if (code == 'es') return 'Sentidos';
+    if (code == 'gl') return 'Sentidos';
+    return 'Senses';
+  }
+
+  static String _passivePerception(BuildContext context) {
+    final code = Localizations.localeOf(context).languageCode;
+    if (code == 'es') return 'Percepcion pasiva';
+    if (code == 'gl') return 'Percepcion pasiva';
+    return 'Passive Perception';
+  }
+
+  static String _passiveInvestigation(BuildContext context) {
+    final code = Localizations.localeOf(context).languageCode;
+    if (code == 'es') return 'Investigacion pasiva';
+    if (code == 'gl') return 'Investigacion pasiva';
+    return 'Passive Investigation';
+  }
+
+  static String _passiveInsight(BuildContext context) {
+    final code = Localizations.localeOf(context).languageCode;
+    if (code == 'es') return 'Perspicacia pasiva';
+    if (code == 'gl') return 'Perspicacia pasiva';
+    return 'Passive Insight';
   }
 }
 
@@ -105,7 +141,7 @@ class _AbilityCell extends StatelessWidget{
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(ability,
+          Text(_abilityAbbrev(context, ability),
             style: GoogleFonts.libreBaskerville(
               color: AppTheme.textSecondary,
               fontSize: 11,
@@ -150,6 +186,19 @@ class _AbilityCell extends StatelessWidget{
           ),
         ]),
     );
+  }
+
+  static String _abilityAbbrev(BuildContext context, String ability) {
+    final s = AppStrings.of(context);
+    return switch (ability) {
+      'STR' => s.str,
+      'DEX' => s.dex,
+      'CON' => s.con,
+      'INT' => s.intAttr,
+      'WIS' => s.wis,
+      'CHA' => s.cha,
+      _ => ability,
+    };
   }
 }
 
@@ -197,7 +246,7 @@ class _SavingThrowRow extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: Text(
-            CharacterSheetViewModel.abilityFull[ability] ?? ability,
+            _abilityFull(context, ability),
             style: GoogleFonts.lato(
               color: proficient ? AppTheme.textPrimary : AppTheme.textSecondary,
                 fontSize: 12),
@@ -210,6 +259,37 @@ class _SavingThrowRow extends StatelessWidget {
             )),
       ]),
     );
+  }
+
+  static String _abilityFull(BuildContext context, String ability) {
+    final code = Localizations.localeOf(context).languageCode;
+    final en = {
+      'STR': 'Strength',
+      'DEX': 'Dexterity',
+      'CON': 'Constitution',
+      'INT': 'Intelligence',
+      'WIS': 'Wisdom',
+      'CHA': 'Charisma',
+    };
+    final es = {
+      'STR': 'Fuerza',
+      'DEX': 'Destreza',
+      'CON': 'Constitucion',
+      'INT': 'Inteligencia',
+      'WIS': 'Sabiduria',
+      'CHA': 'Carisma',
+    };
+    final gl = {
+      'STR': 'Forza',
+      'DEX': 'Destreza',
+      'CON': 'Constitucion',
+      'INT': 'Intelixencia',
+      'WIS': 'Sabedoria',
+      'CHA': 'Carisma',
+    };
+    if (code == 'es') return es[ability] ?? ability;
+    if (code == 'gl') return gl[ability] ?? ability;
+    return en[ability] ?? ability;
   }
 }
 

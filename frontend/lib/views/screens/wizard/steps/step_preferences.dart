@@ -7,6 +7,13 @@ import 'package:provider/provider.dart';
 class StepPreferences extends StatelessWidget{
   const StepPreferences({super.key});
 
+  static String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+    final code = Localizations.localeOf(context).languageCode;
+    if (code == 'es') return es;
+    if (code == 'gl') return gl;
+    return en;
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<CharacterCreatorViewModel>();
@@ -15,19 +22,19 @@ class StepPreferences extends StatelessWidget{
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SizedBox(height: 8),
-        Text('Character Basics',
+        Text(_tr(context, en: 'Character Basics', es: 'Basicos del personaje', gl: 'Basicos da personaxe'),
         style: Theme.of(context).textTheme.displayMedium),
         const SizedBox(height: 4),
-        Text('Give your character a name and set some preferences.',
+        Text(_tr(context, en: 'Give your character a name and set some preferences.', es: 'Pon un nombre al personaje y define algunas preferencias.', gl: 'Pon un nome ao personaxe e define algunhas preferencias.'),
           style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
         const SizedBox(height: 28),
 
           //- Nombre
           TextFormField(
           initialValue: vm.characterName,
-          decoration: const InputDecoration(
-            labelText: 'Character name *',
-            prefixIcon: Icon(Icons.person_outline, color: AppTheme.primary),
+          decoration: InputDecoration(
+            labelText: '${_tr(context, en: 'Character name', es: 'Nombre del personaje', gl: 'Nome da personaxe')} *',
+            prefixIcon: const Icon(Icons.person_outline, color: AppTheme.primary),
           ),
           style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 16),
           onChanged: vm.setName,
@@ -35,20 +42,20 @@ class StepPreferences extends StatelessWidget{
         const SizedBox(height: 28),
 
           // Ability Scores display preference
-          Text('Ability Scores display',
+          Text(_tr(context, en: 'Ability Scores display', es: 'Vista de atributos', gl: 'Vista de atributos'),
             style: GoogleFonts.libreBaskerville(
               color: AppTheme.textPrimary,
               fontSize: 14, fontWeight: FontWeight.bold
             )),
           const SizedBox(height: 4),
-          Text('How ability scores appear in the character sheet.',
+          Text(_tr(context, en: 'How ability scores appear in the character sheet.', es: 'Como se muestran los atributos en la hoja de personaje.', gl: 'Como se mostran os atributos na folla de personaxe.'),
             style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 12)),
           const SizedBox(height: 10),
           Row(children: [
             Expanded(child: _DisplayModeTile(
               title: '20',
               subtitle: '+5',
-              label: 'Score on top',
+              label: _tr(context, en: 'Score on top', es: 'Puntuacion arriba', gl: 'Puntuacion arriba'),
               selected: vm.abilityDisplayMode == 'SCORES_TOP',
               onTap: () => vm.setAbilityDisplayMode('SCORES_TOP'),
             )),
@@ -56,7 +63,7 @@ class StepPreferences extends StatelessWidget{
             Expanded(child: _DisplayModeTile(
               title: '+5',
               subtitle: '20',
-              label: 'Modifier on top',
+              label: _tr(context, en: 'Modifier on top', es: 'Modificador arriba', gl: 'Modificador arriba'),
               selected: vm.abilityDisplayMode == 'MODIFIERS_TOP',
               onTap: () => vm.setAbilityDisplayMode('MODIFIERS_TOP'),
             )),

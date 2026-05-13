@@ -16,6 +16,7 @@ import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_spells.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import 'package:gestor_personajes_dnd/viewmodels/locale_viewmodel.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_info.dart';
 
@@ -212,7 +213,7 @@ class _NavBar extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.arrow_back_ios_new,
                 color: AppTheme.primary, size: 20),
-            tooltip: 'Back',
+            tooltip: s.back,
             onPressed: () => Navigator.of(context).pop(),
           ),
           Expanded(
@@ -231,7 +232,7 @@ class _NavBar extends StatelessWidget {
                         fontWeight: FontWeight.bold),
                   ),
                 ),
-                Text(_subtitle(),
+                Text(_subtitle(context),
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary, fontSize: 11),
                     overflow: TextOverflow.ellipsis),
@@ -289,11 +290,11 @@ class _NavBar extends StatelessWidget {
     );
   }
 
-  String _subtitle() {
+  String _subtitle(BuildContext context) {
     final parts = [
-      if (character.raceName != null) character.raceName!,
-      if (character.dndClassName != null) character.dndClassName!,
-      'Lvl ${character.level}',
+      if (character.raceName != null) localizeKnownName(context, character.raceName!),
+      if (character.dndClassName != null) localizeKnownName(context, character.dndClassName!),
+      '${AppStrings.of(context).level} ${character.level}',
     ];
     return parts.join(' · ');
   }

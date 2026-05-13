@@ -55,6 +55,11 @@ CALL _add_col('racial_traits','name_gl','VARCHAR(255)');
 CALL _add_col('racial_traits','description_es','TEXT');
 CALL _add_col('racial_traits','description_gl','TEXT');
 
+CALL _add_col('class_features','name_es','VARCHAR(255)');
+CALL _add_col('class_features','name_gl','VARCHAR(255)');
+CALL _add_col('class_features','description_es','TEXT');
+CALL _add_col('class_features','description_gl','TEXT');
+
 DROP PROCEDURE IF EXISTS _add_col;
 
 -- 2) Base fallback EN -> ES/GL when translation is not present yet.
@@ -103,6 +108,13 @@ SET
   description_gl = COALESCE(NULLIF(description_gl, ''), description);
 
 UPDATE racial_traits
+SET
+  name_es = COALESCE(NULLIF(name_es, ''), name),
+  name_gl = COALESCE(NULLIF(name_gl, ''), name),
+  description_es = COALESCE(NULLIF(description_es, ''), description),
+  description_gl = COALESCE(NULLIF(description_gl, ''), description);
+
+UPDATE class_features
 SET
   name_es = COALESCE(NULLIF(name_es, ''), name),
   name_gl = COALESCE(NULLIF(name_gl, ''), name),

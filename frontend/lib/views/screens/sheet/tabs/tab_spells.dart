@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
@@ -12,7 +13,61 @@ const double _kHitDcW  = 62.0;
 const double _kDmgW    = 80.0;
 const double _kColGap  =  8.0;
 const double _kCastPad = 10.0;
-const double _kCastW   = 54.0;
+const double _kCastW   = 78.0;
+
+String _tr(BuildContext context, {required String en, required String es, required String gl}) {
+  final code = Localizations.localeOf(context).languageCode;
+  if (code == 'es') return es;
+  if (code == 'gl') return gl;
+  return en;
+}
+
+String _spellLevelName(BuildContext context, int level) {
+  if (level == 0) {
+    return _tr(context, en: 'Cantrips', es: 'Trucos', gl: 'Trucos');
+  }
+  final ord = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th'];
+  final idx = level - 1;
+  if (idx >= 0 && idx < ord.length) {
+    final code = Localizations.localeOf(context).languageCode;
+    if (code == 'es') return '${idx + 1}o Nivel';
+    if (code == 'gl') return '${idx + 1}o Nivel';
+    return '${ord[idx]} Level';
+  }
+  return _tr(context, en: 'Level $level', es: 'Nivel $level', gl: 'Nivel $level');
+}
+
+String _spellDetailLabel(BuildContext context, String key) {
+  switch (key) {
+    case 'castingTime':
+      return _tr(context, en: 'Casting Time', es: 'Tiempo de lanzamiento', gl: 'Tempo de lanzamento');
+    case 'range':
+      return _tr(context, en: 'Range', es: 'Alcance', gl: 'Alcance');
+    case 'duration':
+      return _tr(context, en: 'Duration', es: 'Duracion', gl: 'Duracion');
+    case 'components':
+      return _tr(context, en: 'Components', es: 'Componentes', gl: 'Componentes');
+    case 'status':
+      return _tr(context, en: 'Status', es: 'Estado', gl: 'Estado');
+    case 'description':
+      return _tr(context, en: 'Description', es: 'Descripcion', gl: 'Descricion');
+    default:
+      return key;
+  }
+}
+
+String _spellSourceLabel(BuildContext context, String? source) {
+  switch (source?.toUpperCase()) {
+    case 'RACE':
+      return _tr(context, en: 'Racial', es: 'Racial', gl: 'Racial');
+    case 'FEAT':
+      return _tr(context, en: 'Feat', es: 'Dote', gl: 'Dote');
+    case 'SUBCLASS':
+      return _tr(context, en: 'Subclass', es: 'Subclase', gl: 'Subclase');
+    default:
+      return _tr(context, en: 'Class', es: 'Clase', gl: 'Clase');
+  }
+}
 
 class TabSpells extends StatelessWidget{
   final PlayerCharacter character;
@@ -152,22 +207,6 @@ class _SpellLevelSection extends StatelessWidget {
     required this.vm,
   });
 
-  static const _levelNames = [
-    'Cantrips',
-    '1st Level',
-    '2nd Level',
-    '3rd Level',
-    '4th Level',
-    '5th Level',
-    '6th Level',
-    '7th Level',
-    '8th Level',
-    '9th Level',
-  ];
-
-  String get levelName =>
-      level < _levelNames.length ? _levelNames[level] : 'Level $level';
-
   @override
   Widget build(BuildContext context) {
     final maxSl = vm.maxSlots(level);
@@ -179,7 +218,7 @@ class _SpellLevelSection extends StatelessWidget {
 
       // A. Level name + slot tracker + divider (separate from column headers to prevent overflow)
       Row(children: [
-        Text(levelName,
+        Text(_spellLevelName(context, level),
             style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
                 fontSize: 13,
@@ -213,7 +252,7 @@ class _SpellLevelSection extends StatelessWidget {
             const SizedBox(width: _kColGap),
             SizedBox(
               width: _kDmgW,
-              child: Text('DAMAGE',
+              child: Text(_tr(context, en: 'DAMAGE', es: 'DAÑO', gl: 'DANO'),
                   textAlign: TextAlign.center,
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary,
@@ -289,12 +328,12 @@ class _SpellRow extends StatelessWidget {
     required this.level,
   });
 
-  String _shortTime(String? ct) {
+  String _shortTime(BuildContext context, String? ct) {
     if (ct == null) return '';
     final l = ct.toLowerCase();
-    if (l.contains('bonus')) return 'Bonus';
-    if (l.contains('reaction')) return 'Reaction';
-    if (l.contains('1 action') || l == 'action') return 'Action';
+    if (l.contains('bonus')) return _tr(context, en: 'Bonus', es: 'Adicional', gl: 'Adicional');
+    if (l.contains('reaction')) return _tr(context, en: 'Reaction', es: 'Reaccion', gl: 'Reaccion');
+    if (l.contains('1 action') || l == 'action') return _tr(context, en: 'Action', es: 'Accion', gl: 'Accion');
     if (l.contains('minute')) {
       final m = RegExp(r'(\d+)').firstMatch(l)?.group(1) ?? '1';
       return '${m} min';
@@ -342,9 +381,9 @@ class _SpellRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   _StatsLine(
-                    time: _shortTime(spell.castingTime),
+                    time: _shortTime(context, spell.castingTime),
                     range: _shortRange(spell.range),
-                    school: spell.school,
+                    school: spell.school != null ? localizeSpellSchool(context, spell.school!) : null,
                   ),
                 ],
               ),
@@ -368,7 +407,7 @@ class _SpellRow extends StatelessWidget {
                   final ok = await vm.castSpell(level);
                   if (!ok && context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('No spell slots available for level $level'),
+                      content: Text(_tr(context, en: 'No spell slots available for level $level', es: 'No hay espacios de hechizo para nivel $level', gl: 'Non hai espazos de feitizo para nivel $level')),
                       backgroundColor: AppTheme.accent,
                       duration: const Duration(seconds: 2),
                     ));
@@ -424,9 +463,9 @@ class _SpellRow extends StatelessWidget {
                               fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
                       Text(
-                        '${spell.levelLabel}'
-                        '${spell.school != null ? ' · ${spell.school}' : ''}'
-                        ' · ${spell.sourceLabel}',
+                        '${_spellLevelName(context, spell.level)}'
+                        '${spell.school != null ? ' · ${localizeSpellSchool(context, spell.school!)}' : ''}'
+                        ' · ${_spellSourceLabel(context, spell.spellSource)}',
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary, fontSize: 13),
                       ),
@@ -441,7 +480,7 @@ class _SpellRow extends StatelessWidget {
                           final ok = await vm.castSpell(spell.level);
                           if (!ok && ctx.mounted) {
                             ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                              content: Text('No slots for level ${spell.level}'),
+                              content: Text(_tr(ctx, en: 'No slots for level ${spell.level}', es: 'No hay espacios para nivel ${spell.level}', gl: 'Non hai espazos para nivel ${spell.level}')),
                               backgroundColor: AppTheme.accent,
                               duration: const Duration(seconds: 2)));
                           }
@@ -452,7 +491,7 @@ class _SpellRow extends StatelessWidget {
                           disabledForegroundColor: AppTheme.divider,
                           side: BorderSide(color: canCast2 ? AppTheme.primary : AppTheme.divider),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                        child: Text('CAST', style: GoogleFonts.libreBaskerville(
+                        child: Text(AppStrings.of(context).castButton, style: GoogleFonts.libreBaskerville(
                             fontSize: 11, fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -462,7 +501,7 @@ class _SpellRow extends StatelessWidget {
                 if (!spell.isCantrip && maxSl2 > 0) ...[
                   const SizedBox(height: 12),
                   Row(children: [
-                    Text('Slots Lv.${spell.level}',
+                    Text('${_tr(context, en: 'Slots Lv.', es: 'Espacios Nv.', gl: 'Espazos Nv.')} ${spell.level}',
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary,
                             fontSize: 11,
@@ -493,18 +532,23 @@ class _SpellRow extends StatelessWidget {
                 const Divider(),
                 const SizedBox(height: 8),
                 if (spell.castingTime != null)
-                  _DetailRow('Casting Time', spell.castingTime!),
+                  _DetailRow(_spellDetailLabel(context, 'castingTime'), spell.castingTime!),
                 if (spell.range != null)
-                  _DetailRow('Range', spell.range!),
+                  _DetailRow(_spellDetailLabel(context, 'range'), spell.range!),
                 if (spell.duration != null)
-                  _DetailRow('Duration', spell.duration!),
+                  _DetailRow(_spellDetailLabel(context, 'duration'), spell.duration!),
                 if (spell.components != null)
-                  _DetailRow('Components', spell.components!),
+                  _DetailRow(_spellDetailLabel(context, 'components'), spell.components!),
                 if (!spell.isCantrip)
-                  _DetailRow('Status', spell.prepared ? 'Prepared ✓' : 'Learned'),
+                  _DetailRow(
+                    _spellDetailLabel(context, 'status'),
+                    spell.prepared
+                        ? _tr(context, en: 'Prepared ✓', es: 'Preparado ✓', gl: 'Preparado ✓')
+                        : _tr(context, en: 'Learned', es: 'Aprendido', gl: 'Aprendido'),
+                  ),
                 if (spell.description != null && spell.description!.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  Text('Description',
+                  Text(_spellDetailLabel(context, 'description'),
                       style: GoogleFonts.libreBaskerville(
                           color: AppTheme.textPrimary,
                           fontSize: 13,
@@ -581,28 +625,40 @@ class _CastButton extends StatelessWidget {
   const _CastButton({required this.canCast, required this.onCast});
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 54,
-    height: 32,
-    child: OutlinedButton(
-      onPressed: canCast ? () => onCast() : null,
-      style: OutlinedButton.styleFrom(
-        padding: EdgeInsets.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        foregroundColor: AppTheme.primary,
-        disabledForegroundColor: AppTheme.divider,
-        side: BorderSide(
-          color: canCast ? AppTheme.primary : AppTheme.divider,
-          width: 1,
+  Widget build(BuildContext context) {
+    final label = AppStrings.of(context).castButton;
+    final width = label.length > 5 ? 78.0 : 62.0;
+    return SizedBox(
+      width: width,
+      height: 32,
+      child: OutlinedButton(
+        onPressed: canCast ? () => onCast() : null,
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          foregroundColor: AppTheme.primary,
+          disabledForegroundColor: AppTheme.divider,
+          side: BorderSide(
+            color: canCast ? AppTheme.primary : AppTheme.divider,
+            width: 1,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6),
+          ),
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: GoogleFonts.libreBaskerville(
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
       ),
-      child: Text(AppStrings.of(context).castButton,
-          style: GoogleFonts.libreBaskerville(fontSize: 9, fontWeight: FontWeight.bold)),
-    ),
-  );
+    );
+  }
 }
 
 // ── Damage cell: dice above, type below (same size, uppercase) ────────────────
@@ -624,7 +680,7 @@ class _DamageCell extends StatelessWidget {
     }
     return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
       Text(base, textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600)),
-      Text(type.toUpperCase(), textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600)),
+      Text(localizeDamageType(context, type).toUpperCase(), textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600)),
     ]);
   }
 }
@@ -746,7 +802,12 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
             controller: _searchCtrl,
             onChanged: (v) => setState(() => _query = v),
             decoration: InputDecoration(
-              hintText: 'Search by name or school…',
+              hintText: _tr(
+                context,
+                en: 'Search by name or school…',
+                es: 'Buscar por nombre o escuela…',
+                gl: 'Buscar por nome ou escola…',
+              ),
               hintStyle: GoogleFonts.lato(color: AppTheme.textSecondary),
               prefixIcon:
                   const Icon(Icons.search, color: AppTheme.primary, size: 20),
@@ -802,7 +863,12 @@ class _MySpellsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (spells.isEmpty) {
       return Center(
-          child: Text('No spells match your search.',
+          child: Text(_tr(
+                context,
+                en: 'No spells match your search.',
+                es: 'Ningun hechizo coincide con tu busqueda.',
+                gl: 'Ningun feitizo coincide coa busca.',
+              ),
               style: GoogleFonts.lato(
                   color: AppTheme.textSecondary, fontSize: 13)));
     }
@@ -936,12 +1002,12 @@ class _ManageSpellTile extends StatelessWidget {
                             color: AppTheme.textSecondary, fontSize: 11)),
                   if (isCantrip) ...[
                     const SizedBox(width: 4),
-                    Text('· At Will',
+                    Text(_tr(context, en: '· At Will', es: '· A voluntad', gl: '· A vontade'),
                         style: GoogleFonts.lato(
                             color: AppTheme.primary, fontSize: 11)),
                   ] else if (alwaysPrepared) ...[
                     const SizedBox(width: 4),
-                    Text('· Always Prepared',
+                    Text(_tr(context, en: '· Always Prepared', es: '· Siempre preparado', gl: '· Sempre preparado'),
                         style: GoogleFonts.lato(
                             color: AppTheme.primary, fontSize: 11)),
                   ],
@@ -1019,15 +1085,19 @@ class _LearnNewTabState extends State<_LearnNewTab> {
     final sortedLevels = byLevel.keys.toList()..sort();
 
     if (vm.isLoadingSpells) {
-      return const Center(child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircularProgressIndicator(color: AppTheme.primary),
-          SizedBox(height: 14),
-          Text('Loading spells…',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
-        ],
-      ));
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: AppTheme.primary),
+            const SizedBox(height: 14),
+            Text(
+              _tr(context, en: 'Loading spells…', es: 'Cargando hechizos…', gl: 'Cargando feitizos…'),
+              style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            ),
+          ],
+        ),
+      );
     }
 
     if (vm.spellsError != null) {
@@ -1045,7 +1115,7 @@ class _LearnNewTabState extends State<_LearnNewTab> {
             OutlinedButton.icon(
               onPressed: vm.loadAvailableSpells,
               icon: const Icon(Icons.refresh, size: 16),
-              label: const Text('Retry'),
+              label: Text(AppStrings.of(context).retry),
               style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.primary,
                   side: const BorderSide(color: AppTheme.primary)),
@@ -1058,7 +1128,9 @@ class _LearnNewTabState extends State<_LearnNewTab> {
     if (filtered.isEmpty) {
       return Center(
         child: Text(
-          q.isEmpty ? 'No spells available for this class.' : 'No results for "$q".',
+          q.isEmpty
+              ? _tr(context, en: 'No spells available for this class.', es: 'No hay hechizos disponibles para esta clase.', gl: 'Non hai feitizos dispoñibles para esta clase.')
+              : _tr(context, en: 'No results for "$q".', es: 'Sin resultados para "$q".', gl: 'Sen resultados para "$q".'),
           style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13),
           textAlign: TextAlign.center,
         ),
@@ -1071,10 +1143,7 @@ class _LearnNewTabState extends State<_LearnNewTab> {
       itemBuilder: (_, i) {
         final level     = sortedLevels[i];
         final spells    = byLevel[level]!;
-        final _ord      = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'];
-        final levelName = level == 0
-            ? 'Cantrips'
-            : (level - 1 < _ord.length ? '${_ord[level - 1]} Level' : 'Level $level');
+        final levelName = _spellLevelName(context, level);
 
         return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1123,7 +1192,7 @@ class _LearnNewTabState extends State<_LearnNewTab> {
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text(
-            '${spell.isCantrip ? 'Cantrip' : 'Level ${spell.level}'}'
+            '${spell.isCantrip ? _tr(context, en: 'Cantrip', es: 'Truco', gl: 'Truco') : _tr(context, en: 'Level ${spell.level}', es: 'Nivel ${spell.level}', gl: 'Nivel ${spell.level}')} '
             '${spell.school != null ? ' · ${spell.school}' : ''}',
             style: GoogleFonts.lato(
                 color: AppTheme.textSecondary, fontSize: 12),
@@ -1274,7 +1343,7 @@ class _LearnSpellTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: AppTheme.primary.withOpacity(0.4)),
             ),
-            child: Text('Known',
+            child: Text(_tr(context, en: 'Known', es: 'Conocido', gl: 'Coñecido'),
                 style: GoogleFonts.lato(
                     color: AppTheme.primary,
                     fontSize: 11,
@@ -1303,12 +1372,12 @@ class _EmptyState extends StatelessWidget {
             const Icon(Icons.auto_fix_high,
                 color: AppTheme.surfaceVariant, size: 48),
             const SizedBox(height: 16),
-            Text('No spells learned yet',
+            Text(_tr(context, en: 'No spells learned yet', es: 'Aun no hay hechizos aprendidos', gl: 'Ainda non hai feitizos aprendidos'),
                 style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textSecondary, fontSize: 14)),
             const SizedBox(height: 8),
             Text(
-              'Add spells using the "Manage Spells" button above.',
+              _tr(context, en: 'Add spells using the "Manage Spells" button above.', es: 'Anade hechizos usando el boton "Gestionar Hechizos" de arriba.', gl: 'Engade feitizos usando o boton "Xestionar Feitizos" de arriba.'),
               style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
                   fontSize: 12,

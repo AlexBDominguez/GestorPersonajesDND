@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
+import 'package:gestor_personajes_dnd/l10n/app_strings.dart';
+import 'package:gestor_personajes_dnd/l10n/dnd_terms.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,6 +13,10 @@ class TabSkills extends StatelessWidget{
 
   @override
   Widget build(BuildContext context){
+    final hdr = _columnHeaders(context);
+    final skills = [...CharacterSheetViewModel.skillNames]
+      ..sort((a, b) =>
+          _skillLabel(context, a).toLowerCase().compareTo(_skillLabel(context, b).toLowerCase()));
     return Column(children: [
       //Header de la tabla
       Container(
@@ -21,19 +27,19 @@ class TabSkills extends StatelessWidget{
           const SizedBox(width: 10),
           SizedBox(
             width: 36,
-            child: Text('MOD',
+            child: Text(hdr.mod,
               style: GoogleFonts.lato(
                 color: AppTheme.textSecondary,
                 fontSize: 10, fontWeight: FontWeight.bold)),
           ),
-          const Expanded(
-            child: Text('SKILL',
-            style: TextStyle(
+          Expanded(
+            child: Text(hdr.skill,
+            style: const TextStyle(
               color: AppTheme.textSecondary,
               fontSize: 10
             )),            
           ),
-          Text('BONUS',
+          Text(hdr.bonus,
             style: GoogleFonts.lato(
               color: AppTheme.textSecondary,
               fontSize: 10, fontWeight: FontWeight.bold
@@ -46,11 +52,11 @@ class TabSkills extends StatelessWidget{
       Expanded(
         child: ListView.separated(
           padding: EdgeInsets.zero,
-          itemCount: CharacterSheetViewModel.skillNames.length,
+          itemCount: skills.length,
           separatorBuilder: (_, __) =>
             const Divider(height: 1, color: AppTheme.divider),
           itemBuilder: (_, i){
-            final skill = CharacterSheetViewModel.skillNames[i];
+            final skill = skills[i];
             final ability = vm.skillAbility(skill);
             final bonus = vm.skillBonus(skill);
             final bonusLbl = bonus >= 0 ? '+$bonus' : '$bonus';
@@ -86,7 +92,7 @@ class TabSkills extends StatelessWidget{
                   color: AppTheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Text(ability,
+                child: Text(_abilityAbbrev(context, ability),
                   textAlign: TextAlign.center,
                   style: GoogleFonts.lato(
                     color: AppTheme.primary,
@@ -98,7 +104,7 @@ class TabSkills extends StatelessWidget{
                 //Skill name
                 Expanded(
                   child: Row(children: [
-                    Text(skill,
+                    Text(_skillLabel(context, skill),
                     style: GoogleFonts.lato(
                       color: AppTheme.textPrimary, fontSize: 13)),
                     if (expertise) ...[
@@ -134,5 +140,29 @@ class TabSkills extends StatelessWidget{
         ),
       ),
     ]);
+  }
+
+  static ({String mod, String skill, String bonus}) _columnHeaders(BuildContext context) {
+    final code = Localizations.localeOf(context).languageCode;
+    if (code == 'es') return (mod: 'MOD', skill: 'HABILIDAD', bonus: 'BONO');
+    if (code == 'gl') return (mod: 'MOD', skill: 'HABILIDADE', bonus: 'BONUS');
+    return (mod: 'MOD', skill: 'SKILL', bonus: 'BONUS');
+  }
+
+  static String _abilityAbbrev(BuildContext context, String ability) {
+    final s = AppStrings.of(context);
+    return switch (ability) {
+      'STR' => s.str,
+      'DEX' => s.dex,
+      'CON' => s.con,
+      'INT' => s.intAttr,
+      'WIS' => s.wis,
+      'CHA' => s.cha,
+      _ => ability,
+    };
+  }
+
+  static String _skillLabel(BuildContext context, String skill) {
+    return localizeSkillOrProficiency(context, skill);
   }
 }

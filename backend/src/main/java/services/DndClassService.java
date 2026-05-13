@@ -88,12 +88,13 @@ public class DndClassService {
     }
 
     private ClassFeatureDto toFeatureDto(ClassFeature feature) {
+        String locale = RequestLocaleContext.get();
         ClassFeatureDto dto = new ClassFeatureDto();
         dto.setId(feature.getId());
         dto.setIndexName(feature.getIndexName());
-        dto.setName(feature.getName());
+        dto.setName(LocalizedTextResolver.resolve(locale, feature.getName(), feature.getNameEs(), feature.getNameGl()));
         dto.setLevel(feature.getLevel());
-        dto.setDescription(feature.getDescription());
+        dto.setDescription(LocalizedTextResolver.resolve(locale, feature.getDescription(), feature.getDescriptionEs(), feature.getDescriptionGl()));
         dto.setApiUrl(feature.getApiUrl());
         return dto;
     }
