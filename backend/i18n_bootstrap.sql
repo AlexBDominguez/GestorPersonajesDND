@@ -1,43 +1,61 @@
 -- i18n bootstrap + first-pass translations for D&D data.
 -- Safe to run multiple times (idempotent).
 
--- 1) Ensure columns exist (useful if schema was created before i18n code).
-ALTER TABLE spells ADD COLUMN IF NOT EXISTS name_es VARCHAR(255);
-ALTER TABLE spells ADD COLUMN IF NOT EXISTS name_gl VARCHAR(255);
-ALTER TABLE spells ADD COLUMN IF NOT EXISTS description_es TEXT;
-ALTER TABLE spells ADD COLUMN IF NOT EXISTS description_gl TEXT;
+-- 1) Ensure columns exist — MySQL-compatible (no ADD COLUMN IF NOT EXISTS).
+DROP PROCEDURE IF EXISTS _add_col;
+DELIMITER //
+CREATE PROCEDURE _add_col(IN tbl VARCHAR(64), IN col VARCHAR(64), IN def TEXT)
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = tbl AND COLUMN_NAME = col
+  ) THEN
+    SET @s = CONCAT('ALTER TABLE `', tbl, '` ADD COLUMN `', col, '` ', def);
+    PREPARE st FROM @s;
+    EXECUTE st;
+    DEALLOCATE PREPARE st;
+  END IF;
+END //
+DELIMITER ;
 
-ALTER TABLE classes ADD COLUMN IF NOT EXISTS name_es VARCHAR(255);
-ALTER TABLE classes ADD COLUMN IF NOT EXISTS name_gl VARCHAR(255);
-ALTER TABLE classes ADD COLUMN IF NOT EXISTS description_es TEXT;
-ALTER TABLE classes ADD COLUMN IF NOT EXISTS description_gl TEXT;
+CALL _add_col('spells','name_es','VARCHAR(255)');
+CALL _add_col('spells','name_gl','VARCHAR(255)');
+CALL _add_col('spells','description_es','TEXT');
+CALL _add_col('spells','description_gl','TEXT');
 
-ALTER TABLE race ADD COLUMN IF NOT EXISTS name_es VARCHAR(255);
-ALTER TABLE race ADD COLUMN IF NOT EXISTS name_gl VARCHAR(255);
-ALTER TABLE race ADD COLUMN IF NOT EXISTS description_es TEXT;
-ALTER TABLE race ADD COLUMN IF NOT EXISTS description_gl TEXT;
+CALL _add_col('classes','name_es','VARCHAR(255)');
+CALL _add_col('classes','name_gl','VARCHAR(255)');
+CALL _add_col('classes','description_es','TEXT');
+CALL _add_col('classes','description_gl','TEXT');
 
-ALTER TABLE subclasses ADD COLUMN IF NOT EXISTS name_es VARCHAR(255);
-ALTER TABLE subclasses ADD COLUMN IF NOT EXISTS name_gl VARCHAR(255);
-ALTER TABLE subclasses ADD COLUMN IF NOT EXISTS subclass_flavor_es VARCHAR(255);
-ALTER TABLE subclasses ADD COLUMN IF NOT EXISTS subclass_flavor_gl VARCHAR(255);
-ALTER TABLE subclasses ADD COLUMN IF NOT EXISTS description_es TEXT;
-ALTER TABLE subclasses ADD COLUMN IF NOT EXISTS description_gl TEXT;
+CALL _add_col('race','name_es','VARCHAR(255)');
+CALL _add_col('race','name_gl','VARCHAR(255)');
+CALL _add_col('race','description_es','TEXT');
+CALL _add_col('race','description_gl','TEXT');
 
-ALTER TABLE subraces ADD COLUMN IF NOT EXISTS name_es VARCHAR(255);
-ALTER TABLE subraces ADD COLUMN IF NOT EXISTS name_gl VARCHAR(255);
-ALTER TABLE subraces ADD COLUMN IF NOT EXISTS description_es TEXT;
-ALTER TABLE subraces ADD COLUMN IF NOT EXISTS description_gl TEXT;
+CALL _add_col('subclasses','name_es','VARCHAR(255)');
+CALL _add_col('subclasses','name_gl','VARCHAR(255)');
+CALL _add_col('subclasses','subclass_flavor_es','VARCHAR(255)');
+CALL _add_col('subclasses','subclass_flavor_gl','VARCHAR(255)');
+CALL _add_col('subclasses','description_es','TEXT');
+CALL _add_col('subclasses','description_gl','TEXT');
 
-ALTER TABLE items ADD COLUMN IF NOT EXISTS name_es VARCHAR(255);
-ALTER TABLE items ADD COLUMN IF NOT EXISTS name_gl VARCHAR(255);
-ALTER TABLE items ADD COLUMN IF NOT EXISTS description_es TEXT;
-ALTER TABLE items ADD COLUMN IF NOT EXISTS description_gl TEXT;
+CALL _add_col('subraces','name_es','VARCHAR(255)');
+CALL _add_col('subraces','name_gl','VARCHAR(255)');
+CALL _add_col('subraces','description_es','TEXT');
+CALL _add_col('subraces','description_gl','TEXT');
 
-ALTER TABLE racial_traits ADD COLUMN IF NOT EXISTS name_es VARCHAR(255);
-ALTER TABLE racial_traits ADD COLUMN IF NOT EXISTS name_gl VARCHAR(255);
-ALTER TABLE racial_traits ADD COLUMN IF NOT EXISTS description_es TEXT;
-ALTER TABLE racial_traits ADD COLUMN IF NOT EXISTS description_gl TEXT;
+CALL _add_col('items','name_es','VARCHAR(255)');
+CALL _add_col('items','name_gl','VARCHAR(255)');
+CALL _add_col('items','description_es','TEXT');
+CALL _add_col('items','description_gl','TEXT');
+
+CALL _add_col('racial_traits','name_es','VARCHAR(255)');
+CALL _add_col('racial_traits','name_gl','VARCHAR(255)');
+CALL _add_col('racial_traits','description_es','TEXT');
+CALL _add_col('racial_traits','description_gl','TEXT');
+
+DROP PROCEDURE IF EXISTS _add_col;
 
 -- 2) Base fallback EN -> ES/GL when translation is not present yet.
 UPDATE spells
