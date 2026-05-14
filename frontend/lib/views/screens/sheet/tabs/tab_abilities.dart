@@ -108,7 +108,7 @@ class _AbilityCell extends StatelessWidget{
           Text(ability,
             style: GoogleFonts.libreBaskerville(
               color: AppTheme.textSecondary,
-              fontSize: 11,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               letterSpacing: 1
             )),
@@ -200,7 +200,7 @@ class _SavingThrowRow extends StatelessWidget {
             CharacterSheetViewModel.abilityFull[ability] ?? ability,
             style: GoogleFonts.lato(
               color: proficient ? AppTheme.textPrimary : AppTheme.textSecondary,
-                fontSize: 12),
+                fontSize: 14),
           ),
         ),
             Text(lbl, style: GoogleFonts.libreBaskerville(
@@ -279,7 +279,7 @@ class _SpecialSenseRow extends StatelessWidget {
               Text(description,
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary,
-                      fontSize: 11,
+                      fontSize: 14,
                       height: 1.4)),
           ]),
         ),
@@ -305,3 +305,4 @@ class _SectionTitle extends StatelessWidget{
     const Expanded(child: Divider(color: AppTheme.surfaceVariant))
   ]);
 }
+

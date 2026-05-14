@@ -94,7 +94,7 @@ class _StepEquipmentState extends State<StepEquipment>
                 Text(
                   'Optional',
                   style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary, fontSize: 11),
+                      color: AppTheme.textSecondary, fontSize: 14),
                 ),
             ]),
           ),
@@ -116,7 +116,7 @@ class _StepEquipmentState extends State<StepEquipment>
                     decoration: InputDecoration(
                       hintText: 'Search items...',
                       hintStyle: GoogleFonts.lato(
-                          color: AppTheme.textSecondary, fontSize: 12),
+                          color: AppTheme.textSecondary, fontSize: 14),
                       prefixIcon: const Icon(Icons.search,
                           color: AppTheme.textSecondary, size: 16),
                       suffixIcon: _query.isNotEmpty
@@ -177,7 +177,7 @@ class _StepEquipmentState extends State<StepEquipment>
                           color: active
                               ? AppTheme.primary
                               : AppTheme.textSecondary,
-                          fontSize: 11,
+                          fontSize: 14,
                           fontWeight: active
                               ? FontWeight.bold
                               : FontWeight.normal,
@@ -196,7 +196,7 @@ class _StepEquipmentState extends State<StepEquipment>
             unselectedLabelColor: AppTheme.textSecondary,
             indicatorColor: AppTheme.primary,
             labelStyle: GoogleFonts.libreBaskerville(
-                fontSize: 11, fontWeight: FontWeight.bold),
+                fontSize: 14, fontWeight: FontWeight.bold),
             tabs: const [
               Tab(text: 'CATALOG'),
               Tab(text: 'SELECTED'),
@@ -339,7 +339,7 @@ class _SelectedTab extends StatelessWidget {
           const SizedBox(height: 8),
           Text('Go to the Catalog tab to add starting gear.',
             style: GoogleFonts.lato(
-              color: AppTheme.textSecondary, fontSize: 12,
+              color: AppTheme.textSecondary, fontSize: 14,
               fontStyle: FontStyle.italic
             )),
         ]),
@@ -359,7 +359,7 @@ class _SelectedTab extends StatelessWidget {
         child: Text(
           '${selected.length} items · ${totalWeight.toStringAsFixed(1)} lb total',
           style: GoogleFonts.lato(
-            color: AppTheme.textSecondary, fontSize: 12),
+            color: AppTheme.textSecondary, fontSize: 14),
         ),
       ),
       Expanded(
@@ -451,15 +451,15 @@ class _ItemTile extends StatelessWidget {
                     Text(
                       _formatItemType(item.itemType!),
                       style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 11)),
+                        color: AppTheme.textSecondary, fontSize: 14)),
                   if (item.statSummary.isNotEmpty) ...[
                     const Text(' · ',
                       style: TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 11)),
+                        color: AppTheme.textSecondary, fontSize: 14)),
                     Text(item.statSummary,
                       style: GoogleFonts.lato(
                         color: const Color(0xFFC8A45A),
-                        fontSize: 11,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600)),
                   ],
                 ]),
@@ -471,7 +471,7 @@ class _ItemTile extends StatelessWidget {
             Text(item.costDisplay,
                 style: GoogleFonts.lato(
                     color: const Color(0xFFC8A45A),
-                    fontSize: 11,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold)),
             Text('${item.weight} lb',
                 style: GoogleFonts.lato(
@@ -585,13 +585,13 @@ class _DetailRow extends StatelessWidget {
           width: 110,
           child: Text('$label:',
             style: GoogleFonts.lato(
-              color: AppTheme.textSecondary, fontSize: 12,
+              color: AppTheme.textSecondary, fontSize: 14,
               fontWeight: FontWeight.bold)),
         ),
         Expanded(
           child: Text(value,
             style: GoogleFonts.lato(
-              color: AppTheme.textPrimary, fontSize: 12)),
+              color: AppTheme.textPrimary, fontSize: 14)),
         ),
       ]),
   );
@@ -610,3 +610,4 @@ String _formatItemType(String raw) {
           .join(' ');
   }
 }
+

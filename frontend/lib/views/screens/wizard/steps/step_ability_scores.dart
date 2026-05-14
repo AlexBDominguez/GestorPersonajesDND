@@ -27,7 +27,7 @@ class StepAbilityScores extends StatelessWidget {
           Text('Available values:',
               style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
-                  fontSize: 12, fontWeight: FontWeight.bold)),
+                  fontSize: 14, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8, runSpacing: 8,
@@ -229,7 +229,7 @@ class _StandardArrayRow extends StatelessWidget {
           const SizedBox(width: 6),
           Text('+$racialBonus',
               style: GoogleFonts.lato(
-                  color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.bold)),
+                  color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.bold)),
         ],
         const Spacer(),
         Text(
@@ -307,7 +307,7 @@ class _ManualRow extends StatelessWidget {
           const SizedBox(width: 6),
           Text('+$racialBonus',
               style: GoogleFonts.lato(
-                  color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.bold)),
+                  color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.bold)),
         ],
 
         const Spacer(),
@@ -321,3 +321,4 @@ class _ManualRow extends StatelessWidget {
     );
   }
 }
+

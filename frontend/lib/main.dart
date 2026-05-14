@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import 'config/app_theme.dart';
@@ -9,6 +10,7 @@ import 'views/screens/dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
   runApp(const DndApp());
 }
 
@@ -27,10 +29,36 @@ class DndApp extends StatelessWidget {
           builder: (context, vm, child) {
             // Register global 401/403 → logout handler
             ApiClient.onSessionExpired = () { vm.logout(); };
+
+            if (!vm.isInitialized) {
+              return const _StartupLoadingScreen();
+            }
+
             return vm.isLoggedIn
                 ? const DashboardScreen()
                 : const LoginScreen();
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _StartupLoadingScreen extends StatelessWidget {
+  const _StartupLoadingScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: AppTheme.background,
+      body: Center(
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            color: AppTheme.primary,
+          ),
         ),
       ),
     );

@@ -436,7 +436,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
             const SizedBox(height: 10),
             Text(_error!,
                 style: GoogleFonts.lato(
-                    color: AppTheme.accent, fontSize: 11)),
+                    color: AppTheme.accent, fontSize: 14)),
           ],
         ]),
       ),
@@ -571,7 +571,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 ),
                 child: Text(_error!,
                     style: GoogleFonts.lato(
-                        color: AppTheme.accent, fontSize: 12)),
+                        color: AppTheme.accent, fontSize: 14)),
               ),
             ],
             const SizedBox(height: 28),
@@ -650,7 +650,7 @@ class _RoleChip extends StatelessWidget {
       child: Text(label,
         style: GoogleFonts.lato(
           color: selected ? AppTheme.primary : AppTheme.textSecondary,
-          fontSize: 12,
+          fontSize: 14,
           fontWeight: selected ? FontWeight.bold : FontWeight.normal,
         )),
     ),
@@ -816,4 +816,5 @@ class _EmptyView extends StatelessWidget {
         ]),
       );
 }
+
 

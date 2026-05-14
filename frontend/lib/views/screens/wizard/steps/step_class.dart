@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../config/app_theme.dart';
+import '../../../../config/class_icons.dart';
 import '../../../../models/wizard/class_option.dart';
 import '../../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import '../class_detail_screen.dart';
@@ -62,7 +63,7 @@ class StepClass extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Text(
             'Your class is the primary definition of what your character does. Tap a class to see all details.',
-            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 12),
+            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14),
           ),
         ),
         // Badge con la clase seleccionada (si hay una)
@@ -275,7 +276,7 @@ class _ClassCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary, fontSize: 12)),
+                            color: AppTheme.textSecondary, fontSize: 14)),
                   ],
                 ],
               ),
@@ -311,7 +312,7 @@ class _HitDieBadge extends StatelessWidget {
         child: Text('d$hitDie',
             style: GoogleFonts.libreBaskerville(
                 color: AppTheme.primary,
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: FontWeight.bold)),
       );
 }

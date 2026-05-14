@@ -205,7 +205,7 @@ class _TraitCard extends StatelessWidget{
           Text(label,
             style: GoogleFonts.libreBaskerville(
               color: AppTheme.primary,
-              fontSize: 11,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               letterSpacing: 0.8,
             )),
@@ -241,7 +241,7 @@ class _EmptyHint extends StatelessWidget {
   Widget build(BuildContext context) => Text(text,
     style: GoogleFonts.lato(
       color: AppTheme.textSecondary,
-      fontSize: 12,
+      fontSize: 14,
       fontStyle: FontStyle.italic,
     ));
 }
@@ -312,7 +312,7 @@ class _PhysCell extends StatelessWidget {
           Text(value,
             style: GoogleFonts.lato(
               color: AppTheme.textPrimary,
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
             overflow: TextOverflow.ellipsis),
@@ -346,4 +346,5 @@ class _LongTextCard extends StatelessWidget{
     );
   }
 }
+
 

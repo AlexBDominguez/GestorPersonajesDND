@@ -12,12 +12,14 @@ class AuthViewModel extends ChangeNotifier {
         _tokenStorage   = tokenStorage  ?? TokenStorage();
 
   bool    _isLoading    = false;
+  bool    _isInitialized = false;
   String? _errorMessage;
   bool    _isLoggedIn   = false;
   bool    _isAdmin      = false;
   String  _username     = '';
 
   bool    get isLoading       => _isLoading;
+  bool    get isInitialized   => _isInitialized;
   String? get errorMessage    => _errorMessage;
   bool    get isLoggedIn      => _isLoggedIn;
   bool    get isAdmin         => _isAdmin;
@@ -36,6 +38,8 @@ class AuthViewModel extends ChangeNotifier {
     } catch (e) {
       _isLoggedIn = false;
       if (kDebugMode) print('Error initializing auth: $e');
+    } finally {
+      _isInitialized = true;
     }
     notifyListeners();
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../config/app_theme.dart';
@@ -14,44 +15,45 @@ class StepBackground extends StatefulWidget {
 
 class _StepBackgroundState extends State<StepBackground> {
   // Controladores para los campos de texto libre
-  final _hairCtrl       = TextEditingController();
-  final _eyesCtrl       = TextEditingController();
-  final _skinCtrl       = TextEditingController();
-  final _ageCtrl        = TextEditingController();
-  final _heightCtrl     = TextEditingController();
-  final _weightCtrl     = TextEditingController();
+  final _hairCtrl = TextEditingController();
+  final _eyesCtrl = TextEditingController();
+  final _skinCtrl = TextEditingController();
+  final _ageCtrl = TextEditingController();
+  final _heightCtrl = TextEditingController();
+  final _weightCtrl = TextEditingController();
   final _personalityCtrl = TextEditingController();
-  final _idealsCtrl     = TextEditingController();
-  final _bondsCtrl      = TextEditingController();
-  final _flawsCtrl      = TextEditingController();
+  final _idealsCtrl = TextEditingController();
+  final _bondsCtrl = TextEditingController();
+  final _flawsCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     // Rellenar controllers con los valores guardados en el viewmodel
     final vm = context.read<CharacterCreatorViewModel>();
-    _hairCtrl.text        = vm.hair;
-    _eyesCtrl.text        = vm.eyes;
-    _skinCtrl.text        = vm.skin;
-    _ageCtrl.text         = vm.age;
-    _heightCtrl.text      = vm.height;
-    _weightCtrl.text      = vm.weight;
+    _hairCtrl.text = vm.hair;
+    _eyesCtrl.text = vm.eyes;
+    _skinCtrl.text = vm.skin;
+    _ageCtrl.text = vm.age;
+    _heightCtrl.text = vm.height;
+    _weightCtrl.text = vm.weight;
     _personalityCtrl.text = vm.personality;
-    _idealsCtrl.text      = vm.ideals;
-    _bondsCtrl.text       = vm.bonds;
-    _flawsCtrl.text       = vm.flaws;
+    _idealsCtrl.text = vm.ideals;
+    _bondsCtrl.text = vm.bonds;
+    _flawsCtrl.text = vm.flaws;
 
     // Persistir cambios en el viewmodel al escribir
-    _hairCtrl.addListener(()        => vm.setHair(_hairCtrl.text));
-    _eyesCtrl.addListener(()        => vm.setEyes(_eyesCtrl.text));
-    _skinCtrl.addListener(()        => vm.setSkin(_skinCtrl.text));
-    _ageCtrl.addListener(()         => vm.setAge(_ageCtrl.text));
-    _heightCtrl.addListener(()      => vm.setHeight(_heightCtrl.text));
-    _weightCtrl.addListener(()      => vm.setWeight(_weightCtrl.text));
-    _personalityCtrl.addListener(() => vm.setPersonality(_personalityCtrl.text));
-    _idealsCtrl.addListener(()      => vm.setIdeals(_idealsCtrl.text));
-    _bondsCtrl.addListener(()       => vm.setBonds(_bondsCtrl.text));
-    _flawsCtrl.addListener(()       => vm.setFlaws(_flawsCtrl.text));
+    _hairCtrl.addListener(() => vm.setHair(_hairCtrl.text));
+    _eyesCtrl.addListener(() => vm.setEyes(_eyesCtrl.text));
+    _skinCtrl.addListener(() => vm.setSkin(_skinCtrl.text));
+    _ageCtrl.addListener(() => vm.setAge(_ageCtrl.text));
+    _heightCtrl.addListener(() => vm.setHeight(_heightCtrl.text));
+    _weightCtrl.addListener(() => vm.setWeight(_weightCtrl.text));
+    _personalityCtrl
+        .addListener(() => vm.setPersonality(_personalityCtrl.text));
+    _idealsCtrl.addListener(() => vm.setIdeals(_idealsCtrl.text));
+    _bondsCtrl.addListener(() => vm.setBonds(_bondsCtrl.text));
+    _flawsCtrl.addListener(() => vm.setFlaws(_flawsCtrl.text));
   }
 
   @override
@@ -112,7 +114,8 @@ class _StepBackgroundState extends State<StepBackground> {
                   ? Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       child: Text('Loading backgrounds…',
-                          style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+                          style: GoogleFonts.lato(
+                              color: AppTheme.textSecondary, fontSize: 13)),
                     )
                   : DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
@@ -122,15 +125,19 @@ class _StepBackgroundState extends State<StepBackground> {
                         hint: Text('Select a background…',
                             style: GoogleFonts.lato(
                                 color: AppTheme.textSecondary, fontSize: 14)),
-                        items: vm.backgrounds.map((b) => DropdownMenuItem(
-                          value: b.id,
-                          child: Text(b.name,
-                              style: GoogleFonts.libreBaskerville(
-                                  color: AppTheme.textPrimary, fontSize: 14)),
-                        )).toList(),
+                        items: vm.backgrounds
+                            .map((b) => DropdownMenuItem(
+                                  value: b.id,
+                                  child: Text(b.name,
+                                      style: GoogleFonts.libreBaskerville(
+                                          color: AppTheme.textPrimary,
+                                          fontSize: 14)),
+                                ))
+                            .toList(),
                         onChanged: (id) {
                           if (id == null) return;
-                          final chosen = vm.backgrounds.firstWhere((b) => b.id == id);
+                          final chosen =
+                              vm.backgrounds.firstWhere((b) => b.id == id);
                           vm.selectBackground(chosen);
                         },
                       ),
@@ -143,15 +150,19 @@ class _StepBackgroundState extends State<StepBackground> {
                     hint: Text('Select a background…',
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary, fontSize: 14)),
-                    items: vm.backgrounds.map((b) => DropdownMenuItem(
-                      value: b.id,
-                      child: Text(b.name,
-                          style: GoogleFonts.libreBaskerville(
-                              color: AppTheme.textPrimary, fontSize: 14)),
-                    )).toList(),
+                    items: vm.backgrounds
+                        .map((b) => DropdownMenuItem(
+                              value: b.id,
+                              child: Text(b.name,
+                                  style: GoogleFonts.libreBaskerville(
+                                      color: AppTheme.textPrimary,
+                                      fontSize: 14)),
+                            ))
+                        .toList(),
                     onChanged: (id) {
                       if (id == null) return;
-                      final chosen = vm.backgrounds.firstWhere((b) => b.id == id);
+                      final chosen =
+                          vm.backgrounds.firstWhere((b) => b.id == id);
                       final removed = vm.selectBackground(chosen);
                       if (removed.isNotEmpty && context.mounted) {
                         final names = removed.join(', ');
@@ -160,13 +171,15 @@ class _StepBackgroundState extends State<StepBackground> {
                           content: Text(
                             'Conflict: $names ${removed.length == 1 ? 'is' : 'are'} already granted by this background — '
                             'deselected from your class skills. Go back to Edit Class to re-pick.',
-                            style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
+                            style: GoogleFonts.lato(
+                                color: AppTheme.textPrimary, fontSize: 13),
                           ),
                           backgroundColor: AppTheme.surface,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(color: AppTheme.primary, width: 1),
+                            side: const BorderSide(
+                                color: AppTheme.primary, width: 1),
                           ),
                           duration: const Duration(seconds: 8),
                           action: SnackBarAction(
@@ -201,10 +214,13 @@ class _StepBackgroundState extends State<StepBackground> {
         // ── Características físicas ────────────────────────────────
         _SectionTitle('Physical Characteristics'),
         const SizedBox(height: 10),
-        _TextRow(label: 'Hair',   ctrl: _hairCtrl,   hint: 'e.g. Brown'),
-        _TextRow(label: 'Eyes',   ctrl: _eyesCtrl,   hint: 'e.g. Blue'),
-        _TextRow(label: 'Skin',   ctrl: _skinCtrl,   hint: 'e.g. Tan'),
-        _TextRow(label: 'Age',    ctrl: _ageCtrl,    hint: 'e.g. 25',
+        _TextRow(label: 'Hair', ctrl: _hairCtrl, hint: 'e.g. Brown'),
+        _TextRow(label: 'Eyes', ctrl: _eyesCtrl, hint: 'e.g. Blue'),
+        _TextRow(label: 'Skin', ctrl: _skinCtrl, hint: 'e.g. Tan'),
+        _TextRow(
+            label: 'Age',
+            ctrl: _ageCtrl,
+            hint: 'e.g. 25',
             keyboardType: TextInputType.number),
         _TextRow(label: 'Height', ctrl: _heightCtrl, hint: "e.g. 5'10\""),
         _TextRow(label: 'Weight', ctrl: _weightCtrl, hint: 'e.g. 160 lbs'),
@@ -214,16 +230,22 @@ class _StepBackgroundState extends State<StepBackground> {
         // ── Características personales ─────────────────────────────
         _SectionTitle('Personal Characteristics'),
         const SizedBox(height: 10),
-        _TextArea(label: 'Personality Traits', ctrl: _personalityCtrl,
+        _TextArea(
+            label: 'Personality Traits',
+            ctrl: _personalityCtrl,
             hint: 'Describe your character\'s personality…'),
         const SizedBox(height: 10),
-        _TextArea(label: 'Ideals', ctrl: _idealsCtrl,
-            hint: 'What are your ideals?'),
+        _TextArea(
+            label: 'Ideals', ctrl: _idealsCtrl, hint: 'What are your ideals?'),
         const SizedBox(height: 10),
-        _TextArea(label: 'Bonds', ctrl: _bondsCtrl,
+        _TextArea(
+            label: 'Bonds',
+            ctrl: _bondsCtrl,
             hint: 'What bonds tie you to the world?'),
         const SizedBox(height: 10),
-        _TextArea(label: 'Flaws', ctrl: _flawsCtrl,
+        _TextArea(
+            label: 'Flaws',
+            ctrl: _flawsCtrl,
             hint: 'What are your character\'s flaws?'),
         const SizedBox(height: 24),
       ]),
@@ -244,8 +266,7 @@ class _BackgroundDetail extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: AppTheme.primary.withOpacity(0.4), width: 1),
+        border: Border.all(color: AppTheme.primary.withOpacity(0.4), width: 1),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Nombre
@@ -269,8 +290,11 @@ class _BackgroundDetail extends StatelessWidget {
           _DetailSubtitle('Skill Proficiencies'),
           const SizedBox(height: 6),
           Wrap(
-            spacing: 6, runSpacing: 6,
-            children: bg.skillProficiencies.map((s) => _Chip(_formatProficiency(s))).toList(),
+            spacing: 6,
+            runSpacing: 6,
+            children: bg.skillProficiencies
+                .map((s) => _Chip(_formatProficiency(s)))
+                .toList(),
           ),
         ],
 
@@ -280,8 +304,11 @@ class _BackgroundDetail extends StatelessWidget {
           _DetailSubtitle('Tool Proficiencies'),
           const SizedBox(height: 6),
           Wrap(
-            spacing: 6, runSpacing: 6,
-            children: bg.toolProficiencies.map((s) => _Chip(_formatProficiency(s))).toList(),
+            spacing: 6,
+            runSpacing: 6,
+            children: bg.toolProficiencies
+                .map((s) => _Chip(_formatProficiency(s)))
+                .toList(),
           ),
         ],
 
@@ -291,7 +318,8 @@ class _BackgroundDetail extends StatelessWidget {
           _DetailSubtitle('Languages'),
           const SizedBox(height: 6),
           Wrap(
-            spacing: 6, runSpacing: 6,
+            spacing: 6,
+            runSpacing: 6,
             children: bg.languages.map((l) => _Chip(l)).toList(),
           ),
         ],
@@ -327,8 +355,7 @@ class _FeatureBoxState extends State<_FeatureBox> {
         decoration: BoxDecoration(
           color: AppTheme.primary.withOpacity(0.08),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-              color: AppTheme.primary.withOpacity(0.3)),
+          border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
@@ -349,7 +376,7 @@ class _FeatureBoxState extends State<_FeatureBox> {
             const SizedBox(height: 8),
             Text(widget.description,
                 style: GoogleFonts.lato(
-                    color: AppTheme.textPrimary, fontSize: 12)),
+                    color: AppTheme.textPrimary, fontSize: 14)),
           ],
         ]),
       ),
@@ -366,9 +393,7 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(title,
       style: GoogleFonts.libreBaskerville(
-          color: AppTheme.primary,
-          fontSize: 14,
-          fontWeight: FontWeight.bold));
+          color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.bold));
 }
 
 class _DetailSubtitle extends StatelessWidget {
@@ -379,7 +404,7 @@ class _DetailSubtitle extends StatelessWidget {
   Widget build(BuildContext context) => Text(title,
       style: GoogleFonts.lato(
           color: AppTheme.textSecondary,
-          fontSize: 11,
+          fontSize: 14,
           fontWeight: FontWeight.bold));
 }
 
@@ -387,7 +412,10 @@ String _formatProficiency(String raw) {
   // Strip known prefixes like "skill-", "tool-"
   final stripped = raw.replaceFirst(RegExp(r'^(skill|tool)-'), '');
   // Replace remaining hyphens with spaces and capitalise each word
-  return stripped.split('-').map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
+  return stripped
+      .split('-')
+      .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}')
+      .join(' ');
 }
 
 class _Chip extends StatelessWidget {
@@ -402,8 +430,7 @@ class _Chip extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(label,
-            style: GoogleFonts.lato(
-                color: AppTheme.textPrimary, fontSize: 11)),
+            style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 14)),
       );
 }
 
@@ -412,12 +439,14 @@ class _TextRow extends StatelessWidget {
   final TextEditingController ctrl;
   final String hint;
   final TextInputType keyboardType;
+  final int maxLength;
 
   const _TextRow({
     required this.label,
     required this.ctrl,
     required this.hint,
     this.keyboardType = TextInputType.text,
+    this.maxLength = 40,
   });
 
   @override
@@ -430,19 +459,28 @@ class _TextRow extends StatelessWidget {
           child: Text(label,
               style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold)),
         ),
         Expanded(
           child: TextField(
             controller: ctrl,
             keyboardType: keyboardType,
-            style: GoogleFonts.lato(
-                color: AppTheme.textPrimary, fontSize: 13),
+            maxLength: maxLength,
+            maxLengthEnforcement: MaxLengthEnforcement.enforced,
+            inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
+            buildCounter: (
+              BuildContext context, {
+              required int currentLength,
+              required bool isFocused,
+              required int? maxLength,
+            }) =>
+                null,
+            style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: GoogleFonts.lato(
-                  color: AppTheme.textSecondary, fontSize: 12),
+              hintStyle:
+                  GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               filled: true,
@@ -471,11 +509,13 @@ class _TextArea extends StatelessWidget {
   final String label;
   final TextEditingController ctrl;
   final String hint;
+  final int maxLength;
 
   const _TextArea({
     required this.label,
     required this.ctrl,
     required this.hint,
+    this.maxLength = 220,
   });
 
   @override
@@ -484,18 +524,27 @@ class _TextArea extends StatelessWidget {
       Text(label,
           style: GoogleFonts.lato(
               color: AppTheme.textSecondary,
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.bold)),
       const SizedBox(height: 4),
       TextField(
         controller: ctrl,
         maxLines: 3,
-        style:
-            GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
+        maxLength: maxLength,
+        maxLengthEnforcement: MaxLengthEnforcement.enforced,
+        inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
+        buildCounter: (
+          BuildContext context, {
+          required int currentLength,
+          required bool isFocused,
+          required int? maxLength,
+        }) =>
+            null,
+        style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.lato(
-              color: AppTheme.textSecondary, fontSize: 12),
+          hintStyle:
+              GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14),
           contentPadding: const EdgeInsets.all(10),
           filled: true,
           fillColor: AppTheme.surface,
@@ -527,24 +576,24 @@ class _AlignmentGrid extends StatelessWidget {
 
   // Row-major order: [LG, NG, CG, LN, TN, CN, LE, NE, CE]
   static const _cells = [
-    ('Lawful Good',      'LG'),
-    ('Neutral Good',     'NG'),
-    ('Chaotic Good',     'CG'),
-    ('Lawful Neutral',   'LN'),
-    ('True Neutral',     'TN'),
-    ('Chaotic Neutral',  'CN'),
-    ('Lawful Evil',      'LE'),
-    ('Neutral Evil',     'NE'),
-    ('Chaotic Evil',     'CE'),
+    ('Lawful Good', 'LG'),
+    ('Neutral Good', 'NG'),
+    ('Chaotic Good', 'CG'),
+    ('Lawful Neutral', 'LN'),
+    ('True Neutral', 'TN'),
+    ('Chaotic Neutral', 'CN'),
+    ('Lawful Evil', 'LE'),
+    ('Neutral Evil', 'NE'),
+    ('Chaotic Evil', 'CE'),
   ];
 
-  static const _rowLabels    = ['Good', 'Neutral', 'Evil'];
+  static const _rowLabels = ['Good', 'Neutral', 'Evil'];
   static const _columnLabels = ['Lawful', 'Neutral', 'Chaotic'];
 
   Color _cellColor(String value) {
     if (value == selected) return AppTheme.primary;
-    if (value.contains('Good'))    return const Color(0xFF1A3A2A);
-    if (value.contains('Evil'))    return const Color(0xFF3A1A1A);
+    if (value.contains('Good')) return const Color(0xFF1A3A2A);
+    if (value.contains('Evil')) return const Color(0xFF3A1A1A);
     return AppTheme.surfaceVariant;
   }
 
@@ -554,14 +603,14 @@ class _AlignmentGrid extends StatelessWidget {
       // Column headers
       Row(children: [
         ..._columnLabels.map((l) => Expanded(
-          child: Center(
-            child: Text(l,
-                style: GoogleFonts.libreBaskerville(
-                    color: AppTheme.textSecondary,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold)),
-          ),
-        )),
+              child: Center(
+                child: Text(l,
+                    style: GoogleFonts.libreBaskerville(
+                        color: AppTheme.textSecondary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold)),
+              ),
+            )),
         const SizedBox(width: 52), // spacer for right-side row labels
       ]),
       const SizedBox(height: 4),

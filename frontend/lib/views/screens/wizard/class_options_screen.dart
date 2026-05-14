@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/app_theme.dart';
+import '../../../config/class_icons.dart';
 import '../../../config/dnd_choice_options.dart';
 import '../../../models/wizard/class_option.dart';
 import '../../../viewmodels/wizard/character_creator_viewmodel.dart';
-import 'class_detail_screen.dart' show classIcon;
 
 /// Returns the stored (resolved) choice display text for a feature at an old
 /// level in level-up mode, or null if none found.
@@ -387,7 +387,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                   Text(
                     'Level 1 HP is always maximum (${cls.hitDie} + CON modifier).',
                     style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 12),
+                        color: AppTheme.textSecondary, fontSize: 14),
                   ),
                   const SizedBox(height: 10),
                   // Level 1 (fijo, solo informativo)
@@ -466,7 +466,7 @@ class _BlockerHint extends StatelessWidget {
         message,
         style: GoogleFonts.lato(
           color: AppTheme.accent,
-          fontSize: 11,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
       )),
@@ -524,7 +524,7 @@ class _LevelSelector extends StatelessWidget {
               const SizedBox(height: 4),
               Text('Hit Die: d${cls.hitDie}',
                   style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary, fontSize: 12)),
+                      color: AppTheme.textSecondary, fontSize: 14)),
             ],
           ),
         ),
@@ -534,7 +534,7 @@ class _LevelSelector extends StatelessWidget {
           children: [
             Text('Level',
                 style: GoogleFonts.lato(
-                    color: AppTheme.textSecondary, fontSize: 11)),
+                    color: AppTheme.textSecondary, fontSize: 14)),
             DropdownButtonHideUnderline(
               child: DropdownButton<int>(
                 value: level,
@@ -682,7 +682,7 @@ class _FeatureTile extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                   child: Text(feature.description,
                       style: GoogleFonts.lato(
-                          color: AppTheme.textSecondary, fontSize: 12)),
+                          color: AppTheme.textSecondary, fontSize: 14)),
                 ),
             ] else if (_needsChoice && choice!.type == 'ASI_OR_FEAT')
               Padding(
@@ -725,7 +725,7 @@ class _FeatureTile extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                 child: Text(feature.description,
                     style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 12)),
+                        color: AppTheme.textSecondary, fontSize: 14)),
               ),
           ],
         ],
@@ -865,7 +865,7 @@ class _MultiPickSectionState extends State<_MultiPickSection> {
                 'Choose your skill proficiencies first — Expertise can only be applied to skills you already have proficiency in.',
                 style: GoogleFonts.lato(
                     color: AppTheme.accent,
-                    fontSize: 11,
+                    fontSize: 14,
                     fontStyle: FontStyle.italic),
               ),
             )
@@ -876,7 +876,7 @@ class _MultiPickSectionState extends State<_MultiPickSection> {
                 'Choice ${_activeSlot + 1} of ${widget.config.pickCount}:',
                 style: GoogleFonts.lato(
                     color: AppTheme.textSecondary,
-                    fontSize: 11,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold),
               ),
             ),
@@ -916,7 +916,7 @@ class _PickedChip extends StatelessWidget {
               child: Text(label,
                   style: GoogleFonts.lato(
                       color: AppTheme.primary,
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600)),
             ),
             if (onClear != null)
@@ -988,7 +988,7 @@ class _InlineOptionTile extends StatelessWidget {
                 Text(label,
                     style: GoogleFonts.libreBaskerville(
                         color: effectiveColor,
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
                 Text(
@@ -1093,7 +1093,7 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
         const SizedBox(height: 10),
         if (_isAsi) ...[
           Text('Choose two ability scores to increase by +1 each (or the same twice for +2):',
-              style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11)),
+              style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14)),
           const SizedBox(height: 8),
           _AbilityDropdown(
             label: 'First ability',
@@ -1117,7 +1117,7 @@ class _AsiOrFeatSectionState extends State<_AsiOrFeatSection> {
             },
           ),
         ] else ...[
-          Text('Choose a feat:', style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11)),
+          Text('Choose a feat:', style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14)),
           const SizedBox(height: 8),
           ...kFeats.map((f) {
             // Block feats already chosen at another ASI level
@@ -1166,7 +1166,7 @@ class _AsiToggleButton extends StatelessWidget {
         child: Text(label, textAlign: TextAlign.center,
             style: GoogleFonts.libreBaskerville(
                 color: selected ? AppTheme.primary : AppTheme.textSecondary,
-                fontSize: 11, fontWeight: FontWeight.bold)),
+                fontSize: 14, fontWeight: FontWeight.bold)),
       ),
     ),
   );
@@ -1189,10 +1189,10 @@ class _AbilityDropdown extends StatelessWidget {
     child: DropdownButtonHideUnderline(
       child: DropdownButton<String>(
         value: value,
-        hint: Text(label, style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 12)),
+        hint: Text(label, style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14)),
         dropdownColor: AppTheme.surface,
         isExpanded: true,
-        style: GoogleFonts.libreBaskerville(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.bold),
+        style: GoogleFonts.libreBaskerville(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.bold),
         items: kAbilityScoreNames.map((a) => DropdownMenuItem(value: a.name, child: Text(a.name))).toList(),
         onChanged: (v) { if (v != null) onChanged(v); },
       ),
@@ -1239,7 +1239,7 @@ class _HpRow extends StatelessWidget {
           child: Text('Level $level',
               style: GoogleFonts.libreBaskerville(
                   color: AppTheme.textPrimary,
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold)),
         ),
         const SizedBox(width: 12),
@@ -1256,7 +1256,7 @@ class _HpRow extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text('(already set)',
                         style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary, fontSize: 11)),
+                            color: AppTheme.textSecondary, fontSize: 14)),
                   ] else ...[  
                     Text('$value',
                         style: GoogleFonts.libreBaskerville(
@@ -1266,7 +1266,7 @@ class _HpRow extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text('(maximum)',
                         style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary, fontSize: 11)),
+                            color: AppTheme.textSecondary, fontSize: 14)),
                   ],
                 ])
               : _HpInput(
@@ -1278,7 +1278,7 @@ class _HpRow extends StatelessWidget {
         // Hint del dado
         Text('d$hitDie',
             style: GoogleFonts.lato(
-                color: AppTheme.textSecondary, fontSize: 11)),
+                color: AppTheme.textSecondary, fontSize: 14)),
       ]),
     );
   }
@@ -1342,7 +1342,7 @@ class _HpInputState extends State<_HpInput> {
         decoration: InputDecoration(
           hintText: '1–${widget.hitDie}',
           hintStyle: GoogleFonts.lato(
-              color: AppTheme.textSecondary, fontSize: 12),
+              color: AppTheme.textSecondary, fontSize: 14),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           filled: true,
@@ -1418,7 +1418,7 @@ class _SubclassSelectorSection extends StatelessWidget {
           child: Text(
             'Choosing a subclass is optional — you can assign one later.',
             style: GoogleFonts.lato(
-                color: AppTheme.textSecondary, fontSize: 12),
+                color: AppTheme.textSecondary, fontSize: 14),
           ),
         ),
         ...vm.subclasses.map((sub) => _SubclassChip(
@@ -1499,7 +1499,7 @@ class _SubclassChip extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(subclass.flavor,
                       style: GoogleFonts.lato(
-                          color: AppTheme.textSecondary, fontSize: 11),
+                          color: AppTheme.textSecondary, fontSize: 14),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis),
                 ],
@@ -1635,14 +1635,14 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
               : 'All $count skills chosen ✓',
           style: GoogleFonts.lato(
             color: remaining > 0 ? AppTheme.textSecondary : AppTheme.primary,
-            fontSize: 12,
+            fontSize: 14,
           ),
         ),
         if (bgSkills.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(
             'Skills from your background are already covered.',
-            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11),
+            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14),
           ),
         ],
         const SizedBox(height: 10),
@@ -1685,7 +1685,7 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
                   Text(
                   _formatSkillName(skill),
                   style: GoogleFonts.lato(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: fromBackground
                         ? AppTheme.textSecondary.withOpacity(0.4)
@@ -1705,3 +1705,4 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
     );
   }
 }
+

@@ -139,7 +139,7 @@ class _RaceCard extends StatelessWidget {
                     Text(race.bonusText,
                       style: GoogleFonts.lato(
                         color: AppTheme.primary,
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold)),
                   ],
                   if (race.description.isNotEmpty) ...[
@@ -149,7 +149,7 @@ class _RaceCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.lato(
                         color: AppTheme.textSecondary,
-                        fontSize: 12)),
+                        fontSize: 14)),
                   ],
                 ]),
             ),
@@ -189,7 +189,7 @@ class _SubraceSelector extends StatelessWidget {
             child: Text(
               'Choose a subrace (required)',
               style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary, fontSize: 12),
+                  color: AppTheme.textSecondary, fontSize: 14),
             ),
           ),
           ...vm.subraces.map((sub) => _SubraceChip(
@@ -266,14 +266,14 @@ class _SubraceChip extends StatelessWidget {
                     Text(subrace.bonusText,
                         style: GoogleFonts.lato(
                             color: AppTheme.primary,
-                            fontSize: 11,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold)),
                   ],
                   if (subrace.traits.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(subrace.traits.join(' · '),
                         style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary, fontSize: 11),
+                            color: AppTheme.textSecondary, fontSize: 14),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                   ],
@@ -436,7 +436,7 @@ class _RaceChoiceBlockState extends State<_RaceChoiceBlock> {
                   Text(widget.selected!,
                       style: GoogleFonts.lato(
                           color: AppTheme.primary,
-                          fontSize: 11,
+                          fontSize: 14,
                           fontStyle: FontStyle.italic)),
                 const SizedBox(width: 4),
                 Icon(
@@ -527,7 +527,7 @@ class _RaceOptionTile extends StatelessWidget {
                         color: selected
                             ? AppTheme.primary
                             : AppTheme.textPrimary,
-                        fontSize: 11,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 1),
                 Text(description,
@@ -558,7 +558,7 @@ class _Tag extends StatelessWidget {
         child: Text(label,
             style: GoogleFonts.lato(
                 color: AppTheme.textSecondary,
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: FontWeight.bold)),
       );
 }

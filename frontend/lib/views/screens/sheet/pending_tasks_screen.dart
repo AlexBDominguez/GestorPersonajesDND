@@ -204,7 +204,7 @@ class _OptionListResolverState extends State<_OptionListResolver> {
                       color: Colors.white, strokeWidth: 2))
               : Text(_selected == null ? 'Select an option above' : 'Confirm: $_selected',
                   style: GoogleFonts.libreBaskerville(
-                      fontSize: 12, fontWeight: FontWeight.bold)),
+                      fontSize: 14, fontWeight: FontWeight.bold)),
         ),
       ),
     ]);
@@ -286,7 +286,7 @@ class _OptionTile extends StatelessWidget {
                       color: selected
                           ? AppTheme.primary
                           : AppTheme.textPrimary,
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 2),
               Text(description,
@@ -422,7 +422,7 @@ class _AsiOrFeatResolverState extends State<_AsiOrFeatResolver> {
                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
               : Text(
                   _confirmValue == null ? 'Complete your selection above' : 'Confirm',
-                  style: GoogleFonts.libreBaskerville(fontSize: 12, fontWeight: FontWeight.bold)),
+                  style: GoogleFonts.libreBaskerville(fontSize: 14, fontWeight: FontWeight.bold)),
         ),
       ),
     ]);
@@ -456,7 +456,7 @@ class _SubSectionLabel extends StatelessWidget {
   Widget build(BuildContext context) => Text(text,
       style: GoogleFonts.lato(
           color: AppTheme.textSecondary,
-          fontSize: 11,
+          fontSize: 14,
           fontWeight: FontWeight.bold));
 }
 
@@ -495,7 +495,7 @@ class _AsiModeChip extends StatelessWidget {
           const SizedBox(width: 8),
           Text(label, style: GoogleFonts.lato(
               color: selected ? AppTheme.primary : AppTheme.textPrimary,
-              fontSize: 12, fontWeight: FontWeight.bold)),
+              fontSize: 14, fontWeight: FontWeight.bold)),
         ]),
       ),
     );
@@ -592,7 +592,7 @@ class _FreeTextResolverState extends State<_FreeTextResolver> {
                       color: Colors.white, strokeWidth: 2))
               : Text('Confirm',
                   style: GoogleFonts.libreBaskerville(
-                      fontSize: 12, fontWeight: FontWeight.bold)),
+                      fontSize: 14, fontWeight: FontWeight.bold)),
         ),
       ),
     ]);
@@ -663,7 +663,7 @@ class _SkillVersatilityResolverState
               child: Text(_selected!,
                   style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary,
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold)),
             ),
             GestureDetector(
@@ -680,7 +680,7 @@ class _SkillVersatilityResolverState
         Text('All skills are already proficient.',
             style: GoogleFonts.lato(
                 color: AppTheme.textSecondary,
-                fontSize: 11,
+                fontSize: 14,
                 fontStyle: FontStyle.italic))
       else
         ...skills.map((opt) => _OptionTile(
@@ -712,7 +712,7 @@ class _SkillVersatilityResolverState
                       color: Colors.white, strokeWidth: 2))
               : Text(_selected == null ? 'Select a skill above' : 'Confirm: $_selected',
                   style: GoogleFonts.libreBaskerville(
-                      fontSize: 12, fontWeight: FontWeight.bold)),
+                      fontSize: 14, fontWeight: FontWeight.bold)),
         ),
       ),
     ]);
@@ -777,7 +777,7 @@ class _SubclassResolverState extends State<_SubclassResolver> {
           return Text('Could not load subclasses. Try again later.',
               style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
-                  fontSize: 11,
+                  fontSize: 14,
                   fontStyle: FontStyle.italic));
         }
         final subclasses = snap.data!;
@@ -805,7 +805,7 @@ class _SubclassResolverState extends State<_SubclassResolver> {
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : Text(
                       _selected == null ? 'Select a subclass above' : 'Confirm: $_selected',
-                      style: GoogleFonts.libreBaskerville(fontSize: 12, fontWeight: FontWeight.bold)),
+                      style: GoogleFonts.libreBaskerville(fontSize: 14, fontWeight: FontWeight.bold)),
             ),
           ),
         ]);
@@ -861,7 +861,7 @@ class _ExpertiseResolverState extends State<_ExpertiseResolver> {
     if (skills.isEmpty) {
       return Text(
         'No eligible skills found. You need proficiency in a skill before gaining expertise.',
-        style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11, fontStyle: FontStyle.italic),
+        style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14, fontStyle: FontStyle.italic),
       );
     }
 
@@ -869,7 +869,7 @@ class _ExpertiseResolverState extends State<_ExpertiseResolver> {
       Text(
         'Choose 2 skills you are proficient in to double your proficiency bonus.${
           remaining > 0 ? '  ($remaining remaining)' : ''}',
-        style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 12),
+        style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14),
       ),
       const SizedBox(height: 10),
       ...skills.map((opt) {
@@ -944,7 +944,7 @@ class _ExpertiseResolverState extends State<_ExpertiseResolver> {
                   _selected.length < _maxPicks
                       ? 'Select ${remaining} more skill${remaining == 1 ? '' : 's'}'
                       : 'Confirm: ${_selected.join(', ')}',
-                  style: GoogleFonts.libreBaskerville(fontSize: 12, fontWeight: FontWeight.bold)),
+                  style: GoogleFonts.libreBaskerville(fontSize: 14, fontWeight: FontWeight.bold)),
         ),
       ),
     ]);
@@ -970,3 +970,4 @@ class _ExpertiseResolverState extends State<_ExpertiseResolver> {
     }
   }
 }
+

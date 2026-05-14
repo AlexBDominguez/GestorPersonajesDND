@@ -31,7 +31,7 @@ class AppTheme {
         titleLarge:    GoogleFonts.libreBaskerville(color: textPrimary, fontSize: 20, fontWeight: FontWeight.w600),
         bodyLarge:     GoogleFonts.lato(color: textPrimary,  fontSize: 16),
         bodyMedium:    GoogleFonts.lato(color: textPrimary,  fontSize: 14),
-        bodySmall:     GoogleFonts.lato(color: textSecondary, fontSize: 12),
+        bodySmall:     GoogleFonts.lato(color: textSecondary, fontSize: 14),
         labelLarge:    GoogleFonts.lato(color: primary, fontSize: 14,
                          fontWeight: FontWeight.bold, letterSpacing: 1.2),
       ),

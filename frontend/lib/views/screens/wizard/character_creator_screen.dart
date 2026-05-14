@@ -318,13 +318,14 @@ class _NavButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLast     = vm.isLastStep;
     final canProceed = vm.canProceedCurrentStep && !vm.isSaving;
-    final bottom     = MediaQuery.of(context).padding.bottom;
+    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+    final bottomPadding = (bottomInset > 0 ? bottomInset : 12.0) + 10.0;
 
     final sharedShape   = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
     const sharedPadding = EdgeInsets.symmetric(vertical: 12);
 
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, bottom > 0 ? bottom : 16),
+      padding: EdgeInsets.fromLTRB(16, 10, 16, bottomPadding),
       decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.divider)),

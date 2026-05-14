@@ -452,7 +452,7 @@ class _SpellRow extends StatelessWidget {
                           side: BorderSide(color: canCast2 ? AppTheme.primary : AppTheme.divider),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                         child: Text('CAST', style: GoogleFonts.libreBaskerville(
-                            fontSize: 11, fontWeight: FontWeight.bold)),
+                            fontSize: 14, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -464,7 +464,7 @@ class _SpellRow extends StatelessWidget {
                     Text('Slots Lv.${spell.level}',
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary,
-                            fontSize: 11,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.4)),
                     const SizedBox(width: 10),
@@ -545,12 +545,12 @@ class _StatsLine extends StatelessWidget {
       if (spans.isNotEmpty) {
         spans.add(const TextSpan(
           text: '  ·  ',
-          style: TextStyle(color: _sep, fontSize: 11, height: 1.4),
+          style: TextStyle(color: _sep, fontSize: 14, height: 1.4),
         ));
       }
       spans.add(TextSpan(
         text: v,
-        style: TextStyle(color: color, fontSize: 11, height: 1.4,
+        style: TextStyle(color: color, fontSize: 14, height: 1.4,
             fontFamily: 'Lato'),
       ));
     }
@@ -561,7 +561,7 @@ class _StatsLine extends StatelessWidget {
     if (spans.isEmpty) {
       spans.add(TextSpan(
         text: school ?? '—',
-        style: const TextStyle(color: _dim, fontSize: 11, height: 1.4,
+        style: const TextStyle(color: _dim, fontSize: 14, height: 1.4,
             fontFamily: 'Lato'),
       ));
     }
@@ -616,14 +616,14 @@ class _DamageCell extends StatelessWidget {
     final base = spell.damageBase;
     final type = spell.damageType;
     if (base == null || base.isEmpty) {
-      return Text('—', textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600));
+      return Text('—', textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600));
     }
     if (type == null || type.isEmpty) {
-      return Text(base, textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600));
+      return Text(base, textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600));
     }
     return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
-      Text(base, textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600)),
-      Text(type.toUpperCase(), textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600)),
+      Text(base, textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600)),
+      Text(type.toUpperCase(), textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600)),
     ]);
   }
 }
@@ -642,19 +642,19 @@ class _HitDcCell extends StatelessWidget {
       return Text(
         vm.signedInt(vm.character?.spellAttackBonus ?? 0),
         textAlign: TextAlign.center,
-        style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600),
+        style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600),
       );
     }
     if (spell.dcType != null && spell.dcType!.isNotEmpty) {
       return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
         Text(spell.dcType!.toUpperCase(), textAlign: TextAlign.center,
-            style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600)),
+            style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600)),
         Text('DC ${vm.character?.spellSaveDC ?? 0}', textAlign: TextAlign.center,
-            style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600)),
+            style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600)),
       ]);
     }
     return Text('—', textAlign: TextAlign.center,
-        style: GoogleFonts.lato(color: _kColor, fontSize: 11, fontWeight: FontWeight.w600));
+        style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600));
   }
 }
 
@@ -732,8 +732,8 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
           unselectedLabelColor: AppTheme.textSecondary,
           indicatorColor: AppTheme.primary,
           tabs: [
-            Tab(child: Text('My Spells', style: GoogleFonts.libreBaskerville(fontSize: 12))),
-            Tab(child: Text('Learn New',  style: GoogleFonts.libreBaskerville(fontSize: 12))),
+            Tab(child: Text('My Spells', style: GoogleFonts.libreBaskerville(fontSize: 14))),
+            Tab(child: Text('Learn New',  style: GoogleFonts.libreBaskerville(fontSize: 14))),
           ],
         ),
       ),
@@ -932,17 +932,17 @@ class _ManageSpellTile extends StatelessWidget {
                   if (spell.school != null)
                     Text(spell.school!,
                         style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary, fontSize: 11)),
+                            color: AppTheme.textSecondary, fontSize: 14)),
                   if (isCantrip) ...[
                     const SizedBox(width: 4),
                     Text('· At Will',
                         style: GoogleFonts.lato(
-                            color: AppTheme.primary, fontSize: 11)),
+                            color: AppTheme.primary, fontSize: 14)),
                   ] else if (alwaysPrepared) ...[
                     const SizedBox(width: 4),
                     Text('· Always Prepared',
                         style: GoogleFonts.lato(
-                            color: AppTheme.primary, fontSize: 11)),
+                            color: AppTheme.primary, fontSize: 14)),
                   ],
                 ]),
               ]),
@@ -1125,7 +1125,7 @@ class _LearnNewTabState extends State<_LearnNewTab> {
             '${spell.isCantrip ? 'Cantrip' : 'Level ${spell.level}'}'
             '${spell.school != null ? ' · ${spell.school}' : ''}',
             style: GoogleFonts.lato(
-                color: AppTheme.textSecondary, fontSize: 12),
+                color: AppTheme.textSecondary, fontSize: 14),
           ),
           if (spell.description != null && spell.description!.isNotEmpty) ...[
             const SizedBox(height: 10),
@@ -1134,7 +1134,7 @@ class _LearnNewTabState extends State<_LearnNewTab> {
                   ? '${spell.description!.substring(0, 160)}…'
                   : spell.description!,
               style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary, fontSize: 12, height: 1.5),
+                  color: AppTheme.textSecondary, fontSize: 14, height: 1.5),
             ),
           ],
         ]),
@@ -1250,15 +1250,15 @@ class _LearnSpellTile extends StatelessWidget {
                   if (spell.school != null)
                     Text(spell.school!,
                         style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary, fontSize: 11)),
+                            color: AppTheme.textSecondary, fontSize: 14)),
                   if (spell.castingTime != null) ...[
                     if (spell.school != null)
                       const Text(' · ',
                           style: TextStyle(
-                              color: AppTheme.textSecondary, fontSize: 11)),
+                              color: AppTheme.textSecondary, fontSize: 14)),
                     Text(spell.castingTime!,
                         style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary, fontSize: 11)),
+                            color: AppTheme.textSecondary, fontSize: 14)),
                   ],
                 ]),
               ]),
@@ -1276,7 +1276,7 @@ class _LearnSpellTile extends StatelessWidget {
             child: Text('Known',
                 style: GoogleFonts.lato(
                     color: AppTheme.primary,
-                    fontSize: 11,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold)),
           )
         else
@@ -1310,7 +1310,7 @@ class _EmptyState extends StatelessWidget {
               'Add spells using the "Manage Spells" button above.',
               style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
-                  fontSize: 12,
+                  fontSize: 14,
                   fontStyle: FontStyle.italic),
               textAlign: TextAlign.center,
             ),
@@ -1339,13 +1339,13 @@ class _DetailRow extends StatelessWidget {
             child: Text('$label:',
                 style: GoogleFonts.lato(
                     color: AppTheme.textSecondary,
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold)),
           ),
           Expanded(
             child: Text(value,
                 style: GoogleFonts.lato(
-                    color: AppTheme.textPrimary, fontSize: 12)),
+                    color: AppTheme.textPrimary, fontSize: 14)),
           ),
         ]),
       );

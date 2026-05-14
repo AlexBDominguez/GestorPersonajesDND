@@ -59,7 +59,7 @@ class TabFeatures extends StatelessWidget {
                 character.subclassName ?? 'Subclass',
                 style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
-                  fontSize: 11, 
+                  fontSize: 14, 
                   fontWeight: FontWeight.bold,
                   fontStyle: FontStyle.italic),
               ),
@@ -134,7 +134,7 @@ class _GroupHeader extends StatelessWidget {
           Text('· $sublabel',
               style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
-                  fontSize: 11,
+                  fontSize: 14,
                   fontStyle: FontStyle.italic)),
         ],
         const SizedBox(width: 10),
@@ -184,6 +184,11 @@ class _FeatureTile extends StatelessWidget {
     final resolvedChoice = taskType != null
         ? vm.resolvedChoiceFor(taskType, feature.level)
         : null;
+
+    // Hide unresolved choice-based features in this tab.
+    if (taskType != null && resolvedChoice == null) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -324,13 +329,13 @@ class _FeatureTile extends StatelessWidget {
               Text(feature.description,
                   style: GoogleFonts.lato(
                     color: AppTheme.textSecondary,
-                    fontSize: 12,
+                    fontSize: 14,
                     height: 1.5)),
             ] else ...[
               Text('No description available.',
                   style: GoogleFonts.lato(
                     color: AppTheme.textSecondary,
-                    fontSize: 12,
+                    fontSize: 14,
                     fontStyle: FontStyle.italic)),
             ],
           ],
@@ -429,6 +434,11 @@ class _RacialTraitTile extends StatelessWidget {
       ancestrySuffix = null;
     }
 
+    // Hide unresolved choice-based racial traits in this tab.
+    if (trait.requiresChoice && ancestrySuffix == null) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
@@ -467,9 +477,7 @@ class _RacialTraitTile extends StatelessWidget {
                       color: const Color(0xFFC8A45A),
                       fontSize: 9,
                       fontWeight: FontWeight.bold)),
-                )
-              else if (trait.requiresChoice && ancestryTaskType != 'SKILL_VERSATILITY')
-                _TypeBadge('choose!', Colors.orange),
+                ),
             ],
           ),
           iconColor: AppTheme.textSecondary,
@@ -479,13 +487,13 @@ class _RacialTraitTile extends StatelessWidget {
               Text('Skills gained:',
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary,
-                      fontSize: 11,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 2),
               Text(ancestrySuffix,
                   style: GoogleFonts.lato(
                       color: AppTheme.primary,
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
             ],
@@ -496,7 +504,7 @@ class _RacialTraitTile extends StatelessWidget {
                     : 'No description available.',
                 style: GoogleFonts.lato(
                   color: AppTheme.textSecondary,
-                  fontSize: 12,
+                  fontSize: 14,
                   height: 1.5),
               ),
           ],
@@ -581,13 +589,13 @@ class _FeatsSection extends StatelessWidget {
                 Text(feat.description,
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary,
-                        fontSize: 12,
+                        fontSize: 14,
                         height: 1.5))
               else
                 Text('No description available.',
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary,
-                        fontSize: 12,
+                        fontSize: 14,
                         fontStyle: FontStyle.italic)),
             ],
           ),
@@ -628,7 +636,7 @@ class _EmptyCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: GoogleFonts.lato(
               color: AppTheme.textSecondary,
-              fontSize: 11,
+              fontSize: 14,
               fontStyle: FontStyle.italic)),
         ),
       ],

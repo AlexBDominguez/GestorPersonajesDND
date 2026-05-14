@@ -31,7 +31,10 @@ class _TabInventoryState extends State<TabInventory> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       _items = await _service.getInventory(widget.character.id);
     } catch (e) {
@@ -112,10 +115,10 @@ class _TabInventoryState extends State<TabInventory> {
         backgroundColor: AppTheme.surface,
         scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text ('Remove item?',
-          style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
+        title: Text('Remove item?',
+            style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
         content: Text('Remove "${item.name}" from inventory?',
-          style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+            style: GoogleFonts.lato(color: AppTheme.textPrimary)),
         actions: [
           SizedBox(
             width: double.infinity,
@@ -126,11 +129,14 @@ class _TabInventoryState extends State<TabInventory> {
                     onPressed: () => Navigator.pop(context, false),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.textSecondary,
-                      side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      side: const BorderSide(
+                          color: AppTheme.surfaceVariant, width: 1.5),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                       minimumSize: const Size(0, 40),
                     ),
-                    child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                    child: Text('Cancel',
+                        style: GoogleFonts.lato(color: AppTheme.textSecondary)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -141,7 +147,8 @@ class _TabInventoryState extends State<TabInventory> {
                           backgroundColor: AppTheme.accent,
                           foregroundColor: Colors.white,
                           minimumSize: const Size(0, 40),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8))),
                       child: const Text('Remove')),
                 ),
               ],
@@ -150,7 +157,7 @@ class _TabInventoryState extends State<TabInventory> {
         ],
       ),
     );
-    if(confirm == true){
+    if (confirm == true) {
       await _service.removeItem(widget.character.id, item.itemId);
       await _load();
     }
@@ -168,8 +175,8 @@ class _TabInventoryState extends State<TabInventory> {
     final newQty = (item.quantity + delta).clamp(1, 9999);
     if (newQty == item.quantity) return;
     try {
-      final updated = await _service.updateQuantity(
-          widget.character.id, item.id, newQty);
+      final updated =
+          await _service.updateQuantity(widget.character.id, item.id, newQty);
       if (!mounted) return;
       if (updated != null) {
         setState(() {
@@ -241,7 +248,6 @@ class _TabInventoryState extends State<TabInventory> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          
           //Weight bar (only when encumbrance is enabled)
           if (useEncumbrance) ...[
             _WeightBar(current: totalWeight, max: maxCarry),
@@ -254,7 +260,7 @@ class _TabInventoryState extends State<TabInventory> {
           _CurrencyRow(character: widget.character),
           const SizedBox(height: 24),
 
-          //  Attuned (DragTarget) 
+          //  Attuned (DragTarget)
           _AttunedDropZone(
             items: attuned,
             isDragging: _isDragging,
@@ -266,7 +272,7 @@ class _TabInventoryState extends State<TabInventory> {
           ),
           const SizedBox(height: 24),
 
-          //  Equipped (DragTarget) 
+          //  Equipped (DragTarget)
           _EquippedDropZone(
             items: equipped,
             isDragging: _isDragging,
@@ -278,7 +284,6 @@ class _TabInventoryState extends State<TabInventory> {
           ),
           const SizedBox(height: 24),
 
-
           //Backpack
           Row(children: [
             const Expanded(child: _SectionTitleInline('Backpack')),
@@ -286,54 +291,53 @@ class _TabInventoryState extends State<TabInventory> {
             GestureDetector(
               onTap: () => _showAddItemSheet(context),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppTheme.primary.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppTheme.primary),
                 ),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.add,
-                  color: AppTheme.primary, size: 14),
+                  const Icon(Icons.add, color: AppTheme.primary, size: 14),
                   const SizedBox(width: 4),
                   Text('Add item',
-                  style: GoogleFonts.lato(
-                    color: AppTheme.primary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold)),
+                      style: GoogleFonts.lato(
+                          color: AppTheme.primary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold)),
                 ]),
               ),
             ),
           ]),
           const SizedBox(height: 6),
           //Hint de drag (visible siempre que hay items en la mochila)
-          if(backpack.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Row(children: [
-              const Icon(Icons.drag_indicator,
-                color: AppTheme.textSecondary, size: 14),
-              const SizedBox(width: 4),
-              Text('Long-press an item to drag it to Equipped or Attuned',
-                style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary,
-                  fontSize: 11,
-                  fontStyle: FontStyle.italic)),
-            ]),
-          ),
+          if (backpack.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(children: [
+                const Icon(Icons.drag_indicator,
+                    color: AppTheme.textSecondary, size: 14),
+                const SizedBox(width: 4),
+                Text('Long-press an item to drag it to Equipped or Attuned',
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
+                        fontStyle: FontStyle.italic)),
+              ]),
+            ),
           if (backpack.isEmpty)
             _EmptySlot(message: 'Backpack is empty')
           else
-          ...backpack.map((item) => _DraggableItemTile(
-            item: item,
-            showWeight: useEncumbrance,
-            onRemove: () => _removeItem(item),
-            onDragStarted: () => setState(() => _isDragging = true),
-            onDragEnded: () => setState(() => _isDragging = false),
-            onQuantityChanged: (delta) => _changeQuantity(item, delta),
-          )),
-        const SizedBox(height: 16),
+            ...backpack.map((item) => _DraggableItemTile(
+                  item: item,
+                  showWeight: useEncumbrance,
+                  onRemove: () => _removeItem(item),
+                  onDragStarted: () => setState(() => _isDragging = true),
+                  onDragEnded: () => setState(() => _isDragging = false),
+                  onQuantityChanged: (delta) => _changeQuantity(item, delta),
+                )),
+          const SizedBox(height: 16),
         ]),
       ),
     );
@@ -343,10 +347,10 @@ class _TabInventoryState extends State<TabInventory> {
     final totalWeight = _items.fold<double>(0, (s, i) => s + i.totalWeight);
     final maxCarry = (widget.character.abilityScores['STR'] ?? 10) * 15.0;
     await showModalBottomSheet(
-      context: context, 
+      context: context,
       backgroundColor: AppTheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => _AddItemSheet(
         characterId: widget.character.id,
         service: _service,
@@ -400,45 +404,42 @@ class _EquippedDropZoneState extends State<_EquippedDropZone> {
       },
       onMove: (_) => setState(() => _hovering = true),
       onLeave: (_) => setState(() => _hovering = false),
-      builder: (_, candidateData, __){
+      builder: (_, candidateData, __) {
         final isHovering = _hovering || candidateData.isNotEmpty;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isHovering
-                  ? AppTheme.primary
-                  : Colors.transparent,
+              color: isHovering ? AppTheme.primary : Colors.transparent,
               width: 2,
             ),
             color: isHovering
                 ? AppTheme.primary.withOpacity(0.06)
                 : Colors.transparent,
           ),
-          child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SectionTitle('Equipped'),
-                if (widget.isDragging)
-                  _DropHint(
-                    label: 'Drop here to equip',
-                    active: isHovering,
-                    icon: Icons.shield_outlined,
-                  ),
-                const SizedBox(height: 8),
-                if (widget.items.isEmpty && !widget.isDragging)
-                  _EmptySlot(message: 'No equipped items'),
-                ...widget.items.map((item) => _EquippedItemTile(
-                      item: item,
-                      showWeight: widget.showWeight,
-                      onUnequip: () => widget.onUnequip(item),
-                      onRemove: () => widget.onRemove(item),
-                      onQuantityChanged: widget.onQuantityChanged != null
-                          ? (delta) => widget.onQuantityChanged!(item, delta)
-                          : null,
-                    )),
-              ]),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            _SectionTitle('Equipped'),
+            if (widget.isDragging)
+              _DropHint(
+                label: 'Drop here to equip',
+                active: isHovering,
+                icon: Icons.shield_outlined,
+              ),
+            const SizedBox(height: 8),
+            if (widget.items.isEmpty && !widget.isDragging)
+              _EmptySlot(message: 'No equipped items'),
+            ...widget.items.map((item) => _EquippedItemTile(
+                  item: item,
+                  showWeight: widget.showWeight,
+                  onUnequip: () => widget.onUnequip(item),
+                  onRemove: () => widget.onRemove(item),
+                  onQuantityChanged: widget.onQuantityChanged != null
+                      ? (delta) => widget.onQuantityChanged!(item, delta)
+                      : null,
+                )),
+          ]),
         );
       },
     );
@@ -469,11 +470,11 @@ class _AttunedDropZone extends StatefulWidget {
   State<_AttunedDropZone> createState() => _AttunedDropZoneState();
 }
 
-class _AttunedDropZoneState extends State<_AttunedDropZone>{
+class _AttunedDropZoneState extends State<_AttunedDropZone> {
   bool _hovering = false;
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return DragTarget<InventoryItem>(
       //Aceptamos TODOS para poder dar feedback - la validación real va en onAccept
       onWillAcceptWithDetails: (_) => true,
@@ -509,50 +510,47 @@ class _AttunedDropZoneState extends State<_AttunedDropZone>{
                     ? const Color(0xFFB07DFF).withOpacity(0.06)
                     : Colors.transparent,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Expanded(
-                  child: _SectionTitle(
-                    'Attuned (${widget.items.length}/3)'),
-                  ),
-                  if (invalidHover)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        const Icon(Icons.block,
-                          color: AppTheme.accent, size: 14),
-                        const SizedBox(width: 4),
-                        Text('Cannot attune',
-                          style: GoogleFonts.lato(
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(
+                child: _SectionTitle('Attuned (${widget.items.length}/3)'),
+              ),
+              if (invalidHover)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.block, color: AppTheme.accent, size: 14),
+                    const SizedBox(width: 4),
+                    Text('Cannot attune',
+                        style: GoogleFonts.lato(
                             color: AppTheme.accent,
-                            fontSize: 11,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold)),
-                      ]),
-                    ),
-              ]),
-              if (widget.isDragging)
-                _DropHint(
-                  label: invalidHover
+                  ]),
+                ),
+            ]),
+            if (widget.isDragging)
+              _DropHint(
+                label: invalidHover
                     ? 'This item cannot be attuned'
                     : 'Drop here to attune',
-                  active: isHovering,
-                  isError: invalidHover,
-                  icon: Icons.auto_awesome_outlined,
-                ),
-              const SizedBox(height: 8),
-              if (widget.items.isEmpty && !widget.isDragging)
-                _EmptySlot(message: 'No attuned items'),
-              ...widget.items.map((item) => _AttunedItemTile(
-                    item: item,
-                    showWeight: widget.showWeight,
-                    onRemoveAttuned: () => widget.onRemoveAttuned(item),
-                    onRemove: () => widget.onRemove(item),
-                    onQuantityChanged: widget.onQuantityChanged != null
-                        ? (delta) => widget.onQuantityChanged!(item, delta)
-                        : null,
-                  )),
+                active: isHovering,
+                isError: invalidHover,
+                icon: Icons.auto_awesome_outlined,
+              ),
+            const SizedBox(height: 8),
+            if (widget.items.isEmpty && !widget.isDragging)
+              _EmptySlot(message: 'No attuned items'),
+            ...widget.items.map((item) => _AttunedItemTile(
+                  item: item,
+                  showWeight: widget.showWeight,
+                  onRemoveAttuned: () => widget.onRemoveAttuned(item),
+                  onRemove: () => widget.onRemove(item),
+                  onQuantityChanged: widget.onQuantityChanged != null
+                      ? (delta) => widget.onQuantityChanged!(item, delta)
+                      : null,
+                )),
           ]),
         );
       },
@@ -561,7 +559,7 @@ class _AttunedDropZoneState extends State<_AttunedDropZone>{
 }
 
 //Draggable item tile (Backpack)
-class _DraggableItemTile extends StatelessWidget{
+class _DraggableItemTile extends StatelessWidget {
   final InventoryItem item;
   final bool showWeight;
   final VoidCallback onRemove;
@@ -584,18 +582,22 @@ class _DraggableItemTile extends StatelessWidget{
       item: item,
       showWeight: showWeight,
       dimmed: false,
-      onIncrement: onQuantityChanged != null ? () => onQuantityChanged!(1) : null,
-      onDecrement: onQuantityChanged != null ? () => onQuantityChanged!(-1) : null,
+      onIncrement:
+          onQuantityChanged != null ? () => onQuantityChanged!(1) : null,
+      onDecrement:
+          onQuantityChanged != null ? () => onQuantityChanged!(-1) : null,
       trailing: PopupMenuButton<String>(
         icon: const Icon(Icons.more_vert,
-          color: AppTheme.textSecondary, size: 18),
+            color: AppTheme.textSecondary, size: 18),
         color: AppTheme.surface,
-        onSelected: (v) { if (v == 'remove') onRemove(); },
+        onSelected: (v) {
+          if (v == 'remove') onRemove();
+        },
         itemBuilder: (_) => [
           PopupMenuItem(
             value: 'remove',
-            child: Text('Remove',
-              style: GoogleFonts.lato(color: AppTheme.accent)),
+            child:
+                Text('Remove', style: GoogleFonts.lato(color: AppTheme.accent)),
           ),
         ],
       ),
@@ -615,43 +617,41 @@ class _DraggableItemTile extends StatelessWidget{
         color: Colors.transparent,
         child: Opacity(
           opacity: 0.9,
-        child: Container(
-          width: 280,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppTheme.primary, width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primary.withOpacity(0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(children: [
-            Icon(item.typeIcon,
-              size: 18,
-              color: AppTheme.primary),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(item.name,
-                style: GoogleFonts.libreBaskerville(
-                  color: AppTheme.primary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold)),
+          child: Container(
+            width: 280,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.primary, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primary.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ]),
+            child: Row(children: [
+              Icon(item.typeIcon, size: 18, color: AppTheme.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(item.name,
+                    style: GoogleFonts.libreBaskerville(
+                        color: AppTheme.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold)),
+              ),
+            ]),
+          ),
         ),
       ),
-    ),
-    //El item original se vuelve semitransparente mientras se arrastra
-    childWhenDragging: Opacity(
-      opacity: 0.35,
-      child: tile,      
-    ),
-    child: tile,
+      //El item original se vuelve semitransparente mientras se arrastra
+      childWhenDragging: Opacity(
+        opacity: 0.35,
+        child: tile,
+      ),
+      child: tile,
     );
   }
 }
@@ -678,11 +678,13 @@ class _EquippedItemTile extends StatelessWidget {
       item: item,
       showWeight: showWeight,
       accentBorder: true,
-      onIncrement: onQuantityChanged != null ? () => onQuantityChanged!(1) : null,
-      onDecrement: onQuantityChanged != null ? () => onQuantityChanged!(-1) : null,
+      onIncrement:
+          onQuantityChanged != null ? () => onQuantityChanged!(1) : null,
+      onDecrement:
+          onQuantityChanged != null ? () => onQuantityChanged!(-1) : null,
       trailing: PopupMenuButton<String>(
         icon: const Icon(Icons.more_vert,
-          color: AppTheme.textSecondary, size: 18),
+            color: AppTheme.textSecondary, size: 18),
         color: AppTheme.surface,
         onSelected: (v) {
           if (v == 'unequip') onUnequip();
@@ -692,19 +694,18 @@ class _EquippedItemTile extends StatelessWidget {
           PopupMenuItem(
             value: 'unequip',
             child: Text('Unequip',
-              style: GoogleFonts.lato(color: AppTheme.primary)),
+                style: GoogleFonts.lato(color: AppTheme.primary)),
           ),
           PopupMenuItem(
             value: 'remove',
-            child: Text('Remove',
-              style: GoogleFonts.lato(color: AppTheme.accent)),
+            child:
+                Text('Remove', style: GoogleFonts.lato(color: AppTheme.accent)),
           ),
         ],
       ),
     );
   }
 }
-
 
 //Attuned item tile
 class _AttunedItemTile extends StatelessWidget {
@@ -727,8 +728,10 @@ class _AttunedItemTile extends StatelessWidget {
       item: item,
       showWeight: showWeight,
       attunedBorder: true,
-      onIncrement: onQuantityChanged != null ? () => onQuantityChanged!(1) : null,
-      onDecrement: onQuantityChanged != null ? () => onQuantityChanged!(-1) : null,
+      onIncrement:
+          onQuantityChanged != null ? () => onQuantityChanged!(1) : null,
+      onDecrement:
+          onQuantityChanged != null ? () => onQuantityChanged!(-1) : null,
       trailing: PopupMenuButton<String>(
         icon: const Icon(Icons.more_vert,
             color: AppTheme.textSecondary, size: 18),
@@ -745,8 +748,8 @@ class _AttunedItemTile extends StatelessWidget {
           ),
           PopupMenuItem(
             value: 'remove',
-            child: Text('Remove',
-                style: GoogleFonts.lato(color: AppTheme.accent)),
+            child:
+                Text('Remove', style: GoogleFonts.lato(color: AppTheme.accent)),
           ),
         ],
       ),
@@ -759,8 +762,8 @@ class _ItemTileContent extends StatelessWidget {
   final InventoryItem item;
   final bool showWeight;
   final bool dimmed;
-  final bool accentBorder;   // equipped
-  final bool attunedBorder;  // attuned
+  final bool accentBorder; // equipped
+  final bool attunedBorder; // attuned
   final Widget trailing;
   final VoidCallback? onIncrement;
   final VoidCallback? onDecrement;
@@ -792,10 +795,12 @@ class _ItemTileContent extends StatelessWidget {
         builder: (_, ctrl) => SingleChildScrollView(
           controller: ctrl,
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Center(
               child: Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                     color: AppTheme.surfaceVariant,
@@ -817,14 +822,12 @@ class _ItemTileContent extends StatelessWidget {
             if (item.itemType != null)
               Text(_formatItemType(item.itemType!),
                   style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary, fontSize: 12)),
+                      color: AppTheme.textSecondary, fontSize: 14)),
             const SizedBox(height: 16),
             if (desc != null && desc.isNotEmpty)
               Text(desc,
                   style: GoogleFonts.lato(
-                      color: AppTheme.textPrimary,
-                      fontSize: 13,
-                      height: 1.6))
+                      color: AppTheme.textPrimary, fontSize: 13, height: 1.6))
             else
               Text('No description available.',
                   style: GoogleFonts.lato(
@@ -854,17 +857,15 @@ class _ItemTileContent extends StatelessWidget {
         border: Border.all(color: borderColor),
       ),
       child: Row(children: [
-        Icon(item.typeIcon,
-          size: 18,
-          color: AppTheme.textSecondary),
+        Icon(item.typeIcon, size: 18, color: AppTheme.textSecondary),
         const SizedBox(width: 12),
         Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(item.name,
                 style: GoogleFonts.libreBaskerville(
-                    color: dimmed
-                        ? AppTheme.textSecondary
-                        : AppTheme.textPrimary,
+                    color:
+                        dimmed ? AppTheme.textSecondary : AppTheme.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 2),
@@ -872,19 +873,19 @@ class _ItemTileContent extends StatelessWidget {
               if (item.itemType != null)
                 Text(_formatItemType(item.itemType!),
                     style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 11)),
+                        color: AppTheme.textSecondary, fontSize: 14)),
               if (showWeight)
                 Text('  ·  ${item.totalWeight.toStringAsFixed(1)} lb',
                     style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 11)),
+                        color: AppTheme.textSecondary, fontSize: 14)),
               if (item.attuned) ...[
                 const Text('  ·  ',
-                    style: TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 11)),
+                    style:
+                        TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
                 Text('Attuned',
                     style: GoogleFonts.lato(
                         color: const Color(0xFFB07DFF),
-                        fontSize: 11,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold)),
               ],
             ]),
@@ -896,12 +897,14 @@ class _ItemTileContent extends StatelessWidget {
             GestureDetector(
               onTap: item.quantity > 1 ? onDecrement : null,
               child: Container(
-                width: 22, height: 22,
+                width: 22,
+                height: 22,
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Icon(Icons.remove, size: 12,
+                child: Icon(Icons.remove,
+                    size: 12,
                     color: item.quantity > 1
                         ? AppTheme.textSecondary
                         : AppTheme.textSecondary.withOpacity(0.3)),
@@ -917,19 +920,20 @@ class _ItemTileContent extends StatelessWidget {
               child: Text('${item.quantity}',
                   style: GoogleFonts.lato(
                       color: AppTheme.textPrimary,
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold)),
             ),
             GestureDetector(
               onTap: onIncrement,
               child: Container(
-                width: 22, height: 22,
+                width: 22,
+                height: 22,
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Icon(Icons.add, size: 12,
-                    color: AppTheme.textSecondary),
+                child: const Icon(Icons.add,
+                    size: 12, color: AppTheme.textSecondary),
               ),
             ),
           ])
@@ -943,12 +947,12 @@ class _ItemTileContent extends StatelessWidget {
             child: Text('x${item.quantity}',
                 style: GoogleFonts.lato(
                     color: AppTheme.textPrimary,
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold)),
           ),
         IconButton(
-          icon: Icon(Icons.info_outline,
-              size: 18, color: AppTheme.textSecondary),
+          icon:
+              Icon(Icons.info_outline, size: 18, color: AppTheme.textSecondary),
           splashRadius: 18,
           padding: const EdgeInsets.all(4),
           constraints: const BoxConstraints(),
@@ -961,10 +965,9 @@ class _ItemTileContent extends StatelessWidget {
   }
 }
 
-
 // Drop hint - se muestra mientras hay un drag activo
 
-class _DropHint extends StatelessWidget{
+class _DropHint extends StatelessWidget {
   final String label;
   final bool active;
   final bool isError;
@@ -986,9 +989,7 @@ class _DropHint extends StatelessWidget{
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: active
-            ? color.withOpacity(0.12)
-            : color.withOpacity(0.04),
+        color: active ? color.withOpacity(0.12) : color.withOpacity(0.04),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: active ? color : color.withOpacity(0.3),
@@ -1001,19 +1002,14 @@ class _DropHint extends StatelessWidget{
         Text(label,
             style: GoogleFonts.lato(
                 color: color,
-                fontSize: 12,
-                fontWeight:
-                    active ? FontWeight.bold : FontWeight.normal)),
+                fontSize: 14,
+                fontWeight: active ? FontWeight.bold : FontWeight.normal)),
       ]),
     );
   }
 }
 
-
 // Add Item Sheet (sin)
-
-
-
 
 // Weight bar widget
 class _WeightBar extends StatelessWidget {
@@ -1030,16 +1026,16 @@ class _WeightBar extends StatelessWidget {
             ? Colors.orange
             : AppTheme.primary;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row (children: [
+      Row(children: [
         Text('Carry Weight',
-          style: GoogleFonts.lato(
-            color: AppTheme.textSecondary,
-            fontSize: 11,
-            fontWeight: FontWeight.bold)),
+            style: GoogleFonts.lato(
+                color: AppTheme.textSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.bold)),
         const Spacer(),
         Text('${current.toStringAsFixed(1)} / ${max.toStringAsFixed(0)} lb',
-            style: GoogleFonts.lato(
-                color: AppTheme.textSecondary, fontSize: 11)),
+            style:
+                GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14)),
       ]),
       const SizedBox(height: 4),
       ClipRRect(
@@ -1083,8 +1079,9 @@ class _AddItemSheetState extends State<_AddItemSheet> {
   bool _searching = false;
 
   Future<void> _search(String q) async {
-    if(q.length < 2) {
-      setState(() => _results = []); return;
+    if (q.length < 2) {
+      setState(() => _results = []);
+      return;
     }
     setState(() => _searching = true);
     try {
@@ -1099,29 +1096,30 @@ class _AddItemSheetState extends State<_AddItemSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.75),
+            maxHeight: MediaQuery.of(context).size.height * 0.75),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           // Handle
           Center(
             child: Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: AppTheme.surfaceVariant,
-                borderRadius: BorderRadius.circular(2)),
+                  color: AppTheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(2)),
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Text('Add Item',
-              style: GoogleFonts.libreBaskerville(
-                color: AppTheme.primary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold)),
+                style: GoogleFonts.libreBaskerville(
+                    color: AppTheme.primary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold)),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -1129,31 +1127,31 @@ class _AddItemSheetState extends State<_AddItemSheet> {
               controller: _searchCtrl,
               autofocus: true,
               onChanged: _search,
-              style: GoogleFonts.lato(
-                color: AppTheme.textPrimary, fontSize: 13),
+              style:
+                  GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Search items...',
                 hintStyle: GoogleFonts.lato(
-                  color: AppTheme.textSecondary, fontSize: 13),
+                    color: AppTheme.textSecondary, fontSize: 13),
                 prefixIcon: const Icon(Icons.search,
-                  color: AppTheme.textSecondary, size: 18),
+                    color: AppTheme.textSecondary, size: 18),
                 filled: true,
                 fillColor: AppTheme.surfaceVariant,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 10),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none),
-                ),
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none),
               ),
             ),
-            if (_searching)
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: CircularProgressIndicator(
-                  color: AppTheme.primary),
-                )
-            else Flexible(
+          ),
+          if (_searching)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(color: AppTheme.primary),
+            )
+          else
+            Flexible(
               child: ListView.builder(
                 shrinkWrap: true,
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
@@ -1161,41 +1159,43 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                 itemBuilder: (_, i) {
                   final item = _results[i];
                   return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 2),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     title: Text(item.name,
-                      style: GoogleFonts.libreBaskerville(
-                        color: AppTheme.textPrimary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold)),
+                        style: GoogleFonts.libreBaskerville(
+                            color: AppTheme.textPrimary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold)),
                     subtitle: Text(
-                      [if (item.itemType != null) _formatItemType(item.itemType!), item.statSummary]
-                          .where((s) => s.isNotEmpty)
-                          .join(' · '),
-                      style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary,
-                        fontSize: 11)),
+                        [
+                          if (item.itemType != null)
+                            _formatItemType(item.itemType!),
+                          item.statSummary
+                        ].where((s) => s.isNotEmpty).join(' · '),
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary, fontSize: 14)),
                     trailing: IconButton(
-                      icon: const Icon(Icons.add_circle,
-                        color: AppTheme.primary),
+                      icon:
+                          const Icon(Icons.add_circle, color: AppTheme.primary),
                       onPressed: () async {
                         // Block if encumbrance is enabled and adding this item would exceed max carry
                         if (widget.useEncumbrance) {
                           final newTotal = widget.currentWeight + item.weight;
                           if (newTotal > widget.maxCarry) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text(
-                                  'Cannot add "${item.name}": would exceed carry capacity '
-                                  '(${newTotal.toStringAsFixed(1)} / ${widget.maxCarry.toStringAsFixed(0)} lb)'),
-                                backgroundColor: AppTheme.accent,
-                                duration: const Duration(seconds: 3)));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'Cannot add "${item.name}": would exceed carry capacity '
+                                          '(${newTotal.toStringAsFixed(1)} / ${widget.maxCarry.toStringAsFixed(0)} lb)'),
+                                      backgroundColor: AppTheme.accent,
+                                      duration: const Duration(seconds: 3)));
                             }
                             return;
                           }
                         }
-                        await widget.service.addItem(
-                          widget.characterId, item.id);
+                        await widget.service
+                            .addItem(widget.characterId, item.id);
                         widget.onAdded();
                         if (context.mounted) Navigator.pop(context);
                       },
@@ -1207,7 +1207,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
         ]),
       ),
     );
-  }        
+  }
 }
 
 // Currency Row
@@ -1220,6 +1220,8 @@ class _CurrencyRow extends StatefulWidget {
 }
 
 class _CurrencyRowState extends State<_CurrencyRow> {
+  static const int _maxCoinValue = 99999;
+  static const int _maxCoinDigits = 5;
   static const _coins = [
     ('CP', Colors.brown),
     ('SP', Colors.grey),
@@ -1237,11 +1239,11 @@ class _CurrencyRowState extends State<_CurrencyRow> {
   void initState() {
     super.initState();
     _values = [
-      widget.character.copperPieces,
-      widget.character.silverPieces,
-      widget.character.electrumPieces,
-      widget.character.goldPieces,
-      widget.character.platinumPieces,
+      widget.character.copperPieces.clamp(0, _maxCoinValue),
+      widget.character.silverPieces.clamp(0, _maxCoinValue),
+      widget.character.electrumPieces.clamp(0, _maxCoinValue),
+      widget.character.goldPieces.clamp(0, _maxCoinValue),
+      widget.character.platinumPieces.clamp(0, _maxCoinValue),
     ];
   }
 
@@ -1268,7 +1270,7 @@ class _CurrencyRowState extends State<_CurrencyRow> {
   }
 
   void _adjust(int index, int delta) {
-    final newVal = (_values[index] + delta).clamp(0, 999999);
+    final newVal = (_values[index] + delta).clamp(0, _maxCoinValue);
     final updated = List<int>.from(_values)..[index] = newVal;
     final body = {for (var i = 0; i < _keys.length; i++) _keys[i]: updated[i]};
     setState(() => _values = updated);
@@ -1283,12 +1285,16 @@ class _CurrencyRowState extends State<_CurrencyRow> {
         backgroundColor: AppTheme.surface,
         scrollable: true,
         title: Text('Set ${_coins[index].$1}',
-            style: GoogleFonts.libreBaskerville(color: AppTheme.primary, fontSize: 14)),
+            style: GoogleFonts.libreBaskerville(
+                color: AppTheme.primary, fontSize: 14)),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(_maxCoinDigits),
+          ],
           style: GoogleFonts.lato(color: AppTheme.textPrimary),
           decoration: InputDecoration(
             filled: true,
@@ -1308,12 +1314,15 @@ class _CurrencyRowState extends State<_CurrencyRow> {
                       onPressed: () => Navigator.pop(_),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.textSecondary,
-                        side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        side: const BorderSide(
+                            color: AppTheme.surfaceVariant, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                         minimumSize: const Size(0, 40),
                       ),
                       child: Text('Cancel',
-                          style: GoogleFonts.lato(color: AppTheme.textSecondary))),
+                          style:
+                              GoogleFonts.lato(color: AppTheme.textSecondary))),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -1321,18 +1330,24 @@ class _CurrencyRowState extends State<_CurrencyRow> {
                     onPressed: () {
                       final v = int.tryParse(ctrl.text) ?? _values[index];
                       Navigator.pop(_);
-                      final updated = List<int>.from(_values)..[index] = v.clamp(0, 999999);
-                      final body = {for (var i = 0; i < _keys.length; i++) _keys[i]: updated[i]};
+                      final updated = List<int>.from(_values)
+                        ..[index] = v.clamp(0, _maxCoinValue);
+                      final body = {
+                        for (var i = 0; i < _keys.length; i++)
+                          _keys[i]: updated[i]
+                      };
                       setState(() => _values = updated);
                       _update(body);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,
                       minimumSize: const Size(0, 40),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     child: Text('Set',
-                        style: GoogleFonts.libreBaskerville(color: AppTheme.background)),
+                        style: GoogleFonts.libreBaskerville(
+                            color: AppTheme.background)),
                   ),
                 ),
               ],
@@ -1367,7 +1382,8 @@ class _CurrencyRowState extends State<_CurrencyRow> {
                   padding: const EdgeInsets.symmetric(vertical: 3),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.12),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(7)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(7)),
                   ),
                   child: Icon(Icons.add, color: color, size: 14),
                 ),
@@ -1401,9 +1417,11 @@ class _CurrencyRowState extends State<_CurrencyRow> {
                   padding: const EdgeInsets.symmetric(vertical: 3),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.08),
-                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(7)),
+                    borderRadius:
+                        const BorderRadius.vertical(bottom: Radius.circular(7)),
                   ),
-                  child: Icon(Icons.remove, color: color.withOpacity(0.7), size: 14),
+                  child: Icon(Icons.remove,
+                      color: color.withOpacity(0.7), size: 14),
                 ),
               ),
             ]),
@@ -1421,24 +1439,24 @@ class _EmptySlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(vertical: 20),
-    decoration: BoxDecoration(
-      color: AppTheme.surface,
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: AppTheme.surfaceVariant),
-    ),
-    child: Column(children: [
-      const Icon(Icons.inventory_2_outlined,
-        color: AppTheme.surfaceVariant, size: 36),
-      const SizedBox(height: 8),
-      Text(message,
-        style: GoogleFonts.lato(
-          color: AppTheme.textSecondary,
-          fontSize: 13,
-          fontStyle: FontStyle.italic)),
-    ]),
-  );
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppTheme.surfaceVariant),
+        ),
+        child: Column(children: [
+          const Icon(Icons.inventory_2_outlined,
+              color: AppTheme.surfaceVariant, size: 36),
+          const SizedBox(height: 8),
+          Text(message,
+              style: GoogleFonts.lato(
+                  color: AppTheme.textSecondary,
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic)),
+        ]),
+      );
 }
 
 class _SectionTitle extends StatelessWidget {
@@ -1447,15 +1465,15 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(children: [
-    Text(title,
-      style: GoogleFonts.libreBaskerville(
-        color: AppTheme.primary,
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1)),
-    const SizedBox(width: 10),
-    const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
-  ]);
+        Text(title,
+            style: GoogleFonts.libreBaskerville(
+                color: AppTheme.primary,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1)),
+        const SizedBox(width: 10),
+        const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
+      ]);
 }
 
 class _SectionTitleInline extends StatelessWidget {
@@ -1464,22 +1482,24 @@ class _SectionTitleInline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(children: [
-    Text(title,
-      style: GoogleFonts.libreBaskerville(
-        color: AppTheme.primary,
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1)),
-    const SizedBox(width: 10),
-    const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
-  ]);
+        Text(title,
+            style: GoogleFonts.libreBaskerville(
+                color: AppTheme.primary,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1)),
+        const SizedBox(width: 10),
+        const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
+      ]);
 }
 
 /// Converts raw backend itemType (e.g. ADVENTURING_GEAR) to a readable label.
 String _formatItemType(String raw) {
   switch (raw.toUpperCase()) {
-    case 'ADVENTURING_GEAR': return 'Adventuring Gear';
-    case 'MOUNTS_AND_VEHICLES': return 'Mounts & Vehicles';
+    case 'ADVENTURING_GEAR':
+      return 'Adventuring Gear';
+    case 'MOUNTS_AND_VEHICLES':
+      return 'Mounts & Vehicles';
     default:
       return raw
           .toLowerCase()

@@ -245,7 +245,7 @@ class _FeatureTile extends StatelessWidget {
               ),
               Text('$remaining available',
                   style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary, fontSize: 11)),
+                      color: AppTheme.textSecondary, fontSize: 14)),
             ],
           ),
           actions: [
@@ -316,7 +316,7 @@ class _FeatureTile extends StatelessWidget {
                       color: remaining == 0
                           ? AppTheme.textSecondary
                           : AppTheme.primary,
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(width: 6),
@@ -372,7 +372,7 @@ class _FeatureTile extends StatelessWidget {
               ] else ...[
                 Text('$remaining/$maxUses',
                     style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 11)),
+                        color: AppTheme.textSecondary, fontSize: 14)),
               ],
             ],
             const SizedBox(width: 6),
@@ -466,7 +466,7 @@ class _FeatureDetailSheet extends StatelessWidget {
                           size: 14, color: AppTheme.primary),
                       label: Text('Restore',
                           style: GoogleFonts.lato(
-                              color: AppTheme.primary, fontSize: 12)),
+                              color: AppTheme.primary, fontSize: 14)),
                       onPressed: () => vm.restoreFeatureToFull(feature),
                     ),
                 ],
@@ -535,7 +535,7 @@ class _FeatureDetailSheet extends StatelessWidget {
                                     Text('$remaining available',
                                         style: GoogleFonts.lato(
                                             color: AppTheme.textSecondary,
-                                            fontSize: 11)),
+                                            fontSize: 14)),
                                   ],
                                 ),
                                 actions: [
@@ -579,13 +579,13 @@ class _FeatureDetailSheet extends StatelessWidget {
                 Text('Uses',
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary,
-                        fontSize: 11,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.4)),
                 const SizedBox(width: 10),
                 Text('$remaining / $maxUses',
                     style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 11)),
+                        color: AppTheme.textSecondary, fontSize: 14)),
               ]),
               const SizedBox(height: 8),
               Wrap(
@@ -680,7 +680,7 @@ class _StandardActionsCard extends StatelessWidget {
             const Spacer(),
             Text('${kStandardActions.length} actions',
                 style:
-                    GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11)),
+                    GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14)),
             const SizedBox(width: 6),
             const Icon(Icons.chevron_right,
                 color: AppTheme.textSecondary, size: 18),
@@ -823,7 +823,7 @@ class _WeaponRow extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.lato(
                   color: const Color(0xFFC8A45A),
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600)),
         ),
         const SizedBox(width: _kColGap),
@@ -837,7 +837,7 @@ class _WeaponRow extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.lato(
                       color: const Color(0xFFCB7A48),
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600)),
               if (weapon.damageType != null && weapon.damageType!.isNotEmpty)
                 Text(weapon.damageType!,
@@ -936,7 +936,7 @@ class _SpellRow extends StatelessWidget {
           textAlign: TextAlign.center,
           style: GoogleFonts.lato(
               color: const Color(0xFFC8A45A),
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w600));
     }
     // Save DC: stack ability name over DC value
@@ -957,7 +957,7 @@ class _SpellRow extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.lato(
                   color: const Color(0xFFC8A45A),
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600)),
         ],
       );
@@ -966,7 +966,7 @@ class _SpellRow extends StatelessWidget {
         textAlign: TextAlign.center,
         style: GoogleFonts.lato(
             color: const Color(0xFFC8A45A),
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: FontWeight.w600));
   }
 
@@ -978,7 +978,7 @@ class _SpellRow extends StatelessWidget {
           textAlign: TextAlign.center,
           style: GoogleFonts.lato(
               color: const Color(0xFFCB7A48),
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w600));
     }
     if (t == null || t.isEmpty) {
@@ -986,7 +986,7 @@ class _SpellRow extends StatelessWidget {
           textAlign: TextAlign.center,
           style: GoogleFonts.lato(
               color: const Color(0xFFCB7A48),
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w600));
     }
     return Column(
@@ -997,14 +997,14 @@ class _SpellRow extends StatelessWidget {
             textAlign: TextAlign.center,
             style: GoogleFonts.lato(
                 color: const Color(0xFFCB7A48),
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w600)),
         Text(t.toUpperCase(),
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.lato(
                 color: const Color(0xFFCB7A48),
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w600)),
       ],
     );
@@ -1161,7 +1161,7 @@ class _SpellDetailSheet extends StatelessWidget {
                   ),
                   child: Text('CAST',
                       style: GoogleFonts.libreBaskerville(
-                          fontSize: 11, fontWeight: FontWeight.bold)),
+                          fontSize: 14, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -1174,7 +1174,7 @@ class _SpellDetailSheet extends StatelessWidget {
               Text('Slots Lv.$level',
                   style: GoogleFonts.lato(
                       color: AppTheme.textSecondary,
-                      fontSize: 11,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.4)),
               const SizedBox(width: 10),
@@ -1267,7 +1267,7 @@ class _StaticSection extends StatelessWidget {
                       Text(a.desc,
                           style: GoogleFonts.lato(
                               color: AppTheme.textSecondary,
-                              fontSize: 12,
+                              fontSize: 14,
                               height: 1.5)),
                     ],
                   ),
@@ -1327,7 +1327,7 @@ class _ActionListScreen extends StatelessWidget {
                       Text(a.desc,
                           style: GoogleFonts.lato(
                               color: AppTheme.textSecondary,
-                              fontSize: 12,
+                              fontSize: 14,
                               height: 1.5)),
                     ]),
               ),
@@ -1464,7 +1464,7 @@ class _DeathSavesRow extends StatelessWidget {
                             Text('Successes',
                                 style: GoogleFonts.lato(
                                     color: AppTheme.primary,
-                                    fontSize: 11,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.bold)),
                             const SizedBox(height: 6),
                             Row(
@@ -1494,7 +1494,7 @@ class _DeathSavesRow extends StatelessWidget {
                             Text('Failures',
                                 style: GoogleFonts.lato(
                                     color: AppTheme.accent,
-                                    fontSize: 11,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.bold)),
                             const SizedBox(height: 6),
                             Row(
@@ -1525,78 +1525,7 @@ class _DeathSavesRow extends StatelessWidget {
                     'RESET',
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-                                   color: AppTheme.primary,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 6),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                  3, (i) => _SaveDot(filled: i < successes, color: AppTheme.primary)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                // ── Divider ────────────────────────────────────────────────
-                Container(width: 1, color: AppTheme.divider),
-                // ── Failure half (fully tappable) ──────────────────────────
-                Expanded(
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: onFailureTap,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Failures',
-                                style: GoogleFonts.lato(
-                                    color: AppTheme.accent,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 6),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                  3, (i) => _SaveDot(filled: i < failures, color: AppTheme.accent)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ]),
-            ),
-            // ── Divider ──────────────────────────────────────────────────
-            Container(height: 1, color: AppTheme.divider),
-            // ── RESET button ─────────────────────────────────────────────
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onReset,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 7),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'RESET',
-                    style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary,
-                        fontSize: 11,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.2),
                   ),
@@ -1644,14 +1573,15 @@ class _DetailRow extends StatelessWidget {
             child: Text('$label:',
                 style: GoogleFonts.lato(
                     color: AppTheme.textSecondary,
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold)),
           ),
           Expanded(
             child: Text(value,
                 style: GoogleFonts.lato(
-                    color: AppTheme.textPrimary, fontSize: 12)),
+                    color: AppTheme.textPrimary, fontSize: 14)),
           ),
         ]),
       );
 }
+

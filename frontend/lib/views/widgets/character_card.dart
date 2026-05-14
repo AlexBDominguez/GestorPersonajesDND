@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/app_theme.dart';
+import '../../config/class_icons.dart';
 import '../../models/character/player_character_summary.dart';
 
 class CharacterCard extends StatelessWidget {
@@ -19,6 +20,11 @@ class CharacterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconData = classIcon(
+      character.dndClassName ?? '',
+      classId: character.dndClassId,
+    );
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -28,71 +34,70 @@ class CharacterCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppTheme.surfaceVariant),
           boxShadow: const [
-            BoxShadow(color: Colors.black38, blurRadius: 6, offset: Offset(0, 3)),
+            BoxShadow(
+                color: Colors.black38, blurRadius: 6, offset: Offset(0, 3)),
           ],
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(children: [
-            //Avatar
+            // Class icon
             Container(
-              width: 48, height: 48,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: AppTheme.primary, width: 2),
                 color: AppTheme.background,
               ),
-              child: const Icon(Icons.person,
-                color: AppTheme.primary, size: 26),
+              child: Icon(iconData, color: AppTheme.primary, size: 24),
             ),
             const SizedBox(width: 14),
 
             // Nombre + subtítulo
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  //Fila: nombre + badge de nivel
-                  Row(children: [
-                    Flexible(
-                      child: Text(
-                        character.name,
-                        style: GoogleFonts.libreBaskerville(
-                          color: AppTheme.textPrimary,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _LevelBadge(level: character.level),
-                  ]),
-                  const SizedBox(height: 2),
-                  //Raza (o subrace si la hubiese)
-                  if(character.raceName != null) 
-                    Text(
-                      character.raceName!,
-                      style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    //Fila: nombre + badge de nivel
+                    Row(children: [
+                      Flexible(
+                        child: Text(
+                          character.name,
+                          style: GoogleFonts.libreBaskerville(
+                              color: AppTheme.textPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 1),
-                        //Clase | Subclase
-                        if (character.dndClassName != null)
-                          Text(
-                            _classLine(),
-                            style: GoogleFonts.lato(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12),
-                            ),
+                      ),
+                      const SizedBox(width: 8),
+                      _LevelBadge(level: character.level),
+                    ]),
+                    const SizedBox(height: 2),
+                    //Raza (o subrace si la hubiese)
+                    if (character.raceName != null)
+                      Text(
+                        character.raceName!,
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary, fontSize: 14),
+                      ),
+                    const SizedBox(height: 1),
+                    //Clase | Subclase
+                    if (character.dndClassName != null)
+                      Text(
+                        _classLine(),
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary, fontSize: 14),
+                      ),
                   ]),
-          ),
-          // Menú 3 puntos
-          _MoreMenuButton(
+            ),
+            // Menú 3 puntos
+            _MoreMenuButton(
               character: character,
               onEdit: onEdit,
               onDelete: onDelete,
-          ),
+            ),
           ]),
         ),
       ),
@@ -105,7 +110,7 @@ class CharacterCard extends StatelessWidget {
     //subclassName no está en el summary aún - se puede añadir después
     return parts.join(' | ');
   }
-}  
+}
 
 // Level Badge
 
@@ -125,7 +130,7 @@ class _LevelBadge extends StatelessWidget {
         'Lvl $level',
         style: GoogleFonts.libreBaskerville(
           color: AppTheme.background,
-          fontSize: 11,
+          fontSize: 14,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -162,11 +167,9 @@ class _MoreMenuButton extends StatelessWidget {
         PopupMenuItem(
           value: 'edit',
           child: Row(children: [
-            const Icon(Icons.edit_outlined,
-                color: AppTheme.primary, size: 18),
+            const Icon(Icons.edit_outlined, color: AppTheme.primary, size: 18),
             const SizedBox(width: 10),
-            Text('Edit',
-                style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+            Text('Edit', style: GoogleFonts.lato(color: AppTheme.textPrimary)),
           ]),
         ),
         const PopupMenuDivider(),
@@ -175,8 +178,7 @@ class _MoreMenuButton extends StatelessWidget {
           child: Row(children: [
             const Icon(Icons.delete_outline, color: AppTheme.accent, size: 18),
             const SizedBox(width: 10),
-            Text('Delete',
-                style: GoogleFonts.lato(color: AppTheme.accent)),
+            Text('Delete', style: GoogleFonts.lato(color: AppTheme.accent)),
           ]),
         ),
       ],
@@ -190,16 +192,16 @@ class _MoreMenuButton extends StatelessWidget {
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
         scrollable: true,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Delete Character?',
             style: GoogleFonts.libreBaskerville(
                 color: AppTheme.accent,
-                fontSize: 17, fontWeight: FontWeight.bold)),
+                fontSize: 17,
+                fontWeight: FontWeight.bold)),
         content: RichText(
           text: TextSpan(
-            style: GoogleFonts.lato(
-                color: AppTheme.textSecondary, fontSize: 14),
+            style:
+                GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14),
             children: [
               const TextSpan(text: 'Are you sure you want to delete '),
               TextSpan(
@@ -221,11 +223,14 @@ class _MoreMenuButton extends StatelessWidget {
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.textSecondary,
-                      side: const BorderSide(color: AppTheme.surfaceVariant, width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      side: const BorderSide(
+                          color: AppTheme.surfaceVariant, width: 1.5),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
                       minimumSize: const Size(0, 40),
                     ),
-                    child: Text('Cancel', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+                    child: Text('Cancel',
+                        style: GoogleFonts.lato(color: AppTheme.textSecondary)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -235,12 +240,15 @@ class _MoreMenuButton extends StatelessWidget {
                         backgroundColor: AppTheme.accent,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(0, 40),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8))),
                     onPressed: () {
                       Navigator.pop(context);
                       onDelete();
                     },
-                    child: Text('Delete', style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
+                    child: Text('Delete',
+                        style: GoogleFonts.libreBaskerville(
+                            fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],

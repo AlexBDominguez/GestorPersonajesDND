@@ -176,8 +176,8 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
               tabAlignment: TabAlignment.start,
               labelColor: AppTheme.primary,
               unselectedLabelColor: AppTheme.textSecondary,
-              labelStyle: GoogleFonts.libreBaskerville(fontSize: 12, fontWeight: FontWeight.bold),
-              unselectedLabelStyle: GoogleFonts.libreBaskerville(fontSize: 12),
+              labelStyle: GoogleFonts.libreBaskerville(fontSize: 14, fontWeight: FontWeight.bold),
+              unselectedLabelStyle: GoogleFonts.libreBaskerville(fontSize: 14),
               indicatorColor: AppTheme.primary,
               indicatorWeight: 2,
               tabs: tabs,
@@ -236,7 +236,7 @@ class _NavBar extends StatelessWidget {
                 ),
                 Text(_subtitle(),
                     style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 11),
+                        color: AppTheme.textSecondary, fontSize: 14),
                     overflow: TextOverflow.ellipsis),
               ],
             ),
@@ -347,7 +347,7 @@ class _DyingBanner extends StatelessWidget {
             isStable ? 'STABLE' : 'DYING — Death Saves',
             style: GoogleFonts.libreBaskerville(
               color: isStable ? AppTheme.primary : AppTheme.accent,
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -657,7 +657,7 @@ class _ManageHpSheetState extends State<_ManageHpSheet> {
               if (c.temporaryHp > 0)
                 TextSpan(
                   text: ' (+${c.temporaryHp} temp)',
-                  style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 11),
+                  style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 14),
                 ),
             ],
           ),
@@ -706,7 +706,7 @@ class _ManageHpSheetState extends State<_ManageHpSheet> {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(vm.hpError!,
-                style: GoogleFonts.lato(color: AppTheme.accent, fontSize: 12)),
+                style: GoogleFonts.lato(color: AppTheme.accent, fontSize: 14)),
           ),
         ElevatedButton(
           onPressed: vm.isSavingHp
@@ -753,7 +753,7 @@ class _HpField extends StatelessWidget {
       style: GoogleFonts.libreBaskerville(color: color, fontSize: 18),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: GoogleFonts.lato(color: color, fontSize: 11),
+        labelStyle: GoogleFonts.lato(color: color, fontSize: 14),
         prefixIcon: Icon(icon, color: color, size: 18),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -1185,7 +1185,7 @@ class _RestEffect extends StatelessWidget {
       child: Row(children: [
         Icon(icon, color: AppTheme.primary, size: 14),
         const SizedBox(width: 8),
-        Expanded(child: Text(text, style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 12))),
+        Expanded(child: Text(text, style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 14))),
       ]),
     );
   }

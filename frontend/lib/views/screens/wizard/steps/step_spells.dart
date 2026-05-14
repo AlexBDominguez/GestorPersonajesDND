@@ -201,7 +201,7 @@ class _StepSpellsState extends State<StepSpells> {
                   child: Text(
                     'Choose ${vm.magicalSecretsSlots} spell(s) from any class list.',
                     style: GoogleFonts.lato(
-                        color: Colors.amber.shade700, fontSize: 11),
+                        color: Colors.amber.shade700, fontSize: 14),
                   ),
                 ),
               ]),
@@ -221,7 +221,7 @@ class _StepSpellsState extends State<StepSpells> {
                   child: Text(
                     'Additional Magical Secrets (College of Lore): 2 free spells.',
                     style: GoogleFonts.lato(
-                        color: Colors.amber.shade700, fontSize: 11),
+                        color: Colors.amber.shade700, fontSize: 14),
                   ),
                 ),
               ]),
@@ -241,7 +241,7 @@ class _StepSpellsState extends State<StepSpells> {
                         ? 'Search spells...'
                         : 'Search all spells...',
                     hintStyle: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 12),
+                        color: AppTheme.textSecondary, fontSize: 14),
                     prefixIcon: const Icon(Icons.search,
                         color: AppTheme.primary, size: 16),
                     suffixIcon: _searchCtrl.text.isNotEmpty
@@ -374,7 +374,7 @@ class _SectionTab extends StatelessWidget {
           label,
           style: GoogleFonts.lato(
             color: selected ? Colors.white : AppTheme.textSecondary,
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -420,7 +420,7 @@ class _SlotCounter extends StatelessWidget {
         Text('$label: $current / $max',
             style: GoogleFonts.lato(
                 color: full ? color : AppTheme.textSecondary,
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: full ? FontWeight.bold : FontWeight.normal)),
       ]),
     );
@@ -626,13 +626,13 @@ class _DetailRow extends StatelessWidget {
             child: Text('$label:',
                 style: GoogleFonts.lato(
                     color: AppTheme.textSecondary,
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold)),
           ),
           Expanded(
             child: Text(value,
                 style:
-                    GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 12)),
+                    GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 14)),
           ),
         ]),
       );
@@ -678,3 +678,4 @@ class _LvTag extends StatelessWidget {
                 fontWeight: FontWeight.bold)),
       );
 }
+

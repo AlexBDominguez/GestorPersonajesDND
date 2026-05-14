@@ -2,28 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../config/app_theme.dart';
+import '../../../config/class_icons.dart';
 import '../../../models/wizard/class_option.dart';
 import '../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import 'class_options_screen.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-
-final Map<String, IconData> kClassIcons = {
-  'barbarian': MdiIcons.axeBattle,          // Hacha de batalla (¡esto es un bárbaro!)
-  'bard':       MdiIcons.musicClefTreble,    
-  'cleric':     MdiIcons.cross,              // Cruz clásica (o 'clover' para algo místico)
-  'druid':      MdiIcons.leaf,               // Hoja natural
-  'fighter':    MdiIcons.sword,              // ¡LA ESPADA! (por fin)
-  'monk':       MdiIcons.yinYang,         
-  'paladin':    MdiIcons.shieldSword,        // Escudo y espada combinados
-  'ranger':     MdiIcons.bowArrow,           // Arco y flecha
-  'rogue':      MdiIcons.knifeMilitary,      // Una daga militar (mucho más "pícaro")
-  'sorcerer':   MdiIcons.fire,               // Poder innato de fuego
-  'warlock':    MdiIcons.skull,              // Calavera (pacto oscuro)
-  'wizard':     MdiIcons.autoFix,            // Varita mágica con destellos
-};
-
-IconData classIcon(String indexName) =>
-    kClassIcons[indexName.toLowerCase()] ?? MdiIcons.diceD6;
 
 /// Pantalla de detalle de una clase. Muestra toda la información de la clase
 /// antes de que el usuario decida añadirla o cancelar.
@@ -213,7 +195,7 @@ class _StatBadge extends StatelessWidget {
             TextSpan(
                 text: '$label: ',
                 style: GoogleFonts.lato(
-                    color: AppTheme.textSecondary, fontSize: 12)),
+                    color: AppTheme.textSecondary, fontSize: 14)),
             TextSpan(
                 text: value,
                 style: GoogleFonts.libreBaskerville(
@@ -250,7 +232,7 @@ class _Chip extends StatelessWidget {
         ),
         child: Text(label,
             style: GoogleFonts.lato(
-                color: AppTheme.textPrimary, fontSize: 11)),
+                color: AppTheme.textPrimary, fontSize: 14)),
       );
 }
 
@@ -284,7 +266,7 @@ class _LevelSection extends StatelessWidget {
               child: Text('Level $level',
                   style: GoogleFonts.libreBaskerville(
                       color: AppTheme.background,
-                      fontSize: 11,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold)),
             ),
           ]),
@@ -357,7 +339,7 @@ class _FeatureTile extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                 child: Text(feature.description,
                     style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 12)),
+                        color: AppTheme.textSecondary, fontSize: 14)),
               ),
             ],
           ],
@@ -409,3 +391,4 @@ class _BottomButtons extends StatelessWidget {
     );
   }
 }
+
