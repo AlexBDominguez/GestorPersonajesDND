@@ -16,8 +16,8 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    // Clave secreta (puedes cambiarla en application.properties)
-    @Value("${jwt.secret:MySuperSecretKeyForDnDCharacterManager2024!MustBe256BitsLongForHS256Algorithm}")
+    // Clave secreta - obligatoria desde variable de entorno (sin defaults débiles)
+    @Value("${jwt.secret}")
     private String SECRET_KEY;
 
     // Tiempo de expiración del token: 24 horas (en milisegundos)

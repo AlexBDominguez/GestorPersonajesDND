@@ -1,6 +1,7 @@
 package config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +19,9 @@ public class AdminDataInitializer implements ApplicationRunner {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @Value("${admin.initial.password}")
+    private String adminInitialPassword;
 
     @Override
     public void run(ApplicationArguments args){
@@ -25,11 +29,11 @@ public class AdminDataInitializer implements ApplicationRunner {
         if(!userRepository.existsByUsername("admin")){
             User admin = new User();
             admin.setUsername("admin");
-            admin.setPassword(passwordEncoder.encode("admin123")); //Contraseña por defecto (cambiar en producción)
+            admin.setPassword(passwordEncoder.encode(adminInitialPassword));
             admin.setRole(Role.ADMIN);
             admin.setActive(true);
             userRepository.save(admin);
-            System.out.println("Admin user created with username 'admin' and password 'admin123'");
+            System.out.println("Admin user created with username 'admin'");
         }
     }
     
