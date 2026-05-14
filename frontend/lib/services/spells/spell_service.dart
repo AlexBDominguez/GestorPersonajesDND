@@ -35,9 +35,11 @@ class SpellService {
   Future<void> learnSpell({
     required int characterId,
     required int spellId,
+    bool prepared = false,
   }) async {
     final res = await _api.post(
       '/api/characters/$characterId/learn-spell/$spellId',
+      body: {'prepared': prepared},
     );
     if (res.statusCode == 200 || res.statusCode == 204) return;
     if (res.statusCode == 401) throw Exception('Unauthorized');

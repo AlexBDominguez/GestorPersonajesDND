@@ -572,14 +572,29 @@ public class PlayerCharacterService {
     }
 
     @Transactional
-    public void learnSpell(Long characterId, Long spellId) {
+    public void learnSpell(Long characterId, Long spellId, boolean prepared) {
         PlayerCharacter character = characterRepository.findById(characterId)
                 .orElseThrow(() -> new RuntimeException("Character not found"));
 
         Spell spell = spellRepository.findById(spellId)
                 .orElseThrow(() -> new RuntimeException("Spell not found"));
 
+        // When learning as prepared, validate the prepare limit
+        if (prepared && spell.getLevel() > 0) {
+            int maxPrepared = character.getMaxPreparedSpells();
+            if (maxPrepared > 0) {
+                int currentPrepared = characterSpellRepository.countPreparedNonCantripsByCharacterId(characterId);
+                if (currentPrepared >= maxPrepared) {
+                    throw new ResponseStatusException(
+                        HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Spell preparation limit reached (" + maxPrepared + "/" + maxPrepared + ")");
+                }
+            }
+        }
+
         CharacterSpell characterSpell = new CharacterSpell(character, spell);
+        // Cantrips are always prepared; non-cantrips respect the 'prepared' flag
+        characterSpell.setPrepared(spell.getLevel() == 0 || prepared);
         characterSpellRepository.save(characterSpell);
     }
 

@@ -861,7 +861,7 @@ class _MySpellsTab extends StatelessWidget {
         );
         if (confirm == true) {
           await vm.removeSpell(spells[i].spellId);
-          if (context.mounted) Navigator.of(context).pop(); // cerrar manage screen
+          // Stay on Manage Spells — the viewmodel reload will update the list
         }
       },
       onTogglePrepare: (_) async {
@@ -1157,15 +1157,17 @@ class _LearnNewTabState extends State<_LearnNewTab> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
                     onPressed: () => Navigator.pop(context, true),
-                    icon: const Icon(Icons.add, size: 14),
-                    label: const Text('Learn'),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primary,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(0, 40),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                    child: Text('Learn',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],

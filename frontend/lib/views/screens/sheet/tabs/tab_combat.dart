@@ -119,6 +119,9 @@ class _TabCombatState extends State<TabCombat> {
           _DeathSavesRow(
             successes: c.deathSaveSuccesses,
             failures: c.deathSaveFailures,
+            onSuccessTap: () => vm.recordDeathSave(success: true),
+            onFailureTap: () => vm.recordDeathSave(success: false),
+            onReset: () => vm.resetDeathSaves(),
           ),
           const SizedBox(height: 20),
         ],
@@ -1421,46 +1424,188 @@ class _SectionTitle extends StatelessWidget {
 class _DeathSavesRow extends StatelessWidget {
   final int successes;
   final int failures;
-  const _DeathSavesRow({required this.successes, required this.failures});
+  final VoidCallback onSuccessTap;
+  final VoidCallback onFailureTap;
+  final VoidCallback onReset;
+  const _DeathSavesRow({
+    required this.successes,
+    required this.failures,
+    required this.onSuccessTap,
+    required this.onFailureTap,
+    required this.onReset,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.accent.withOpacity(0.5)),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppTheme.accent.withOpacity(0.5)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IntrinsicHeight(
+              child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                // ── Success half (fully tappable) ──────────────────────────
+                Expanded(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onSuccessTap,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Successes',
+                                style: GoogleFonts.lato(
+                                    color: AppTheme.primary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                  3, (i) => _SaveDot(filled: i < successes, color: AppTheme.primary)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // ── Divider ────────────────────────────────────────────────
+                Container(width: 1, color: AppTheme.divider),
+                // ── Failure half (fully tappable) ──────────────────────────
+                Expanded(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onFailureTap,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Failures',
+                                style: GoogleFonts.lato(
+                                    color: AppTheme.accent,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                  3, (i) => _SaveDot(filled: i < failures, color: AppTheme.accent)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+            // ── Divider ──────────────────────────────────────────────────
+            Container(height: 1, color: AppTheme.divider),
+            // ── RESET button ─────────────────────────────────────────────
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onReset,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 7),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'RESET',
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+                                   color: AppTheme.primary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                  3, (i) => _SaveDot(filled: i < successes, color: AppTheme.primary)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // ── Divider ────────────────────────────────────────────────
+                Container(width: 1, color: AppTheme.divider),
+                // ── Failure half (fully tappable) ──────────────────────────
+                Expanded(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: onFailureTap,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Failures',
+                                style: GoogleFonts.lato(
+                                    color: AppTheme.accent,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                  3, (i) => _SaveDot(filled: i < failures, color: AppTheme.accent)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+            // ── Divider ──────────────────────────────────────────────────
+            Container(height: 1, color: AppTheme.divider),
+            // ── RESET button ─────────────────────────────────────────────
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onReset,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 7),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'RESET',
+                    style: GoogleFonts.lato(
+                        color: AppTheme.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Row(children: [
-        Expanded(
-            child: Column(children: [
-          Text('Successes',
-              style: GoogleFonts.lato(
-                  color: AppTheme.primary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold)),
-          const SizedBox(height: 6),
-          Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                  3, (i) => _SaveDot(filled: i < successes, color: AppTheme.primary))),
-        ])),
-        Container(width: 1, height: 40, color: AppTheme.divider),
-        Expanded(
-            child: Column(children: [
-          Text('Failures',
-              style: GoogleFonts.lato(
-                  color: AppTheme.accent,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold)),
-          const SizedBox(height: 6),
-          Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                  3, (i) => _SaveDot(filled: i < failures, color: AppTheme.accent))),
-        ])),
-      ]),
     );
   }
 }
