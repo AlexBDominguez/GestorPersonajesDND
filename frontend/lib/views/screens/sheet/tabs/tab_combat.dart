@@ -411,7 +411,12 @@ class _FeatureDetailSheet extends StatelessWidget {
       maxChildSize: 0.92,
       builder: (_, ctrl) => SingleChildScrollView(
         controller: ctrl,
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          8,
+          20,
+          MediaQuery.of(context).padding.bottom + 20,
+        ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // Handle
           Center(
@@ -1098,7 +1103,12 @@ class _SpellDetailSheet extends StatelessWidget {
       maxChildSize: 0.92,
       builder: (_, ctrl) => SingleChildScrollView(
         controller: ctrl,
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          8,
+          20,
+          MediaQuery.of(context).padding.bottom + 20,
+        ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // Handle
           Center(
@@ -1297,7 +1307,12 @@ class _ActionListScreen extends StatelessWidget {
                 color: AppTheme.primary, fontWeight: FontWeight.bold)),
       ),
       body: ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MediaQuery.of(context).padding.bottom + 16,
+        ),
         itemCount: actions.length,
         separatorBuilder: (_, __) =>
             const Divider(height: 1, color: AppTheme.divider),

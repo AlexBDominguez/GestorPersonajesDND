@@ -358,36 +358,39 @@ class _BottomButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.divider)),
       ),
-      child: Row(children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: onCancel,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.textSecondary,
-              side: const BorderSide(color: AppTheme.surfaceVariant),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        child: Row(children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: onCancel,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.textSecondary,
+                side: const BorderSide(color: AppTheme.surfaceVariant),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: Text('Cancel',
+                  style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
             ),
-            child: Text('Cancel',
-                style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          flex: 2,
-          child: ElevatedButton(
-            onPressed: onAdd,
-            style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14)),
-            child: Text('Choose Class',
-                style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: ElevatedButton(
+              onPressed: onAdd,
+              style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14)),
+              child: Text('Choose Class',
+                  style: GoogleFonts.lato(fontWeight: FontWeight.bold)),
+            ),
           ),
-        ),
-      ]),
+        ]),
+      ),
     );
   }
 }

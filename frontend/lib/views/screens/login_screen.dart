@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
                   Text('DungeonScroll', style: Theme.of(context).textTheme.displayMedium),
                   const SizedBox(height: 6),
-                  Text('Gestor de Personajes D&D', style: Theme.of(context).textTheme.bodySmall),
+                  Text('D&D Character Manager', style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(height: 48),
 
                   // Formulario

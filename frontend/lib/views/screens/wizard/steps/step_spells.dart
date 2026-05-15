@@ -550,7 +550,12 @@ class _SpellTile extends StatelessWidget {
         maxChildSize: 0.92,
         builder: (_, scrollCtrl) => SingleChildScrollView(
           controller: scrollCtrl,
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            8,
+            20,
+            MediaQuery.of(context).padding.bottom + 20,
+          ),
           child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

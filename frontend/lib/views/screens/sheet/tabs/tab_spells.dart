@@ -401,7 +401,12 @@ class _SpellRow extends StatelessWidget {
             maxChildSize: 0.92,
             builder: (_, ctrl) => SingleChildScrollView(
               controller: ctrl,
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                8,
+                20,
+                MediaQuery.of(context).padding.bottom + 20,
+              ),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Center(
                   child: Container(
@@ -737,7 +742,9 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
           ],
         ),
       ),
-      body: Column(children: [
+      body: SafeArea(
+        top: false,
+        child: Column(children: [
         // Buscador global
         Padding(
           padding: const EdgeInsets.all(12),
@@ -780,7 +787,8 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
             ],
           ),
         ),
-      ]),
+        ]),
+      ),
     );
   }
 }

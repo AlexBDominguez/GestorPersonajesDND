@@ -505,7 +505,12 @@ class _ItemTile extends StatelessWidget {
         maxChildSize: 0.85,
         builder: (_, ctrl) => SingleChildScrollView(
           controller: ctrl,
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            8,
+            20,
+            MediaQuery.of(context).padding.bottom + 20,
+          ),
           child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
