@@ -42,6 +42,38 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/fonts/
+  fonts:
+    - family: Libre Baskerville
+      fonts:
+        - asset: assets/fonts/LibreBaskerville-wght.ttf
+          weight: 400
+        - asset: assets/fonts/LibreBaskerville-wght.ttf
+          weight: 700
+        - asset: assets/fonts/LibreBaskerville-Italic-wght.ttf
+          style: italic
+          weight: 400
+        - asset: assets/fonts/LibreBaskerville-Italic-wght.ttf
+          style: italic
+          weight: 700
+    - family: Lato
+      fonts:
+        - asset: assets/fonts/Lato-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Lato-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/Lato-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Lato-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/Lato-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Lato-BoldItalic.ttf
+          weight: 700
+          style: italic
   
 
 flutter_launcher_icons:

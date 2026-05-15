@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
@@ -257,7 +259,7 @@ class _TabInventoryState extends State<TabInventory> {
           //Currency
           _SectionTitle('Currency'),
           const SizedBox(height: 10),
-          _CurrencyRow(character: widget.character),
+          _CurrencyRow(character: widget.character, vm: widget.vm),
           const SizedBox(height: 24),
 
           //  Attuned (DragTarget)
@@ -1218,7 +1220,8 @@ class _AddItemSheetState extends State<_AddItemSheet> {
 // Currency Row
 class _CurrencyRow extends StatefulWidget {
   final PlayerCharacter character;
-  const _CurrencyRow({required this.character});
+  final CharacterSheetViewModel vm;
+  const _CurrencyRow({required this.character, required this.vm});
 
   @override
   State<_CurrencyRow> createState() => _CurrencyRowState();
@@ -1227,6 +1230,7 @@ class _CurrencyRow extends StatefulWidget {
 class _CurrencyRowState extends State<_CurrencyRow> {
   static const int _maxCoinValue = 99999;
   static const int _maxCoinDigits = 5;
+  static const Duration _saveDebounce = Duration(milliseconds: 180);
   static const _coins = [
     ('CP', Colors.brown),
     ('SP', Colors.grey),
@@ -1239,47 +1243,152 @@ class _CurrencyRowState extends State<_CurrencyRow> {
   late List<int> _values;
   final _svc = InventoryService();
   bool _busy = false;
+  bool _hasPendingLocalChanges = false;
+  Map<String, int>? _queuedValues;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
-    _values = [
-      widget.character.copperPieces.clamp(0, _maxCoinValue),
-      widget.character.silverPieces.clamp(0, _maxCoinValue),
-      widget.character.electrumPieces.clamp(0, _maxCoinValue),
-      widget.character.goldPieces.clamp(0, _maxCoinValue),
-      widget.character.platinumPieces.clamp(0, _maxCoinValue),
+    // Preferir el caché local del vm (guardado por _CurrencyRow en sesión anterior)
+    // para evitar mostrar valores obsoletos del personaje tras cambio de pestaña.
+    final cached = widget.vm.lastSavedCurrency;
+    if (cached != null) {
+      _values = [
+        (cached['copper']  ?? 0).clamp(0, _maxCoinValue),
+        (cached['silver']  ?? 0).clamp(0, _maxCoinValue),
+        (cached['electrum']?? 0).clamp(0, _maxCoinValue),
+        (cached['gold']    ?? 0).clamp(0, _maxCoinValue),
+        (cached['platinum']?? 0).clamp(0, _maxCoinValue),
+      ];
+    } else {
+      _values = _valuesFromCharacter(widget.character);
+    }
+  }
+
+  List<int> _valuesFromCharacter(PlayerCharacter character) {
+    return [
+      character.copperPieces.clamp(0, _maxCoinValue),
+      character.silverPieces.clamp(0, _maxCoinValue),
+      character.electrumPieces.clamp(0, _maxCoinValue),
+      character.goldPieces.clamp(0, _maxCoinValue),
+      character.platinumPieces.clamp(0, _maxCoinValue),
     ];
   }
 
-  Future<void> _update(Map<String, int> newValues) async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    try {
-      final result = await _svc.setMoney(widget.character.id, newValues);
-      if (mounted) {
-        setState(() {
-          _values = [
-            result['copper']!,
-            result['silver']!,
-            result['electrum']!,
-            result['gold']!,
-            result['platinum']!,
-          ];
-        });
+  @override
+  void didUpdateWidget(covariant _CurrencyRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Solo aceptar datos del personaje si no hay cambios locales pendientes
+    // ni guardado reciente en caché (vm.lastSavedCurrency indica que el
+    // personaje aún no fue recargado con los últimos valores guardados).
+    if (_hasPendingLocalChanges || _busy) return;
+    if (widget.vm.lastSavedCurrency != null) return;
+    _values = _valuesFromCharacter(widget.character);
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    final hasPending = _hasPendingLocalChanges;
+    final body = _currentBody();
+    final vm = widget.vm;
+    final svc = _svc;
+    final charId = widget.character.id;
+    if (hasPending) {
+      // Actualizar caché inmediatamente (antes de la respuesta del servidor)
+      // para que initState lo lea si el usuario vuelve a la pestaña.
+      vm.cacheCurrency(body);
+      if (_busy) {
+        // Hay petición en vuelo: encolar los últimos valores.
+        _queuedValues = body;
+      } else {
+        unawaited(svc.setMoney(charId, body));
       }
-    } catch (_) {
+    }
+    super.dispose();
+  }
+
+  Map<String, int> _currentBody() {
+    return {for (var i = 0; i < _keys.length; i++) _keys[i]: _values[i]};
+  }
+
+  void _scheduleUpdate() {
+    _hasPendingLocalChanges = true;
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(_saveDebounce, () {
+      _update(_currentBody());
+    });
+  }
+
+  Future<void> _update(
+    Map<String, int> newValues, {
+    bool syncUiOnResponse = true,
+  }) async {
+    if (_busy) {
+      _queuedValues = newValues;
+      return;
+    }
+
+    if (mounted) {
+      setState(() => _busy = true);
+    } else {
+      _busy = true;
+    }
+    var valuesToSend = newValues;
+
+    try {
+      while (true) {
+        _queuedValues = null;
+
+        try {
+          final result = await _svc.setMoney(widget.character.id, valuesToSend);
+
+          if (_queuedValues == null) {
+            _hasPendingLocalChanges = false;
+            // Guardar en caché del vm para que initState lo lea si se remonta.
+            widget.vm.cacheCurrency(result);
+            if (mounted && syncUiOnResponse) {
+              setState(() => _values = [
+                result['copper']!,
+                result['silver']!,
+                result['electrum']!,
+                result['gold']!,
+                result['platinum']!,
+              ]);
+            } else {
+              _values = [
+                result['copper']!,
+                result['silver']!,
+                result['electrum']!,
+                result['gold']!,
+                result['platinum']!,
+              ];
+            }
+            break;
+          }
+        } catch (_) {
+          if (_queuedValues == null) {
+            break;
+          }
+        }
+
+        valuesToSend = _queuedValues!;
+      }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      _queuedValues = null;
+      if (mounted) {
+        setState(() => _busy = false);
+      } else {
+        _busy = false;
+      }
     }
   }
 
   void _adjust(int index, int delta) {
     final newVal = (_values[index] + delta).clamp(0, _maxCoinValue);
-    final updated = List<int>.from(_values)..[index] = newVal;
-    final body = {for (var i = 0; i < _keys.length; i++) _keys[i]: updated[i]};
-    setState(() => _values = updated);
-    _update(body);
+    setState(() => _values = List<int>.from(_values)..[index] = newVal);
+    _scheduleUpdate();
   }
 
   void _editDialog(BuildContext context, int index) {
@@ -1335,14 +1444,11 @@ class _CurrencyRowState extends State<_CurrencyRow> {
                     onPressed: () {
                       final v = int.tryParse(ctrl.text) ?? _values[index];
                       Navigator.pop(_);
-                      final updated = List<int>.from(_values)
-                        ..[index] = v.clamp(0, _maxCoinValue);
-                      final body = {
-                        for (var i = 0; i < _keys.length; i++)
-                          _keys[i]: updated[i]
-                      };
-                      setState(() => _values = updated);
-                      _update(body);
+                      setState(() {
+                        _values = List<int>.from(_values)
+                          ..[index] = v.clamp(0, _maxCoinValue);
+                      });
+                      _scheduleUpdate();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primary,

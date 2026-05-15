@@ -88,6 +88,14 @@ class CharacterSheetViewModel extends ChangeNotifier {
   // ── State 
   PlayerCharacter? character;
   bool _isLoading = false;
+  // Caché local de la última moneda guardada. Se usa en _CurrencyRow.initState()
+  // para leer valores frescos sin necesidad de recargar el personaje.
+  // No llama a notifyListeners() para evitar rebuilds innecesarios.
+  Map<String, int>? _lastSavedCurrency;
+  Map<String, int>? get lastSavedCurrency => _lastSavedCurrency;
+  void cacheCurrency(Map<String, int> values) {
+    _lastSavedCurrency = Map.unmodifiable(values);
+  }
   String? _errorMessage;
   int _tabIndex = 0;
   List<RacialTrait> _racialTraits = [];
@@ -132,8 +140,22 @@ class CharacterSheetViewModel extends ChangeNotifier {
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception', '');
     } finally {
-      _isLoading = false;
+        _isLoading = false;
+        _lastSavedCurrency = null; // el personaje recargado ya tiene datos frescos
+        notifyListeners();
+      }
+  }
+
+  /// Recarga el personaje silenciosamente (sin spinner de carga).
+  /// Usar cuando solo se necesita refrescar datos concretos (p.ej. moneda)
+  /// sin interrumpir la UI.
+  Future<void> silentRefresh() async {
+    try {
+      character = await _service.getCharacterById(characterId);
+      _initSpellSlots();
       notifyListeners();
+    } catch (_) {
+      // Ignorar errores en refresco silencioso
     }
   }
 
