@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextFormField(
                           controller: _usernameCtrl,
                           decoration: const InputDecoration(
-                            labelText: 'Usuario',
+                            labelText: 'Username',
                             prefixIcon: Icon(Icons.person_outline, color: AppTheme.textSecondary),
                           ),
                           validator: (v) =>
