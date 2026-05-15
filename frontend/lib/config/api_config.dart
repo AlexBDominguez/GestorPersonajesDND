@@ -13,7 +13,9 @@ class ApiConfig {
   static const String apiPrefix = '/api';
 
   /// Auth
-  static const String loginPath = '$apiPrefix/auth/login';
+  static const String loginPath    = '$apiPrefix/auth/login';
+  static const String refreshPath   = '$apiPrefix/auth/refresh';
+  static const String logoutPath    = '$apiPrefix/auth/logout';
 
   ///Characters
   static const String charactersPath = '$apiPrefix/characters';

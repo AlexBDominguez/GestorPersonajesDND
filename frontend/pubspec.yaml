@@ -27,6 +27,7 @@ dependencies:
   
   # Utilities
   shared_preferences: ^2.2.2  # Para guardar token JWT localmente
+  flutter_secure_storage: ^9.2.2 # Almacenamiento seguro para refresh token
   intl: ^0.18.1               # Formateo de fechas, números, etc.
 
 dev_dependencies:

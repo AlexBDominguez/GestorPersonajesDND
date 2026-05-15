@@ -236,7 +236,7 @@ class _NavBar extends StatelessWidget {
                 ),
                 Text(_subtitle(),
                     style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 14),
+                        color: AppTheme.textSecondary, fontSize: 12),
                     overflow: TextOverflow.ellipsis),
               ],
             ),
@@ -753,7 +753,7 @@ class _HpField extends StatelessWidget {
       style: GoogleFonts.libreBaskerville(color: color, fontSize: 18),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: GoogleFonts.lato(color: color, fontSize: 14),
+        labelStyle: GoogleFonts.lato(color: color, fontSize: 12),
         prefixIcon: Icon(icon, color: color, size: 18),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),

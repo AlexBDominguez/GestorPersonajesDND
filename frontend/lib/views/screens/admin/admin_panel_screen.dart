@@ -134,7 +134,7 @@ class _UserTile extends StatelessWidget {
           Text(user.username,
               style: GoogleFonts.libreBaskerville(
                 color: user.active ? AppTheme.textPrimary : AppTheme.textSecondary,
-                fontSize: 13,
+                fontSize: 16,
                 fontWeight: FontWeight.bold)),
           const SizedBox(width: 8),
           if (!user.active)
@@ -147,7 +147,7 @@ class _UserTile extends StatelessWidget {
             '${user.characterCount}/10 characters'
             '${user.lastLogin != null ? '  ·  Last login: ${_formatDate(user.lastLogin!)}' : ''}',
             style: GoogleFonts.lato(
-                color: AppTheme.textSecondary, fontSize: 10),
+                color: AppTheme.textSecondary, fontSize: 12),
           ),
         ]),
         trailing: _UserMenu(user: user, service: service, onChanged: onChanged),

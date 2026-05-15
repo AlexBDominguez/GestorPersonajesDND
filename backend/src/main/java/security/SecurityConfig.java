@@ -26,6 +26,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@org.springframework.scheduling.annotation.EnableScheduling
 public class SecurityConfig {
 
     @Autowired
@@ -72,7 +73,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/api/auth/refresh").permitAll()
+                .requestMatchers("/api/auth/logout").permitAll()
                 .requestMatchers("/api/sync/**").permitAll()
 
                 // Reference data (read-only game data) accessible to all

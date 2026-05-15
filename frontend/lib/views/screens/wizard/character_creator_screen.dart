@@ -198,11 +198,11 @@ class _StepIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppTheme.surface,
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: LayoutBuilder(builder: (context, constraints) {
-        // If each step has less than ~52 px we switch to compact (smaller) mode
+        // If each step has less than ~64 px we switch to compact (smaller) mode
         final perStep = constraints.maxWidth / steps.length;
-        final compact = perStep < 56;
+        final compact = perStep < 64;
         return Row(
           children: List.generate(steps.length, (i) {
             final step = steps[i];
@@ -286,21 +286,21 @@ class _StepDot extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 250),
-          width:  compact ? 26 : 34,
-          height: compact ? 26 : 34,
+          width:  compact ? 32 : 42,
+          height: compact ? 32 : 42,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: bgColor,
             border: Border.all(color: borderColor, width: 2),
           ),
-          child: Icon(dotIcon, color: dotColor, size: compact ? 13 : 17),
+          child: Icon(dotIcon, color: dotColor, size: compact ? 16 : 21),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 4),
         Text(title,
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.lato(
             color: labelColor,
-            fontSize: compact ? 8 : 9,
+            fontSize: compact ? 10 : 12,
             fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
           )),
       ]),

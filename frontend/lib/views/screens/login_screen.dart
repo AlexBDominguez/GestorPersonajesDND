@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
+  bool _rememberMe = false;
 
   @override
   void dispose() {
@@ -26,8 +27,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _onLoginPressed(AuthViewModel vm) async {
     if (!_formKey.currentState!.validate()) return;
     await vm.login(
-      username: _usernameCtrl.text.trim(),
-      password: _passwordCtrl.text,
+      username:   _usernameCtrl.text.trim(),
+      password:   _passwordCtrl.text,
+      rememberMe: _rememberMe,
     );    
   }
 
@@ -103,7 +105,24 @@ class _LoginScreenState extends State<LoginScreen> {
                               (v == null || v.isEmpty) ? 'Please enter your password' : null,
                           onFieldSubmitted: (_) => _onLoginPressed(vm),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 4),
+
+                        // Remember me
+                        CheckboxListTile(
+                          value: _rememberMe,
+                          onChanged: (v) => setState(() => _rememberMe = v ?? false),
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          activeColor: AppTheme.primary,
+                          checkColor: AppTheme.background,
+                          side: const BorderSide(color: AppTheme.textSecondary),
+                          title: Text(
+                            'Remember me',
+                            style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
 
                         // Error message
                         if (vm.errorMessage != null)...[
