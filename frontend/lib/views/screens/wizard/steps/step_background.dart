@@ -214,16 +214,28 @@ class _StepBackgroundState extends State<StepBackground> {
         // ── Características físicas ────────────────────────────────
         _SectionTitle('Physical Characteristics'),
         const SizedBox(height: 10),
-        _TextRow(label: 'Hair', ctrl: _hairCtrl, hint: 'e.g. Brown'),
-        _TextRow(label: 'Eyes', ctrl: _eyesCtrl, hint: 'e.g. Blue'),
-        _TextRow(label: 'Skin', ctrl: _skinCtrl, hint: 'e.g. Tan'),
+        _TextRow(
+            label: 'Hair', ctrl: _hairCtrl, hint: 'e.g. Brown', maxLength: 30),
+        _TextRow(
+            label: 'Eyes', ctrl: _eyesCtrl, hint: 'e.g. Blue', maxLength: 30),
+        _TextRow(
+            label: 'Skin', ctrl: _skinCtrl, hint: 'e.g. Tan', maxLength: 30),
         _TextRow(
             label: 'Age',
             ctrl: _ageCtrl,
             hint: 'e.g. 25',
-            keyboardType: TextInputType.number),
-        _TextRow(label: 'Height', ctrl: _heightCtrl, hint: "e.g. 5'10\""),
-        _TextRow(label: 'Weight', ctrl: _weightCtrl, hint: 'e.g. 160 lbs'),
+            keyboardType: TextInputType.number,
+            maxLength: 3),
+        _TextRow(
+            label: 'Height',
+            ctrl: _heightCtrl,
+            hint: "e.g. 5'10\"",
+            maxLength: 20),
+        _TextRow(
+            label: 'Weight',
+            ctrl: _weightCtrl,
+            hint: 'e.g. 160 lbs',
+            maxLength: 20),
 
         const SizedBox(height: 24),
 
@@ -233,20 +245,26 @@ class _StepBackgroundState extends State<StepBackground> {
         _TextArea(
             label: 'Personality Traits',
             ctrl: _personalityCtrl,
-            hint: 'Describe your character\'s personality…'),
+            hint: 'Describe your character\'s personality…',
+            maxLength: 220),
         const SizedBox(height: 10),
         _TextArea(
-            label: 'Ideals', ctrl: _idealsCtrl, hint: 'What are your ideals?'),
+            label: 'Ideals',
+            ctrl: _idealsCtrl,
+            hint: 'What are your ideals?',
+            maxLength: 220),
         const SizedBox(height: 10),
         _TextArea(
             label: 'Bonds',
             ctrl: _bondsCtrl,
-            hint: 'What bonds tie you to the world?'),
+            hint: 'What bonds tie you to the world?',
+            maxLength: 220),
         const SizedBox(height: 10),
         _TextArea(
             label: 'Flaws',
             ctrl: _flawsCtrl,
-            hint: 'What are your character\'s flaws?'),
+            hint: 'What are your character\'s flaws?',
+            maxLength: 220),
         const SizedBox(height: 24),
       ]),
     );

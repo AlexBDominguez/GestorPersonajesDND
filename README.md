@@ -36,7 +36,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 
 ### Backend
 - **Java 21**
-- **Spring Boot 3.2.0**
+- Spring Boot 3.2.5
 - **Spring Data JPA** - Persistencia de datos
 - **MySQL 8.0** - Base de datos relacional (ejecutándose en Docker)
 - **Maven** - Gestión de dependencias
@@ -124,282 +124,57 @@ Sistema completo para gestionar personajes de D&D 5e:
 
 ### Backend
 ```
-src/main/java/
-├── controllers/        # Controladores REST API (28 controladores)
-│   ├── ActiveEffectController
-│   ├── AuthController
-│   ├── BackgroundController
-│   ├── CharacterActiveEffectController
-│   ├── CharacterClassResourceController
-│   ├── CharacterConditionController
-│   ├── CharacterDamageRelationController
-│   ├── CharacterEquipmentController
-│   ├── CharacterFeatController
-│   ├── CharacterInventoryController
-│   ├── CharacterLanguageController
-│   ├── CharacterMoneyController
-│   ├── CharacterProficiencyController
-│   ├── CharacterSkillController
-│   ├── ClassFeatureController
-│   ├── ClassResourceController
-│   ├── ConditionController
-│   ├── DamageTypeController
-│   ├── DndClassController
-│   ├── FeatController
-│   ├── ItemController
-│   ├── LanguageController
-│   ├── PlayerCharacterController
-│   ├── ProficiencyController
-│   ├── RaceController
-│   ├── SpellController
-│   ├── SubclassController
-│   └── UserController
-├── dto/               # Data Transfer Objects (32 DTOs)
-│   ├── ActiveEffectDto
-│   ├── AuthResponse
-│   ├── BackgroundDto
-│   ├── CharacterActiveEffectDto
-│   ├── CharacterClassResourceDto
-│   ├── CharacterConditionDto
-│   ├── CharacterDamageRelationDto
-│   ├── CharacterEquipmentDto
-│   ├── CharacterFeatDto
-│   ├── CharacterInventoryDto
-│   ├── CharacterLanguageDto
-│   ├── CharacterMoneyDto
-│   ├── CharacterProficiencyDto
-│   ├── CharacterSavingThrowDto
-│   ├── CharacterSkillDto
-│   ├── ClassFeatureDto
-│   ├── ClassResourceDto
-│   ├── CreateUserRequest
-│   ├── ConditionDto
-│   ├── DamageTypeDto
-│   ├── DndClassDto
-│   ├── FeatDto
-│   ├── LanguageDto
-│   ├── LevelUpRequest
-│   ├── LoginRequest
-│   ├── PlayerCharacterDto
-│   ├── ProficiencyDto
-│   ├── RaceDto
-│   ├── SpellDto
-│   ├── SpellSlotDto
-│   ├── SubclassDto
-│   └── UserDto
-├── entities/          # Entidades JPA (38 entidades)
-│   ├── ActiveEffect
-│   ├── Background
-│   ├── CharacterActiveEffect
-│   ├── CharacterClassResource
-│   ├── CharacterCondition
-│   ├── CharacterDamageRelation
-│   ├── CharacterEquipment
-│   ├── CharacterFeat
-│   ├── CharacterFeature
-│   ├── CharacterInventory
-│   ├── CharacterLanguage
-│   ├── CharacterMoney
-│   ├── CharacterProficiency
-│   ├── CharacterSavingThrow
-│   ├── CharacterSkill
-│   ├── CharacterSpell
-│   ├── CharacterSpellSlot
-│   ├── ClassFeature
-│   ├── ClassLevelFeature
-│   ├── ClassLevelProgression
-│   ├── ClassResource
-│   ├── Condition
-│   ├── DamageType
-│   ├── DndClass
-│   ├── Feat
-│   ├── Item
-│   ├── Language
-│   ├── LevelUpTask
-│   ├── PendingTask
-│   ├── PlayerCharacter
-│   ├── Proficiency
-│   ├── Race
-│   ├── Skill
-│   ├── Spell
-│   ├── SpellSlotProgression
-│   ├── Subclass
-│   ├── SubclassFeature
-│   └── User
-├── enumeration/       # Enumeraciones (9 enumeraciones)
-│   ├── ArmorType
-│   ├── DamageRelationType
-│   ├── EffectModifierType
-│   ├── FeatureType
-│   ├── ItemType
-│   ├── ProficiencyType
-│   ├── Role
-│   ├── SimpleDamageType
-│   └── WeaponProperty
-├── repositories/      # Repositorios JPA (37 repositorios)
-│   ├── ActiveEffectRepository
-│   ├── BackgroundRepository
-│   ├── CharacterActiveEffectRepository
-│   ├── CharacterClassResourceRepository
-│   ├── CharacterConditionRepository
-│   ├── CharacterDamageRelationRepository
-│   ├── CharacterEquipmentRepository
-│   ├── CharacterFeatRepository
-│   ├── CharacterFeatureRepository
-│   ├── CharacterInventoryRepository
-│   ├── CharacterLanguageRepository
-│   ├── CharacterMoneyRepository
-│   ├── CharacterProficiencyRepository
-│   ├── CharacterSavingThrowRepository
-│   ├── CharacterSkillRepository
-│   ├── CharacterSpellRepository
-│   ├── CharacterSpellSlotRepository
-│   ├── ClassFeatureRepository
-│   ├── ClassLevelFeatureRepository
-│   ├── ClassLevelProgressionRepository
-│   ├── ClassResourceRepository
-│   ├── ConditionRepository
-│   ├── DamageTypeRepository
-│   ├── DndClassRepository
-│   ├── FeatRepository
-│   ├── ItemRepository
-│   ├── LanguageRepository
-│   ├── PendingTaskRepository
-│   ├── PlayerCharacterRepository
-│   ├── ProficiencyRepository
-│   ├── RaceRepository
-│   ├── SkillRepository
-│   ├── SpellRepository
-│   ├── SpellSlotProgressionRepository
-│   ├── SubclassFeatureRepository
-│   ├── SubclassRepository
-│   └── UserRepository
-├── services/          # Lógica de negocio (27 servicios)
-│   ├── ActiveEffectService
-│   ├── BackgroundService
-│   ├── CharacterActiveEffectService
-│   ├── CharacterClassResourceService
-│   ├── CharacterConditionService
-│   ├── CharacterDamageRelationService
-│   ├── CharacterEquipmentService
-│   ├── CharacterFeatService
-│   ├── CharacterInventoryService
-│   ├── CharacterLanguageService
-│   ├── CharacterMoneyService
-│   ├── CharacterProficiencyService
-│   ├── CharacterSkillService
-│   ├── ClassFeatureService
-│   ├── ClassResourceService
-│   ├── ConditionService
-│   ├── DamageTypeService
-│   ├── DndClassService
-│   ├── FeatService
-│   ├── LanguageService
-│   ├── PlayerCharacterService
-│   ├── ProficiencyService
-│   ├── RaceService
-│   ├── SpellService
-│   ├── SubclassFeatureService
-│   ├── SubclassService
-│   └── UserService
-├── security/          # Autenticación y autorización JWT
-│   ├── CustomUserDetailsService
-│   ├── JwtAuthenticationFilter
-│   ├── JwtUtil
-│   └── SecurityConfig
-└── sync/             # Servicios de sincronización (15 servicios)
-    ├── ApiRateLimiter
-    ├── BackgroundSyncService
-    ├── BaseSyncService
-    ├── ConditionSyncService
-    ├── DamageTypeSyncService
-    ├── DndClassSyncService
-    ├── FeatSyncService
-    ├── ItemSyncService
-    ├── LanguageSyncService
-    ├── ProficiencySyncService
-    ├── RaceSyncService
-    ├── SkillSyncService
-    ├── SpellSlotSyncService
-    ├── SpellSyncService
-    ├── SubclassSyncService
-    └── SyncController
+backend/
+├── src/main/java/
+│   ├── com/                 # Punto de entrada (Main)
+│   ├── config/              # Configuración de beans e inicialización
+│   ├── controllers/         # Endpoints REST
+│   │   ├── AuthController
+│   │   ├── PlayerCharacterController
+│   │   ├── PendingTaskController
+│   │   ├── SubraceController
+│   │   └── ...
+│   ├── dto/                 # Data Transfer Objects
+│   ├── entities/            # Entidades JPA
+│   ├── enumeration/         # Enumeraciones del dominio
+│   ├── repositories/        # Repositorios Spring Data
+│   ├── security/            # JWT, filtros y seguridad HTTP
+│   ├── services/            # Lógica de negocio
+│   └── sync/                # Sincronización con D&D 5e API
+├── src/main/resources/
+│   └── application.properties
+├── docker-compose.yml
+├── Dockerfile
+├── init-db.sql
+├── .env.example
+└── mysql-data/
 ```
 
 ### Frontend (Flutter)
 ```
 frontend/lib/
-├── config/            # Configuración global
-│   ├── api_config.dart
-│   └── app_theme.dart
-├── models/            # Modelos de datos
-│   ├── auth/
-│   │   ├── auth_response.dart
-│   │   └── login_request.dart
-│   ├── character/
-│   │   ├── character_saving_throw.dart
-│   │   ├── character_skill.dart
-│   │   ├── character_spell.dart
-│   │   ├── player_character_summary.dart
-│   │   ├── player_character.dart
-│   │   └── spell_slot.dart
-│   ├── inventory/
-│   │   └── inventory_item.dart
-│   └── wizard/
-│       ├── background_option.dart
-│       ├── class_option.dart
-│       └── race_option.dart
-├── services/          # Servicios de API y almacenamiento
-│   ├── auth/
-│   │   └── auth_service.dart
-│   ├── characters/
-│   │   └── character_service.dart
-│   ├── http/
-│   │   └── api_client.dart
-│   ├── inventory/
-│   │   └── inventory_service.dart
-│   ├── spells/
-│   │   └── spell_service.dart
-│   ├── storage/
-│   │   └── token_storage.dart
-│   └── wizard/
-│       └── wizard_reference_service.dart
-├── viewmodels/        # Lógica de presentación (MVVM)
-│   ├── auth/
-│   │   └── auth_viewmodel.dart
-│   ├── characters/
-│   │   ├── character_list_viewmodel.dart
-│   │   └── character_sheet_viewmodel.dart
-│   └── wizard/
-│       └── character_creator_viewmodel.dart
-├── views/             # Pantallas y widgets
+├── config/                 # api_config, tema e iconos
+├── models/                 # Modelos de auth, personaje, inventario y wizard
+├── services/               # Cliente HTTP, auth, personajes, inventario, wizard
+├── viewmodels/             # MVVM con Provider
+├── views/
 │   ├── screens/
-│   │   ├── dashboard_screen.dart
 │   │   ├── login_screen.dart
+│   │   ├── dashboard_screen.dart
+│   │   ├── admin/admin_panel_screen.dart
 │   │   ├── sheet/
 │   │   │   ├── character_sheet_screen.dart
+│   │   │   ├── pending_tasks_screen.dart
 │   │   │   └── tabs/
-│   │   │       ├── tab_abilities.dart
-│   │   │       ├── tab_combat.dart
-│   │   │       ├── tab_info.dart
-│   │   │       ├── tab_inventory.dart
-│   │   │       ├── tab_skills.dart
-│   │   │       └── tab_spells.dart
 │   │   └── wizard/
 │   │       ├── character_creator_screen.dart
+│   │       ├── edit_character_screen.dart
+│   │       ├── level_up_screen.dart
 │   │       ├── class_detail_screen.dart
 │   │       ├── class_options_screen.dart
 │   │       └── steps/
-│   │           ├── step_race.dart
-│   │           ├── step_class.dart
-│   │           ├── step_ability_scores.dart
-│   │           ├── step_background.dart
-│   │           ├── step_equipment.dart
-│   │           ├── step_spells.dart
-│   │           └── step_preferences.dart
 │   └── widgets/
-│       └── character_card.dart
-└── main.dart          # Punto de entrada de la aplicación
+└── main.dart
 ```
 
 ## Características Principales
@@ -569,24 +344,32 @@ cd GestorPersonajesDND
 ```bash
 # Iniciar solo MySQL
 docker compose up -d mysql-db
-
-# O usar el script de ejecución que inicia todo automáticamente
-./run.sh
 ```
 
 3. **Ejecutar la aplicación**
 ```bash
-# Opción A: Usar el script
-./run.sh
-
-# Opción B: Con Maven directamente
+# Opción A: Con Maven directamente
 mvn spring-boot:run
 
-# Opción C: Desde tu IDE
+# Opción B: Desde tu IDE
 # Ejecuta la clase Main.java
 ```
 
 La aplicación estará disponible en `http://localhost:8081`
+
+4. **Variables de entorno requeridas**
+
+Antes de arrancar con Docker Compose, crea `backend/.env` a partir de `backend/.env.example` y completa:
+
+- `MYSQL_ROOT_PASSWORD`
+- `MYSQL_USER`
+- `MYSQL_PASSWORD`
+- `SPRING_DATASOURCE_USERNAME`
+- `SPRING_DATASOURCE_PASSWORD`
+- `JWT_SECRET`
+- `ADMIN_INITIAL_PASSWORD`
+
+Nota: en este proyecto, `SPRING_DATASOURCE_USERNAME` y `SPRING_DATASOURCE_PASSWORD` normalmente coinciden con `MYSQL_USER` y `MYSQL_PASSWORD`.
 
 ### Opción 2: Configuración Manual
 
@@ -600,12 +383,14 @@ GRANT ALL PRIVILEGES ON dnd_character_manager.* TO 'dnd_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-2. **Configurar credenciales en `application.properties`**
+2. **Configurar variables de entorno para Spring Boot**
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/dnd_character_manager?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-spring.datasource.username=dnd_user
-spring.datasource.password=dnd_password
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+jwt.secret=${JWT_SECRET}
+admin.initial.password=${ADMIN_INITIAL_PASSWORD}
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 ```
@@ -689,7 +474,7 @@ docker compose build --no-cache backend
 docker compose down
 
 # Ejecutar script SQL en el contenedor
-docker exec -i dnd-mysql mysql -u dnd_user -pdnd_password dnd_character_manager < mi_script.sql
+docker exec -i dnd-mysql mysql -u <MYSQL_USER> -p<MYSQL_PASSWORD> dnd_character_manager < mi_script.sql
 ```
 
 ### Conectar con DBeaver o MySQL Workbench
@@ -705,13 +490,15 @@ Nota: En DBeaver, añade en "Driver properties":
 
 ## Documentación Adicional
 
-- [DOCKER.md](DOCKER.md) - Guía completa de uso con Docker
-- [init-db.sql](init-db.sql) - Script de base de datos con todas las tablas
+- [backend/DOCKER.md](backend/DOCKER.md) - Guía completa de uso con Docker
+- [backend/init-db.sql](backend/init-db.sql) - Script de base de datos con todas las tablas
 
 ## API Endpoints de Autenticación y Usuarios
 
 ### Autenticación
 - `POST /api/auth/login` - Iniciar sesión y obtener token JWT
+- `POST /api/auth/refresh` - Rotar refresh token y emitir nuevo access token
+- `POST /api/auth/logout` - Revocar refresh token
 
 ### Administración de Usuarios
 - `GET /api/admin/users` - Listar todos los usuarios
