@@ -619,116 +619,121 @@ class _ManageHpSheetState extends State<_ManageHpSheet> {
   Widget build(BuildContext context) {
     final vm = context.watch<CharacterSheetViewModel>();
     final c = vm.character!;
+    final mediaQuery = MediaQuery.of(context);
+    final bottomSafeSpace = mediaQuery.viewInsets.bottom + mediaQuery.padding.bottom + 20;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-                color: AppTheme.surfaceVariant,
-                borderRadius: BorderRadius.circular(2))),
-        const SizedBox(height: 16),
-        Text('Manage HP',
-            style: GoogleFonts.libreBaskerville(
-                color: AppTheme.primary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        RichText(
-          text: TextSpan(
-            style: GoogleFonts.lato(color: AppTheme.textSecondary),
-            children: [
-              TextSpan(
-                text: c.temporaryHp > 0
-                    ? '${c.currentHp + c.temporaryHp}'
-                    : '${c.currentHp}',
-                style: TextStyle(
-                  color: c.temporaryHp > 0 ? Colors.lightBlueAccent : null,
-                ),
-              ),
-              TextSpan(text: '/${c.maxHp} HP'),
-              if (c.temporaryHp > 0)
-                TextSpan(
-                  text: ' (+${c.temporaryHp} temp)',
-                  style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 14),
-                ),
-            ],
-          ),
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: bottomSafeSpace,
         ),
-        const SizedBox(height: 20),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: c.hpPercent,
-            minHeight: 8,
-            backgroundColor: AppTheme.surfaceVariant,
-            valueColor: AlwaysStoppedAnimation(
-              c.hpPercent < 0.25
-                  ? AppTheme.accent
-                  : c.hpPercent < 0.5
-                      ? Colors.orange
-                      : AppTheme.primary,
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: AppTheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 16),
+          Text('Manage HP',
+              style: GoogleFonts.libreBaskerville(
+                  color: AppTheme.primary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          RichText(
+            text: TextSpan(
+              style: GoogleFonts.lato(color: AppTheme.textSecondary),
+              children: [
+                TextSpan(
+                  text: c.temporaryHp > 0
+                      ? '${c.currentHp + c.temporaryHp}'
+                      : '${c.currentHp}',
+                  style: TextStyle(
+                    color: c.temporaryHp > 0 ? Colors.lightBlueAccent : null,
+                  ),
+                ),
+                TextSpan(text: '/${c.maxHp} HP'),
+                if (c.temporaryHp > 0)
+                  TextSpan(
+                    text: ' (+${c.temporaryHp} temp)',
+                    style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 14),
+                  ),
+              ],
             ),
           ),
-        ),
-        const SizedBox(height: 24),
-        Row(children: [
-          Expanded(
-              child: _HpField(
-                  controller: _damageCtrl,
-                  label: 'Damage',
-                  icon: Icons.remove_circle_outline,
-                  color: AppTheme.accent)),
-          const SizedBox(width: 10),
-          Expanded(
-              child: _HpField(
-                  controller: _healCtrl,
-                  label: 'Heal',
-                  icon: Icons.add_circle_outline,
-                  color: Colors.green)),
-          const SizedBox(width: 10),
-          Expanded(
-              child: _HpField(
-                  controller: _tempCtrl,
-                  label: 'Temp HP',
-                  icon: Icons.shield_outlined,
-                  color: Colors.lightBlueAccent)),
-        ]),
-        const SizedBox(height: 20),
-        if (vm.hpError != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Text(vm.hpError!,
-                style: GoogleFonts.lato(color: AppTheme.accent, fontSize: 14)),
+          const SizedBox(height: 20),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: c.hpPercent,
+              minHeight: 8,
+              backgroundColor: AppTheme.surfaceVariant,
+              valueColor: AlwaysStoppedAnimation(
+                c.hpPercent < 0.25
+                    ? AppTheme.accent
+                    : c.hpPercent < 0.5
+                        ? Colors.orange
+                        : AppTheme.primary,
+              ),
+            ),
           ),
-        ElevatedButton(
-          onPressed: vm.isSavingHp
-              ? null
-              : () async {
-                  final dmg = int.tryParse(_damageCtrl.text) ?? 0;
-                  final heal = int.tryParse(_healCtrl.text) ?? 0;
-                  final temp = int.tryParse(_tempCtrl.text) ?? 0;
-                  await vm.applyHpChange(damage: dmg, heal: heal, tempHp: temp);
-                  if (vm.hpError == null && context.mounted) {
-                    Navigator.pop(context);
-                  }
-                },
-          child: vm.isSavingHp
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppTheme.background))
-              : const Text('Apply'),
-        ),
-      ]),
+          const SizedBox(height: 24),
+          Row(children: [
+            Expanded(
+                child: _HpField(
+                    controller: _damageCtrl,
+                    label: 'Damage',
+                    icon: Icons.remove_circle_outline,
+                    color: AppTheme.accent)),
+            const SizedBox(width: 10),
+            Expanded(
+                child: _HpField(
+                    controller: _healCtrl,
+                    label: 'Heal',
+                    icon: Icons.add_circle_outline,
+                    color: Colors.green)),
+            const SizedBox(width: 10),
+            Expanded(
+                child: _HpField(
+                    controller: _tempCtrl,
+                    label: 'Temp HP',
+                    icon: Icons.shield_outlined,
+                    color: Colors.lightBlueAccent)),
+          ]),
+          const SizedBox(height: 20),
+          if (vm.hpError != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(vm.hpError!,
+                  style: GoogleFonts.lato(color: AppTheme.accent, fontSize: 14)),
+            ),
+          ElevatedButton(
+            onPressed: vm.isSavingHp
+                ? null
+                : () async {
+                    final dmg = int.tryParse(_damageCtrl.text) ?? 0;
+                    final heal = int.tryParse(_healCtrl.text) ?? 0;
+                    final temp = int.tryParse(_tempCtrl.text) ?? 0;
+                    await vm.applyHpChange(damage: dmg, heal: heal, tempHp: temp);
+                    if (vm.hpError == null && context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+            child: vm.isSavingHp
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppTheme.background))
+                : const Text('Apply'),
+          ),
+        ]),
+      ),
     );
   }
 }

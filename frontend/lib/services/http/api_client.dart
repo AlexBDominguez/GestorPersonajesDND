@@ -1,15 +1,19 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:gestor_personajes_dnd/config/api_config.dart';
+import 'package:gestor_personajes_dnd/services/auth/auth_service.dart';
 import 'package:gestor_personajes_dnd/services/storage/token_storage.dart';
 
 class ApiClient{
   /// Called when the server returns 401 or 403 — signals the app to log out.
   static void Function()? onSessionExpired;
   final TokenStorage _tokenStorage;
+  final AuthService _authService;
+  static Future<bool>? _refreshInFlight;
 
   ApiClient({TokenStorage? tokenStorage})
-      : _tokenStorage = tokenStorage ?? TokenStorage();
+      : _tokenStorage = tokenStorage ?? TokenStorage(),
+        _authService = AuthService();
 
   Future<Map<String, String>> _buildHeaders({bool jsonBody = true}) async {
     final token = await _tokenStorage.getToken();
@@ -28,45 +32,117 @@ class ApiClient{
 
   Uri _uri(String path) => Uri.parse('${ApiConfig.baseUrl}$path');
 
-  http.Response _check(http.Response res) {
-    // Only 401 (invalid/expired token) should trigger global logout.
-    // 403 means the server understood the request but forbids it — this is
-    // a permissions error, NOT an expired session, so it must NOT log out.
-    if (res.statusCode == 401) {
+  bool _canAttemptRefresh(String path) {
+    return path != ApiConfig.loginPath &&
+        path != ApiConfig.refreshPath &&
+        path != ApiConfig.logoutPath;
+  }
+
+  Future<bool> _refreshAccessToken() async {
+    if (_refreshInFlight != null) {
+      return _refreshInFlight!;
+    }
+
+    final refreshFuture = () async {
+      final refreshToken = await _tokenStorage.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) {
+        return false;
+      }
+
+      try {
+        final auth = await _authService.refresh(refreshToken);
+        await _tokenStorage.saveSession(
+          accessToken: auth.token,
+          username: auth.username,
+          role: auth.role,
+        );
+        await _tokenStorage.saveRefreshToken(auth.refreshToken);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }();
+
+    _refreshInFlight = refreshFuture;
+    try {
+      return await refreshFuture;
+    } finally {
+      _refreshInFlight = null;
+    }
+  }
+
+  Future<http.Response> _sendWithRefresh(
+    String path,
+    Future<http.Response> Function(Map<String, String> headers) send,
+  ) async {
+    final initial = await send(await _buildHeaders());
+    if (initial.statusCode != 401 || !_canAttemptRefresh(path)) {
+      if (initial.statusCode == 401) {
+        ApiClient.onSessionExpired?.call();
+      }
+      return initial;
+    }
+
+    final refreshed = await _refreshAccessToken();
+    if (!refreshed) {
+      ApiClient.onSessionExpired?.call();
+      return initial;
+    }
+
+    final retry = await send(await _buildHeaders());
+    if (retry.statusCode == 401) {
       ApiClient.onSessionExpired?.call();
     }
-    return res;
+    return retry;
   }
 
   Future<http.Response> get(String path) async {
-    return _check(await http.get(_uri(path), headers: await _buildHeaders()));
+    return _sendWithRefresh(
+      path,
+      (headers) => http.get(_uri(path), headers: headers),
+    );
   }
 
   Future<http.Response> post(String path, {Object? body}) async {
-    return _check(await http.post(
-      _uri(path),
-      headers: await _buildHeaders(),
-      body: body == null ? null : jsonEncode(body),
-    ));
+    final encodedBody = body == null ? null : jsonEncode(body);
+    return _sendWithRefresh(
+      path,
+      (headers) => http.post(
+        _uri(path),
+        headers: headers,
+        body: encodedBody,
+      ),
+    );
   }
 
   Future<http.Response> put(String path, {Object? body}) async {
-    return _check(await http.put(
-      _uri(path),
-      headers: await _buildHeaders(),
-      body: body == null ? null : jsonEncode(body),
-    ));
+    final encodedBody = body == null ? null : jsonEncode(body);
+    return _sendWithRefresh(
+      path,
+      (headers) => http.put(
+        _uri(path),
+        headers: headers,
+        body: encodedBody,
+      ),
+    );
   }
 
   Future<http.Response> delete(String path) async {
-    return _check(await http.delete(_uri(path), headers: await _buildHeaders()));
+    return _sendWithRefresh(
+      path,
+      (headers) => http.delete(_uri(path), headers: headers),
+    );
   }
 
   Future<http.Response> patch(String path, {Object? body}) async {
-    return _check(await http.patch(
-      _uri(path),
-      headers: await _buildHeaders(),
-      body: body == null ? null : jsonEncode(body),
-    ));
+    final encodedBody = body == null ? null : jsonEncode(body);
+    return _sendWithRefresh(
+      path,
+      (headers) => http.patch(
+        _uri(path),
+        headers: headers,
+        body: encodedBody,
+      ),
+    );
   }
 }

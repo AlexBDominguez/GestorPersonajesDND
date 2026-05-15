@@ -104,7 +104,6 @@ class _StepSpellsState extends State<StepSpells> {
         color: AppTheme.surface,
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // Fila: título + contadores
           Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
             const Icon(Icons.auto_fix_high,
                 color: AppTheme.primary, size: 16),
@@ -112,47 +111,41 @@ class _StepSpellsState extends State<StepSpells> {
             Text('Choose Spells',
                 style: GoogleFonts.libreBaskerville(
                     color: AppTheme.textPrimary,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(children: [
-                  _SlotCounter(
-                    label: 'Cantrips',
-                    current: vm.selectedCantripCount,
-                    max: vm.maxCantrips,
-                  ),
-                  const SizedBox(width: 6),
-                  _SlotCounter(
-                    label: 'Spells',
-                    current: vm.selectedSpellCount,
-                    max: vm.maxSpellsKnown,
-                  ),
-                  if (hasMagicalSecrets) ...[
-                    const SizedBox(width: 6),
-                    _SlotCounter(
-                      label: 'Secrets',
-                      current: vm.selectedMagicalSecretCount,
-                      max: vm.magicalSecretsSlots,
-                      highlight: true,
-                    ),
-                  ],
-                  if (hasLoreExtras) ...[
-                    const SizedBox(width: 6),
-                    _SlotCounter(
-                      label: 'Lore Extras',
-                      current: vm.selectedAdditionalMagicalSecretCount,
-                      max: vm.additionalMagicalSecretsSlots,
-                      highlight: true,
-                    ),
-                  ],
-                ]),
-              ),
-            ),
           ]),
           const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _SlotCounter(
+                label: 'Cantrips',
+                current: vm.selectedCantripCount,
+                max: vm.maxCantrips,
+              ),
+              _SlotCounter(
+                label: 'Spells',
+                current: vm.selectedSpellCount,
+                max: vm.maxSpellsKnown,
+              ),
+              if (hasMagicalSecrets)
+                _SlotCounter(
+                  label: 'Secrets',
+                  current: vm.selectedMagicalSecretCount,
+                  max: vm.magicalSecretsSlots,
+                  highlight: true,
+                ),
+              if (hasLoreExtras)
+                _SlotCounter(
+                  label: 'Lore Extras',
+                  current: vm.selectedAdditionalMagicalSecretCount,
+                  max: vm.additionalMagicalSecretsSlots,
+                  highlight: true,
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
 
           // Selector de sección (bardo con Magical Secrets)
           if (sectionCount > 1) ...[
@@ -402,7 +395,7 @@ class _SlotCounter extends StatelessWidget {
     final full = current >= max;
     final color = highlight ? Colors.amber.shade700 : AppTheme.primary;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: full
             ? color.withOpacity(0.15)
@@ -413,14 +406,14 @@ class _SlotCounter extends StatelessWidget {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(
           full ? Icons.check_circle : Icons.radio_button_unchecked,
-          size: 13,
+          size: 12,
           color: full ? color : AppTheme.textSecondary,
         ),
-        const SizedBox(width: 5),
+        const SizedBox(width: 4),
         Text('$label: $current / $max',
             style: GoogleFonts.lato(
                 color: full ? color : AppTheme.textSecondary,
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: full ? FontWeight.bold : FontWeight.normal)),
       ]),
     );
