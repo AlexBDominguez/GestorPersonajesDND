@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -1527,14 +1529,22 @@ class _BottomButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final bottomInset = math.max(
+      mediaQuery.viewPadding.bottom,
+      math.max(
+        mediaQuery.padding.bottom,
+        mediaQuery.systemGestureInsets.bottom,
+      ),
+    );
+
     return Container(
       decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.divider)),
       ),
-      child: SafeArea(
-        top: false,
-        minimum: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 12, 16, bottomInset + 12),
         child: Row(children: [
           Expanded(
             child: OutlinedButton(

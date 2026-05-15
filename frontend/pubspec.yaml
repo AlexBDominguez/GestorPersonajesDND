@@ -1,7 +1,7 @@
 name: gestor_personajes_dnd
 description: Gestor de personajes para D&D 5e inspirado en DNDBeyond
 publish_to: 'none'
-version: 1.0.0+7
+version: 1.0.0+8
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
