@@ -51,7 +51,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 - **Dart** - Lenguaje de programación
 - **Provider** - Gestión de estado
 - **HTTP** - Cliente HTTP para consumir la API REST
-- **google_fonts** - Tipografía Cinzel y Lato
+- **google_fonts** - Tipografía LibreBaskerville y Lato
 - **font_awesome_flutter** - Iconografía temática
 
 ## Características Técnicas
@@ -106,7 +106,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 #### Interfaz de Usuario
 - Material Design 3
 - Tema visual personalizado con paleta D&D (dark theme, dorado, carmesí)
-- Tipografía temática con Cinzel (títulos) y Lato (texto)
+- Tipografía temática con LibreBaskerville (títulos) y Lato (texto)
 - Navegación automática basada en estado de autenticación
 - Manejo de estados de carga y errores
 - Feedback visual con SnackBars y loaders
@@ -798,7 +798,7 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 - Autenticación JWT con Spring Security
 - Gestión de usuarios del sistema (admin)
 
-### Frontend Mobile - En Desarrollo
+### Frontend Mobile - Implementado y Operativo
 - Sistema de autenticación con login y gestión de tokens
 - Manejo de errores de red con mensajes descriptivos (sin conexión, credenciales incorrectas, errores de servidor)
 - Pantalla de dashboard con lista de personajes
@@ -807,7 +807,7 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 - Modelos de datos (personajes, autenticación, inventario)
 - Servicios para personajes, autenticación, inventario y hechizos
 - Almacenamiento persistente de tokens
-- Tema visual personalizado con paleta D&D (dark theme, Cinzel + Lato)
+- Tema visual personalizado con paleta D&D (dark theme, LibreBaskerville + Lato)
 - Configuración centralizada de API (ApiConfig)
 - Widget de tarjeta de personaje con barra de HP y estadísticas
 - Wizard de creación de personajes en 7 pasos (raza, clase, puntuaciones de habilidad, background, equipamiento, hechizos, preferencias)
@@ -816,10 +816,7 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 - Ficha de personaje con 6 tabs: Abilities, Skills, Combat, Spells, Inventory, Info
 - Tab Combat con secciones de acciones, acciones de bonus y reacciones siempre visibles
 - Tab Spells con slot tracker interactivo (tocar slot para usar/restaurar) y detalle de hechizo con botón de lanzamiento
-- Tab Inventory con control de encumbramiento basado en la preferencia `useEncumbrance` del personaje
 
-### Planificado
-- Vinculación de personajes a usuarios (privacidad por cuenta)
 
 
 ## 👤 Autor
