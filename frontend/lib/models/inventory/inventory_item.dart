@@ -76,6 +76,42 @@ class InventoryItem {
     }
   }
 
+  InventoryItem copyWith({
+    int? id,
+    int? itemId,
+    String? name,
+    String? itemType,
+    int? quantity,
+    double? weight,
+    double? totalWeight,
+    bool? equipped,
+    bool? attuned,
+    String? notes,
+    bool? requiresAttunement,
+    String? description,
+    String? damageDice,
+    String? damageType,
+    String? weaponRange,
+    List<String>? weaponProperties,
+  }) => InventoryItem(
+        id: id ?? this.id,
+        itemId: itemId ?? this.itemId,
+        name: name ?? this.name,
+        itemType: itemType ?? this.itemType,
+        quantity: quantity ?? this.quantity,
+        weight: weight ?? this.weight,
+        totalWeight: totalWeight ?? this.totalWeight,
+        equipped: equipped ?? this.equipped,
+        attuned: attuned ?? this.attuned,
+        notes: notes ?? this.notes,
+        requiresAttunement: requiresAttunement ?? this.requiresAttunement,
+        description: description ?? this.description,
+        damageDice: damageDice ?? this.damageDice,
+        damageType: damageType ?? this.damageType,
+        weaponRange: weaponRange ?? this.weaponRange,
+        weaponProperties: weaponProperties ?? this.weaponProperties,
+      );
+
   String get costDisplay {
     return '';   // Se puede enriquecer si el backend devuelve costInCopper
   }

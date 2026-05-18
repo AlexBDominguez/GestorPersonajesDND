@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
 import 'package:gestor_personajes_dnd/models/character/pending_task.dart';
@@ -147,13 +149,15 @@ class CharacterSheetViewModel extends ChangeNotifier {
   }
 
   /// Recarga el personaje silenciosamente (sin spinner de carga).
-  /// Usar cuando solo se necesita refrescar datos concretos (p.ej. moneda)
-  /// sin interrumpir la UI.
+  /// Usar tras cualquier mutación para refrescar datos sin interrumpir la UI.
+  /// También recarga el inventario en segundo plano para mantener equippedWeapons
+  /// y AC actualizados en el header.
   Future<void> silentRefresh() async {
     try {
       character = await _service.getCharacterById(characterId);
       _initSpellSlots();
       notifyListeners();
+      unawaited(_loadInventory()); // actualiza equippedWeapons sin bloquear
     } catch (_) {
       // Ignorar errores en refresco silencioso
     }
@@ -226,7 +230,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
     }
     try {
       await _service.togglePrepareSpell(characterId: characterId, spellId: spellId);
-      await load();
+      await silentRefresh();
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception', '');
       notifyListeners();
@@ -236,7 +240,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
   Future<void> removeSpell(int spellId) async {
     try {
       await _service.removeSpell(characterId: characterId, spellId: spellId);
-      await load();
+      await silentRefresh();
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception', '');
       notifyListeners();
@@ -281,7 +285,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
         spellId: spellId,
         prepared: alwaysPreparedClass,
       );
-      await load();
+      await silentRefresh();
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception', '');
       notifyListeners();

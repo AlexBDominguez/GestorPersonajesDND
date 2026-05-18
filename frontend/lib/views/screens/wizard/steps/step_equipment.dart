@@ -67,7 +67,7 @@ class _StepEquipmentState extends State<StepEquipment>
                   color: AppTheme.primary, size: 16),
               const SizedBox(width: 6),
               Expanded(
-                child: Text('Starting Equipment',
+                child: Text(vm.isEditMode ? 'Equipment' : 'Starting Equipment',
                     style: GoogleFonts.libreBaskerville(
                         color: AppTheme.textPrimary,
                         fontSize: 14,
@@ -90,7 +90,7 @@ class _StepEquipmentState extends State<StepEquipment>
                         fontWeight: FontWeight.bold),
                   ),
                 )
-              else
+              else if (!vm.isEditMode)
                 Text(
                   'Optional',
                   style: GoogleFonts.lato(

@@ -7,6 +7,7 @@ import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
 import 'package:gestor_personajes_dnd/services/inventory/inventory_service.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
+import 'package:gestor_personajes_dnd/views/screens/sheet/add_item_screen.dart';
 import 'package:google_fonts/google_fonts.dart' show GoogleFonts;
 
 class TabInventory extends StatefulWidget {
@@ -20,6 +21,7 @@ class TabInventory extends StatefulWidget {
 
 class _TabInventoryState extends State<TabInventory> {
   final _service = InventoryService();
+  final _scrollCtrl = ScrollController();
   List<InventoryItem> _items = [];
   bool _loading = true;
   String? _error;
@@ -30,6 +32,12 @@ class _TabInventoryState extends State<TabInventory> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -46,22 +54,28 @@ class _TabInventoryState extends State<TabInventory> {
     }
   }
 
-  //Equipa/desequipa. Tras la llamada recarga tanto el inventario como
-  // el personaje completo (para actualizar AC en el header)
-  Future<void> _toggleEquipped(InventoryItem item) async {
+  // Equipa/desequipa con UI optimista: aplica el cambio localmente de inmediato
+  // y sincroniza con el backend. Revierte en caso de error.
+  // Devuelve true si la operación fue exitosa.
+  Future<bool> _toggleEquipped(InventoryItem item) async {
+    final idx = _items.indexWhere((i) => i.id == item.id);
+    // Optimistic update
+    if (idx != -1) setState(() => _items[idx] = item.copyWith(equipped: !item.equipped));
     try {
       await _service.toggleEquipped(widget.character.id, item.id);
-      await Future.wait([_load(), widget.vm.load()]);
+      unawaited(widget.vm.silentRefresh()); // actualiza AC y equippedWeapons
+      return true;
     } catch (e) {
-      if (mounted) {
-        _showError(e.toString().replaceFirst('Exception: ', ''));
-      }
+      // Rollback
+      if (idx != -1 && mounted) setState(() => _items[idx] = item);
+      if (mounted) _showError(e.toString().replaceFirst('Exception: ', ''));
+      return false;
     }
   }
 
   Future<void> _equipWithUndo(InventoryItem item) async {
-    await _toggleEquipped(item);
-    if (!mounted) return;
+    final success = await _toggleEquipped(item);
+    if (!success || !mounted) return;
     final wasEquipped = !item.equipped; // after toggle it's the opposite
     final action = wasEquipped ? 'Equipped' : 'Unequipped';
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -82,8 +96,8 @@ class _TabInventoryState extends State<TabInventory> {
       _showCannotAttuneMessage(item.name);
       return;
     }
-    await _toggleAttuned(item);
-    if (!mounted) return;
+    final success = await _toggleAttuned(item);
+    if (!success || !mounted) return;
     final wasAttuned = !item.attuned;
     final action = wasAttuned ? 'Attuned' : 'Removed attunement for';
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -99,14 +113,21 @@ class _TabInventoryState extends State<TabInventory> {
     ));
   }
 
-  Future<void> _toggleAttuned(InventoryItem item) async {
+  Future<bool> _toggleAttuned(InventoryItem item) async {
+    final idx = _items.indexWhere((i) => i.id == item.id);
+    // Optimistic update
+    if (idx != -1) setState(() => _items[idx] = item.copyWith(attuned: !item.attuned));
     try {
       await _service.toggleAttuned(widget.character.id, item.id);
-      await Future.wait([_load(), widget.vm.load()]);
+      unawaited(widget.vm.silentRefresh());
+      return true;
     } catch (e) {
+      // Rollback
+      if (idx != -1 && mounted) setState(() => _items[idx] = item);
       if (mounted) {
         _showError(e.toString().replaceFirst('Exception: ', ''));
       }
+      return false;
     }
   }
 
@@ -160,8 +181,17 @@ class _TabInventoryState extends State<TabInventory> {
       ),
     );
     if (confirm == true) {
-      await _service.removeItem(widget.character.id, item.itemId);
-      await _load();
+      // Optimistic remove
+      final idx = _items.indexWhere((i) => i.id == item.id);
+      if (idx != -1 && mounted) setState(() => _items.removeAt(idx));
+      try {
+        await _service.removeItem(widget.character.id, item.itemId);
+        unawaited(widget.vm.silentRefresh());
+      } catch (e) {
+        // Rollback
+        if (idx != -1 && mounted) setState(() => _items.insert(idx, item));
+        if (mounted) _showError(e.toString().replaceFirst('Exception: ', ''));
+      }
     }
   }
 
@@ -247,6 +277,7 @@ class _TabInventoryState extends State<TabInventory> {
       onRefresh: _load,
       color: AppTheme.primary,
       child: SingleChildScrollView(
+        controller: _scrollCtrl,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -291,7 +322,7 @@ class _TabInventoryState extends State<TabInventory> {
             const Expanded(child: _SectionTitleInline('Backpack')),
             // Add item button
             GestureDetector(
-              onTap: () => _showAddItemSheet(context),
+              onTap: () => _openAddItemScreen(context),
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -317,15 +348,19 @@ class _TabInventoryState extends State<TabInventory> {
           if (backpack.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: Row(children: [
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 const Icon(Icons.drag_indicator,
                     color: AppTheme.textSecondary, size: 14),
                 const SizedBox(width: 4),
-                Text('Long-press an item to drag it to Equipped or Attuned',
+                Expanded(
+                  child: Text(
+                    'Long-press to drag items to Equipped or Attuned.\n✦ Magic items can only be attuned.',
                     style: GoogleFonts.lato(
                         color: AppTheme.textSecondary,
-                        fontSize: 14,
-                        fontStyle: FontStyle.italic)),
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic),
+                  ),
+                ),
               ]),
             ),
           if (backpack.isEmpty)
@@ -335,7 +370,14 @@ class _TabInventoryState extends State<TabInventory> {
                   item: item,
                   showWeight: useEncumbrance,
                   onRemove: () => _removeItem(item),
-                  onDragStarted: () => setState(() => _isDragging = true),
+                  onDragStarted: () {
+                    setState(() => _isDragging = true);
+                    _scrollCtrl.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeOut,
+                    );
+                  },
                   onDragEnded: () => setState(() => _isDragging = false),
                   onQuantityChanged: (delta) => _changeQuantity(item, delta),
                 )),
@@ -345,21 +387,15 @@ class _TabInventoryState extends State<TabInventory> {
     );
   }
 
-  Future<void> _showAddItemSheet(BuildContext context) async {
-    final totalWeight = _items.fold<double>(0, (s, i) => s + i.totalWeight);
-    final maxCarry = (widget.character.abilityScores['STR'] ?? 10) * 15.0;
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: AppTheme.surface,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => _AddItemSheet(
-        characterId: widget.character.id,
-        service: _service,
-        useEncumbrance: widget.character.useEncumbrance,
-        currentWeight: totalWeight,
-        maxCarry: maxCarry,
-        onAdded: _load,
+  Future<void> _openAddItemScreen(BuildContext context) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddItemScreen(
+          characterId: widget.character.id,
+          service: _service,
+          onAdded: _load,
+        ),
       ),
     );
   }
@@ -397,8 +433,8 @@ class _EquippedDropZoneState extends State<_EquippedDropZone> {
   Widget build(BuildContext context) {
     return DragTarget<InventoryItem>(
       onWillAcceptWithDetails: (details) {
-        //Solo acepta items del backpack (no equipados, no attuend)
-        return !details.data.equipped && !details.data.attuned;
+        //Solo acepta items del backpack (no equipados, no attuned, no requieren attunement)
+        return !details.data.equipped && !details.data.attuned && !details.data.requiresAttunement;
       },
       onAcceptWithDetails: (details) {
         setState(() => _hovering = false);
@@ -406,27 +442,55 @@ class _EquippedDropZoneState extends State<_EquippedDropZone> {
       },
       onMove: (_) => setState(() => _hovering = true),
       onLeave: (_) => setState(() => _hovering = false),
-      builder: (_, candidateData, __) {
+      builder: (_, candidateData, rejectedData) {
         final isHovering = _hovering || candidateData.isNotEmpty;
+        final isMagicRejected = rejectedData.isNotEmpty &&
+            rejectedData.first != null &&
+            rejectedData.first!.requiresAttunement;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isHovering ? AppTheme.primary : Colors.transparent,
+              color: isMagicRejected
+                  ? AppTheme.accent
+                  : isHovering
+                      ? AppTheme.primary
+                      : Colors.transparent,
               width: 2,
             ),
-            color: isHovering
-                ? AppTheme.primary.withOpacity(0.06)
-                : Colors.transparent,
+            color: isMagicRejected
+                ? AppTheme.accent.withOpacity(0.06)
+                : isHovering
+                    ? AppTheme.primary.withOpacity(0.06)
+                    : Colors.transparent,
           ),
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _SectionTitle('Equipped'),
+            Row(children: [
+              Expanded(child: _SectionTitle('Equipped')),
+              if (isMagicRejected)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.auto_awesome,
+                        color: Color(0xFFB07DFF), size: 14),
+                    const SizedBox(width: 4),
+                    Text('Attunement required',
+                        style: GoogleFonts.lato(
+                            color: const Color(0xFFB07DFF),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold)),
+                  ]),
+                ),
+            ]),
             if (widget.isDragging)
               _DropHint(
-                label: 'Drop here to equip',
+                label: isMagicRejected
+                    ? 'Magic items must be attuned instead'
+                    : 'Drop here to equip',
                 active: isHovering,
+                isError: isMagicRejected,
                 icon: Icons.shield_outlined,
               ),
             const SizedBox(height: 8),
@@ -876,24 +940,32 @@ class _ItemTileContent extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 2),
-            Row(children: [
+            Wrap(children: [
               if (item.itemType != null)
                 Text(_formatItemType(item.itemType!),
                     style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 14)),
+                        color: AppTheme.textSecondary, fontSize: 12)),
               if (showWeight)
                 Text('  ·  ${item.totalWeight.toStringAsFixed(1)} lb',
                     style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 14)),
+                        color: AppTheme.textSecondary, fontSize: 12)),
               if (item.attuned) ...[
                 const Text('  ·  ',
                     style:
-                        TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+                        TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
                 Text('Attuned',
                     style: GoogleFonts.lato(
                         color: const Color(0xFFB07DFF),
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold)),
+              ],
+              if (item.requiresAttunement && !item.attuned) ...[
+                const Text('  ·  ',
+                    style:
+                        TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                Text('Attunement',
+                    style: GoogleFonts.lato(
+                        color: const Color(0xFFB07DFF), fontSize: 12)),
               ],
             ]),
           ]),

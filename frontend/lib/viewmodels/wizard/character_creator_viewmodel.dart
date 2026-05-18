@@ -186,6 +186,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     if (_editMode) {
       final steps = [WizardStep.preferences, WizardStep.dndClass, WizardStep.background, WizardStep.race, WizardStep.abilityScores];
       if (isSpellcaster) steps.add(WizardStep.spells);
+      steps.add(WizardStep.equipment);
       return steps;
     }
     final steps = [
