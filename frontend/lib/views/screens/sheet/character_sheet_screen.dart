@@ -26,9 +26,13 @@ class CharacterSheetScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => CharacterSheetViewModel(characterId: characterId)..load(),
-      child: const _SheetBody(),
+    // ScaffoldMessenger scoped to this screen so snackbars are dismissed
+    // automatically when the user navigates away (pops the route).
+    return ScaffoldMessenger(
+      child: ChangeNotifierProvider(
+        create: (_) => CharacterSheetViewModel(characterId: characterId)..load(),
+        child: const _SheetBody(),
+      ),
     );
   }
 }
@@ -108,7 +112,8 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final vm = context.watch<CharacterSheetViewModel>();
 
-    if (vm.isLoading) {
+    // Mostrar spinner solo si aún cargamos Y no hay datos que mostrar todavía
+    if (vm.isLoading && vm.character == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
       );
@@ -162,6 +167,10 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
           
           // Stats header
           _SheetHeader(character: c, vm: vm),
+
+          // Indicador de caché — visible cuando se muestran datos locales
+          if (vm.fromCache)
+            _CachedDataBanner(savedAt: vm.cacheTimestamp),
 
           // Death saves banner — visible when HP = 0 or dying
           if (c.currentHp <= 0 || c.isDying)
@@ -312,6 +321,40 @@ class _NavBar extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => _ShortRestModal(vm: vm, character: c),
+    );
+  }
+}
+
+// ── Cached Data Banner ───────────────────────────────────────────────────────
+
+class _CachedDataBanner extends StatelessWidget {
+  final DateTime? savedAt;
+  const _CachedDataBanner({this.savedAt});
+
+  static String _ageText(DateTime? ts) {
+    if (ts == null) return '';
+    final diff = DateTime.now().difference(ts);
+    if (diff.inMinutes < 1) return 'recién guardados';
+    if (diff.inHours < 1)   return 'hace ${diff.inMinutes} min';
+    if (diff.inDays < 1)    return 'hace ${diff.inHours} h';
+    return 'hace ${diff.inDays} día${diff.inDays == 1 ? '' : 's'}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: AppTheme.surfaceVariant,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      child: Row(children: [
+        const Icon(Icons.cloud_off_rounded, size: 12,
+            color: AppTheme.textSecondary),
+        const SizedBox(width: 6),
+        Text(
+          'Datos en caché · ${_ageText(savedAt)}',
+          style: GoogleFonts.lato(fontSize: 11, color: AppTheme.textSecondary),
+        ),
+      ]),
     );
   }
 }

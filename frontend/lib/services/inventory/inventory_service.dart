@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:core';
 
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
 import 'package:gestor_personajes_dnd/services/http/api_client.dart';
+import 'package:gestor_personajes_dnd/services/storage/local_cache_service.dart';
 
 class InventoryService {
   final ApiClient _api;
@@ -12,6 +14,7 @@ class InventoryService {
   Future<List<InventoryItem>> getInventory(int characterId) async {
     final res = await _api.get('/api/characters/$characterId/inventory');
     if (res.statusCode == 200) {
+      unawaited(LocalCacheService.saveInventory(characterId, res.body));
       return (jsonDecode(res.body) as List)
           .map((e) => InventoryItem.fromJson(e as Map<String, dynamic>))
           .toList();

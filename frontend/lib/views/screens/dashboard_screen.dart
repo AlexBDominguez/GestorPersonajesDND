@@ -156,15 +156,15 @@ class _DashboardBody extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, CharacterListViewModel vm) {
-    // Estado: cargando
-    if (vm.isLoading) {
+    // Estado: cargando (solo si no hay datos que mostrar aún)
+    if (vm.isLoading && vm.characters.isEmpty) {
       return const Center(
         child: CircularProgressIndicator(color: AppTheme.primary),
       );
     }
 
-    // Estado: error
-    if (vm.errorMessage != null) {
+    // Estado: error (solo si no hay caché)
+    if (vm.errorMessage != null && vm.characters.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),

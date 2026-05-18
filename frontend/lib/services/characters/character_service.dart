@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:gestor_personajes_dnd/config/api_config.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character_summary.dart';
 import 'package:gestor_personajes_dnd/services/http/api_client.dart';
+import 'package:gestor_personajes_dnd/services/storage/local_cache_service.dart';
 
 class CharacterService {
   final ApiClient _api;
@@ -13,6 +15,7 @@ class CharacterService {
   Future<List<PlayerCharacterSummary>> getMyCharacters() async {
     final res = await _api.get(ApiConfig.charactersPath);
     if (res.statusCode == 200) {
+      unawaited(LocalCacheService.saveCharacterList(res.body));
       return (jsonDecode(res.body) as List)
           .map((e) => PlayerCharacterSummary.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -23,9 +26,10 @@ class CharacterService {
   }
 
   // GET single
-  Future<PlayerCharacter>getCharacterById(int id) async {
+  Future<PlayerCharacter> getCharacterById(int id) async {
     final res = await _api.get('${ApiConfig.charactersPath}/$id');
     if (res.statusCode == 200) {
+      unawaited(LocalCacheService.saveCharacter(id, res.body));
       return PlayerCharacter.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
     }
     if(res.statusCode == 401) throw Exception ('Unauthorized');

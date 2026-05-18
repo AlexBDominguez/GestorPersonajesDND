@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
+import 'package:gestor_personajes_dnd/services/storage/local_cache_service.dart';
 import 'package:gestor_personajes_dnd/models/character/pending_task.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/character/racial_trait.dart';
@@ -90,6 +91,10 @@ class CharacterSheetViewModel extends ChangeNotifier {
   // ── State 
   PlayerCharacter? character;
   bool _isLoading = false;
+  bool _fromCache = false;
+  DateTime? _cacheTimestamp;
+  bool get fromCache => _fromCache;
+  DateTime? get cacheTimestamp => _cacheTimestamp;
   // Caché local de la última moneda guardada. Se usa en _CurrencyRow.initState()
   // para leer valores frescos sin necesidad de recargar el personaje.
   // No llama a notifyListeners() para evitar rebuilds innecesarios.
@@ -123,9 +128,25 @@ class CharacterSheetViewModel extends ChangeNotifier {
   Future<void> load() async {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    notifyListeners(); // spinner inmediato
+
+    // ── 1. Mostrar caché local mientras llega la API ──────────────────────
+    final cachedChar = await LocalCacheService.loadCharacter(characterId);
+    if (cachedChar != null) {
+      final cachedInv = await LocalCacheService.loadInventory(characterId);
+      character       = cachedChar;
+      _inventoryItems = cachedInv ?? [];
+      _fromCache      = true;
+      _cacheTimestamp = await LocalCacheService.characterSavedAt(characterId);
+      _initSpellSlots();
+      notifyListeners(); // muestra datos en caché con banner
+    }
+
+    // ── 2. Fetch desde API ────────────────────────────────────────────────
     try {
       character = await _service.getCharacterById(characterId);
+      _fromCache = false;
+      _cacheTimestamp = null;
       // TODO(DASH-02): re-enable once level-up flow is redesigned
       // await _loadPendingTasks();
       _initSpellSlots();
@@ -140,7 +161,11 @@ class CharacterSheetViewModel extends ChangeNotifier {
         _loadRacialTraits();
       }
     } catch (e) {
-      _errorMessage = e.toString().replaceFirst('Exception', '');
+      if (character == null) {
+        // Sin caché disponible: mostrar error
+        _errorMessage = e.toString().replaceFirst('Exception', '');
+      }
+      // Si hay caché, _fromCache sigue en true y se muestra el banner
     } finally {
         _isLoading = false;
         _lastSavedCurrency = null; // el personaje recargado ya tiene datos frescos
@@ -150,14 +175,16 @@ class CharacterSheetViewModel extends ChangeNotifier {
 
   /// Recarga el personaje silenciosamente (sin spinner de carga).
   /// Usar tras cualquier mutación para refrescar datos sin interrumpir la UI.
-  /// También recarga el inventario en segundo plano para mantener equippedWeapons
-  /// y AC actualizados en el header.
+  /// Lanza personaje e inventario en paralelo y notifica UNA sola vez al
+  /// terminar, evitando rebuilds dobles en la capa de UI.
   Future<void> silentRefresh() async {
     try {
-      character = await _service.getCharacterById(characterId);
+      final charFuture = _service.getCharacterById(characterId);
+      final invFuture  = _inventoryService.getInventory(characterId);
+      character        = await charFuture;
+      _inventoryItems  = await invFuture;
       _initSpellSlots();
-      notifyListeners();
-      unawaited(_loadInventory()); // actualiza equippedWeapons sin bloquear
+      notifyListeners(); // única notificación
     } catch (_) {
       // Ignorar errores en refresco silencioso
     }

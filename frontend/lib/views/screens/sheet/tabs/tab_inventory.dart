@@ -74,21 +74,7 @@ class _TabInventoryState extends State<TabInventory> {
   }
 
   Future<void> _equipWithUndo(InventoryItem item) async {
-    final success = await _toggleEquipped(item);
-    if (!success || !mounted) return;
-    final wasEquipped = !item.equipped; // after toggle it's the opposite
-    final action = wasEquipped ? 'Equipped' : 'Unequipped';
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('$action "${item.name}"',
-          style: GoogleFonts.lato(color: Colors.white)),
-      backgroundColor: AppTheme.surface.withOpacity(0.95),
-      duration: const Duration(seconds: 3),
-      action: SnackBarAction(
-        label: 'Undo',
-        textColor: AppTheme.primary,
-        onPressed: () => _toggleEquipped(item),
-      ),
-    ));
+    await _toggleEquipped(item);
   }
 
   Future<void> _attuneWithUndo(InventoryItem item) async {
@@ -96,21 +82,7 @@ class _TabInventoryState extends State<TabInventory> {
       _showCannotAttuneMessage(item.name);
       return;
     }
-    final success = await _toggleAttuned(item);
-    if (!success || !mounted) return;
-    final wasAttuned = !item.attuned;
-    final action = wasAttuned ? 'Attuned' : 'Removed attunement for';
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('$action "${item.name}"',
-          style: GoogleFonts.lato(color: Colors.white)),
-      backgroundColor: AppTheme.surface.withOpacity(0.95),
-      duration: const Duration(seconds: 3),
-      action: SnackBarAction(
-        label: 'Undo',
-        textColor: AppTheme.primary,
-        onPressed: () => _toggleAttuned(item),
-      ),
-    ));
+    await _toggleAttuned(item);
   }
 
   Future<bool> _toggleAttuned(InventoryItem item) async {
