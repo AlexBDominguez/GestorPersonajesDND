@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/viewmodels/wizard/character_creator_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-class StepPreferences extends StatelessWidget {
+class StepPreferences extends StatelessWidget{
   const StepPreferences({super.key});
 
   @override
@@ -17,26 +16,15 @@ class StepPreferences extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SizedBox(height: 8),
         Text('Character Basics',
-            style: Theme.of(context).textTheme.displayMedium),
+        style: Theme.of(context).textTheme.displayMedium),
         const SizedBox(height: 4),
-        Text('Give your character a name and set some preferences.',
-            style:
-                GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+        Text('Give your character a name.',
+          style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
         const SizedBox(height: 28),
 
-        //- Nombre
-        TextFormField(
+          //- Nombre
+          TextFormField(
           initialValue: vm.characterName,
-          maxLength: 30,
-          maxLengthEnforcement: MaxLengthEnforcement.enforced,
-          inputFormatters: [LengthLimitingTextInputFormatter(30)],
-          buildCounter: (
-            BuildContext context, {
-            required int currentLength,
-            required bool isFocused,
-            required int? maxLength,
-          }) =>
-              null,
           decoration: const InputDecoration(
             labelText: 'Character name *',
             prefixIcon: Icon(Icons.person_outline, color: AppTheme.primary),

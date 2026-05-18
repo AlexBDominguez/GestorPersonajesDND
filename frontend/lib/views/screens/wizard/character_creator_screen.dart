@@ -38,6 +38,18 @@ class CharacterWizardBody extends StatelessWidget {
     WizardStep.equipment:     (title: 'Items',    icon: Icons.backpack_outlined),
   };
 
+  String _stepTitle(BuildContext context, WizardStep step) {
+    return switch (step) {
+      WizardStep.preferences => 'Prefs',
+      WizardStep.dndClass => 'Class',
+      WizardStep.background => 'BG',
+      WizardStep.race => 'Race',
+      WizardStep.abilityScores => 'Stats',
+      WizardStep.spells => 'Spells',
+      WizardStep.equipment => 'Items',
+    };
+  }
+
   Widget _stepWidget(WizardStep step) {
     switch (step) {
       case WizardStep.preferences:   return const StepPreferences();
@@ -66,7 +78,11 @@ class CharacterWizardBody extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 48,
-        title: Text(vm.isLevelUpMode ? 'Level Up' : vm.isEditMode ? 'Edit Character' : 'New Character'),
+        title: Text(vm.isLevelUpMode
+          ? 'Level Up'
+          : vm.isEditMode
+            ? 'Edit Character'
+            : 'New Character'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => _confirmDiscard(context, vm.isEditMode),
@@ -77,7 +93,10 @@ class CharacterWizardBody extends StatelessWidget {
         _StepIndicator(
           steps:       activeSteps,
           current:     vm.currentStepIndex,
-          meta:        _meta,
+          meta:        {
+            for (final e in _meta.entries)
+              e.key: (title: _stepTitle(context, e.key), icon: e.value.icon),
+          },
           isCompleted: (step) => vm.isStepCompleted(step),
           isPartial:   (step) => vm.isStepPartial(step),
           onTap:       (step) => vm.goToStep(step),
@@ -116,7 +135,6 @@ class CharacterWizardBody extends StatelessWidget {
   }
 
   Future<void> _confirmDiscard(BuildContext context, bool isEditMode) async {
-
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -124,11 +142,15 @@ class CharacterWizardBody extends StatelessWidget {
         scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          isEditMode ? 'Discard changes?' : 'Discard character?',
+          isEditMode
+              ? 'Discard changes?'
+              : 'Discard character?',
           style: GoogleFonts.libreBaskerville(color: AppTheme.primary),
         ),
         content: Text(
-          isEditMode ? 'Your changes will not be saved.' : 'Your progress will be lost.',
+          isEditMode
+              ? 'Your changes will not be saved.'
+              : 'Your progress will be lost.',
           style: GoogleFonts.lato(color: AppTheme.textPrimary),
         ),
         actions: [
@@ -198,11 +220,11 @@ class _StepIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: AppTheme.surface,
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: LayoutBuilder(builder: (context, constraints) {
-        // If each step has less than ~64 px we switch to compact (smaller) mode
+        // If each step has less than ~52 px we switch to compact (smaller) mode
         final perStep = constraints.maxWidth / steps.length;
-        final compact = perStep < 64;
+        final compact = perStep < 56;
         return Row(
           children: List.generate(steps.length, (i) {
             final step = steps[i];
@@ -286,21 +308,21 @@ class _StepDot extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 250),
-          width:  compact ? 32 : 42,
-          height: compact ? 32 : 42,
+          width:  compact ? 26 : 34,
+          height: compact ? 26 : 34,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: bgColor,
             border: Border.all(color: borderColor, width: 2),
           ),
-          child: Icon(dotIcon, color: dotColor, size: compact ? 16 : 21),
+          child: Icon(dotIcon, color: dotColor, size: compact ? 13 : 17),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         Text(title,
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.lato(
             color: labelColor,
-            fontSize: compact ? 10 : 12,
+            fontSize: compact ? 8 : 9,
             fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
           )),
       ]),
@@ -318,14 +340,13 @@ class _NavButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLast     = vm.isLastStep;
     final canProceed = vm.canProceedCurrentStep && !vm.isSaving;
-    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
-    final bottomPadding = (bottomInset > 0 ? bottomInset : 12.0) + 10.0;
+    final bottom     = MediaQuery.of(context).padding.bottom;
 
     final sharedShape   = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
     const sharedPadding = EdgeInsets.symmetric(vertical: 12);
 
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, bottomPadding),
+      padding: EdgeInsets.fromLTRB(16, 10, 16, bottom > 0 ? bottom : 16),
       decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.divider)),
@@ -365,10 +386,18 @@ class _NavButtons extends StatelessWidget {
                           strokeWidth: 2, color: AppTheme.background))
                   : Icon(isLast ? Icons.check : Icons.arrow_forward, size: 16),
               label: Text(vm.isSaving
-                  ? (vm.isLevelUpMode ? 'Leveling Up…' : vm.isEditMode ? 'Saving...' : 'Creating…')
+                  ? (vm.isLevelUpMode
+                    ? 'Leveling Up…'
+                    : vm.isEditMode
+                      ? 'Saving...'
+                      : 'Creating…')
                   : isLast
-                      ? (vm.isLevelUpMode ? 'Level Up!' : vm.isEditMode ? 'Save Changes' : 'Create Character')
-                      : 'Next'),
+                    ? (vm.isLevelUpMode
+                      ? 'Level Up'
+                      : vm.isEditMode
+                        ? 'Save Changes'
+                        : 'Create Character')
+                    : 'Next'),
               style: ElevatedButton.styleFrom(
                 shape: sharedShape,
                 padding: sharedPadding,

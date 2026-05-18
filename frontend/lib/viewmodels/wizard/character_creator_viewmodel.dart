@@ -569,7 +569,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void setLevel(int level) {
-    selectedLevel = level.clamp(1,20);
+    selectedLevel = level.clamp(1, 20);
     _markDirty(WizardStep.dndClass);
     notifyListeners();
   }

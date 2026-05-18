@@ -2,7 +2,7 @@
 
 Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot, MySQL y Flutter.
 
-> Estado del Proyecto: El backend está completo con todas las funcionalidades implementadas y operativas. El frontend está en desarrollo activo, con el flujo de creación de personajes (7 pasos) y la ficha de personaje interactiva ya implementados.
+> Estado del Proyecto: El backend está completo con todas las funcionalidades implementadas y operativas. El frontend está completo para esta versión (lista para presentar), con el flujo de creación de personajes (7 pasos), modo de edición, subida de nivel y la ficha de personaje interactiva ya implementados. Hay funcionalidades implementadas en el backend (slots de equipamiento por parte del cuerpo, encumbrance, sistema XP) que están pendientes de integración en el frontend para una versión futura.
 
 ## Descripción
 
@@ -59,7 +59,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 ### Backend
 
 #### Modelo de Datos
-- 38 entidades JPA con relaciones complejas (OneToMany, ManyToOne, OneToOne, ElementCollection)
+- 41 entidades JPA con relaciones complejas (OneToMany, ManyToOne, OneToOne, ElementCollection)
 - Mapeo de atributos como Map y List
 - Métodos transient para cálculos en tiempo de ejecución
 - Cascadas y eliminación en cascada (orphanRemoval)
@@ -70,7 +70,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Rate Limiting inteligente con pausas entre peticiones
 - Sincronización automática de:
   - 12 clases oficiales con progresión completa y subclases
-  - 9 razas base con bonificadores
+  - 9 razas base con bonificadores y sus subrazas (subraces)
   - 13 backgrounds con características únicas
   - 18 habilidades del sistema D&D
   - 300+ hechizos con información completa
@@ -80,7 +80,12 @@ Sistema completo para gestionar personajes de D&D 5e:
   - Idiomas disponibles
   - Condiciones del juego
   - Tipos de daño
-  - Feats (dotes) del sistema
+
+> **Nota sobre datos hardcodeados:** Parte del contenido no estaba disponible o estaba incompleto en la D&D 5e API pública y fue generado/insertado manualmente mediante scripts SQL:
+> - 42 feats del Player's Handbook (con descripciones completas y prerrequisitos)
+> - 28+ subclases con sus características por nivel (subclass features)
+> - Subraces con sus bonificadores raciales
+> - Características de subclase (phases 1 y 2)
 
 #### Lógica de Negocio
 - Inicialización automática de habilidades y salvaciones al crear personaje
@@ -117,8 +122,9 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Tab Skills con tabla completa de las 18 habilidades
 - Tab Combat con secciones de acciones, acciones de bonus y reacciones siempre visibles
 - Tab Spells con filtro por nivel, modificadores, slots interactivos (usar/restaurar) y detalle de hechizo con botón de lanzamiento
-- Tab Inventory con gestión de peso y control de encumbramiento configurable
-- Tab Info con información narrativa del personaje
+- Tab Features con características de clase y subclase agrupadas, badges de relevancia en combate y cargador de opciones activas
+- Tab Inventory con gestión de ítems, peso total, cantidades y attunement (máximo 3 objetos)
+- Tab Info con información narrativa del personaje (rasgos físicos, personalidad, ideales, vínculos y defectos)
 
 ## Estructura del Proyecto
 
@@ -133,7 +139,8 @@ backend/
 │   │   ├── PlayerCharacterController
 │   │   ├── PendingTaskController
 │   │   ├── SubraceController
-│   │   └── ...
+│   │   ├── UserController
+│   │   └── ... (30 controllers en total)
 │   ├── dto/                 # Data Transfer Objects
 │   ├── entities/            # Entidades JPA
 │   ├── enumeration/         # Enumeraciones del dominio
@@ -153,19 +160,27 @@ backend/
 ### Frontend (Flutter)
 ```
 frontend/lib/
-├── config/                 # api_config, tema e iconos
+├── config/                 # api_config, tema, iconos, opciones D&D
 ├── models/                 # Modelos de auth, personaje, inventario y wizard
-├── services/               # Cliente HTTP, auth, personajes, inventario, wizard
+├── services/               # Cliente HTTP, auth, personajes, inventario, hechizos, feats, wizard
 ├── viewmodels/             # MVVM con Provider
 ├── views/
 │   ├── screens/
 │   │   ├── login_screen.dart
 │   │   ├── dashboard_screen.dart
-│   │   ├── admin/admin_panel_screen.dart
+│   │   ├── admin/
+│   │   │   └── admin_panel_screen.dart
 │   │   ├── sheet/
 │   │   │   ├── character_sheet_screen.dart
 │   │   │   ├── pending_tasks_screen.dart
 │   │   │   └── tabs/
+│   │   │       ├── tab_abilities.dart
+│   │   │       ├── tab_skills.dart
+│   │   │       ├── tab_combat.dart
+│   │   │       ├── tab_spells.dart
+│   │   │       ├── tab_features.dart
+│   │   │       ├── tab_inventory.dart
+│   │   │       └── tab_info.dart
 │   │   └── wizard/
 │   │       ├── character_creator_screen.dart
 │   │       ├── edit_character_screen.dart
@@ -173,6 +188,13 @@ frontend/lib/
 │   │       ├── class_detail_screen.dart
 │   │       ├── class_options_screen.dart
 │   │       └── steps/
+│   │           ├── step_preferences.dart
+│   │           ├── step_class.dart
+│   │           ├── step_background.dart
+│   │           ├── step_race.dart
+│   │           ├── step_ability_scores.dart
+│   │           ├── step_spells.dart
+│   │           └── step_equipment.dart
 │   └── widgets/
 └── main.dart
 ```
@@ -245,11 +267,10 @@ frontend/lib/
 - Límite de 3 objetos con attunement
 
 ### Sistema de Equipamiento
-- Slots dedicados para cada parte del cuerpo
-- Mano principal y mano secundaria
-- Armadura, casco, guantes, botas
-- Capa, amuleto, dos anillos, cinturón
+- Slots dedicados para cada parte del cuerpo implementados en el **backend**: mano principal, mano secundaria, armadura, casco, guantes, botas, capa, amuleto, dos anillos y cinturón
+- API REST completa para equipar/desequipar items por slot
 - Relación OneToOne con el personaje
+- **Nota:** La interfaz de gestión de slots por parte del cuerpo no está implementada en el frontend en esta versión (pendiente para versión futura)
 
 ### Sistema de Dinero
 - Gestión de las 5 monedas de D&D (platino, oro, electrum, plata, cobre)
@@ -798,24 +819,28 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 - Autenticación JWT con Spring Security
 - Gestión de usuarios del sistema (admin)
 
-### Frontend Mobile - Implementado y Operativo
-- Sistema de autenticación con login y gestión de tokens
+### Frontend Mobile - Completo para esta versión
+- Sistema de autenticación con login y gestión de tokens JWT
 - Manejo de errores de red con mensajes descriptivos (sin conexión, credenciales incorrectas, errores de servidor)
-- Pantalla de dashboard con lista de personajes
-- Cliente HTTP para consumo de API REST
-- Arquitectura MVVM con Provider para gestión de estado
-- Modelos de datos (personajes, autenticación, inventario)
-- Servicios para personajes, autenticación, inventario y hechizos
+- Pantalla de dashboard con lista de personajes y acciones rápidas
+- Cliente HTTP centralizado para consumo de la API REST
+- Arquitectura MVVM con Provider para gestión de estado reactivo
+- Modelos de datos (personajes, autenticación, inventario, wizard)
+- Servicios para personajes, autenticación, inventario, hechizos y feats
 - Almacenamiento persistente de tokens
 - Tema visual personalizado con paleta D&D (dark theme, LibreBaskerville + Lato)
-- Configuración centralizada de API (ApiConfig)
-- Widget de tarjeta de personaje con barra de HP y estadísticas
-- Wizard de creación de personajes en 7 pasos (raza, clase, puntuaciones de habilidad, background, equipamiento, hechizos, preferencias)
-- Pasos de equipamiento y hechizos opcionales con banner informativo y estado vacío con reintento
-- Modelo completo de personaje (PlayerCharacter) para la ficha
-- Ficha de personaje con 6 tabs: Abilities, Skills, Combat, Spells, Inventory, Info
-- Tab Combat con secciones de acciones, acciones de bonus y reacciones siempre visibles
-- Tab Spells con slot tracker interactivo (tocar slot para usar/restaurar) y detalle de hechizo con botón de lanzamiento
+- Panel de administración de usuarios (AdminPanelScreen)
+- Wizard de creación de personajes en 7 pasos: preferencias, clase, background, raza, puntuaciones, hechizos y equipamiento
+- Wizard en modo edición (EditCharacterScreen) y modo subida de nivel (LevelUpScreen)
+- Selección de habilidades de clase, feats/ASI, elecciones de subclase integradas en el wizard
+- Pasos de equipamiento y hechizos opcionales con banner informativo
+- Ficha de personaje interactiva con 7 tabs: Abilities, Skills, Combat, Spells, Features, Inventory, Info
+- Tab Features con características de clase y subclase con badges de relevancia en combate
+- Tab Spells con slot tracker interactivo y detalle de hechizo con botón de lanzamiento
+- Tab Combat con acciones, acciones de bonus y reacciones siempre visibles
+- Gestión de descansos cortos y largos desde la ficha
+
+> **Funcionalidades pendientes para versiones futuras:** gestión visual de slots de equipamiento por parte del cuerpo, sistema XP (el backend ya lo soporta, la UI siempre usa Milestone), toggle de Encumbrance, soporte multi-idioma.
 
 
 
