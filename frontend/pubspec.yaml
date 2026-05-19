@@ -40,6 +40,8 @@ dev_dependencies:
   json_serializable: ^6.7.1
   flutter_launcher_icons: ^0.14.4
 
+  mocktail: 1.0.4
+
 flutter:
   uses-material-design: true
   assets:

@@ -85,7 +85,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 > - 42 feats del Player's Handbook (con descripciones completas y prerrequisitos)
 > - 28+ subclases con sus características por nivel (subclass features)
 > - Subraces con sus bonificadores raciales
-> - Características de subclase (phases 1 y 2)
+> - Características de subclase
 
 #### Lógica de Negocio
 - Inicialización automática de habilidades y salvaciones al crear personaje
