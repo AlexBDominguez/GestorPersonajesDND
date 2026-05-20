@@ -60,7 +60,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
   final SpellService _spellService;
   final WizardReferenceService _refService;
   final PendingTaskService _taskService = PendingTaskService();
-  final InventoryService _inventoryService = InventoryService();
+  final InventoryService _inventoryService;
   List<PendingTask> _pendingTasks = [];
   /// Only incomplete tasks — completed ones are displayed elsewhere (Features tab).
   /// Also filters out tasks that are handled outside the pending-tasks flow:
@@ -84,9 +84,11 @@ class CharacterSheetViewModel extends ChangeNotifier {
     CharacterService? service,
     SpellService? spellService,
     WizardReferenceService? refService,
+    InventoryService? inventoryService,
   })  : _service = service ?? CharacterService(),
         _spellService = spellService ?? SpellService(),
-        _refService = refService ?? WizardReferenceService();
+        _refService = refService ?? WizardReferenceService(),
+        _inventoryService = inventoryService ?? InventoryService();
 
   // ── State 
   PlayerCharacter? character;

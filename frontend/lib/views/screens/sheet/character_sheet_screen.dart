@@ -22,10 +22,30 @@ import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_info.dart';
 
 class CharacterSheetScreen extends StatelessWidget {
   final int characterId;
-  const CharacterSheetScreen({super.key, required this.characterId});
+  // Solo para tests: permite inyectar un VM ya configurado en lugar del
+  // que crea la pantalla internamente.
+  @visibleForTesting
+  final CharacterSheetViewModel? testVm;
+
+  const CharacterSheetScreen({
+    super.key,
+    required this.characterId,
+    this.testVm,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final injected = testVm;
+    if (injected != null) {
+      // En tests usamos ChangeNotifierProvider.value para que el test
+      // controle el ciclo de vida del VM (no lo dispone el provider).
+      return ScaffoldMessenger(
+        child: ChangeNotifierProvider.value(
+          value: injected,
+          child: const _SheetBody(),
+        ),
+      );
+    }
     // ScaffoldMessenger scoped to this screen so snackbars are dismissed
     // automatically when the user navigates away (pops the route).
     return ScaffoldMessenger(
@@ -170,7 +190,7 @@ class _SheetBodyState extends State<_SheetBody> with TickerProviderStateMixin {
 
           // Indicador de caché — visible cuando se muestran datos locales
           if (vm.fromCache)
-            _CachedDataBanner(savedAt: vm.cacheTimestamp),
+            CachedDataBanner(savedAt: vm.cacheTimestamp),
 
           // Death saves banner — visible when HP = 0 or dying
           if (c.currentHp <= 0 || c.isDying)
@@ -327,9 +347,11 @@ class _NavBar extends StatelessWidget {
 
 // ── Cached Data Banner ───────────────────────────────────────────────────────
 
-class _CachedDataBanner extends StatelessWidget {
+/// Banner que aparece cuando la ficha muestra datos locales (sin conexión).
+/// Es una clase pública para poder testearla directamente en tests de widget.
+class CachedDataBanner extends StatelessWidget {
   final DateTime? savedAt;
-  const _CachedDataBanner({this.savedAt});
+  const CachedDataBanner({super.key, this.savedAt});
 
   static String _ageText(DateTime? ts) {
     if (ts == null) return '';
