@@ -123,6 +123,7 @@ class _AddItemScreenState extends State<AddItemScreen>
     return Scaffold(
       backgroundColor: AppTheme.background,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             // Header

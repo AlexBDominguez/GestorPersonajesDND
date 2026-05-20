@@ -346,7 +346,7 @@ class _NavButtons extends StatelessWidget {
     const sharedPadding = EdgeInsets.symmetric(vertical: 12);
 
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, bottom > 0 ? bottom : 16),
+      padding: EdgeInsets.fromLTRB(16, 10, 16, bottom > 0 ? bottom + 12 : 16),
       decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.divider)),

@@ -31,6 +31,7 @@ class _StepEquipmentState extends State<StepEquipment>
     // ('wand', 'Wands'),            // not yet in catalog
     // ('wondrous_item', 'Wondrous'),// not yet in catalog
     ('adventuring_gear', 'Other Gear'),
+    ('magic', 'Magic'),
   ];
   @override
   void initState() {
@@ -286,7 +287,9 @@ class _CatalogTab extends StatelessWidget {
 
     final filtered = vm.catalogItems.where((item) {
       final matchesType = typeFilter == 'all' ||
-          (item.itemType?.toLowerCase() == typeFilter);
+          (typeFilter == 'magic'
+              ? item.requiresAttunement
+              : item.itemType?.toLowerCase() == typeFilter);
       final matchesQuery = query.isEmpty ||
           item.name.toLowerCase().contains(query) ||
           (item.category?.toLowerCase().contains(query) ?? false);
