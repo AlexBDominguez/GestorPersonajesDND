@@ -338,6 +338,9 @@ CREATE TABLE IF NOT EXISTS items (
     rarity VARCHAR(100),
     requires_attunement BOOLEAN NOT NULL DEFAULT FALSE,
     attunement_requierement VARCHAR(255),
+    bonus_ac INT NOT NULL DEFAULT 0,
+    bonus_to_hit INT NOT NULL DEFAULT 0,
+    bonus_saving_throws INT NOT NULL DEFAULT 0,
     INDEX idx_items_name (name),
     INDEX idx_items_item_type (item_type),
     INDEX idx_items_category (category)

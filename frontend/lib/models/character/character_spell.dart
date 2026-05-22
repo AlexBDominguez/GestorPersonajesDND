@@ -40,6 +40,15 @@ class CharacterSpell {
 
   bool get isCantrip => level == 0;
 
+  CharacterSpell copyWith({bool? prepared}) => CharacterSpell(
+    id: id, spellId: spellId, name: name, level: level,
+    school: school, castingTime: castingTime, range: range,
+    duration: duration, components: components, description: description,
+    prepared: prepared ?? this.prepared, learned: learned,
+    spellSource: spellSource, attackType: attackType, dcType: dcType,
+    damageType: damageType, damageBase: damageBase,
+  );
+
   String get levelLabel => isCantrip ? 'Cantrip' : 'Level $level';
 
   String get sourceLabel{

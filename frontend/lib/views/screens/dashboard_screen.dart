@@ -127,15 +127,13 @@ class _DashboardBody extends StatelessWidget {
           final newId = await Navigator.of(context).push<int>(MaterialPageRoute(
             builder: (_) => const CharacterCreatorScreen()),
           );
-          if (newId != null) {
-            // Recargamos la lista y abrimos la ficha del personaje recién creado
-            await vm.load();
-            if (context.mounted) {
-              await Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => CharacterSheetScreen(characterId: newId),
-              ));
-              vm.load(); // por si cambia HP u otros datos en la ficha
-            }
+          if (newId != null && context.mounted) {
+            // Abrimos la ficha inmediatamente; la lista se recarga en segundo plano
+            vm.load();
+            await Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => CharacterSheetScreen(characterId: newId),
+            ));
+            if (context.mounted) vm.load(); // por si cambia HP u otros datos en la ficha
           }
         },
         backgroundColor: vm.characters.length >= 10 ? AppTheme.accent : AppTheme.primary,

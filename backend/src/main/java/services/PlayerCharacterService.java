@@ -42,6 +42,7 @@ public class PlayerCharacterService {
     private final CharacterClassResourceService characterClassResourceService;
     private final CharacterEquipmentRepository equipmentRepository;
     private final CharacterActiveEffectRepository characterActiveEffectRepository;
+    private final CharacterInventoryRepository characterInventoryRepository;
     private final UserRepository userRepository;
     private final CharacterFeatService characterFeatService;
 
@@ -64,6 +65,7 @@ public class PlayerCharacterService {
             CharacterClassResourceService characterClassResourceService,
             CharacterEquipmentRepository equipmentRepository,
             CharacterActiveEffectRepository characterActiveEffectRepository,
+            CharacterInventoryRepository characterInventoryRepository,
             UserRepository userRepository,
             CharacterFeatService characterFeatService
 
@@ -88,6 +90,7 @@ public class PlayerCharacterService {
         this.characterClassResourceService = characterClassResourceService;
         this.equipmentRepository = equipmentRepository;
         this.characterActiveEffectRepository = characterActiveEffectRepository;
+        this.characterInventoryRepository = characterInventoryRepository;
     }
 
     // ========== CRUD BÁSICO ==========
@@ -399,7 +402,23 @@ public class PlayerCharacterService {
         CharacterEquipment equipment = equipmentRepository.findByCharacter(playerCharacter).orElse(null);
         List<CharacterActiveEffect> activeEffects = characterActiveEffectRepository.findByCharacterIdAndActive(
         playerCharacter.getId(), true);
-        dto.setArmorClass(playerCharacter.getArmorClass(equipment, activeEffects));
+
+        // Bonuses de objetos equipados / sintonizados
+        List<CharacterInventory> inventory = characterInventoryRepository.findByCharacterId(playerCharacter.getId());
+        int itemBonusAc = 0, itemBonusToHit = 0, itemBonusSavingThrows = 0;
+        for (CharacterInventory ci : inventory) {
+            Item item = ci.getItem();
+            // Objetos que requieren sintonización: el bonus aplica solo si están sintonizados
+            // Objetos sin sintonización: aplica si están equipados
+            boolean active = item.isRequiresAttunement() ? ci.isAttuned() : ci.isEquipped();
+            if (active) {
+                itemBonusAc            += item.getBonusAc();
+                itemBonusToHit         += item.getBonusToHit();
+                itemBonusSavingThrows  += item.getBonusSavingThrows();
+            }
+        }
+
+        dto.setArmorClass(playerCharacter.getArmorClass(equipment, activeEffects) + itemBonusAc);
         dto.setSpellSaveDC(playerCharacter.getSpellSaveDC());
         dto.setSpellAttackBonus(playerCharacter.getSpellAttackBonus());
         dto.setInitiativeModifier(playerCharacter.getInitiativeModifier());
@@ -409,9 +428,9 @@ public class PlayerCharacterService {
         dto.setHeavilyEncumberedThreshold(playerCharacter.getHeavilyEncumberedThreshold());
         dto.setUseEncumbrance(playerCharacter.isUseEncumbrance());
         dto.setAbilityDisplayMode(playerCharacter.getAbilityDisplayMode());
-        dto.setMeleeAttackBonus(playerCharacter.getMeleeAttackBonus());
-        dto.setRangedAttackBonus(playerCharacter.getRangedAttackBonus());
-        dto.setFinesseAttackBonus(playerCharacter.getFinesseAttackBonus());
+        dto.setMeleeAttackBonus(playerCharacter.getMeleeAttackBonus() + itemBonusToHit);
+        dto.setRangedAttackBonus(playerCharacter.getRangedAttackBonus() + itemBonusToHit);
+        dto.setFinesseAttackBonus(playerCharacter.getFinesseAttackBonus() + itemBonusToHit);
         dto.setExperienceToNextLevel(playerCharacter.getExperienceToNextLevel());
         dto.setExperienceNeeded(playerCharacter.getExperienceNeeded());
         dto.setDying(playerCharacter.isDying());
@@ -450,7 +469,7 @@ public class PlayerCharacterService {
             stDto.setProficient(st.isProficient());
             int abilityMod = playerCharacter.calculateAbilityModifier(st.getAbilityScore());
             int profBonus = st.isProficient() ? playerCharacter.getProficiencyBonus() : 0;
-            stDto.setBonus(abilityMod + profBonus);
+            stDto.setBonus(abilityMod + profBonus + itemBonusSavingThrows);
             savingThrowDtos.add(stDto);
         }
         dto.setSavingThrows(savingThrowDtos);

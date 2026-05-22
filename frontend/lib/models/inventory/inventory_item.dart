@@ -19,6 +19,9 @@ class InventoryItem {
   final String? damageType;
   final String? weaponRange;
   final List<String> weaponProperties;
+  final int bonusAc;
+  final int bonusToHit;
+  final int bonusSavingThrows;
 
   const InventoryItem({
     required this.id,
@@ -37,6 +40,9 @@ class InventoryItem {
     this.damageType,
     this.weaponRange,
     this.weaponProperties = const [],
+    this.bonusAc = 0,
+    this.bonusToHit = 0,
+    this.bonusSavingThrows = 0,
   });
 
   factory InventoryItem.fromJson(Map<String, dynamic> j) => InventoryItem(
@@ -56,6 +62,9 @@ class InventoryItem {
         damageType:         j['damageType'] as String?,
         weaponRange:        j['weaponRange'] as String?,
         weaponProperties:   List<String>.from(j['weaponProperties'] ?? []),
+        bonusAc:            (j['bonusAc'] as num?)?.toInt() ?? 0,
+        bonusToHit:         (j['bonusToHit'] as num?)?.toInt() ?? 0,
+        bonusSavingThrows:  (j['bonusSavingThrows'] as num?)?.toInt() ?? 0,
       );
 
   // Icono por tipo
@@ -93,6 +102,9 @@ class InventoryItem {
     String? damageType,
     String? weaponRange,
     List<String>? weaponProperties,
+    int? bonusAc,
+    int? bonusToHit,
+    int? bonusSavingThrows,
   }) => InventoryItem(
         id: id ?? this.id,
         itemId: itemId ?? this.itemId,
@@ -110,6 +122,9 @@ class InventoryItem {
         damageType: damageType ?? this.damageType,
         weaponRange: weaponRange ?? this.weaponRange,
         weaponProperties: weaponProperties ?? this.weaponProperties,
+        bonusAc: bonusAc ?? this.bonusAc,
+        bonusToHit: bonusToHit ?? this.bonusToHit,
+        bonusSavingThrows: bonusSavingThrows ?? this.bonusSavingThrows,
       );
 
   String get costDisplay {

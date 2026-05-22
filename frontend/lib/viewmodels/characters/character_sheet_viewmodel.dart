@@ -185,12 +185,22 @@ class CharacterSheetViewModel extends ChangeNotifier {
       final invFuture  = _inventoryService.getInventory(characterId);
       character        = await charFuture;
       _inventoryItems  = await invFuture;
+      _optimisticSpells = null; // server data is now authoritative
       _initSpellSlots();
       notifyListeners(); // única notificación
     } catch (_) {
       // Ignorar errores en refresco silencioso
     }
   }
+
+  // ── Optimistic spell prepared state ────────────────────────────────────────
+  // Non-null while a togglePrepareSpell call is in-flight; cleared by silentRefresh.
+  List<CharacterSpell>? _optimisticSpells;
+
+  /// The authoritative spell list for the UI: uses the optimistic override while
+  /// the API call is in-flight, then falls back to the model data.
+  List<CharacterSpell> get currentSpells =>
+      _optimisticSpells ?? character?.characterSpells ?? [];
 
   // ── Spell Slots 
   final Map<int, int> _usedSlots = {};
@@ -246,10 +256,10 @@ class CharacterSheetViewModel extends ChangeNotifier {
   }
 
   Future<void> togglePrepareSpell(int spellId) async {
-    // Validate prepare limit before calling API
-    final spell = character?.characterSpells.where((s) => s.spellId == spellId).firstOrNull;
+    final spell = currentSpells.where((s) => s.spellId == spellId).firstOrNull;
+    // Validate prepare limit before applying optimistic update
     if (spell != null && !spell.prepared && !spell.isCantrip && !alwaysPreparedClass) {
-      final preparedCount = character!.characterSpells.where((s) => s.prepared && !s.isCantrip).length;
+      final preparedCount = currentSpells.where((s) => s.prepared && !s.isCantrip).length;
       final max = character!.maxPreparedSpells;
       if (max > 0 && preparedCount >= max) {
         _errorMessage = 'Prepared spell limit reached ($preparedCount/$max). Unprepare a spell first.';
@@ -257,10 +267,17 @@ class CharacterSheetViewModel extends ChangeNotifier {
         return;
       }
     }
+    // Optimistic update: flip prepared flag immediately
+    final newPrepared = !(spell?.prepared ?? false);
+    _optimisticSpells = currentSpells
+        .map((s) => s.spellId == spellId ? s.copyWith(prepared: newPrepared) : s)
+        .toList();
+    notifyListeners();
     try {
       await _service.togglePrepareSpell(characterId: characterId, spellId: spellId);
-      await silentRefresh();
+      await silentRefresh(); // clears _optimisticSpells and syncs server state
     } catch (e) {
+      _optimisticSpells = null; // revert to model data (API call failed, server unchanged)
       _errorMessage = e.toString().replaceFirst('Exception', '');
       notifyListeners();
     }

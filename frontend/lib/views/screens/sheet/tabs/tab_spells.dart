@@ -20,7 +20,7 @@ class TabSpells extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
-    final spells = character.characterSpells;
+    final spells = vm.currentSpells;
 
     //Agrupa spells por nivel
     final Map<int, List<CharacterSpell>> byLevel = {};
@@ -106,7 +106,7 @@ class _SpellStatsHeader extends StatelessWidget {
             _VertDivider(),
             _StatPill(
               label: 'PREPARED',
-              value: '${c.characterSpells.where((s) => s.prepared && !s.isCantrip).length}/${c.maxPreparedSpells}',
+              value: '${vm.currentSpells.where((s) => s.prepared && !s.isCantrip).length}/${c.maxPreparedSpells}',
             ),
           ],
         ],
@@ -716,7 +716,7 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
 
     List<CharacterSpell> get _filteredSpells {
     final q = _query.toLowerCase();
-    return widget.vm.character!.characterSpells.where((s) {
+    return widget.vm.currentSpells.where((s) {
       return q.isEmpty ||
           s.name.toLowerCase().contains(q) ||
           (s.school?.toLowerCase().contains(q) ?? false);

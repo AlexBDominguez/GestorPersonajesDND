@@ -19,6 +19,9 @@ public class CharacterInventoryDto {
     private String damageType;
     private String weaponRange;
     private java.util.List<String> weaponProperties = new java.util.ArrayList<>();
+    private int bonusAc;
+    private int bonusToHit;
+    private int bonusSavingThrows;
 
     // Getters y Setters
 
@@ -165,5 +168,29 @@ public class CharacterInventoryDto {
 
     public void setWeaponProperties(java.util.List<String> weaponProperties) {
         this.weaponProperties = weaponProperties;
+    }
+
+    public int getBonusAc() {
+        return bonusAc;
+    }
+
+    public void setBonusAc(int bonusAc) {
+        this.bonusAc = bonusAc;
+    }
+
+    public int getBonusToHit() {
+        return bonusToHit;
+    }
+
+    public void setBonusToHit(int bonusToHit) {
+        this.bonusToHit = bonusToHit;
+    }
+
+    public int getBonusSavingThrows() {
+        return bonusSavingThrows;
+    }
+
+    public void setBonusSavingThrows(int bonusSavingThrows) {
+        this.bonusSavingThrows = bonusSavingThrows;
     }
 }

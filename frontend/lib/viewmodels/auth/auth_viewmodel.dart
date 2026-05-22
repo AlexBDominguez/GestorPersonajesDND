@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:gestor_personajes_dnd/models/auth/login_request.dart';
 import 'package:gestor_personajes_dnd/services/auth/auth_service.dart';
+import 'package:gestor_personajes_dnd/services/storage/local_cache_service.dart';
 import 'package:gestor_personajes_dnd/services/storage/token_storage.dart';
 
 class AuthViewModel extends ChangeNotifier {
@@ -108,7 +109,10 @@ class AuthViewModel extends ChangeNotifier {
     if (refreshToken != null) {
       _authService.logout(refreshToken).catchError((_) {});
     }
-    await _tokenStorage.clearSession();
+    await Future.wait([
+      _tokenStorage.clearSession(),
+      LocalCacheService.clearAll(),
+    ]);
     _isLoggedIn = false;
     _isAdmin    = false;
     _username   = '';

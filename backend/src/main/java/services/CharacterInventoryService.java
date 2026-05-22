@@ -211,6 +211,9 @@ public class CharacterInventoryService {
         dto.setDamageType(inventory.getItem().getDamageType());
         dto.setWeaponRange(inventory.getItem().getWeaponRange());
         dto.setWeaponProperties(inventory.getItem().getWeaponProperties());
+        dto.setBonusAc(inventory.getItem().getBonusAc());
+        dto.setBonusToHit(inventory.getItem().getBonusToHit());
+        dto.setBonusSavingThrows(inventory.getItem().getBonusSavingThrows());
         return dto;
     }
 }

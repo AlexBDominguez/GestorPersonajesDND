@@ -56,6 +56,11 @@ public class Item {
     private boolean requiresAttunement;
     private String attunementRequierement;
 
+    // Bonuses que aplica el objeto cuando está equipado/sintonizado
+    private int bonusAc = 0;
+    private int bonusToHit = 0;
+    private int bonusSavingThrows = 0;
+
     public Item(){}
 
     public Long getId() {
@@ -218,6 +223,28 @@ public class Item {
         this.attunementRequierement = attunementRequierement;
     }
 
-        
-    
+    public int getBonusAc() {
+        return bonusAc;
+    }
+
+    public void setBonusAc(int bonusAc) {
+        this.bonusAc = bonusAc;
+    }
+
+    public int getBonusToHit() {
+        return bonusToHit;
+    }
+
+    public void setBonusToHit(int bonusToHit) {
+        this.bonusToHit = bonusToHit;
+    }
+
+    public int getBonusSavingThrows() {
+        return bonusSavingThrows;
+    }
+
+    public void setBonusSavingThrows(int bonusSavingThrows) {
+        this.bonusSavingThrows = bonusSavingThrows;
+    }
+
 }

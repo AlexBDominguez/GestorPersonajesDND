@@ -90,4 +90,14 @@ class LocalCacheService {
   }
 
   static Future<DateTime?> characterListSavedAt() => savedAt(_listKey);
+
+  // ── Limpieza completa (p.ej. al cerrar sesión) ────────────────────────────
+
+  static Future<void> clearAll() async {
+    final p = await SharedPreferences.getInstance();
+    final keys = p.getKeys().where((k) => k.startsWith(_kPfx)).toList();
+    for (final k in keys) {
+      await p.remove(k);
+    }
+  }
 }
