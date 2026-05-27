@@ -48,6 +48,15 @@ app.*.map.json
 # iOS generated files
 ios/Flutter/Generated.xcconfig
 ios/Flutter/flutter_export_environment.sh
+
+# Build output logs
+build_output.txt
+
+# Flutter local metadata
+.metadata
+
+# Default README (generado por Flutter, no informativo)
+README.md
 ios/Flutter/ephemeral/
 ios/Runner/GeneratedPluginRegistrant.h
 ios/Runner/GeneratedPluginRegistrant.m

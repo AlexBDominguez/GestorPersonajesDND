@@ -53,4 +53,24 @@ backups/
 
 seed_subraces_v2.sql
 backend/SEED_EXECUTION_STEPS.md
-backend/SEED_EXECUTION_STEPS.md
+
+# VS Code workspace files
+*.code-workspace
+
+# Java upgrade tool artifacts (auto-generated por Copilot)
+backend/.github/java-upgrade/
+
+# Maintenance/operational scripts
+backend/*.sh
+
+# Development/generation scripts
+backend/i18n_phase2_gen.py
+
+# Internal documentation (no necesaria para el repo público)
+backend/README_SETUP.md
+backend/REQUIREMENTS.md
+backend/DOCKER.md
+backend/DOCKER_SETUP.md
+backend/EjecutarAppConDocker.md
+backend/MIGRACION_BASE_DATOS.md
+backend/DB_TABLES_INFO.md
