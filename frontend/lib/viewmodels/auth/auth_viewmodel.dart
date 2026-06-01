@@ -26,16 +26,16 @@ class AuthViewModel extends ChangeNotifier {
   bool    get isAdmin         => _isAdmin;
   String  get currentUsername => _username;
 
-  // ── Init (cold-start auto-login via stored refresh token) ─────────────────
+  // ── Inicialización (auto-login en arranque en frío mediante refresh token guardado) ──
 
   Future<void> init() async {
     try {
       final refreshToken = await _tokenStorage.getRefreshToken();
       if (refreshToken == null) {
-        // No persisted session — clear any stale access token and show login.
+        // Sin sesión persistida — limpiar cualquier access token caducado y mostrar el login.
         await _tokenStorage.clearSession();
       } else {
-        // Exchange refresh token for a fresh access token.
+          // Intercambiar el refresh token por un nuevo access token.
         try {
           final auth = await _authService.refresh(refreshToken,
               deviceInfo: _deviceInfo());
@@ -44,13 +44,13 @@ class AuthViewModel extends ChangeNotifier {
             username:    auth.username,
             role:        auth.role,
           );
-          // Persist the rotated refresh token (same persist flag as before).
+          // Persistir el refresh token rotado (mismo flag persist que antes).
           await _tokenStorage.saveRefreshToken(auth.refreshToken, persist: true);
           _isLoggedIn = true;
           _username   = auth.username;
           _isAdmin    = auth.role == 'ADMIN';
         } catch (e) {
-          // Refresh token expired / revoked — force a fresh login.
+          // Refresh token caducado / revocado — forzar un nuevo login.
           await _tokenStorage.clearSession();
           _isLoggedIn = false;
           if (kDebugMode) print('[AuthViewModel.init] refresh failed: $e');
@@ -83,7 +83,7 @@ class AuthViewModel extends ChangeNotifier {
         username:    auth.username,
         role:        auth.role,
       );
-      // Save refresh token; persist to secure storage only when rememberMe=true.
+      // Guardar el refresh token; persistir en almacenamiento seguro solo cuando rememberMe=true.
       await _tokenStorage.saveRefreshToken(
         auth.refreshToken,
         persist: rememberMe,
@@ -104,7 +104,7 @@ class AuthViewModel extends ChangeNotifier {
   // ── Logout ────────────────────────────────────────────────────────────────
 
   Future<void> logout() async {
-    // Best-effort server-side revocation (fire and forget).
+    // Revocación server-side best-effort (fire and forget).
     final refreshToken = await _tokenStorage.getRefreshToken();
     if (refreshToken != null) {
       _authService.logout(refreshToken).catchError((_) {});

@@ -57,7 +57,7 @@ public class UserService {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword())); // Hashear contraseña
-        user.setRole(Role.USER); //admin never creates another admin from this endpoint
+        user.setRole(Role.USER); // el admin no puede crear otro admin desde este endpoint
         user.setActive(true);
 
         return toDto(userRepository.save(user));

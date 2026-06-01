@@ -24,9 +24,9 @@ class PendingTaskService {
     required String choice,
     String? extraData,
   }) async {
-    // Pass the Map directly — ApiClient.post encodes it once via jsonEncode.
-    // Previously the body was pre-encoded as a String and then double-encoded,
-    // which Spring Boot could not deserialize.
+    // Pasar el Map directamente — ApiClient.post lo codifica una vez con jsonEncode.
+    // Antes el cuerpo se pre-codificaba como String y luego se codificaba doble,
+    // lo que Spring Boot no podía deserializar.
     final body = <String, dynamic>{'choice': choice};
     if (extraData != null) body['extraData'] = extraData;
     final res = await _api.post(

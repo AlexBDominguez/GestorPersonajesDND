@@ -255,7 +255,7 @@ public class PlayerCharacterService {
             applyBackgroundProficiencies(saved);
         }
 
-        // Apply class skill picks from wizard
+        // Aplicar elecciones de skill de clase del wizard
         if (dto.getClassSkillIndices() != null) {
             for (String skillIndex : dto.getClassSkillIndices()) {
                 characterSkillService.applySkillProficiencyByIndex(saved, skillIndex);
@@ -278,13 +278,13 @@ public class PlayerCharacterService {
 
         generateSpellSlots(saved);
 
-        // Initialize class resources (Rage charges, Ki Points, Bardic Inspiration, etc.)
+        // Inicializar recursos de clase (cargas de Rabia, Ki Points, Bardic Inspiration, etc.)
         characterClassResourceService.initializeClassResourcesForCharacter(saved.getId());
 
-        // Generate pending tasks for all choice-requiring features from level 1 to selectedLevel
+        // Generar tareas pendientes para todas las features que requieren elección del nivel 1 al nivel seleccionado
         generateChoiceTasksForCreation(saved);
 
-        // Generate pending tasks for race-level choices (e.g., Dragonborn Draconic Ancestry)
+        // Generar tareas pendientes para las elecciones de raza (p.ej., Dragonborn Draconic Ancestry)
         generateRaceChoiceTasksForCreation(saved);
         
         return toDto(saved);
@@ -347,7 +347,7 @@ public class PlayerCharacterService {
                         HttpStatus.NOT_FOUND, "Race not found"));
             if (character.getRace() == null || !dto.getRaceId().equals(character.getRace().getId())) {
                 character.setRace(race);
-                character.setSubrace(null); // clear subrace when race changes
+                character.setSubrace(null); // limpiar subraza al cambiar de raza
             }
         }
 
@@ -597,7 +597,7 @@ public class PlayerCharacterService {
         Spell spell = spellRepository.findById(spellId)
                 .orElseThrow(() -> new RuntimeException("Spell not found"));
 
-        // When learning as prepared, validate the prepare limit
+        // Al aprender como preparado, validar el límite de preparación
         if (prepared && spell.getLevel() > 0) {
             int maxPrepared = character.getMaxPreparedSpells();
             if (maxPrepared > 0) {
@@ -611,7 +611,7 @@ public class PlayerCharacterService {
         }
 
         CharacterSpell characterSpell = new CharacterSpell(character, spell);
-        // Cantrips are always prepared; non-cantrips respect the 'prepared' flag
+        // Los cantrips siempre están preparados; los no-cantrips respetan el flag 'prepared'
         characterSpell.setPrepared(spell.getLevel() == 0 || prepared);
         characterSpellRepository.save(characterSpell);
     }
@@ -745,7 +745,7 @@ public class PlayerCharacterService {
                 && !subclass.getSpellcastingAbility().isEmpty();
 
         if (classHasSpellcasting) {
-            // Standard full/half-caster: look up progression table
+            // Lanzador full/half estándar: consultar tabla de progresión
             List<SpellSlotProgression> progression =
                     spellSlotProgressionRepository.findByDndClassAndCharacterLevel(
                             dndClass, character.getLevel());
@@ -758,12 +758,12 @@ public class PlayerCharacterService {
                 slotRepository.save(slot);
             }
         } else if (subclassHasSpellcasting) {
-            // Third-caster subclass (Eldritch Knight / Arcane Trickster)
+            // Subclase lanzador 1/3 (Eldritch Knight / Arcane Trickster)
             saveThirdCasterSlots(character, character.getLevel());
         }
     }
 
-    /** Computes and persists spell slots for a 1/3-caster at the given character level. */
+    /** Calcula y persiste los spell slots para un lanzador 1/3 en el nivel de personaje dado. */
     private void saveThirdCasterSlots(PlayerCharacter character, int level) {
         int[] slots = computeThirdCasterSlots(level);
         for (int spellLvl = 1; spellLvl <= 3; spellLvl++) {
@@ -782,8 +782,8 @@ public class PlayerCharacterService {
     }
 
     /**
-     * Third-caster (1/3) spell slot table per character level (PHB Eldritch Knight / Arcane Trickster).
-     * Returns int[3] = [lv1Slots, lv2Slots, lv3Slots].
+     * Tabla de spell slots para lanzadores 1/3 por nivel de personaje (PHB Eldritch Knight / Arcane Trickster).
+     * Devuelve int[3] = [slotsNv1, slotsNv2, slotsNv3].
      */
     private int[] computeThirdCasterSlots(int level) {
         int lv1 = 0, lv2 = 0, lv3 = 0;
@@ -825,7 +825,7 @@ public class PlayerCharacterService {
                 System.out.println("Updated spell slots level " + spellLevel + ": " + maxSlots + " slots");
             }
         } else if (subclassHasSpellcasting) {
-            // Third-caster level-up
+            // Subida de nivel como lanzador 1/3
             saveThirdCasterSlots(character, newLevel);
         } else {
             System.out.println("Character is not a spellcaster");
@@ -1168,9 +1168,9 @@ public class PlayerCharacterService {
     }
 
     /**
-     * Creates PendingTasks for every choice-requiring ClassLevelFeature from level 1
-     * to the character's starting level. Does NOT apply automatic features (those are
-     * already handled during create()).
+     * Crea PendingTasks para cada ClassLevelFeature que requiere elección del nivel 1
+     * al nivel inicial del personaje. NO aplica features automáticas (ya se gestionan
+     * durante create()).
      */
     private void generateChoiceTasksForCreation(PlayerCharacter character) {
         DndClass dndClass = character.getDndClass();
@@ -1193,16 +1193,16 @@ public class PlayerCharacterService {
     private void createTask(PlayerCharacter character, int level, ClassLevelFeature feature) {
         System.out.println("Creating task for feature type: " + feature.getType());
 
-        // SPELL_LEARN / SPELL_PREPARE: initial spells are selected directly in the
-        // creation wizard (spellIds in the DTO). These tasks are only relevant for
-        // level-up, not for the initial creation.
+        // SPELL_LEARN / SPELL_PREPARE: los spells iniciales se seleccionan directamente en el
+        // wizard de creación (spellIds en el DTO). Estas tareas solo son relevantes para
+        // subidas de nivel, no para la creación inicial.
         if (feature.getType() == FeatureType.SPELL_LEARN ||
             feature.getType() == FeatureType.SPELL_PREPARE) {
             System.out.println("Skipping " + feature.getType() + " at creation – handled by wizard spell selection.");
             return;
         }
 
-        // SUBCLASS_CHOICE: if the wizard already chose a subclass, no pending task needed.
+        // SUBCLASS_CHOICE: si el wizard ya eligió una subclase, no se necesita tarea pendiente.
         if (feature.getType() == FeatureType.SUBCLASS_CHOICE &&
             character.getSubclass() != null) {
             System.out.println("Skipping SUBCLASS_CHOICE – subclass already chosen: " + character.getSubclass().getName());
@@ -1285,9 +1285,10 @@ public class PlayerCharacterService {
     }
 
     /**
-     * Creates PendingTasks for CHOICE_REQUIRED racial traits of the character's race (and subrace).
-     * Only creates a task if no task of the same type+level already exists (avoids duplicates
-     * e.g. for a Dragonborn Draconic Sorcerer whose class already generated a DRACONIC_ANCESTRY task).
+     * Crea PendingTasks para los traits raciales CHOICE_REQUIRED de la raza del personaje (y subraza).
+     * Solo crea una tarea si no existe ya una del mismo tipo+nivel (evita duplicados,
+     * p.ej. para un Dragonborn Draconic Sorcerer cuya clase ya generó una tarea DRACONIC_ANCESTRY).
+     */
      */
     private void generateRaceChoiceTasksForCreation(PlayerCharacter character) {
         List<RacialTrait> allTraits = new ArrayList<>();
@@ -1301,14 +1302,14 @@ public class PlayerCharacterService {
             allTraits.addAll(subrace.getTraits());
         }
 
-        // These traits are derived from draconic-ancestry — they don't need their own task
+        // Estos traits derivan de draconic-ancestry — no necesitan su propia tarea
         java.util.Set<String> derivedTraits = java.util.Set.of("breath-weapon", "damage-resistance");
 
         List<PendingTask> existing = pendingTaskRepository.findByCharacter(character);
 
         for (RacialTrait trait : allTraits) {
-            // high-elf-cantrip may not be CHOICE_REQUIRED in the DB (needs re-sync to fix),
-            // so we check it explicitly by indexName too.
+            // high-elf-cantrip puede no estar como CHOICE_REQUIRED en la BD (requiere re-sync para corregirlo),
+            // por lo que también se comprueba explícitamente por indexName.
             boolean isChoice = "CHOICE_REQUIRED".equals(trait.getTraitType()) ||
                                "high-elf-cantrip".equals(trait.getIndexName());
             if (!isChoice) continue;
@@ -1330,7 +1331,7 @@ public class PlayerCharacterService {
                     description = "Choose one wizard cantrip (High Elf trait)";
                     break;
                 case "skill-versatility": {
-                    // Half-Elf gets TWO separate skill choices
+                    // Half-Elf obtiene DOS elecciones de skill separadas
                     String[] svTypes = {"SKILL_VERSATILITY_1", "SKILL_VERSATILITY_2"};
                     String[] svDescs = {
                         "Choose first skill proficiency (Skill Versatility)",
@@ -1364,7 +1365,7 @@ public class PlayerCharacterService {
                     continue;
             }
 
-            // Avoid duplicate tasks (e.g. Draconic Sorcerer already has this from class features)
+            // Evitar tareas duplicadas (p.ej. Draconic Sorcerer ya tiene ésta de las features de clase)
             final String finalTaskType = taskType;
             boolean alreadyExists = existing.stream()
                 .anyMatch(t -> finalTaskType.equals(t.getTaskType()) && t.getRelatedLevel() == 1);

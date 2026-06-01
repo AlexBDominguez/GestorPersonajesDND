@@ -22,19 +22,19 @@ enum AbilityScoreMethod {standardArray, manual}
 const List<int> kStandardArray = [15, 14, 13, 12, 10, 8];
 const List<String> kAbilityNames = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 
-/// One required feature choice – shown as a section in the wizard Features step.
+/// Elección de feature requerida – mostrada como sección en el paso Features del wizard.
 class WizardChoiceConfig {
-  /// D&D task type, e.g. 'FIGHTING_STYLE', 'FAVORED_ENEMY'.
+  /// Tipo de tarea D&D, p.ej. 'FIGHTING_STYLE', 'FAVORED_ENEMY'.
   final String type;
-  /// Level at which this feature is acquired.
+  /// Nivel en el que se adquiere esta feature.
   final int level;
-  /// Display label shown in the wizard UI.
+  /// Etiqueta mostrada en la UI del wizard.
   final String label;
-  /// Selectable options.
+  /// Opciones seleccionables.
   final List<DndChoiceOption> options;
-  /// If false, this choice does not block classFeatureChoicesDone (e.g. ASI).
+  /// Si es false, esta elección no bloquea classFeatureChoicesDone (p.ej. ASI).
   final bool required;
-  /// How many items the user must pick (1 = single pick, 2+ = multi-pick).
+  /// Cuántos ítems debe elegir el usuario (1 = elección única, 2+ = multi-elección).
   final int pickCount;
   const WizardChoiceConfig({
     required this.type,
@@ -44,7 +44,7 @@ class WizardChoiceConfig {
     this.required = true,
     this.pickCount = 1,
   });
-  /// Unique key used to store / look up the selection: e.g. 'FAVORED_ENEMY_6'.
+  /// Clave única para guardar / buscar la selección: p.ej. 'FAVORED_ENEMY_6'.
   String get key => '${type}_$level';
 }
 
@@ -61,11 +61,11 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   bool get isEditMode => _editMode;
   bool _levelUpMode = false;
   bool get isLevelUpMode => _levelUpMode;
-  /// In level-up mode: the minimum selectable level (originalLevel + 1).
+  /// En modo nivel-up: el nivel mínimo seleccionable (originalLevel + 1).
   int get levelUpMinLevel => _levelUpMode ? _originalLevel + 1 : 1;
   int? _editCharacterId;
   int _originalLevel = 1;
-  /// Spell IDs the character already had before this level-up session.
+  /// IDs de spells que el personaje ya tenía antes de esta sesión de subida de nivel.
   Set<int> _preExistingSpellIds = {};
   int? _initialClassId;
   int? _initialSubclassId;
@@ -82,7 +82,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         _inventoryService = inventoryService ?? InventoryService(),
         _pendingTaskService = pendingTaskService ?? PendingTaskService();
 
-  /// Named constructor that pre-fills the wizard from an existing character for edit mode.
+  /// Constructor nombrado que pre-rellena el wizard a partir de un personaje existente para el modo edición.
   CharacterCreatorViewModel.forEdit(
     PlayerCharacter char, {
     WizardReferenceService? refService,
@@ -100,7 +100,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         _initialSubclassId  = char.subclassId,
         _initialBackgroundId = char.backgroundId,
         _initialRaceId  = char.raceId {
-    // Pre-fill text/value fields immediately
+    // Rellenar campos de texto/valor inmediatamente
     characterName    = char.name;
     selectedLevel    = char.level;
     alignment        = char.alignment;
@@ -115,18 +115,18 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     height           = char.height ?? '';
     weight           = char.weight ?? '';
     abilityDisplayMode = char.abilityDisplayMode;
-    // Ability scores: pre-fill with character's current scores (already include racial bonus)
+    // Ability scores: pre-rellenar con los scores actuales del personaje (ya incluyen el bonus racial)
     for (final key in kAbilityNames) {
       abilityScores[key] = char.abilityScores[key] ?? 10;
     }
     scoreMethod = AbilityScoreMethod.manual;
-    // Pre-populate existing spell IDs so the spells step shows them as already selected
+    // Pre-rellenar los IDs de spells existentes para que el paso de spells los muestre como ya seleccionados
     _preExistingSpellIds = char.characterSpells.map((s) => s.spellId).toSet();
     selectedSpellIds.addAll(_preExistingSpellIds);
   }
 
-  /// Named constructor for leveling up an existing character.
-  /// Starts the wizard at the Class step with level pre-set to current+1.
+  /// Constructor nombrado para subir de nivel a un personaje existente.
+  /// Inicia el wizard en el paso Clase con el nivel pre-establecido en actual+1.
   CharacterCreatorViewModel.forLevelUp(
     PlayerCharacter char, {
     WizardReferenceService? refService,
@@ -146,8 +146,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         _initialBackgroundId = char.backgroundId,
         _initialRaceId  = char.raceId {
     characterName    = char.name;
-    selectedLevel    = char.level + 1;  // Pre-increment: we're leveling UP
-    // Pre-populate existing spell IDs so the spells step shows them as already selected
+    selectedLevel    = char.level + 1;  // Pre-incremento: estamos subiendo de nivel
+    // Pre-rellenar los IDs de spells existentes para que el paso de spells los muestre como ya seleccionados
     _preExistingSpellIds = char.characterSpells.map((s) => s.spellId).toSet();
     selectedSpellIds.addAll(_preExistingSpellIds);
     alignment        = char.alignment;
@@ -182,7 +182,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       if (isSpellcaster) steps.add(WizardStep.spells);
       return steps;
     }
-    // Edit mode: full wizard (Preferences, Class, Background, Race, Ability Scores, + Spells if spellcaster)
+    // Modo edición: wizard completo (Preferencias, Clase, Background, Raza, Ability Scores, + Spells si es spellcaster)
     if (_editMode) {
       final steps = [WizardStep.preferences, WizardStep.dndClass, WizardStep.background, WizardStep.race, WizardStep.abilityScores];
       if (isSpellcaster) steps.add(WizardStep.spells);
@@ -230,7 +230,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       return 0;
     }
     if (className.contains('ranger') || className.contains('paladin')) {
-      // Half-caster: spell slot level table (levels 0-20)
+      // Lanzadores half (Ranger, Paladin): nivel de hechizo limitado por tabla PHB
       const table = [0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5];
       return table[level.clamp(0, 20)];
     }
@@ -290,7 +290,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       return table[level.clamp(0, 20)];
     }
     if (className.contains('bard')) {
-      // Magical Secrets slots are tracked separately; subtract them from the table
+      // Los slots de Magical Secrets se llevan aparte; restarlos de la tabla
       const table = [0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 15, 16, 18, 19, 19, 20, 22, 22, 22];
       return (table[level.clamp(0, 20)] - magicalSecretsSlots).clamp(0, 99);
     }
@@ -395,8 +395,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   void clearError() {_error = null; notifyListeners();}
   void _setLoading(bool v){ _isLoading = v; notifyListeners();}
   void _setError(String? v) {_error = v; notifyListeners();}
-  /// Public wrapper — lets external widgets trigger a rebuild without
-  /// violating the @protected restriction on notifyListeners().
+  /// Wrapper público — permite que widgets externos disparen un rebuild sin
+  /// violar la restricción @protected en notifyListeners().
   void notify() => notifyListeners();
 
   // - PASO 1: Preferencias
@@ -406,9 +406,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   // [DISABLED] XP/Encumbrance — not used. Always milestone, never encumbrance.
   // bool useMilestone = true;
   // bool useEncumbrance = false;
-  bool useMilestone = true;      // kept for backend call; always true
-  bool useEncumbrance = false;   // kept for backend call; always false
-  String abilityDisplayMode = 'SCORES_TOP'; // 'SCORES_TOP' or 'MODIFIERS_TOP'
+  bool useMilestone = true;      // mantenido para la llamada al backend; siempre true
+  bool useEncumbrance = false;   // mantenido para la llamada al backend; siempre false
+  String abilityDisplayMode = 'SCORES_TOP'; // 'SCORES_TOP' o 'MODIFIERS_TOP'
 
   void setName(String v) {characterName = v; _markDirty(WizardStep.preferences); notifyListeners();}
   void setAbilityDisplayMode(String v) {abilityDisplayMode = v; _markDirty(WizardStep.preferences); notifyListeners();}
@@ -433,7 +433,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _setError(null);
     try{
       classes = await _refService.getClasses();
-      // Edit mode: auto-select the character's existing class
+      // Modo edición: seleccionar automáticamente la clase existente del personaje
       if (_editMode && _initialClassId != null && selectedClass == null) {
         final matches = classes.where((c) => c.id == _initialClassId);
         if (matches.isNotEmpty) {
@@ -477,11 +477,11 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void clearClass() {
-    // Clear class feature choices before clearing selectedClass
+    // Limpiar elecciones de features de clase antes de limpiar selectedClass
     for (final c in classFeatureChoices) {
       featureChoices.remove(c.key);
     }
-    // Also clear individual multi-pick sub-keys (e.g. EXPERTISE_PICK_0_3)
+    // Limpiar también las sub-claves de multi-selección (p.ej. EXPERTISE_PICK_0_3)
     featureChoices.removeWhere((k, _) => k.contains('_PICK_'));
     selectedClass = null;
     selectedSubclass = null;
@@ -518,7 +518,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       subclasses = await _refService.getSubclasses(classId);
-      // Edit mode: auto-select the character's existing subclass
+      // Modo edición: seleccionar automáticamente la subclase existente del personaje
       if (_editMode && _initialSubclassId != null && selectedSubclass == null) {
         final matches = subclasses.where((s) => s.id == _initialSubclassId);
         if (matches.isNotEmpty) {
@@ -546,9 +546,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void clearSubclass() {
-    // Clear subclass-specific feature choices (Hunter choices etc.)
+    // Limpiar elecciones de features específicas de subclase (Hunter, etc.)
     for (final c in subclassFeatureChoices) featureChoices.remove(c.key);
-    // Also remove DRACONIC_ANCESTRY if it was a subclass-driven class choice
+    // Eliminar también DRACONIC_ANCESTRY si fue una elección de clase impulsada por subclase
     for (final c in classFeatureChoices) {
       if (c.type == 'DRACONIC_ANCESTRY') featureChoices.remove(c.key);
     }
@@ -630,7 +630,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   void toggleClassSkill(String skillIndex) {
     if (_classSkillIndices.contains(skillIndex)) {
       _classSkillIndices.remove(skillIndex);
-      // If this skill had expertise, remove those picks too
+      // Si esta skill tenía expertise, eliminar también esas elecciones
       _removeExpertisePicksForSkill(_skillIndexToDisplay(skillIndex));
     } else {
       final count = _effectiveSkillCount;
@@ -642,25 +642,25 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Converts a hyphenated skill index to a display name.
-  /// e.g. 'sleight-of-hand' → 'Sleight Of Hand'
+  /// Convierte un índice de skill con guiones en un nombre de pantalla.
+  /// p.ej. 'sleight-of-hand' → 'Sleight Of Hand'
   String _skillIndexToDisplay(String idx) =>
       idx.split('-').map((w) => w.isEmpty ? '' : w[0].toUpperCase() + w.substring(1)).join(' ');
 
-  /// Removes any EXPERTISE_PICK_* featureChoices whose value matches [displayName].
+  /// Elimina cualquier featureChoice EXPERTISE_PICK_* cuyo valor coincida con [displayName].
   void _removeExpertisePicksForSkill(String displayName) {
     featureChoices.removeWhere(
       (k, v) => k.contains('EXPERTISE_PICK') && v == displayName,
     );
   }
 
-  /// Normalises a skill index from the API: strips the leading 'skill-' prefix
-  /// that background proficiencies carry (e.g. 'skill-insight' → 'insight').
+  /// Normaliza un índice de skill del API: elimina el prefijo 'skill-'
+  /// que llevan las proficiencias de background (p.ej. 'skill-insight' → 'insight').
   static String _normalizeSkillIndex(String s) =>
       s.startsWith('skill-') ? s.substring(6) : s;
 
-  /// Skills granted by the currently selected background (normalized indices).
-  /// Used by the class skill picker to block already-covered skills.
+  /// Skills otorgadas por el background seleccionado actualmente (indices normalizados).
+  /// Usadas por el selector de skills de clase para bloquear las ya cubiertas.
   Set<String> get backgroundSkillIndices {
     if (selectedBackground == null) return const {};
     return selectedBackground!.skillProficiencies
@@ -668,13 +668,13 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         .toSet();
   }
 
-  /// Skills the character is already proficient in (class picks + background).
-  /// Used to restrict Expertise options to only valid choices per D&D 5e rules.
+  /// Skills en las que el personaje ya tiene proficiency (elecciones de clase + background).
+  /// Usadas para restringir las opciones de Expertise a elecciones válidas según las reglas de D&D 5e.
   Set<String> get _proficientSkillIndices {
     final indices = <String>{};
-    // Class skill picks (lowercase hyphenated, e.g. 'sleight-of-hand')
+    // Elecciones de skill de clase (en minúsculas con guiones, p.ej. 'sleight-of-hand')
     indices.addAll(_classSkillIndices);
-    // Background skill proficiencies — normalize 'skill-X' → 'X'
+    // Proficiencias de skill del background — normalizar 'skill-X' → 'X'
     if (selectedBackground != null) {
       for (final s in selectedBackground!.skillProficiencies) {
         indices.add(_normalizeSkillIndex(s));
@@ -683,12 +683,12 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     return indices;
   }
 
-  /// Returns only the kSkills options the character already has proficiency in.
-  /// Returns empty list if none are selected yet (Expertise requires prior proficiency).
+  /// Devuelve solo las opciones de kSkills en las que el personaje ya tiene proficiency.
+  /// Devuelve lista vacía si no hay ninguna seleccionada aún (Expertise requiere proficiency previa).
   List<DndChoiceOption> get proficientSkillOptions {
     final proficient = _proficientSkillIndices;
     if (proficient.isEmpty) return const [];
-    // Normalize kSkills name to index format: 'Sleight of Hand' → 'sleight-of-hand'
+    // Normalizar el nombre de kSkills al formato de índice: 'Sleight of Hand' → 'sleight-of-hand'
     String toIndex(String name) =>
         name.toLowerCase().replaceAll(' ', '-');
     final filtered = kSkills
@@ -707,7 +707,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _setError(null);
     try{
       backgrounds = await _refService.getBackgrounds();
-      // Edit mode: auto-select the character's existing background
+      // Modo edición: seleccionar automáticamente el background existente del personaje
       if (_editMode && _initialBackgroundId != null && selectedBackground == null) {
         final matches = backgrounds.where((b) => b.id == _initialBackgroundId);
         if (matches.isNotEmpty) selectedBackground = matches.first;
@@ -719,14 +719,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     }
   }
 
-  /// Selects the background and removes any class skill picks that conflict
-  /// (same skill can't come from both class and background in D&D 5e).
-  /// Returns the display names of any skills that were deselected from the class.
+  /// Selecciona el background y elimina las elecciones de skill de clase que entren en conflicto
+  /// (la misma skill no puede venir a la vez de clase y background en D&D 5e).
+  /// Devuelve los nombres de pantalla de las skills que se deseleccionaron de la clase.
   List<String> selectBackground(BackgroundOption b) {
     selectedBackground = b;
     _markDirty(WizardStep.background);
 
-    // Find class skills that overlap with background skill proficiencies.
+    // Encontrar skills de clase que solapan con las proficiencias de skill del background.
     // Background indices have a 'skill-' prefix (e.g. 'skill-insight'),
     // class indices do not (e.g. 'insight') — normalise before comparing.
     final bgNormalised = b.skillProficiencies
@@ -746,7 +746,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
     notifyListeners();
 
-    // Return human-readable display names for the UI to show a warning
+    // Devolver nombres legibles para mostrar una advertencia en la UI
     String toDisplay(String idx) =>
         idx.split('-').map((w) => w[0].toUpperCase() + w.substring(1)).join(' ');
     return conflicts.map(toDisplay).toList();
@@ -797,7 +797,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _setError(null);
     try{
       races = await _refService.getRaces();
-      // Edit mode: auto-select the character's existing race
+      // Modo edición: seleccionar automáticamente la raza existente del personaje
       if (_editMode && _initialRaceId != null && selectedRace == null) {
         final matches = races.where((r) => r.id == _initialRaceId);
         if (matches.isNotEmpty) selectedRace = matches.first;
@@ -810,9 +810,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void selectRace(RaceOption r) {
-    // Clear previous race AND subrace feature choices before switching
+    // Limpiar elecciones de features de raza y subraza anteriores antes de cambiar
     for (final c in raceFeatureChoices) featureChoices.remove(c.key);
-    for (final c in subraceFeatureChoices) featureChoices.remove(c.key); // must be before clearing subrace
+    for (final c in subraceFeatureChoices) featureChoices.remove(c.key); // debe ejecutarse antes de limpiar la subraza
     selectedRace = r;
     selectedSubrace = null;
     subraces = [];
@@ -835,7 +835,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void selectSubrace(SubraceOption s) {
-    // Clear previous subrace feature choices before switching
+    // Limpiar elecciones de features de subraza anteriores antes de cambiar
     for (final c in subraceFeatureChoices) {
       featureChoices.remove(c.key);
     }
@@ -845,7 +845,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   bool get raceValid {
-    if (_editMode) return selectedRace != null; // Race pre-selected; feature choices already resolved at creation
+    if (_editMode) return selectedRace != null; // Raza pre-seleccionada; las elecciones de features ya se resolvieron en la creación
     return selectedRace != null &&
       (subraces.isEmpty || selectedSubrace != null) &&
       raceFeatureChoicesDone;
@@ -946,7 +946,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   // ── Magical Secrets ─────────────────────────────────────────
-  /// How many Magical Secrets picks are available (PHB: 2 at lv10, +2 at lv14, +2 at lv18).
+  /// Cuántos slots de Magical Secrets están disponibles (PHB: 2 en nv10, +2 en nv14, +2 en nv18).
   int get magicalSecretsSlots {
     final className = selectedClass?.name.toLowerCase() ?? '';
     if (!className.contains('bard')) return 0;
@@ -957,7 +957,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     return 0;
   }
 
-  /// Extra 2 free picks for College of Lore bards at level 6+ (Additional Magical Secrets).
+  /// 2 elecciones extra gratuitas para bards del College of Lore a nivel 6+ (Additional Magical Secrets).
   int get additionalMagicalSecretsSlots {
     final subName = selectedSubclass?.name.toLowerCase() ?? '';
     if (!subName.contains('lore')) return 0;
@@ -1071,14 +1071,14 @@ void toggleItem(int itemId) {
   // Feature Choices — inline en el step de clase y el step de raza
   // ────────────────────────────────────────────────────────────
 
-  /// Raw class feature choices (all levels up to selectedLevel, unfiltered).
+  /// Elecciones de features de clase sin filtrar (todos los niveles hasta selectedLevel).
   List<WizardChoiceConfig> _buildClassFeatureChoices() {
     final choices = <WizardChoiceConfig>[];
     final className = selectedClass?.name.toLowerCase() ?? '';
     final subcName  = selectedSubclass?.name.toLowerCase() ?? '';
     final level     = selectedLevel;
 
-    // Fighter: Fighting Style at level 1
+    // Fighter: Fighting Style en el nivel 1
     if (className.contains('fighter') && level >= 1) {
       choices.add(const WizardChoiceConfig(
         type: 'FIGHTING_STYLE', level: 1,
@@ -1086,7 +1086,7 @@ void toggleItem(int itemId) {
         options: kFightingStyles,
       ));
     }
-    // Paladin: Fighting Style at level 2
+    // Paladin: Fighting Style en el nivel 2
     if (className.contains('paladin') && level >= 2) {
       choices.add(const WizardChoiceConfig(
         type: 'FIGHTING_STYLE', level: 2,
@@ -1094,7 +1094,7 @@ void toggleItem(int itemId) {
         options: kFightingStyles,
       ));
     }
-    // Ranger: Fighting Style at level 2
+    // Ranger: Fighting Style en el nivel 2
     if (className.contains('ranger') && level >= 2) {
       choices.add(const WizardChoiceConfig(
         type: 'FIGHTING_STYLE', level: 2,
@@ -1102,7 +1102,7 @@ void toggleItem(int itemId) {
         options: kRangerFightingStyles,
       ));
     }
-    // Ranger: Favored Enemy at levels 1, 6, 14
+    // Ranger: Favored Enemy en los niveles 1, 6, 14
     if (className.contains('ranger')) {
       for (final l in [1, 6, 14]) {
         if (level >= l) {
@@ -1113,7 +1113,7 @@ void toggleItem(int itemId) {
           ));
         }
       }
-      // Natural Explorer Terrain at levels 1, 6, 10
+      // Natural Explorer Terrain en los niveles 1, 6, 10
       for (final l in [1, 6, 10]) {
         if (level >= l) {
           choices.add(WizardChoiceConfig(
@@ -1124,8 +1124,8 @@ void toggleItem(int itemId) {
         }
       }
     }
-    // ASI_OR_FEAT — available at level 4, 8, 12, 16, 19 for most classes;
-    // Fighter also at 6, 14; Rogue also at 10, 18. Marked optional (not blocking).
+    // ASI_OR_FEAT — disponible en los niveles 4, 8, 12, 16, 19 para la mayoría de clases;
+    // Fighter también en 6, 14; Rogue también en 10, 18. Marcado como opcional (no bloqueante).
     {
       final List<int> asiLevels;
       if (className.contains('fighter')) {
@@ -1140,7 +1140,7 @@ void toggleItem(int itemId) {
           choices.add(WizardChoiceConfig(
             type: 'ASI_OR_FEAT', level: l,
             label: 'Ability Score Improvement (lv $l)',
-            options: const [], // handled by special ASI widget, options unused here
+            options: const [], // gestionado por el widget especial de ASI, opciones no utilizadas aquí
             required: false,
           ));
         }
@@ -1156,8 +1156,8 @@ void toggleItem(int itemId) {
         options: kDraconicAncestries,
       ));
     }
-    // ── Expertise: doubles proficiency bonus for chosen skills ──────────────
-    // Rogue: lv 1 and lv 6 (2 skills each)
+    // ── Expertise: duplica el bonus de proficiency para las skills elegidas ───────────────
+    // Rogue: nv 1 y nv 6 (2 skills cada uno)
     if (className.contains('rogue')) {
       for (final l in [1, 6]) {
         if (level >= l) choices.add(WizardChoiceConfig(
@@ -1169,7 +1169,7 @@ void toggleItem(int itemId) {
         ));
       }
     }
-    // Bard: lv 3 and lv 10 (2 skills each)
+    // Bard: nv 3 y nv 10 (2 skills cada uno)
     if (className.contains('bard')) {
       for (final l in [3, 10]) {
         if (level >= l) choices.add(WizardChoiceConfig(
@@ -1182,7 +1182,7 @@ void toggleItem(int itemId) {
       }
     }
     // ── Sorcerer Metamagic ───────────────────────────────────────────────────
-    // lv 3: 2 picks; lv 10 and 17: 1 pick each
+    // Nv 3: 2 elecciones; nv 10 y 17: 1 elección cada uno
     if (className.contains('sorcerer')) {
       if (level >= 3)  choices.add(WizardChoiceConfig(type: 'METAMAGIC', level: 3,  label: 'Metamagic (lv 3)',  options: kMetamagicOptions, pickCount: 2, required: false));
       if (level >= 10) choices.add(WizardChoiceConfig(type: 'METAMAGIC', level: 10, label: 'Metamagic (lv 10)', options: kMetamagicOptions, required: false));
@@ -1259,7 +1259,7 @@ void toggleItem(int itemId) {
     return choices;
   }
 
-  /// Choices required by the selected subrace (e.g. High Elf cantrip, extra language).
+  /// Choices requeridas por la subraza seleccionada (p.ej. cantrip de High Elf, idioma extra).
   List<WizardChoiceConfig> get subraceFeatureChoices {
     final choices = <WizardChoiceConfig>[];
     final subIdx = selectedSubrace?.indexName.toLowerCase() ?? '';
@@ -1278,8 +1278,8 @@ void toggleItem(int itemId) {
     return choices;
   }
 
-  /// Choices required by the selected class at the selected level.
-  /// In level-up mode only returns choices for NEW levels (> originalLevel).
+  /// Choices requeridas por la clase seleccionada en el nivel seleccionado.
+  /// En modo nivel-up solo devuelve elecciones para niveles NUEVOS (> originalLevel).
   List<WizardChoiceConfig> get classFeatureChoices {
     final rawChoices = _buildClassFeatureChoices();
     if (_levelUpMode) {
@@ -1288,11 +1288,11 @@ void toggleItem(int itemId) {
     return rawChoices;
   }
 
-  /// All class feature choices for ALL levels (used in level-up mode to
-  /// look up previously made choices for read-only display).
+  /// Todas las elecciones de features de clase para TODOS los niveles (usado en modo nivel-up
+  /// para mostrar en modo lectura las elecciones previas).
   List<WizardChoiceConfig> get allClassFeatureChoices => _buildClassFeatureChoices();
 
-  /// Map of choice key (e.g. 'FAVORED_ENEMY_1') → selected option name.
+  /// Mapa de clave de elección (p.ej. 'FAVORED_ENEMY_1') → nombre de opción seleccionada.
   final Map<String, String> featureChoices = {};
 
   void setFeatureChoice(String key, String value) {
@@ -1300,7 +1300,7 @@ void toggleItem(int itemId) {
     notifyListeners();
   }
 
-  /// Choices required by the selected subclass at the selected level.
+  /// Choices requeridas por la subclase seleccionada en el nivel seleccionado.
   List<WizardChoiceConfig> get subclassFeatureChoices {
     final choices = <WizardChoiceConfig>[];
     final subcIdx  = selectedSubclass?.indexName.toLowerCase() ?? '';
@@ -1473,8 +1473,8 @@ void toggleItem(int itemId) {
 
   // Carga automática al cambiar de paso
 
-  /// Pre-loads all reference data needed for edit mode and auto-selects the
-  /// character's existing class, subclass, background and race.
+  /// Pre-carga todos los datos de referencia necesarios para el modo edición y
+  /// selecciona automáticamente la clase, subclase, background y raza del personaje.
   Future<void> loadEditData() async {
     if (!_editMode) return;
     await loadClasses();     // also triggers _loadSubclassesFor → auto-selects subclass
@@ -1483,7 +1483,7 @@ void toggleItem(int itemId) {
     if (isSpellcaster) await loadAvailableSpells();
   }
 
-  /// Pre-loads class data for level-up mode and auto-selects the existing class.
+  /// Pre-carga los datos de clase para el modo nivel-up y selecciona la clase existente.
   Future<void> loadLevelUpData() async {
     if (!_levelUpMode) return;
     await loadClasses(); // auto-selects existing class + subclass
@@ -1502,8 +1502,8 @@ void toggleItem(int itemId) {
     }
   }
 
-  /// Submits changes in edit mode: level-ups the character if level increased,
-  /// updates profile fields, then auto-resolves any new feature choices.
+  /// Envía los cambios en modo edición: sube de nivel el personaje si el nivel ha aumentado,
+  /// actualiza los campos del perfil y auto-resuelve las nuevas elecciones de features.
   Future<void> _submitEdit() async {
     if (_editCharacterId == null) return;
     _isSaving = true;
@@ -1518,7 +1518,7 @@ void toggleItem(int itemId) {
         }
       }
 
-      // 2. Update profile metadata
+      // 2. Actualizar metadatos del perfil
       await _charService.updateProfile(
         id: _editCharacterId!,
         name: characterName.trim(),
@@ -1554,7 +1554,7 @@ void toggleItem(int itemId) {
         await _autoResolveFeatureChoices(_editCharacterId!);
       }
 
-      // 4. Sync spells: level-up adds only new ones; edit mode adds new and removes deselected
+      // 4. Sincronizar spells: nivel-up añade solo los nuevos; modo edición añade nuevos y elimina los deseleccionados
       if (_levelUpMode) {
         final newSpellIds = selectedSpellIds.difference(_preExistingSpellIds);
         if (newSpellIds.isNotEmpty) {
@@ -1589,8 +1589,8 @@ void toggleItem(int itemId) {
     }
   }
 
-  /// Loads pending tasks for the newly created character and silently resolves
-  /// any task whose key (taskType_relatedLevel) matches a wizard-collected choice.
+  /// Carga las tareas pendientes del personaje recién creado y resuelve silenciosamente
+  /// cualquier tarea cuya clave (taskType_relatedLevel) coincida con una elección recogida en el wizard.
   Future<void> _autoResolveFeatureChoices(int characterId) async {
     try {
       final tasks = await _pendingTaskService.getPendingTasks(characterId);

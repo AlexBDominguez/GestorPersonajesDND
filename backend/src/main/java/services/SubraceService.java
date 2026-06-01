@@ -43,7 +43,7 @@ public class SubraceService {
         s.setRace(race);
         s.setDescription(dto.getDescription());
         s.setAbilityBonuses(dto.getAbilityBonuses());
-        // Traits are managed via sync; skip setting from DTO
+        // Los traits se gestionan vía sync; no se establecen desde el DTO
         return toDto(subraceRepository.save(s));
     }
 

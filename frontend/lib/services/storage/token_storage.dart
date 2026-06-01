@@ -7,11 +7,11 @@ class TokenStorage {
   static const _roleKey     = 'auth_role';
   static const _refreshKey  = 'auth_refresh_token';
 
-  // In-memory refresh token cache (shared across all instances via static field).
+  // Caché en memoria del refresh token (compartida entre todas las instancias mediante campo estático).
   static String? _memRefreshToken;
 
-  // Tracks whether the refresh token was persisted to secure storage
-  // so that rotation knows whether to persist the replacement.
+  // Indica si el refresh token fue persistido en almacenamiento seguro
+  // para que la rotación sepa si persistir el reemplazo.
   static bool _refreshTokenPersisted = false;
 
   final _secure = const FlutterSecureStorage(
@@ -45,9 +45,9 @@ class TokenStorage {
 
   // ── Refresh token (secure storage + memory cache) ─────────────────────────
 
-  /// Saves the refresh token.
-  /// [persist] = true  → also write to encrypted secure storage (rememberMe=true).
-  /// [persist] = null  → reuse whatever the previous decision was (used by rotation).
+  /// Guarda el refresh token.
+  /// [persist] = true  → también escribe en almacenamiento seguro cifrado (rememberMe=true).
+  /// [persist] = null  → reutiliza la decisión anterior (usado por la rotación).
   Future<void> saveRefreshToken(String token, {bool? persist}) async {
     _memRefreshToken = token;
     final shouldPersist = persist ?? _refreshTokenPersisted;
@@ -59,7 +59,7 @@ class TokenStorage {
 
   Future<String?> getRefreshToken() async {
     if (_memRefreshToken != null) return _memRefreshToken;
-    // Cold start: try to load persisted value
+    // Arranque en frío: intentar cargar el valor persistido
     final persisted = await _secure.read(key: _refreshKey);
     if (persisted != null) {
       _memRefreshToken       = persisted;

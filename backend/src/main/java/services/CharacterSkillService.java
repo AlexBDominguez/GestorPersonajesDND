@@ -92,7 +92,7 @@ public class CharacterSkillService {
         characterSkillRepository.save(characterSkill);
     }
 
-    /** Sets expertise=true for the skill with the given display name on the given character. */
+    /** Establece expertise=true para la skill con el nombre de pantalla dado en el personaje indicado. */
     @Transactional
     public void applyExpertiseByName(PlayerCharacter character, String skillName) {
         List<CharacterSkill> skills = characterSkillRepository.findByCharacter(character);
@@ -110,8 +110,8 @@ public class CharacterSkillService {
 
     @Transactional
 public void applySkillProficiencyByIndex(PlayerCharacter character, String skillIndex) {
-    // Background skill proficiencies arrive as e.g. "skill-insight" from the API,
-    // but the skills table stores index_name without the "skill-" prefix.
+    // Las proficiencias de skill del background llegan como p.ej. "skill-insight" desde la API,
+    // pero la tabla de skills almacena index_name sin el prefijo "skill-".
     String normalizedIndex = skillIndex.startsWith("skill-") ? skillIndex.substring(6) : skillIndex;
     Skill skill = skillRepository.findByIndexName(normalizedIndex)
             .orElseThrow(() -> new RuntimeException("Skill not found: " + normalizedIndex));
@@ -129,3 +129,4 @@ public void applySkillProficiencyByIndex(PlayerCharacter character, String skill
 }
 
 }
+r tareas pendientes para las elecciones de raza (p.ejr tareas pendientes para todas las features que requieren elección del nivel 1 al nivel seleccionadocializar recursos de clase (cargas de Rabialicar elecciones de skill de clase del

@@ -3,7 +3,7 @@ package sync;
 public class ApiRateLimiter {
     
 
-    private static final long DELAY_BETWEEN_REQUESTS_MS = 500; // 1 second delay
+    private static final long DELAY_BETWEEN_REQUESTS_MS = 500; // retardo de 1 segundo
 
     public static void waitBetweenRequests() {
         try {

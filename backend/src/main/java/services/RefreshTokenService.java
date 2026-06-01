@@ -20,7 +20,7 @@ public class RefreshTokenService {
     private final RefreshTokenRepository repo;
 
     @Value("${jwt.refresh.expiration:2592000000}")
-    private long refreshExpirationMs; // default: 30 days
+    private long refreshExpirationMs; // por defecto: 30 días
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -29,8 +29,8 @@ public class RefreshTokenService {
     }
 
     /**
-     * Creates a new refresh token for {@code username}, persists its SHA-256 hash,
-     * and returns the raw (plain-text) token that must be sent to the client.
+     * Crea un nuevo refresh token para {@code username}, persiste su hash SHA-256
+     * y devuelve el token en texto plano que debe enviarse al cliente.
      */
     @Transactional
     public String generate(String username, String deviceInfo) {
@@ -50,11 +50,11 @@ public class RefreshTokenService {
     }
 
     /**
-     * Validates {@code rawToken}, revokes it, and returns a fresh replacement
-     * token together with the owning username (token rotation).
+     * Valida {@code rawToken}, lo revoca y devuelve un token de reemplazo
+     * junto con el nombre de usuario propietario (rotación de tokens).
      *
-     * <p>If a <em>previously revoked</em> token is presented we assume possible
-     * theft and revoke <strong>all</strong> tokens for that user.</p>
+     * <p>Si se presenta un token <em>previamente revocado</em>, se asume un posible
+     * robo y se revocan <strong>todos</strong> los tokens de ese usuario.</p>
      */
     @Transactional
     public RotateResult rotate(String rawToken, String deviceInfo) {
@@ -64,7 +64,7 @@ public class RefreshTokenService {
                 .orElseThrow(() -> new RuntimeException("INVALID_REFRESH_TOKEN"));
 
         if (Boolean.TRUE.equals(rt.getRevoked())) {
-            // Possible token-reuse attack — revoke every token for this user
+            // Posible ataque de reutilización de token — revocar todos los tokens del usuario
             repo.revokeAllByUsername(rt.getUsername());
             throw new RuntimeException("REFRESH_TOKEN_REVOKED");
         }
@@ -75,7 +75,7 @@ public class RefreshTokenService {
             throw new RuntimeException("REFRESH_TOKEN_EXPIRED");
         }
 
-        // Rotate: mark old as revoked, issue a brand-new one
+        // Rotación: marcar el token anterior como revocado y emitir uno nuevo
         rt.setRevoked(true);
         repo.save(rt);
 
@@ -83,7 +83,7 @@ public class RefreshTokenService {
         return new RotateResult(rt.getUsername(), newRawToken);
     }
 
-    /** Revokes a single refresh token (called on explicit logout). */
+    /** Revoca un único refresh token (se llama al cerrar sesión explícitamente). */
     @Transactional
     public void revoke(String rawToken) {
         String hash = sha256(rawToken);
@@ -93,7 +93,7 @@ public class RefreshTokenService {
         });
     }
 
-    /** Nightly cleanup at 03:00 — removes expired and revoked rows. */
+    /** Limpieza nocturna a las 03:00 — elimina filas caducadas y revocadas. */
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
     public void cleanup() {

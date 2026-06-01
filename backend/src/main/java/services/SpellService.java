@@ -44,18 +44,18 @@ public class SpellService {
     }
 
     public List<Spell> getAvailableSpells(Long classId, Long subclassId, Integer maxLevel){
-        // Check if this class has spells linked (full/half-casters do; Fighter/Rogue don't)
+        // Comprobar si esta clase tiene spells vinculados (los lanzadores full/half los tienen; Fighter/Rogue no)
         boolean classHasSpells = classId != null &&
                 !spellRepository.findByDndClassesId(classId).isEmpty();
 
-        // If the class has no spells but a subclass is provided and that subclass has
-        // spellcasting (e.g. Eldritch Knight / Arcane Trickster), use the Wizard spell list
+        // Si la clase no tiene spells pero se ha indicado una subclase que sí tiene
+        // lanzamiento de spells (p.ej. Eldritch Knight / Arcane Trickster), usar la lista del Wizard
         Long resolvedClassId = classId;
         if (!classHasSpells && subclassId != null) {
             Subclass subclass = subclassRepository.findById(subclassId).orElse(null);
             if (subclass != null && subclass.getSpellcastingAbility() != null
                     && !subclass.getSpellcastingAbility().isEmpty()) {
-                // Third-caster: use Wizard list (abjuration + evocation focus, but list is Wizard)
+                // Lanzador 1/3: usar lista del Wizard (enfoque en abjuración + evocación, pero la lista es de Wizard)
                 DndClass wizard = dndClassRepository.findAll().stream()
                         .filter(c -> "Wizard".equalsIgnoreCase(c.getName()))
                         .findFirst().orElse(null);

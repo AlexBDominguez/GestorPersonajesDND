@@ -5,7 +5,7 @@ import 'package:gestor_personajes_dnd/services/auth/auth_service.dart';
 import 'package:gestor_personajes_dnd/services/storage/token_storage.dart';
 
 class ApiClient{
-  /// Called when the server returns 401 or 403 — signals the app to log out.
+  /// Se llama cuando el servidor devuelve 401 o 403 — indica a la app que cierre sesión.
   static void Function()? onSessionExpired;
   final TokenStorage _tokenStorage;
   final AuthService _authService;

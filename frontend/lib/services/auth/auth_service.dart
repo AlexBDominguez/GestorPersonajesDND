@@ -68,8 +68,8 @@ class AuthService {
         body: jsonEncode({'refreshToken': refreshToken}),
       ).timeout(const Duration(seconds: 5));
     } catch (_) {
-      // Best-effort: server-side revocation is nice to have but client
-      // clears local state regardless.
+      // Intento best-effort: la revocación del lado servidor es opcional;
+      // el cliente limpia el estado local independientemente.
     }
   }
 }

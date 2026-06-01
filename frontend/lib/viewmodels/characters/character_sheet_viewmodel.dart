@@ -63,10 +63,10 @@ class CharacterSheetViewModel extends ChangeNotifier {
   final PendingTaskService _taskService = PendingTaskService();
   final InventoryService _inventoryService;
   List<PendingTask> _pendingTasks = [];
-  /// Only incomplete tasks — completed ones are displayed elsewhere (Features tab).
-  /// Also filters out tasks that are handled outside the pending-tasks flow:
-  ///   • LEARN_SPELLS / PREPARE_SPELLS – initial spells added directly in the wizard
-  ///   • CHOOSE_SUBCLASS – subclass was assigned in the wizard
+  /// Solo las tareas incompletas — las completadas se muestran en otra pestaña (Features).
+  /// También filtra las tareas gestionadas fuera del flujo de pending tasks:
+  ///   • LEARN_SPELLS / PREPARE_SPELLS – los spells iniciales se añaden directamente en el wizard
+  ///   • CHOOSE_SUBCLASS – la subclase se asignó en el wizard
   List<PendingTask> get pendingTasks => _pendingTasks.where((t) {
     if (t.completed) return false;
     if (t.taskType == 'LEARN_SPELLS' || t.taskType == 'PREPARE_SPELLS') return false;
@@ -194,12 +194,12 @@ class CharacterSheetViewModel extends ChangeNotifier {
     }
   }
 
-  // ── Optimistic spell prepared state ────────────────────────────────────────
-  // Non-null while a togglePrepareSpell call is in-flight; cleared by silentRefresh.
+  // ── Estado optimista del spell preparado ────────────────────────────────────────────
+  // No nulo mientras una llamada a togglePrepareSpell está en vuelo; limpiado por silentRefresh.
   List<CharacterSpell>? _optimisticSpells;
 
-  /// The authoritative spell list for the UI: uses the optimistic override while
-  /// the API call is in-flight, then falls back to the model data.
+  /// La lista de spells autoritativa para la UI: usa la sobreescritura optimista mientras
+  /// la llamada a la API está en vuelo y luego vuelve a los datos del modelo.
   List<CharacterSpell> get currentSpells =>
       _optimisticSpells ?? character?.characterSpells ?? [];
 
@@ -258,7 +258,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
 
   Future<void> togglePrepareSpell(int spellId) async {
     final spell = currentSpells.where((s) => s.spellId == spellId).firstOrNull;
-    // Validate prepare limit before applying optimistic update
+    // Validar el límite de preparación antes de aplicar la actualización optimista
     if (spell != null && !spell.prepared && !spell.isCantrip && !alwaysPreparedClass) {
       final preparedCount = currentSpells.where((s) => s.prepared && !s.isCantrip).length;
       final max = character!.maxPreparedSpells;
@@ -268,7 +268,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
         return;
       }
     }
-    // Optimistic update: flip prepared flag immediately
+    // Actualización optimista: cambiar el flag prepared inmediatamente
     final newPrepared = !(spell?.prepared ?? false);
     _optimisticSpells = currentSpells
         .map((s) => s.spellId == spellId ? s.copyWith(prepared: newPrepared) : s)
@@ -276,9 +276,9 @@ class CharacterSheetViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       await _service.togglePrepareSpell(characterId: characterId, spellId: spellId);
-      await silentRefresh(); // clears _optimisticSpells and syncs server state
+      await silentRefresh(); // limpia _optimisticSpells y sincroniza el estado del servidor
     } catch (e) {
-      _optimisticSpells = null; // revert to model data (API call failed, server unchanged)
+      _optimisticSpells = null; // revertir a datos del modelo (fallo de llamada API, servidor sin cambios)
       _errorMessage = e.toString().replaceFirst('Exception', '');
       notifyListeners();
     }
@@ -440,8 +440,8 @@ class CharacterSheetViewModel extends ChangeNotifier {
     }
   }
 
-  /// Loads available subclasses for the character's class (used by the
-  /// CHOOSE_SUBCLASS pending task resolver).
+  /// Carga las subclases disponibles para la clase del personaje (usado por el
+  /// resolvedor de tareas pendientes CHOOSE_SUBCLASS).
   Future<List<SubclassOption>> loadSubclassOptions() async {
     final classId = character?.dndClassId;
     if (classId == null) return [];
@@ -530,8 +530,8 @@ class CharacterSheetViewModel extends ChangeNotifier {
 
   bool isConsumableFeature(ClassFeature f) => featureMaxUses(f) > 0;
 
-  /// Returns true if this feature uses a pool UI (counter + Use button)
-  /// rather than individual circles.
+  /// Devuelve true si esta feature usa una UI de pool (contador + botón Usar)
+  /// en lugar de círculos individuales.
   bool isPoolResource(ClassFeature f) {
     final key = f.indexName.toLowerCase();
     return key == 'rage'                   ||
@@ -621,8 +621,8 @@ class CharacterSheetViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Returns the resolved choice value (from completed tasks) for a given
-  /// task type and level, or null if not resolved yet.
+  /// Devuelve el valor de elección resuelto (de las tareas completadas) para un
+  /// tipo de tarea y nivel dados, o null si aún no se ha resuelto.
   String? resolvedChoiceFor(String taskType, int level) {
     for (final task in _pendingTasks) {
       if (task.taskType == taskType && task.relatedLevel == level && task.completed) {
@@ -698,7 +698,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
   String get spellcastingAbility {
     final cls = character?.dndClassName?.toLowerCase() ?? '';
     final sub = character?.subclassName?.toLowerCase() ?? '';
-    // Subclass-based spellcasters (third-casters use INT)
+    // Lanzadores basados en subclase (los lanzadores 1/3 usan INT)
     if (sub.contains('eldritch knight') || sub.contains('arcane trickster')) return 'INT';
     if (cls.contains('wizard')) return 'INT';
     if (cls.contains('cleric') || cls.contains('druid') ||
@@ -711,8 +711,8 @@ class CharacterSheetViewModel extends ChangeNotifier {
   bool get alwaysPreparedClass {
     final cls = character?.dndClassName?.toLowerCase() ?? '';
     final sub = character?.subclassName?.toLowerCase() ?? '';
-    // Eldritch Knight and Arcane Trickster are subclass-based casters:
-    // they do NOT prepare spells (they know a fixed list)
+    // Eldritch Knight y Arcane Trickster son lanzadores basados en subclase:
+    // NO preparan spells (conocen una lista fija)
     if (sub.contains('eldritch knight') || sub.contains('arcane trickster')) return true;
     return cls.contains('bard') || cls.contains('sorcerer') ||
         cls.contains('warlock') || cls.contains('ranger');
