@@ -548,10 +548,6 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   void clearSubclass() {
     // Limpiar elecciones de features específicas de subclase (Hunter, etc.)
     for (final c in subclassFeatureChoices) featureChoices.remove(c.key);
-    // Eliminar también DRACONIC_ANCESTRY si fue una elección de clase impulsada por subclase
-    for (final c in classFeatureChoices) {
-      if (c.type == 'DRACONIC_ANCESTRY') featureChoices.remove(c.key);
-    }
     selectedSubclass = null;
     subclassFeatures = [];
     _markDirty(WizardStep.dndClass);
@@ -1075,7 +1071,6 @@ void toggleItem(int itemId) {
   List<WizardChoiceConfig> _buildClassFeatureChoices() {
     final choices = <WizardChoiceConfig>[];
     final className = selectedClass?.name.toLowerCase() ?? '';
-    final subcName  = selectedSubclass?.name.toLowerCase() ?? '';
     final level     = selectedLevel;
 
     // Fighter: Fighting Style en el nivel 1
@@ -1145,16 +1140,6 @@ void toggleItem(int itemId) {
           ));
         }
       }
-    }
-    // Draconic Sorcerer: Draconic Ancestry at level 1
-    if (className.contains('sorcerer') &&
-        subcName.contains('draconic') &&
-        level >= 1) {
-      choices.add(const WizardChoiceConfig(
-        type: 'DRACONIC_ANCESTRY', level: 1,
-        label: 'Draconic Ancestry',
-        options: kDraconicAncestries,
-      ));
     }
     // ── Expertise: duplica el bonus de proficiency para las skills elegidas ───────────────
     // Rogue: nv 1 y nv 6 (2 skills cada uno)
@@ -1349,6 +1334,15 @@ void toggleItem(int itemId) {
         options: kSkills,
         pickCount: 3,
         required: false,
+      ));
+    }
+
+    // Draconic Bloodline Sorcerer: Draconic Ancestry at level 1
+    if (subcIdx.contains('draconic') && level >= 1) {
+      choices.add(const WizardChoiceConfig(
+        type: 'DRACONIC_ANCESTRY', level: 1,
+        label: 'Draconic Ancestry',
+        options: kDraconicAncestries,
       ));
     }
 

@@ -365,8 +365,10 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                               'BATTLEMASTER_MANEUVER_5' ||
                               'BATTLEMASTER_MANEUVER_6' ||
                               'BATTLEMASTER_MANEUVER_7'  => fname.contains('combat superiority') || fname.contains('maneuver'),
-                              'LORE_BARD_MAGIC'          => fname.contains('additional magical secret') || fname.contains('magical secrets'),
-                              'COLLEGE_OF_LORE_SKILLS'   => fname.contains('bonus proficienc'),
+                              'DRACONIC_ANCESTRY'        => fname.contains('draconic ancestry'),
+                              'FOUR_ELEM_DISC_1' ||
+                              'FOUR_ELEM_DISC_2'         => fname.contains('disciple of the elements'),
+                              'LORE_BONUS_PROF'          => fname.contains('bonus proficienc'),
                               _                          => false,
                             };
                           });
