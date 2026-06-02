@@ -108,6 +108,21 @@ public class CharacterSkillService {
     }
 
 
+    /** Establece proficient=true para la skill con el nombre de pantalla dado en el personaje indicado. */
+    @Transactional
+    public void applySkillProficiencyByName(PlayerCharacter character, String skillName) {
+        List<CharacterSkill> skills = characterSkillRepository.findByCharacter(character);
+        for (CharacterSkill cs : skills) {
+            if (cs.getSkill().getName().equalsIgnoreCase(skillName.trim())) {
+                cs.setProficient(true);
+                characterSkillRepository.save(cs);
+                System.out.println("Applied skill proficiency: " + skillName + " for " + character.getName());
+                return;
+            }
+        }
+        System.out.println("Skill not found for proficiency: " + skillName + " on " + character.getName());
+    }
+
     @Transactional
 public void applySkillProficiencyByIndex(PlayerCharacter character, String skillIndex) {
     // Las proficiencias de skill del background llegan como p.ej. "skill-insight" desde la API,
@@ -129,4 +144,3 @@ public void applySkillProficiencyByIndex(PlayerCharacter character, String skill
 }
 
 }
-r tareas pendientes para las elecciones de raza (p.ejr tareas pendientes para todas las features que requieren elección del nivel 1 al nivel seleccionadocializar recursos de clase (cargas de Rabialicar elecciones de skill de clase del

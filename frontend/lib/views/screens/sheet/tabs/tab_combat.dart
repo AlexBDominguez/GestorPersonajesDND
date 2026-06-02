@@ -91,6 +91,10 @@ class _TabCombatState extends State<TabCombat> {
           _SpellAttackTable(spells: bonusSpells, vm: vm),
           const SizedBox(height: 8),
         ],
+        if (vm.offhandWeapon != null) ...[
+          _OffhandWeaponCard(weapon: vm.offhandWeapon!, character: c, vm: vm),
+          const SizedBox(height: 8),
+        ],
         _StaticSection(actions: kBonusActions),
         if (bonusFeatures.isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -695,6 +699,158 @@ class _StandardActionsCard extends StatelessWidget {
 }
 
 // ── Spell Attack Table (no CAST button, no per-row slot tracker) ──────────────
+
+// ── Offhand Weapon Card (Bonus Action) ────────────────────────────────────────
+
+class _OffhandWeaponCard extends StatelessWidget {
+  final InventoryItem weapon;
+  final PlayerCharacter character;
+  final CharacterSheetViewModel vm;
+
+  const _OffhandWeaponCard({
+    required this.weapon,
+    required this.character,
+    required this.vm,
+  });
+
+  bool get _isRanged => weapon.weaponRange?.toLowerCase() == 'ranged';
+
+  bool get _isFinesse =>
+      weapon.weaponProperties.any((p) => p.toLowerCase().contains('finesse'));
+
+  int get _abilityMod {
+    final str = character.modifier('STR');
+    final dex = character.modifier('DEX');
+    if (_isRanged) return dex;
+    if (_isFinesse) return str > dex ? str : dex;
+    return str;
+  }
+
+  int get _toHitBonus => character.proficiencyBonus + _abilityMod;
+
+  String get _toHitText {
+    final b = _toHitBonus;
+    return b >= 0 ? '+$b' : '$b';
+  }
+
+  /// Daño: sin modificador de habilidad (a menos que tenga Two-Weapon Fighting).
+  String get _damageText {
+    final dice = weapon.damageDice ?? '';
+    if (dice.isEmpty) return '—';
+    if (vm.hasTwoWeaponFighting) {
+      final mod = _abilityMod;
+      if (mod > 0) return '$dice+$mod';
+      if (mod < 0) return '$dice$mod';
+      return dice;
+    }
+    // Sin Two-Weapon Fighting: sin modificador de habilidad al daño
+    return dice;
+  }
+
+  String get _rangeLabel {
+    final range = weapon.weaponRange;
+    if (range == null || range.isEmpty) return 'Melee';
+    return range[0].toUpperCase() + range.substring(1).toLowerCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final twoWF = vm.hasTwoWeaponFighting;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF48A999).withOpacity(0.5)),
+      ),
+      child: Column(children: [
+        // Header
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: const BoxDecoration(
+            color: Color(0xFF0E2828),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+          ),
+          child: Row(children: [
+            const Icon(Icons.swap_horiz,
+                color: Color(0xFF48A999), size: 14),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text('OFF-HAND ATTACK',
+                  style: const TextStyle(
+                      color: Color(0xFF48A999),
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5)),
+            ),
+            const SizedBox(width: _kHitDcW + _kColGap + _kDmgW,),
+          ]),
+        ),
+        // Row
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(weapon.name,
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textPrimary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis),
+                    Text('$_rangeLabel · Bonus Action',
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary, fontSize: 10)),
+                    if (!twoWF)
+                      Text('No ability mod to damage',
+                          style: GoogleFonts.lato(
+                              color: AppTheme.textSecondary.withOpacity(0.7),
+                              fontSize: 9,
+                              fontStyle: FontStyle.italic)),
+                  ]),
+            ),
+            SizedBox(
+              width: _kHitDcW,
+              child: Text(_toHitText,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lato(
+                      color: const Color(0xFFC8A45A),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600)),
+            ),
+            const SizedBox(width: _kColGap),
+            SizedBox(
+              width: _kDmgW,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_damageText,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.lato(
+                          color: const Color(0xFFCB7A48),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600)),
+                  if (weapon.damageType != null &&
+                      weapon.damageType!.isNotEmpty)
+                    Text(weapon.damageType!,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.3)),
+                ],
+              ),
+            ),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
 
 // ── Weapon Attack Table ────────────────────────────────────────────────────────
 

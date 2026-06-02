@@ -8,10 +8,12 @@ import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/character/racial_trait.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
+import 'package:gestor_personajes_dnd/models/wizard/feat_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
 import 'package:gestor_personajes_dnd/services/characters/pending_task_service.dart';
+import 'package:gestor_personajes_dnd/services/feats/feat_service.dart';
 import 'package:gestor_personajes_dnd/services/inventory/inventory_service.dart';
 import 'package:gestor_personajes_dnd/services/spells/spell_service.dart';
 import 'package:gestor_personajes_dnd/services/wizard/wizard_reference_service.dart';
@@ -62,6 +64,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
   final WizardReferenceService _refService;
   final PendingTaskService _taskService = PendingTaskService();
   final InventoryService _inventoryService;
+  final FeatService _featService;
   List<PendingTask> _pendingTasks = [];
   /// Solo las tareas incompletas — las completadas se muestran en otra pestaña (Features).
   /// También filtra las tareas gestionadas fuera del flujo de pending tasks:
@@ -86,15 +89,66 @@ class CharacterSheetViewModel extends ChangeNotifier {
     SpellService? spellService,
     WizardReferenceService? refService,
     InventoryService? inventoryService,
+    FeatService? featService,
   })  : _service = service ?? CharacterService(),
         _spellService = spellService ?? SpellService(),
         _refService = refService ?? WizardReferenceService(),
-        _inventoryService = inventoryService ?? InventoryService();
+        _inventoryService = inventoryService ?? InventoryService(),
+        _featService = featService ?? FeatService();
 
   // ── State 
   PlayerCharacter? character;
   bool _isLoading = false;
   bool _fromCache = false;
+
+  // ── Offhand weapon ──────────────────────────────────────────────────────────
+  /// ID del InventoryItem designado como arma secundaria (off-hand). Nulo si no hay.
+  int? _offhandWeaponId;
+
+  /// El arma equipada actualmente designada como off-hand, o null si no hay ninguna.
+  InventoryItem? get offhandWeapon => _inventoryItems
+      .where((i) =>
+          i.equipped &&
+          i.id == _offhandWeaponId &&
+          i.damageDice != null &&
+          i.damageDice!.isNotEmpty)
+      .firstOrNull;
+
+  /// True si el personaje tiene el fighting style "Two-Weapon Fighting".
+  bool get hasTwoWeaponFighting =>
+      _classFeatures.any((f) => f.indexName == 'two-weapon-fighting') ||
+      _subclassFeatures.any((f) => f.indexName == 'two-weapon-fighting');
+
+  /// True si el personaje tiene el feat "Dual Wielder".
+  bool get hasDualWielderFeat => _characterFeats
+      .any((f) => f.name.toLowerCase().contains('dual wielder'));
+
+  /// Devuelve true si el item puede usarse como arma secundaria.
+  /// Requisito: ser arma (tener damageDice) + propiedad Light O tener el feat Dual Wielder.
+  bool canWeaponBeOffhand(InventoryItem item) {
+    if (item.damageDice == null || item.damageDice!.isEmpty) return false;
+    if (hasDualWielderFeat) return true;
+    return item.weaponProperties.any((p) => p.toLowerCase() == 'light');
+  }
+
+  /// Designa o quita la designación de arma off-hand.
+  void setOffhandWeapon(int? inventoryId) {
+    _offhandWeaponId = inventoryId;
+    notifyListeners();
+  }
+
+  // ── Feats ───────────────────────────────────────────────────────────────────
+  List<CharacterFeat> _characterFeats = [];
+  List<CharacterFeat> get characterFeats => _characterFeats;
+
+  Future<void> _loadFeats() async {
+    try {
+      _characterFeats = await _featService.getCharacterFeats(characterId);
+      notifyListeners();
+    } catch (_) {
+      // silencioso
+    }
+  }
   DateTime? _cacheTimestamp;
   bool get fromCache => _fromCache;
   DateTime? get cacheTimestamp => _cacheTimestamp;
@@ -162,6 +216,9 @@ class CharacterSheetViewModel extends ChangeNotifier {
       }
       if (character?.raceId != null && _racialTraits.isEmpty){
         _loadRacialTraits();
+      }
+      if (_characterFeats.isEmpty) {
+        _loadFeats();
       }
     } catch (e) {
       if (character == null) {
@@ -477,6 +534,10 @@ class CharacterSheetViewModel extends ChangeNotifier {
   Future<void> _loadInventory() async {
     try {
       _inventoryItems = await _inventoryService.getInventory(characterId);
+      // Si el arma off-hand designada ya no está equipada, quitarla.
+      if (_offhandWeaponId != null && offhandWeapon == null) {
+        _offhandWeaponId = null;
+      }
       notifyListeners();
     } catch (_) {}
   }

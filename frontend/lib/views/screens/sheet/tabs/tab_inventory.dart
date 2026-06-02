@@ -282,6 +282,7 @@ class _TabInventoryState extends State<TabInventory> {
             items: equipped,
             isDragging: _isDragging,
             showWeight: useEncumbrance,
+            vm: widget.vm,
             onDropped: (item) => _equipWithUndo(item),
             onUnequip: (item) => _toggleEquipped(item),
             onRemove: (item) => _removeItem(item),
@@ -379,6 +380,7 @@ class _EquippedDropZone extends StatefulWidget {
   final List<InventoryItem> items;
   final bool isDragging;
   final bool showWeight;
+  final CharacterSheetViewModel vm;
   final void Function(InventoryItem) onDropped;
   final void Function(InventoryItem) onUnequip;
   final void Function(InventoryItem) onRemove;
@@ -388,6 +390,7 @@ class _EquippedDropZone extends StatefulWidget {
     required this.items,
     required this.isDragging,
     required this.showWeight,
+    required this.vm,
     required this.onDropped,
     required this.onUnequip,
     required this.onRemove,
@@ -471,6 +474,7 @@ class _EquippedDropZoneState extends State<_EquippedDropZone> {
             ...widget.items.map((item) => _EquippedItemTile(
                   item: item,
                   showWeight: widget.showWeight,
+                  vm: widget.vm,
                   onUnequip: () => widget.onUnequip(item),
                   onRemove: () => widget.onRemove(item),
                   onQuantityChanged: widget.onQuantityChanged != null
@@ -698,6 +702,7 @@ class _DraggableItemTile extends StatelessWidget {
 class _EquippedItemTile extends StatelessWidget {
   final InventoryItem item;
   final bool showWeight;
+  final CharacterSheetViewModel vm;
   final VoidCallback onUnequip;
   final VoidCallback onRemove;
   final void Function(int delta)? onQuantityChanged;
@@ -705,6 +710,7 @@ class _EquippedItemTile extends StatelessWidget {
   const _EquippedItemTile({
     required this.item,
     required this.showWeight,
+    required this.vm,
     required this.onUnequip,
     required this.onRemove,
     this.onQuantityChanged,
@@ -712,10 +718,14 @@ class _EquippedItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isOffhand = vm.offhandWeapon?.id == item.id;
+    final canBeOffhand = vm.canWeaponBeOffhand(item);
+
     return _ItemTileContent(
       item: item,
       showWeight: showWeight,
       accentBorder: true,
+      isOffhand: isOffhand,
       onIncrement:
           onQuantityChanged != null ? () => onQuantityChanged!(1) : null,
       onDecrement:
@@ -727,8 +737,37 @@ class _EquippedItemTile extends StatelessWidget {
         onSelected: (v) {
           if (v == 'unequip') onUnequip();
           if (v == 'remove') onRemove();
+          if (v == 'set_offhand') vm.setOffhandWeapon(item.id);
+          if (v == 'remove_offhand') vm.setOffhandWeapon(null);
         },
         itemBuilder: (_) => [
+          if (canBeOffhand && !isOffhand)
+            PopupMenuItem(
+              value: 'set_offhand',
+              child: Row(
+                children: [
+                  const Icon(Icons.swap_horiz,
+                      color: AppTheme.primary, size: 16),
+                  const SizedBox(width: 8),
+                  Text('Use as Offhand Weapon',
+                      style: GoogleFonts.lato(color: AppTheme.primary)),
+                ],
+              ),
+            ),
+          if (isOffhand)
+            PopupMenuItem(
+              value: 'remove_offhand',
+              child: Row(
+                children: [
+                  Icon(Icons.swap_horiz,
+                      color: AppTheme.textSecondary, size: 16),
+                  const SizedBox(width: 8),
+                  Text('Remove Offhand',
+                      style: GoogleFonts.lato(
+                          color: AppTheme.textSecondary)),
+                ],
+              ),
+            ),
           PopupMenuItem(
             value: 'unequip',
             child: Text('Unequip',
@@ -802,6 +841,7 @@ class _ItemTileContent extends StatelessWidget {
   final bool dimmed;
   final bool accentBorder; // equipped
   final bool attunedBorder; // attuned
+  final bool isOffhand;
   final Widget trailing;
   final VoidCallback? onIncrement;
   final VoidCallback? onDecrement;
@@ -812,6 +852,7 @@ class _ItemTileContent extends StatelessWidget {
     this.dimmed = false,
     this.accentBorder = false,
     this.attunedBorder = false,
+    this.isOffhand = false,
     required this.trailing,
     this.onIncrement,
     this.onDecrement,
@@ -938,6 +979,16 @@ class _ItemTileContent extends StatelessWidget {
                 Text('Attunement',
                     style: GoogleFonts.lato(
                         color: const Color(0xFFB07DFF), fontSize: 12)),
+              ],
+              if (isOffhand) ...[
+                const Text('  ·  ',
+                    style:
+                        TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                Text('Off-Hand',
+                    style: GoogleFonts.lato(
+                        color: const Color(0xFF48A999),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold)),
               ],
             ]),
           ]),

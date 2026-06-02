@@ -238,6 +238,17 @@ public class PlayerCharacterService {
             playerCharacter.setAbilityScores(scores);
         }
 
+        //Aplicar bonos de subraza a los ability scores (adicionales a los de la raza base)
+        if (playerCharacter.getSubrace() != null) {
+            Subrace subrace = playerCharacter.getSubrace();
+            if (subrace.getAbilityBonuses() != null && !subrace.getAbilityBonuses().isEmpty()) {
+                Map<String, Integer> scores = new HashMap<>(playerCharacter.getAbilityScores());
+                subrace.getAbilityBonuses().forEach((ability, bonus) ->
+                    scores.merge(ability, bonus, Integer::sum));
+                playerCharacter.setAbilityScores(scores);
+            }
+        }
+
         PlayerCharacter saved = characterRepository.save(playerCharacter);
 
         //PROCESAMIENTO DE FEATS
@@ -418,7 +429,24 @@ public class PlayerCharacterService {
             }
         }
 
-        dto.setArmorClass(playerCharacter.getArmorClass(equipment, activeEffects) + itemBonusAc);
+        // Fighting Style bonuses (Archery → +2 ranged; Defense → +1 AC while armored)
+        String fightingStyle = pendingTaskRepository
+                .findByCharacterAndCompleted(playerCharacter, true)
+                .stream()
+                .filter(t -> "FIGHTING_STYLE".equals(t.getTaskType()) && t.getMetadata() != null)
+                .map(t -> extractChoiceFromMetadata(t.getMetadata()))
+                .filter(c -> c != null)
+                .findFirst()
+                .orElse(null);
+        int fightingStyleAcBonus = 0;
+        int fightingStyleRangedBonus = 0;
+        if ("Defense".equalsIgnoreCase(fightingStyle) && equipment != null && equipment.getArmor() != null) {
+            fightingStyleAcBonus = 1;
+        } else if ("Archery".equalsIgnoreCase(fightingStyle)) {
+            fightingStyleRangedBonus = 2;
+        }
+
+        dto.setArmorClass(playerCharacter.getArmorClass(equipment, activeEffects) + itemBonusAc + fightingStyleAcBonus);
         dto.setSpellSaveDC(playerCharacter.getSpellSaveDC());
         dto.setSpellAttackBonus(playerCharacter.getSpellAttackBonus());
         dto.setInitiativeModifier(playerCharacter.getInitiativeModifier());
@@ -429,7 +457,7 @@ public class PlayerCharacterService {
         dto.setUseEncumbrance(playerCharacter.isUseEncumbrance());
         dto.setAbilityDisplayMode(playerCharacter.getAbilityDisplayMode());
         dto.setMeleeAttackBonus(playerCharacter.getMeleeAttackBonus() + itemBonusToHit);
-        dto.setRangedAttackBonus(playerCharacter.getRangedAttackBonus() + itemBonusToHit);
+        dto.setRangedAttackBonus(playerCharacter.getRangedAttackBonus() + itemBonusToHit + fightingStyleRangedBonus);
         dto.setFinesseAttackBonus(playerCharacter.getFinesseAttackBonus() + itemBonusToHit);
         dto.setExperienceToNextLevel(playerCharacter.getExperienceToNextLevel());
         dto.setExperienceNeeded(playerCharacter.getExperienceNeeded());
@@ -857,7 +885,12 @@ public class PlayerCharacterService {
         // 3. Añadir ClassFeatures descriptivas del API
         addClassFeaturesFromAPI(character, newLevel);
 
-        // 4. Guardar cambios
+        // 4. Inicializar recursos de clase nuevos desbloqueados en este nivel
+        //    y actualizar los máximos de los recursos existentes (escalan con el nivel)
+        characterClassResourceService.initializeClassResourcesForCharacter(character.getId());
+        characterClassResourceService.updateResourceMaximums(character.getId());
+
+        // 5. Guardar cambios
         characterRepository.save(character);
 
         System.out.println("=== Level up complete! ===");
@@ -1289,7 +1322,6 @@ public class PlayerCharacterService {
      * Solo crea una tarea si no existe ya una del mismo tipo+nivel (evita duplicados,
      * p.ej. para un Dragonborn Draconic Sorcerer cuya clase ya generó una tarea DRACONIC_ANCESTRY).
      */
-     */
     private void generateRaceChoiceTasksForCreation(PlayerCharacter character) {
         List<RacialTrait> allTraits = new ArrayList<>();
 
@@ -1590,6 +1622,15 @@ public class PlayerCharacterService {
                 System.out.println("Granted racial spell: " + spell.getName() + " to: " + character.getName());
             }
         }
+    }
+
+    /** Extrae el valor "choice" del metadata JSON de una tarea. Formato: {"choice":"Defense",...} */
+    private String extractChoiceFromMetadata(String metadata) {
+        int idx = metadata.indexOf("\"choice\":\"");
+        if (idx == -1) return null;
+        int start = idx + 10;
+        int end = metadata.indexOf("\"", start);
+        return (end > start) ? metadata.substring(start, end) : null;
     }
 
 }
