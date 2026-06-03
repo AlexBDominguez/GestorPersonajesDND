@@ -70,8 +70,13 @@ class _TabCombatState extends State<TabCombat> {
         // Standard Actions are actions — show them first inside Actions
         _StandardActionsCard(),
         const SizedBox(height: 8),
-        if (vm.equippedWeapons.isNotEmpty) ...[
-          _WeaponAttackTable(weapons: vm.equippedWeapons, character: c),
+        if (vm.equippedWeapons.where((w) => w.id != vm.offhandWeapon?.id).isNotEmpty) ...[
+          _WeaponAttackTable(
+            weapons: vm.equippedWeapons
+                .where((w) => w.id != vm.offhandWeapon?.id)
+                .toList(),
+            character: c,
+          ),
           const SizedBox(height: 8),
         ],
         if (actionSpells.isNotEmpty) ...[

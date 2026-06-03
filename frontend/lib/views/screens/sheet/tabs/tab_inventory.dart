@@ -273,7 +273,6 @@ class _TabInventoryState extends State<TabInventory> {
             onDropped: (item) => _attuneWithUndo(item),
             onRemoveAttuned: (item) => _toggleAttuned(item),
             onRemove: (item) => _removeItem(item),
-            onQuantityChanged: (item, delta) => _changeQuantity(item, delta),
           ),
           const SizedBox(height: 24),
 
@@ -286,7 +285,6 @@ class _TabInventoryState extends State<TabInventory> {
             onDropped: (item) => _equipWithUndo(item),
             onUnequip: (item) => _toggleEquipped(item),
             onRemove: (item) => _removeItem(item),
-            onQuantityChanged: (item, delta) => _changeQuantity(item, delta),
           ),
           const SizedBox(height: 24),
 
@@ -384,7 +382,6 @@ class _EquippedDropZone extends StatefulWidget {
   final void Function(InventoryItem) onDropped;
   final void Function(InventoryItem) onUnequip;
   final void Function(InventoryItem) onRemove;
-  final void Function(InventoryItem, int delta)? onQuantityChanged;
 
   const _EquippedDropZone({
     required this.items,
@@ -394,7 +391,6 @@ class _EquippedDropZone extends StatefulWidget {
     required this.onDropped,
     required this.onUnequip,
     required this.onRemove,
-    this.onQuantityChanged,
   });
 
   @override
@@ -477,9 +473,6 @@ class _EquippedDropZoneState extends State<_EquippedDropZone> {
                   vm: widget.vm,
                   onUnequip: () => widget.onUnequip(item),
                   onRemove: () => widget.onRemove(item),
-                  onQuantityChanged: widget.onQuantityChanged != null
-                      ? (delta) => widget.onQuantityChanged!(item, delta)
-                      : null,
                 )),
           ]),
         );
@@ -496,7 +489,6 @@ class _AttunedDropZone extends StatefulWidget {
   final void Function(InventoryItem) onDropped;
   final void Function(InventoryItem) onRemoveAttuned;
   final void Function(InventoryItem) onRemove;
-  final void Function(InventoryItem, int delta)? onQuantityChanged;
 
   const _AttunedDropZone({
     required this.items,
@@ -505,7 +497,6 @@ class _AttunedDropZone extends StatefulWidget {
     required this.onDropped,
     required this.onRemoveAttuned,
     required this.onRemove,
-    this.onQuantityChanged,
   });
 
   @override
@@ -589,9 +580,6 @@ class _AttunedDropZoneState extends State<_AttunedDropZone> {
                   showWeight: widget.showWeight,
                   onRemoveAttuned: () => widget.onRemoveAttuned(item),
                   onRemove: () => widget.onRemove(item),
-                  onQuantityChanged: widget.onQuantityChanged != null
-                      ? (delta) => widget.onQuantityChanged!(item, delta)
-                      : null,
                 )),
           ]),
         );
@@ -705,7 +693,6 @@ class _EquippedItemTile extends StatelessWidget {
   final CharacterSheetViewModel vm;
   final VoidCallback onUnequip;
   final VoidCallback onRemove;
-  final void Function(int delta)? onQuantityChanged;
 
   const _EquippedItemTile({
     required this.item,
@@ -713,7 +700,6 @@ class _EquippedItemTile extends StatelessWidget {
     required this.vm,
     required this.onUnequip,
     required this.onRemove,
-    this.onQuantityChanged,
   });
 
   @override
@@ -726,10 +712,6 @@ class _EquippedItemTile extends StatelessWidget {
       showWeight: showWeight,
       accentBorder: true,
       isOffhand: isOffhand,
-      onIncrement:
-          onQuantityChanged != null ? () => onQuantityChanged!(1) : null,
-      onDecrement:
-          onQuantityChanged != null ? () => onQuantityChanged!(-1) : null,
       trailing: PopupMenuButton<String>(
         icon: const Icon(Icons.more_vert,
             color: AppTheme.textSecondary, size: 18),
@@ -790,13 +772,11 @@ class _AttunedItemTile extends StatelessWidget {
   final bool showWeight;
   final VoidCallback onRemoveAttuned;
   final VoidCallback onRemove;
-  final void Function(int delta)? onQuantityChanged;
   const _AttunedItemTile({
     required this.item,
     required this.showWeight,
     required this.onRemoveAttuned,
     required this.onRemove,
-    this.onQuantityChanged,
   });
 
   @override
@@ -805,10 +785,6 @@ class _AttunedItemTile extends StatelessWidget {
       item: item,
       showWeight: showWeight,
       attunedBorder: true,
-      onIncrement:
-          onQuantityChanged != null ? () => onQuantityChanged!(1) : null,
-      onDecrement:
-          onQuantityChanged != null ? () => onQuantityChanged!(-1) : null,
       trailing: PopupMenuButton<String>(
         icon: const Icon(Icons.more_vert,
             color: AppTheme.textSecondary, size: 18),
