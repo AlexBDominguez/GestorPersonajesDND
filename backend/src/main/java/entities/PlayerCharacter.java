@@ -523,13 +523,27 @@ public class PlayerCharacter {
         return 3;
     }
 
+    // Puntuaciones efectivas transitorias (aplicadas por items equipados/sintonizados)
+    // No se persisten; se establecen durante el cálculo del DTO y se limpian al terminar.
+    @Transient
+    private Map<String, Integer> effectiveAbilityScores;
+
+    public void applyEffectiveAbilityScores(Map<String, Integer> effective) {
+        this.effectiveAbilityScores = effective;
+    }
+
+    public void clearEffectiveAbilityScores() {
+        this.effectiveAbilityScores = null;
+    }
+
     @Transient
     public int calculateAbilityModifier(String abilityScore) {
-        if (abilityScores == null || abilityScore == null) return 0;
+        Map<String, Integer> scores = effectiveAbilityScores != null ? effectiveAbilityScores : abilityScores;
+        if (scores == null || abilityScore == null) return 0;
         // Buscar insensible a mayúsculas/minúsculas para compatibilidad con datos existentes
-        Integer score = abilityScores.get(abilityScore);
-        if (score == null) score = abilityScores.get(abilityScore.toLowerCase());
-        if (score == null) score = abilityScores.get(abilityScore.toUpperCase());
+        Integer score = scores.get(abilityScore);
+        if (score == null) score = scores.get(abilityScore.toLowerCase());
+        if (score == null) score = scores.get(abilityScore.toUpperCase());
         if (score == null) return 0;
         return (score - 10) / 2;
     }

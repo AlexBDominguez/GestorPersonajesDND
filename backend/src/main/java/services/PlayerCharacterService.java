@@ -396,12 +396,7 @@ public class PlayerCharacterService {
         dto.setId(playerCharacter.getId());
         dto.setName(playerCharacter.getName());
         dto.setLevel(playerCharacter.getLevel());
-        // Normalizar claves a minúsculas para consistencia en el cliente
-        if (playerCharacter.getAbilityScores() != null) {
-            Map<String, Integer> normalized = new HashMap<>();
-            playerCharacter.getAbilityScores().forEach((k, v) -> normalized.put(k.toLowerCase(), v));
-            dto.setAbilityScores(normalized);
-        }
+        // ability scores se setean más abajo, tras computar los effective scores con overrides de items
         dto.setProficiencyBonus(playerCharacter.getProficiencyBonus());
         dto.setBackstory(playerCharacter.getBackstory());
         dto.setCurrentHp(playerCharacter.getCurrentHP());
@@ -417,6 +412,13 @@ public class PlayerCharacterService {
         // Bonuses de objetos equipados / sintonizados
         List<CharacterInventory> inventory = characterInventoryRepository.findByCharacterId(playerCharacter.getId());
         int itemBonusAc = 0, itemBonusToHit = 0, itemBonusSavingThrows = 0;
+
+        // Effective ability scores: copia de los scores base con overrides de items activos
+        Map<String, Integer> effectiveScores = new HashMap<>();
+        if (playerCharacter.getAbilityScores() != null) {
+            playerCharacter.getAbilityScores().forEach((k, v) -> effectiveScores.put(k.toLowerCase(), v));
+        }
+
         for (CharacterInventory ci : inventory) {
             Item item = ci.getItem();
             // Objetos que requieren sintonización: el bonus aplica solo si están sintonizados
@@ -426,8 +428,19 @@ public class PlayerCharacterService {
                 itemBonusAc            += item.getBonusAc();
                 itemBonusToHit         += item.getBonusToHit();
                 itemBonusSavingThrows  += item.getBonusSavingThrows();
+
+                // Ability score overrides: solo aplica si la puntuación del item supera la actual
+                applyAbilityOverride(effectiveScores, "str", item.getSetStrTo());
+                applyAbilityOverride(effectiveScores, "dex", item.getSetDexTo());
+                applyAbilityOverride(effectiveScores, "con", item.getSetConTo());
+                applyAbilityOverride(effectiveScores, "int", item.getSetIntTo());
+                applyAbilityOverride(effectiveScores, "wis", item.getSetWisTo());
+                applyAbilityOverride(effectiveScores, "cha", item.getSetChaTo());
             }
         }
+
+        // Aplicar effective scores al personaje antes de calcular stats derivados
+        playerCharacter.applyEffectiveAbilityScores(effectiveScores);
 
         // Fighting Style bonuses (Archery → +2 ranged; Defense → +1 AC while armored)
         String fightingStyle = pendingTaskRepository
@@ -445,6 +458,9 @@ public class PlayerCharacterService {
         } else if ("Archery".equalsIgnoreCase(fightingStyle)) {
             fightingStyleRangedBonus = 2;
         }
+
+        // Ability scores efectivos (con overrides de items ya aplicados al personaje)
+        dto.setAbilityScores(effectiveScores);
 
         dto.setArmorClass(playerCharacter.getArmorClass(equipment, activeEffects) + itemBonusAc + fightingStyleAcBonus);
         dto.setSpellSaveDC(playerCharacter.getSpellSaveDC());
@@ -590,6 +606,8 @@ public class PlayerCharacterService {
                 .map(s -> new SpellSlotDto(s.getSpellLevel(), s.getMaxSlots(), s.getUsedSlots()))
                 .collect(Collectors.toList());
         dto.setSpellSlots(slotDtos);
+
+        playerCharacter.clearEffectiveAbilityScores();
 
         return dto;
     }
@@ -1621,6 +1639,18 @@ public class PlayerCharacterService {
                 characterSpellRepository.save(characterSpell);
                 System.out.println("Granted racial spell: " + spell.getName() + " to: " + character.getName());
             }
+        }
+    }
+
+    /**
+     * Aplica un override de ability score: establece la puntuación al valor del item
+     * solo si supera la puntuación actual del personaje (p.ej. Gauntlets of Ogre Power STR=19).
+     */
+    private void applyAbilityOverride(Map<String, Integer> scores, String ability, Integer overrideTo) {
+        if (overrideTo == null) return;
+        int current = scores.getOrDefault(ability, 10);
+        if (overrideTo > current) {
+            scores.put(ability, overrideTo);
         }
     }
 

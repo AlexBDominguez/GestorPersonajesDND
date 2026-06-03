@@ -61,6 +61,15 @@ public class Item {
     private int bonusToHit = 0;
     private int bonusSavingThrows = 0;
 
+    // Overrides de ability scores (ej: Gauntlets of Ogre Power → STR = 19)
+    // null = sin efecto; valor = fuerza la puntuación a ese valor si es mayor que la actual
+    private Integer setStrTo;
+    private Integer setDexTo;
+    private Integer setConTo;
+    private Integer setIntTo;
+    private Integer setWisTo;
+    private Integer setChaTo;
+
     public Item(){}
 
     public Long getId() {
@@ -246,5 +255,23 @@ public class Item {
     public void setBonusSavingThrows(int bonusSavingThrows) {
         this.bonusSavingThrows = bonusSavingThrows;
     }
+
+    public Integer getSetStrTo() { return setStrTo; }
+    public void setSetStrTo(Integer setStrTo) { this.setStrTo = setStrTo; }
+
+    public Integer getSetDexTo() { return setDexTo; }
+    public void setSetDexTo(Integer setDexTo) { this.setDexTo = setDexTo; }
+
+    public Integer getSetConTo() { return setConTo; }
+    public void setSetConTo(Integer setConTo) { this.setConTo = setConTo; }
+
+    public Integer getSetIntTo() { return setIntTo; }
+    public void setSetIntTo(Integer setIntTo) { this.setIntTo = setIntTo; }
+
+    public Integer getSetWisTo() { return setWisTo; }
+    public void setSetWisTo(Integer setWisTo) { this.setWisTo = setWisTo; }
+
+    public Integer getSetChaTo() { return setChaTo; }
+    public void setSetChaTo(Integer setChaTo) { this.setChaTo = setChaTo; }
 
 }
