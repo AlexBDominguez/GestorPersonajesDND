@@ -92,8 +92,8 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
   // Computed locally from cls (widget param) to avoid stale vm.selectedClass data
   bool get _classSkillsDone {
-    // In level-up mode, skills were already chosen at creation — always done
-    if (widget.vm.isLevelUpMode) return true;
+    // In level-up and edit modes, skills were already chosen at creation — always done
+    if (widget.vm.isLevelUpMode || widget.isEditing) return true;
     if (cls.skillChoiceCount == 0 || cls.allowedSkillIndices.isEmpty) return true;
     return widget.vm.classSkillIndices.length >= cls.skillChoiceCount;
   }
@@ -178,6 +178,8 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
     if (_level == 1) return true;
     // In level-up mode, only the new level needs a HP roll
     if (widget.vm.isLevelUpMode) return _hpRolls[_level] != null;
+    // In edit mode, HP is stored server-side — don't block on rolls
+    if (widget.isEditing) return true;
     return _hpRolls.values.every((v) => v != null);
   }
 
@@ -333,7 +335,9 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                                     : _expandedFeatures.add(synth.id)),
                             choice: c,
                             currentChoice: widget.vm.featureChoices[c.key],
-                            alreadyTaken: const {},
+                            alreadyTaken: c.type == 'LORE_BONUS_PROF'
+                                ? widget.vm.classSkillKSkillsNames
+                                : const {},
                             onChoiceSelected: (v) => widget.vm.setFeatureChoice(c.key, v),
                             vm: widget.vm,
                           );
@@ -1636,6 +1640,7 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
   Widget build(BuildContext context) {
     final count = widget.cls.skillChoiceCount;
     final bgSkills = widget.vm.backgroundSkillIndices;
+    final bonusProfNames = widget.vm.loreBonusProfSkillNames;
     final picked = _picked.length;
     final remaining = count - picked;
 
@@ -1660,6 +1665,13 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
             style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14),
           ),
         ],
+        if (bonusProfNames.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Skills chosen as Bonus Proficiencies are already covered.',
+            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14),
+          ),
+        ],
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -1667,7 +1679,9 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
           children: widget.cls.allowedSkillIndices.map((skill) {
             final isSelected = _picked.contains(skill);
             final fromBackground = bgSkills.contains(skill);
-            final isDisabled = fromBackground || (!isSelected && remaining == 0);
+            final skillDisplayLower = _formatSkillName(skill).toLowerCase();
+            final fromBonusProf = bonusProfNames.any((n) => n.toLowerCase() == skillDisplayLower);
+            final isDisabled = fromBackground || fromBonusProf || (!isSelected && remaining == 0);
             return GestureDetector(
               onTap: isDisabled ? null : () => _toggle(skill),
               child: AnimatedContainer(
@@ -1676,42 +1690,55 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
                 decoration: BoxDecoration(
                   color: fromBackground
                       ? AppTheme.surfaceVariant.withOpacity(0.2)
-                      : isSelected
-                          ? AppTheme.primary
-                          : isDisabled
-                              ? AppTheme.surfaceVariant.withOpacity(0.4)
-                              : AppTheme.surfaceVariant,
+                      : fromBonusProf
+                          ? AppTheme.accent.withOpacity(0.08)
+                          : isSelected
+                              ? AppTheme.primary
+                              : isDisabled
+                                  ? AppTheme.surfaceVariant.withOpacity(0.4)
+                                  : AppTheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: fromBackground
                         ? AppTheme.textSecondary.withOpacity(0.3)
-                        : isSelected ? AppTheme.primary : AppTheme.divider,
+                        : fromBonusProf
+                            ? AppTheme.accent.withOpacity(0.3)
+                            : isSelected ? AppTheme.primary : AppTheme.divider,
                   ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                  if (fromBackground) ...[
-                    Icon(Icons.book_outlined,
-                        size: 11,
-                        color: AppTheme.textSecondary.withOpacity(0.5)),
-                    const SizedBox(width: 4),
+                    if (fromBackground) ...[
+                      Icon(Icons.book_outlined,
+                          size: 11,
+                          color: AppTheme.textSecondary.withOpacity(0.5)),
+                      const SizedBox(width: 4),
+                    ],
+                    if (fromBonusProf) ...[
+                      Icon(Icons.auto_awesome,
+                          size: 11,
+                          color: AppTheme.accent.withOpacity(0.5)),
+                      const SizedBox(width: 4),
+                    ],
+                    Text(
+                      _formatSkillName(skill),
+                      style: GoogleFonts.lato(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: fromBackground
+                            ? AppTheme.textSecondary.withOpacity(0.4)
+                            : fromBonusProf
+                                ? AppTheme.accent.withOpacity(0.5)
+                                : isSelected
+                                    ? AppTheme.background
+                                    : isDisabled
+                                        ? AppTheme.textSecondary.withOpacity(0.4)
+                                        : AppTheme.textPrimary,
+                      ),
+                    ),
                   ],
-                  Text(
-                  _formatSkillName(skill),
-                  style: GoogleFonts.lato(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: fromBackground
-                        ? AppTheme.textSecondary.withOpacity(0.4)
-                        : isSelected
-                            ? AppTheme.background
-                            : isDisabled
-                                ? AppTheme.textSecondary.withOpacity(0.4)
-                                : AppTheme.textPrimary,
-                  ),
                 ),
-                  ]),
               ),
             );
           }).toList(),

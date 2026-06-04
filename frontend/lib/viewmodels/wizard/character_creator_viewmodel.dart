@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
+import 'package:gestor_personajes_dnd/models/character/character_skill.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/content_source.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
@@ -72,6 +73,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   int? _initialSubclassId;
   int? _initialBackgroundId;
   int? _initialRaceId;
+  List<CharacterSkill> _editCharSkills = [];
 
   CharacterCreatorViewModel({
     WizardReferenceService? refService,
@@ -124,6 +126,8 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     // Pre-rellenar los IDs de spells existentes para que el paso de spells los muestre como ya seleccionados
     _preExistingSpellIds = char.characterSpells.map((s) => s.spellId).toSet();
     selectedSpellIds.addAll(_preExistingSpellIds);
+    // Guardar skills del personaje para pre-popular la selección de clase tras cargar los datos
+    _editCharSkills = char.skills;
   }
 
   /// Constructor nombrado para subir de nivel a un personaje existente.
@@ -705,6 +709,31 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   static String _normalizeSkillIndex(String s) =>
       s.startsWith('skill-') ? s.substring(6) : s;
 
+  /// En modo edición: pre-pobla _classSkillIndices a partir de las skills
+  /// proficientes del personaje que coincidan con las permitidas por la clase
+  /// y que NO vengan del background. Requiere clase y background ya cargados.
+  void _prePopulateClassSkillsForEdit() {
+    if (!_editMode || selectedClass == null || _editCharSkills.isEmpty) return;
+    if (_classSkillIndices.isNotEmpty) return;
+
+    final proficientNames = _editCharSkills
+        .where((s) => s.proficient)
+        .map((s) => s.skillName.toLowerCase())
+        .toSet();
+
+    final bgNames = backgroundSkillIndices
+        .map((idx) => _skillIndexToDisplay(idx).toLowerCase())
+        .toSet();
+
+    for (final idx in selectedClass!.allowedSkillIndices) {
+      final name = _skillIndexToDisplay(idx).toLowerCase();
+      if (proficientNames.contains(name) && !bgNames.contains(name)) {
+        _classSkillIndices.add(idx);
+      }
+    }
+    notifyListeners();
+  }
+
   /// Skills otorgadas por el background seleccionado actualmente (indices normalizados).
   /// Usadas por el selector de skills de clase para bloquear las ya cubiertas.
   Set<String> get backgroundSkillIndices {
@@ -726,6 +755,10 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         indices.add(_normalizeSkillIndex(s));
       }
     }
+    // Lore Bard Bonus Proficiencies: 'Sleight of Hand' → 'sleight-of-hand'
+    for (final name in loreBonusProfSkillNames) {
+      indices.add(name.toLowerCase().replaceAll(' ', '-'));
+    }
     return indices;
   }
 
@@ -741,6 +774,30 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         .where((s) => proficient.contains(toIndex(s.name)))
         .toList();
     return filtered;
+  }
+
+  /// Nombres en formato kSkills de las skills elegidas como Lore Bard Bonus Proficiencies.
+  /// Usados para impedir que se elijan las mismas skills en ambas secciones.
+  Set<String> get loreBonusProfSkillNames {
+    final result = <String>{};
+    for (int i = 0; i < 3; i++) {
+      final v = featureChoices['LORE_BONUS_PROF_PICK_${i}_3'];
+      if (v != null) result.add(v);
+    }
+    return result;
+  }
+
+  /// Nombres en formato kSkills de las skills de clase elegidas actualmente.
+  /// Usados para impedir conflictos con Lore Bard Bonus Proficiencies.
+  Set<String> get classSkillKSkillsNames {
+    String indexToKSkillsName(String idx) {
+      final norm = idx.replaceAll('-', ' ');
+      for (final s in kSkills) {
+        if (s.name.toLowerCase() == norm) return s.name;
+      }
+      return _skillIndexToDisplay(idx);
+    }
+    return _classSkillIndices.map(indexToKSkillsName).toSet();
   }
 
   // PASO 3: Background
@@ -1530,6 +1587,7 @@ void toggleItem(int itemId) {
     if (!_editMode) return;
     await loadClasses();     // also triggers _loadSubclassesFor → auto-selects subclass
     await loadBackgrounds();
+    _prePopulateClassSkillsForEdit(); // cross-reference skills una vez clase + background están listos
     await loadRaces();
     if (isSpellcaster) await loadAvailableSpells();
   }
