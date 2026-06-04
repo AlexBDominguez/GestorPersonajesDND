@@ -126,6 +126,7 @@ public class DndClassSyncService {
             existing.setSpellcastingAbility(spellcastingAbility);
             existing.setSubclassLevel(subclassLevel);
             existing.setDescription("Imported from D&D 5e API");
+            if (existing.getSource() == null) existing.setSource("PHB");
 
             DndClass savedClass = repository.save(existing);
             System.out.println("✓ Class saved: " + savedClass.getName());

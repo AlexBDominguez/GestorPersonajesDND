@@ -75,6 +75,7 @@ public class RaceSyncService {
                 }
             }
             race.setTraits(traitEntities);
+            if (race.getSource() == null) race.setSource("PHB");
 
             raceRepository.save(race);
             System.out.println("  Synced race: " + indexName + " with " + traitEntities.size() + " traits");

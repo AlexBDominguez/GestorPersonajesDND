@@ -84,6 +84,7 @@ public class SubclassSyncService {
                 subclass.setDndClass(dndClass);
         }
 
+        if (subclass.getSource() == null) subclass.setSource("PHB");
         subclassRepository.save(subclass);
         System.out.println("Saved subclass: " + subclass.getName());
 

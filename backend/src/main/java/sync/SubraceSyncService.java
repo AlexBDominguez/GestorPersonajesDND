@@ -88,6 +88,7 @@ public class SubraceSyncService {
                     }
                 }
                 subrace.setTraits(traitEntities);
+                if (subrace.getSource() == null) subrace.setSource("PHB");
 
                 subraceRepository.save(subrace);
                 System.out.println("  Synced subrace: " + indexName + " with " + traitEntities.size() + " traits");

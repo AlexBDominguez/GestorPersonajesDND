@@ -97,6 +97,7 @@ public class BackgroundSyncService {
             background.setBonds(bonds);
             background.setFlaws(flaws);
             background.setDescription("Imported from D&D 5e API");
+            if (background.getSource() == null) background.setSource("PHB");
 
             backgroundRepository.save(background);
 
