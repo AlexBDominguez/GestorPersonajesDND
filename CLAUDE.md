@@ -1,0 +1,89 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+**DungeonScroll** — D&D 5e character manager. Spring Boot 3 REST API backend + Flutter frontend (web/Android/iOS). Database: MySQL 8.0 via Docker. App name in code: `gestor_personajes_dnd`.
+
+---
+
+## Commands
+
+### Backend (from `backend/`)
+
+```bash
+# Start only MySQL (development)
+docker compose up -d mysql-db
+
+# Run backend locally with Maven
+mvn spring-boot:run
+
+# Build JAR
+mvn clean package
+
+# Deploy everything (MySQL + backend + Nginx for web Flutter)
+docker compose up -d
+
+# Execute SQL script against running container
+docker exec -i dnd-mysql mysql -u <MYSQL_USER> -p<MYSQL_PASSWORD> dnd_character_manager < backups/my_script.sql
+
+# Initial data sync from D&D 5e API (run once after first boot)
+curl -X POST http://localhost:8081/api/sync/all
+```
+
+Required `.env` variables (copy from `.env.example`): `MYSQL_ROOT_PASSWORD`, `MYSQL_USER`, `MYSQL_PASSWORD`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `JWT_SECRET`, `ADMIN_INITIAL_PASSWORD`.
+
+### Frontend (from `frontend/`)
+
+```bash
+flutter pub get           # Install dependencies
+flutter run               # Run (defaults to first available device)
+flutter run -d chrome     # Run as web app
+flutter run -d <id>       # Run on specific device (flutter devices to list)
+flutter build apk --release          # Android APK
+flutter build web --release          # Web build (output: build/web/)
+flutter analyze           # Static analysis
+```
+
+---
+
+## Architecture
+
+### Backend
+
+Standard Spring Boot layered architecture: `Entity → Repository → Service → DTO → Controller`.
+
+- **`entities/`** — JPA entities, `ddl-auto=update` so Hibernate manages the schema. `PlayerCharacter` is the central entity with many `@OneToMany` relationships (spells, skills, inventory, feats, etc.).
+- **`repositories/`** — Spring Data JPA interfaces. One oddity: `CharacterFeatService.java` is misplaced in the `repositories/` package.
+- **`services/`** — Business logic. `PlayerCharacterService` is the largest, orchestrating character creation, level-up, rests, and HP management.
+- **`controllers/`** — REST endpoints, all under `/api/` prefix, port `8081`.
+- **`dto/`** — DTOs used for all API input/output; entities are never returned directly.
+- **`security/`** — Stateless JWT auth. Access token = 15 min, refresh token = 30 days. `JwtAuthenticationFilter` validates every request. `SecurityConfig` whitelists reference-data GET endpoints and `/api/auth/*`.
+- **`sync/`** — Services that pull data from the public D&D 5e API (`https://www.dnd5eapi.co`). `BaseSyncService<T>` defines the contract. `SyncController` exposes `/api/sync/*` endpoints (publicly accessible, no auth required). Some data (feats, subclasses, subraces) was not available from the public API and is inserted manually via SQL scripts in `backups/`.
+- **`config/`** — `AdminDataInitializer` seeds the admin user on startup using `ADMIN_INITIAL_PASSWORD`.
+
+### Frontend
+
+MVVM pattern with Provider:
+
+- **`config/api_config.dart`** — Single source of truth for the base URL. Web release builds use an empty string (Nginx proxy); dev and mobile use the VPS IP `http://178.104.94.11:8081`. Change here to switch environments.
+- **`services/http/api_client.dart`** — Centralized HTTP client. Handles JWT Bearer headers, automatic token refresh on 401, and calls `onSessionExpired` callback (wired in `main.dart` to `AuthViewModel.logout()`) when refresh fails.
+- **`services/`** — Domain services (`CharacterService`, `SpellService`, `InventoryService`, etc.) that call `ApiClient` and parse responses. `WizardReferenceService` fetches reference data (races, classes, backgrounds) for the creation wizard.
+- **`viewmodels/`** — `ChangeNotifier` classes. `CharacterSheetViewModel` is the largest; it owns all character sheet state including the consumable feature tracker (`_kConsumableFeatures` map with special negative constants for class-level calculations). `CharacterCreatorViewModel` drives the 7-step wizard.
+- **`views/screens/sheet/tabs/`** — The character sheet is split into 7 tabs: Abilities, Skills, Combat, Spells, Features, Inventory, Info.
+- **`views/screens/wizard/steps/`** — The creation/edit wizard steps (preferences → class → background → race → ability scores → spells → equipment).
+- **`config/combat_features.dart`** — Hardcoded list of features that appear in the Combat tab.
+- **`config/dnd_choice_options.dart`** — Hardcoded options for class feature choices shown in the wizard (fighting styles, invocations, metamagic, etc.).
+
+### Level-Up System
+
+`POST /api/characters/{id}/level-up` takes a `LevelUpRequest` DTO. The backend processes automatic features (HP, spell slot progression, class resources) and creates `PendingTask` entities for decisions that require player input (ASI/feat choice, subclass selection, learn spells, etc.). The frontend fetches pending tasks and renders them in `PendingTasksScreen`.
+
+### Auth Flow
+
+Login → `POST /api/auth/login` → returns `accessToken` (JWT) + `refreshToken`. Access token stored via `shared_preferences`; refresh token via `flutter_secure_storage`. `ApiClient` attempts one silent refresh on any 401; on failure, calls `onSessionExpired` to force logout.
+
+### Deployment (Production)
+
+`docker-compose.yml` runs three containers: `dnd-mysql` (port 3306), `dnd-backend` (port 8081), and `dnd-nginx` (port 80). Nginx serves the Flutter web build from `./frontend-dist/` and proxies `/api/` to the backend. To deploy a new web build: `flutter build web --release`, copy `build/web/` to `backend/frontend-dist/`, then `docker compose restart nginx`.

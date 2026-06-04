@@ -43,6 +43,23 @@ services:
     networks:
       - dnd-network
 
+  nginx:
+    image: nginx:alpine
+    container_name: dnd-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      # - "443:443"  # Descomentar cuando haya dominio + certificado SSL
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend-dist:/usr/share/nginx/html:ro
+      # - ./certbot/conf:/etc/letsencrypt:ro   # Descomentar para SSL
+      # - ./certbot/www:/var/www/certbot:ro    # Descomentar para SSL
+    networks:
+      - dnd-network
+
 networks:
   dnd-network:
     driver: bridge

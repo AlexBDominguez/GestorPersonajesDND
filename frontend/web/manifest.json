@@ -1,12 +1,12 @@
 {
     "name": "DnD Character Manager",
     "short_name": "DnD Manager",
-    "start_url": ".",
+    "start_url": "/",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
+    "background_color": "#1a1a2e",
+    "theme_color": "#1a1a2e",
     "description": "A D&D 5e character manager app.",
-    "orientation": "portrait-primary",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

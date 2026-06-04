@@ -1,13 +1,14 @@
+import 'package:flutter/foundation.dart';
+
 class ApiConfig {
-   /// URL base del backend.
+  /// En producción web (build de release), URL vacía → Nginx hace proxy a /api/.
+  /// En desarrollo web (flutter run) y en móvil, URL absoluta del VPS.
   /// - Android emulator: http://10.0.2.2:8081
-  /// - iOS simulator: http://localhost:8081
-  /// - Device físico: http://<IP-DE-TU-PC>:8081
-  /// Chrome emulador:
-  //static const String baseUrl = 'http://localhost:8081';
-  //static const String baseUrl = 'http://10.0.2.2:8081';
-  ///PRODUCCIÓN (VPS) - descomenta esta línea y comenta la de arriba para el APK
-  static const String baseUrl = 'http://178.104.94.11:8081';
+  /// - Device físico / APK producción: http://178.104.94.11:8081
+  static String get baseUrl {
+    if (kIsWeb && kReleaseMode) return '';
+    return 'http://178.104.94.11:8081';
+  }
 
   //Prefijo para las rutas de la API
   static const String apiPrefix = '/api';
