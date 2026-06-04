@@ -45,6 +45,9 @@ public class Race {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(nullable = false)
+    private String source = "PHB";
+
     public Race() {
     }
 
@@ -119,4 +122,7 @@ public class Race {
     public void setTraits(List<RacialTrait> traits) {
         this.traits = traits;
     }
+
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
 }

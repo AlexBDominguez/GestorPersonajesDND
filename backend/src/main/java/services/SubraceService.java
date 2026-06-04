@@ -21,11 +21,11 @@ public class SubraceService {
         this.raceRepository = raceRepository;
     }
 
-    public List<SubraceDto> getByRaceId(Long raceId) {
-        return subraceRepository.findByRaceId(raceId)
-                .stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());   
+    public List<SubraceDto> getByRaceId(Long raceId, List<String> sources) {
+        List<Subrace> subraces = (sources == null || sources.isEmpty())
+                ? subraceRepository.findByRaceId(raceId)
+                : subraceRepository.findByRaceIdAndSourceIn(raceId, sources);
+        return subraces.stream().map(this::toDto).collect(Collectors.toList());
     }
 
     public SubraceDto getById(Long id) {

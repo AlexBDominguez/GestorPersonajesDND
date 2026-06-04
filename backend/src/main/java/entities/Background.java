@@ -76,7 +76,10 @@ public class Background {
     @ElementCollection
     @CollectionTable(name = "background_flaws", joinColumns = @JoinColumn(name = "background_id"))
     @Column(name = "flaw", columnDefinition = "TEXT")
-    private List<String> flaws; 
+    private List<String> flaws;
+
+    @Column(nullable = false)
+    private String source = "PHB";
 
     public Background() {}
 
@@ -192,5 +195,6 @@ public class Background {
         this.flaws = flaws;
     }
 
-
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
 }

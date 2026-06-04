@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
+import 'package:gestor_personajes_dnd/models/content_source.dart';
 import 'package:gestor_personajes_dnd/viewmodels/wizard/character_creator_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-class StepPreferences extends StatelessWidget{
+class StepPreferences extends StatelessWidget {
   const StepPreferences({super.key});
 
   @override
@@ -15,15 +16,13 @@ class StepPreferences extends StatelessWidget{
       padding: const EdgeInsets.all(16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SizedBox(height: 8),
-        Text('Character Basics',
-        style: Theme.of(context).textTheme.displayMedium),
+        Text('Character Basics', style: Theme.of(context).textTheme.displayMedium),
         const SizedBox(height: 4),
         Text('Give your character a name.',
-          style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
         const SizedBox(height: 28),
 
-          //- Nombre
-          TextFormField(
+        TextFormField(
           initialValue: vm.characterName,
           decoration: const InputDecoration(
             labelText: 'Character name *',
@@ -32,18 +31,44 @@ class StepPreferences extends StatelessWidget{
           style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 16),
           onChanged: vm.setName,
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 32),
 
-        // Ability Scores display preference
+        // ── Content Sources ──────────────────────────────────────────────────
+        Text('Content Sources',
+            style: GoogleFonts.libreBaskerville(
+                color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Text(
+          'Choose which sourcebooks are available when selecting race, class, background and more.',
+          style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13),
+        ),
+        const SizedBox(height: 12),
+        if (vm.sourcesLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 2),
+            ),
+          )
+        else if (vm.availableContentSources.isEmpty)
+          Text('No sources available.',
+              style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13))
+        else
+          _SourcesGrid(
+            sources: vm.availableContentSources,
+            selectedSources: vm.selectedSources,
+            onToggle: vm.toggleSource,
+          ),
+
+        const SizedBox(height: 32),
+
+        // ── Ability Scores display ───────────────────────────────────────────
         Text('Ability Scores display',
             style: GoogleFonts.libreBaskerville(
-                color: AppTheme.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.bold)),
+                color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
         Text('How ability scores appear in the character sheet.',
-            style:
-                GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14)),
+            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14)),
         const SizedBox(height: 10),
         Row(children: [
           Expanded(
@@ -64,28 +89,99 @@ class StepPreferences extends StatelessWidget{
             onTap: () => vm.setAbilityDisplayMode('MODIFIERS_TOP'),
           )),
         ]),
-
-        // [DISABLED] Progression system (XP vs Milestone) — omitido by design.
-        // Siempre se usa Milestone. Para reactivar, descomentar este bloque.
-        /*
-          Text('Progression system', ...),
-          _OptionTile(title: 'Milestone', ...),
-          _OptionTile(title: 'Experience Points (XP)', ...),
-          const SizedBox(height: 28),
-          */
-
-        // [DISABLED] Encumbrance — omitido by design.
-        // Para reactivar, descomentar este bloque y restaurar _OptionTile.
-        /*
-          Text('Optional rules', ...),
-          SwitchListTile(value: vm.useEncumbrance, onChanged: vm.setEncumbrance),
-          */
       ]),
     );
   }
 }
 
-// ── Tile de selección de modo de visualización ────────────────────────────────
+// ── Sources grid ──────────────────────────────────────────────────────────────
+
+class _SourcesGrid extends StatelessWidget {
+  final List<ContentSource> sources;
+  final Set<String> selectedSources;
+  final void Function(String) onToggle;
+
+  const _SourcesGrid({
+    required this.sources,
+    required this.selectedSources,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: sources.map((s) => _SourceChip(
+        source: s,
+        selected: selectedSources.contains(s.shortName),
+        onToggle: () => onToggle(s.shortName),
+      )).toList(),
+    );
+  }
+}
+
+class _SourceChip extends StatelessWidget {
+  final ContentSource source;
+  final bool selected;
+  final VoidCallback onToggle;
+
+  const _SourceChip({
+    required this.source,
+    required this.selected,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isLocked = source.isBase;
+    final effectiveSelected = isLocked ? true : selected;
+
+    return Tooltip(
+      message: source.fullName,
+      child: GestureDetector(
+        onTap: isLocked ? null : onToggle,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: effectiveSelected
+                ? AppTheme.primary.withOpacity(0.15)
+                : AppTheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: effectiveSelected
+                  ? AppTheme.primary
+                  : AppTheme.surfaceVariant,
+              width: effectiveSelected ? 2 : 1,
+            ),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            if (isLocked)
+              const Icon(Icons.lock, size: 12, color: AppTheme.primary)
+            else
+              Icon(
+                effectiveSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                size: 16,
+                color: effectiveSelected ? AppTheme.primary : AppTheme.textSecondary,
+              ),
+            const SizedBox(width: 6),
+            Text(
+              source.shortName,
+              style: GoogleFonts.libreBaskerville(
+                color: effectiveSelected ? AppTheme.primary : AppTheme.textSecondary,
+                fontSize: 12,
+                fontWeight: effectiveSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Display mode tile ─────────────────────────────────────────────────────────
 
 class _DisplayModeTile extends StatelessWidget {
   final String title;
@@ -110,8 +206,7 @@ class _DisplayModeTile extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
-          color:
-              selected ? AppTheme.primary.withOpacity(0.12) : AppTheme.surface,
+          color: selected ? AppTheme.primary.withOpacity(0.12) : AppTheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? AppTheme.primary : AppTheme.surfaceVariant,
@@ -119,7 +214,6 @@ class _DisplayModeTile extends StatelessWidget {
           ),
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          // Mock ability card preview
           Container(
             width: 44,
             height: 30,

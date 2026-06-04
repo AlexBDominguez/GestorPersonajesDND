@@ -77,6 +77,7 @@ public class PlayerCharacterDto {
     private List<CharacterSkillDto> skills;
     private List<CharacterSavingThrowDto> savingThrows;
     private List<String> classSkillIndices; // input: class skill picks from wizard
+    private List<String> selectedSources;
     
 
 
@@ -665,5 +666,8 @@ public class PlayerCharacterDto {
     public void setAbilityDisplayMode(String abilityDisplayMode) {
         this.abilityDisplayMode = abilityDisplayMode;
     }
+
+    public List<String> getSelectedSources() { return selectedSources; }
+    public void setSelectedSources(List<String> selectedSources) { this.selectedSources = selectedSources; }
 
 }

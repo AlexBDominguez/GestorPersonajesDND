@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
+import 'package:gestor_personajes_dnd/models/content_source.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
 import 'package:gestor_personajes_dnd/models/wizard/background_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
@@ -403,12 +404,61 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   // ────────────────────────────────────────────────────────────
 
   String characterName = '';
-  // [DISABLED] XP/Encumbrance — not used. Always milestone, never encumbrance.
-  // bool useMilestone = true;
-  // bool useEncumbrance = false;
-  bool useMilestone = true;      // mantenido para la llamada al backend; siempre true
-  bool useEncumbrance = false;   // mantenido para la llamada al backend; siempre false
-  String abilityDisplayMode = 'SCORES_TOP'; // 'SCORES_TOP' o 'MODIFIERS_TOP'
+  bool useMilestone = true;
+  bool useEncumbrance = false;
+  String abilityDisplayMode = 'SCORES_TOP';
+
+  // Content sources
+  List<ContentSource> availableContentSources = [];
+  bool _sourcesLoading = false;
+  bool get sourcesLoading => _sourcesLoading;
+  // PHB siempre activo; el Set refleja las fuentes seleccionadas por el usuario.
+  final Set<String> selectedSources = {'PHB'};
+
+  List<String> get selectedSourcesList => selectedSources.toList();
+
+  Future<void> loadContentSources() async {
+    _sourcesLoading = true;
+    notifyListeners();
+    try {
+      availableContentSources = await _refService.getContentSources();
+    } catch (_) {
+      availableContentSources = [];
+    } finally {
+      _sourcesLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void toggleSource(String shortName) {
+    if (shortName == 'PHB') return; // PHB siempre activo
+    if (selectedSources.contains(shortName)) {
+      selectedSources.remove(shortName);
+    } else {
+      selectedSources.add(shortName);
+    }
+    // Limpiar selecciones de clase/raza/trasfondo porque pueden ya no estar disponibles
+    _clearCatalogSelections();
+    _markDirty(WizardStep.preferences);
+    notifyListeners();
+  }
+
+  void _clearCatalogSelections() {
+    classes = [];
+    selectedClass = null;
+    selectedSubclass = null;
+    subclasses = [];
+    classFeatures = [];
+    subclassFeatures = [];
+    selectedSpellIds.clear();
+    availableSpells.clear();
+    races = [];
+    selectedRace = null;
+    selectedSubrace = null;
+    subraces = [];
+    backgrounds = [];
+    selectedBackground = null;
+  }
 
   void setName(String v) {characterName = v; _markDirty(WizardStep.preferences); notifyListeners();}
   void setAbilityDisplayMode(String v) {abilityDisplayMode = v; _markDirty(WizardStep.preferences); notifyListeners();}
@@ -432,7 +482,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try{
-      classes = await _refService.getClasses();
+      classes = await _refService.getClasses(sources: selectedSourcesList);
       // Modo edición: seleccionar automáticamente la clase existente del personaje
       if (_editMode && _initialClassId != null && selectedClass == null) {
         final matches = classes.where((c) => c.id == _initialClassId);
@@ -506,7 +556,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   Future<void> loadSubclasses(int classId) async {
     try {
-      subclasses = await _refService.getSubclasses(classId);
+      subclasses = await _refService.getSubclasses(classId, sources: selectedSourcesList);
     } catch (_) {
       subclasses = [];
     }
@@ -517,7 +567,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     subclasses = [];
     notifyListeners();
     try {
-      subclasses = await _refService.getSubclasses(classId);
+      subclasses = await _refService.getSubclasses(classId, sources: selectedSourcesList);
       // Modo edición: seleccionar automáticamente la subclase existente del personaje
       if (_editMode && _initialSubclassId != null && selectedSubclass == null) {
         final matches = subclasses.where((s) => s.id == _initialSubclassId);
@@ -702,7 +752,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try{
-      backgrounds = await _refService.getBackgrounds();
+      backgrounds = await _refService.getBackgrounds(sources: selectedSourcesList);
       // Modo edición: seleccionar automáticamente el background existente del personaje
       if (_editMode && _initialBackgroundId != null && selectedBackground == null) {
         final matches = backgrounds.where((b) => b.id == _initialBackgroundId);
@@ -792,7 +842,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _setLoading(true);
     _setError(null);
     try{
-      races = await _refService.getRaces();
+      races = await _refService.getRaces(sources: selectedSourcesList);
       // Modo edición: seleccionar automáticamente la raza existente del personaje
       if (_editMode && _initialRaceId != null && selectedRace == null) {
         final matches = races.where((r) => r.id == _initialRaceId);
@@ -821,7 +871,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     isLoadingSubraces = true;
     notifyListeners();
     try {
-      subraces = await _refService.getSubRaces(raceId);
+      subraces = await _refService.getSubRaces(raceId, sources: selectedSourcesList);
     } catch (_) {
       subraces = [];
     } finally {
@@ -979,6 +1029,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     try {
       magicalSecretsPool = await _refService.getAvailableSpells(
         maxLevel: maxSpellLevel,
+        sources: selectedSourcesList,
       );
     } catch (_) {
       magicalSecretsPool = [];
@@ -1016,6 +1067,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         classId: selectedClass?.id,
         subclassId: selectedSubclass?.id,
         maxLevel: maxSpellLevel,
+        sources: selectedSourcesList,
       );
       if (magicalSecretsSlots > 0 || additionalMagicalSecretsSlots > 0) {
         await loadMagicalSecretsPool();
@@ -1438,6 +1490,7 @@ void toggleItem(int itemId) {
         weight: weight.isNotEmpty  ? weight  : null,
         useEncumbrance: useEncumbrance,
         abilityDisplayMode: abilityDisplayMode,
+        selectedSources: selectedSourcesList,
       );
       _createdCharacterId = result.id;
 
@@ -1621,6 +1674,9 @@ void toggleItem(int itemId) {
 
   void _loadStepData() {
     switch (_currentStep) {
+      case WizardStep.preferences:
+        if (availableContentSources.isEmpty) loadContentSources();
+        break;
       case WizardStep.dndClass:
         if (classes.isEmpty) loadClasses();
         break;

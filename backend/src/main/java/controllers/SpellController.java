@@ -42,8 +42,9 @@ public class SpellController {
     public List<Spell> getAvailableSpells(
         @RequestParam(required = false) Long classId,
         @RequestParam(required = false) Long subclassId,
-        @RequestParam(required = false) Integer maxLevel){
-        return spellService.getAvailableSpells(classId, subclassId, maxLevel);
-        }
+        @RequestParam(required = false) Integer maxLevel,
+        @RequestParam(required = false) List<String> sources) {
+        return spellService.getAvailableSpells(classId, subclassId, maxLevel, sources);
+    }
     
 }

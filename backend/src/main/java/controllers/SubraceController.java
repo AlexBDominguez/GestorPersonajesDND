@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import dto.SubraceDto;
@@ -25,8 +26,10 @@ public class SubraceController {
 
     //Get /api/subraces/races/{raceId} -> subrazas de una raza concreta
     @GetMapping("/race/{raceId}")
-    public ResponseEntity<List<SubraceDto>> getByRace(@PathVariable Long raceId) {
-        return ResponseEntity.ok(subraceService.getByRaceId(raceId));
+    public ResponseEntity<List<SubraceDto>> getByRace(
+            @PathVariable Long raceId,
+            @RequestParam(required = false) List<String> sources) {
+        return ResponseEntity.ok(subraceService.getByRaceId(raceId, sources));
     }
 
     @GetMapping("/{id}")

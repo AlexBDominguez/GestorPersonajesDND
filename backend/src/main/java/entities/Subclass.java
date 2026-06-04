@@ -34,6 +34,9 @@ public class Subclass {
     // Ability Score para spellcasting (puede ser null si no es caster)
     private String spellcastingAbility;
 
+    @Column(nullable = false)
+    private String source = "PHB";
+
     public Subclass(){}
 
     public Long getId() {
@@ -92,7 +95,6 @@ public class Subclass {
         this.spellcastingAbility = spellcastingAbility;
     }
 
-    
-
-
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
 }

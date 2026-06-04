@@ -10,4 +10,5 @@ import entities.Subrace;
 public interface SubraceRepository extends JpaRepository<Subrace, Long> {
     List<Subrace> findByRaceId(Long raceId);
     Optional<Subrace> findByIndexName(String indexName);
+    List<Subrace> findByRaceIdAndSourceIn(Long raceId, List<String> sources);
 }

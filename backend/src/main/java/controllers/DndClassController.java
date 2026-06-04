@@ -9,6 +9,8 @@ import services.DndClassService;
 
 import java.util.List;
 
+
+
 @RestController
 @RequestMapping("/api/classes")
 public class DndClassController {
@@ -20,8 +22,9 @@ public class DndClassController {
     }
 
     @GetMapping
-    public List<DndClassDto> getAll(){
-        return service.getAll();
+    public List<DndClassDto> getAll(
+            @RequestParam(required = false) List<String> sources) {
+        return service.getAll(sources);
     }
 
     @GetMapping("/{id}")
@@ -40,8 +43,10 @@ public class DndClassController {
     }
 
     @GetMapping("/{id}/subclasses")
-    public List<SubclassDto> getSubclassesByClass(@PathVariable Long id){
-        return service.getSubclassesByClassId(id);
+    public List<SubclassDto> getSubclassesByClass(
+            @PathVariable Long id,
+            @RequestParam(required = false) List<String> sources) {
+        return service.getSubclassesByClassId(id, sources);
     }
 
 }

@@ -18,10 +18,11 @@ public class BackgroundService {
         this.backgroundRepository = backgroundRepository;
     }
 
-    public List<BackgroundDto> getAll() {
-        return backgroundRepository.findAll().stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+    public List<BackgroundDto> getAll(List<String> sources) {
+        List<Background> backgrounds = (sources == null || sources.isEmpty())
+                ? backgroundRepository.findAll()
+                : backgroundRepository.findBySourceIn(sources);
+        return backgrounds.stream().map(this::toDto).collect(Collectors.toList());
     }
 
     public BackgroundDto getById(Long id) {

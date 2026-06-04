@@ -6,6 +6,7 @@ import dto.RacialTraitDto;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import services.RaceService;
 
@@ -22,8 +23,9 @@ public class RaceController {
     }
 
     @GetMapping
-    public List<RaceDto> getAllRaces(){
-        return raceService.getAllRaces();
+    public List<RaceDto> getAllRaces(
+            @RequestParam(required = false) List<String> sources) {
+        return raceService.getAllRaces(sources);
     }
 
     @GetMapping("/{id}")

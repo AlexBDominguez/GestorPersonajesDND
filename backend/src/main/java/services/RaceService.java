@@ -22,10 +22,11 @@ public class RaceService {
         this.subraceRepository = subraceRepository;
     }
 
-    public List<RaceDto> getAllRaces() {
-        return raceRepository.findAll().stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+    public List<RaceDto> getAllRaces(List<String> sources) {
+        List<Race> races = (sources == null || sources.isEmpty())
+                ? raceRepository.findAll()
+                : raceRepository.findBySourceIn(sources);
+        return races.stream().map(this::toDto).collect(Collectors.toList());
     }
 
     public RaceDto getRace(Long id) {

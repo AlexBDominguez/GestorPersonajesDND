@@ -43,7 +43,9 @@ public class SpellService {
             spellRepository.findByCastingTimeContainingIgnoreCase(castingTime);
     }
 
-    public List<Spell> getAvailableSpells(Long classId, Long subclassId, Integer maxLevel){
+    public List<Spell> getAvailableSpells(Long classId, Long subclassId, Integer maxLevel, List<String> sources) {
+        boolean hasSourceFilter = sources != null && !sources.isEmpty();
+
         // Comprobar si esta clase tiene spells vinculados (los lanzadores full/half los tienen; Fighter/Rogue no)
         boolean classHasSpells = classId != null &&
                 !spellRepository.findByDndClassesId(classId).isEmpty();
@@ -55,7 +57,6 @@ public class SpellService {
             Subclass subclass = subclassRepository.findById(subclassId).orElse(null);
             if (subclass != null && subclass.getSpellcastingAbility() != null
                     && !subclass.getSpellcastingAbility().isEmpty()) {
-                // Lanzador 1/3: usar lista del Wizard (enfoque en abjuración + evocación, pero la lista es de Wizard)
                 DndClass wizard = dndClassRepository.findAll().stream()
                         .filter(c -> "Wizard".equalsIgnoreCase(c.getName()))
                         .findFirst().orElse(null);
@@ -67,14 +68,18 @@ public class SpellService {
         }
 
         if (classHasSpells && maxLevel != null) {
-            return spellRepository.findByDndClassesIdAndLevelLessThanEqual(resolvedClassId, maxLevel);
+            return hasSourceFilter
+                    ? spellRepository.findByDndClassesIdAndLevelLessThanEqualAndSourceIn(resolvedClassId, maxLevel, sources)
+                    : spellRepository.findByDndClassesIdAndLevelLessThanEqual(resolvedClassId, maxLevel);
         }
         if (classHasSpells) {
-            return spellRepository.findByDndClassesId(resolvedClassId);
+            return hasSourceFilter
+                    ? spellRepository.findByDndClassesIdAndSourceIn(resolvedClassId, sources)
+                    : spellRepository.findByDndClassesId(resolvedClassId);
         }
         if (maxLevel != null) {
             return spellRepository.findByLevelLessThanEqual(maxLevel);
         }
-        return spellRepository.findAll();
+        return hasSourceFilter ? spellRepository.findBySourceIn(sources) : spellRepository.findAll();
     }
 }

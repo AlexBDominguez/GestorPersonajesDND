@@ -30,6 +30,9 @@ public class Spell {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(nullable = false)
+    private String source = "PHB";
+
     // Extended combat data (from dnd5eapi)
     private String attackType;   // "ranged", "melee", or null (save-based)
     private String dcType;       // "DEX", "CON", etc., or null (attack-based)
@@ -159,4 +162,7 @@ public class Spell {
 
         public boolean isExtendedDataSynced() { return extendedDataSynced; }
         public void setExtendedDataSynced(boolean extendedDataSynced) { this.extendedDataSynced = extendedDataSynced; }
+
+        public String getSource() { return source; }
+        public void setSource(String source) { this.source = source; }
 }

@@ -149,6 +149,9 @@ public class PlayerCharacterService {
         if (dto.getAbilityDisplayMode() != null) {
             playerCharacter.setAbilityDisplayMode(dto.getAbilityDisplayMode());
         }
+        if (dto.getSelectedSources() != null && !dto.getSelectedSources().isEmpty()) {
+            playerCharacter.setSelectedSources(dto.getSelectedSources());
+        }
 
         //Hit dice disponibles = nivel del personaje (se consume 1 por cada descanso corto)
         playerCharacter.setAvailableHitDice(dto.getLevel());
@@ -472,6 +475,7 @@ public class PlayerCharacterService {
         dto.setHeavilyEncumberedThreshold(playerCharacter.getHeavilyEncumberedThreshold());
         dto.setUseEncumbrance(playerCharacter.isUseEncumbrance());
         dto.setAbilityDisplayMode(playerCharacter.getAbilityDisplayMode());
+        dto.setSelectedSources(playerCharacter.getSelectedSources());
         dto.setMeleeAttackBonus(playerCharacter.getMeleeAttackBonus() + itemBonusToHit);
         dto.setRangedAttackBonus(playerCharacter.getRangedAttackBonus() + itemBonusToHit + fightingStyleRangedBonus);
         dto.setFinesseAttackBonus(playerCharacter.getFinesseAttackBonus() + itemBonusToHit);

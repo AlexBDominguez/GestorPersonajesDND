@@ -37,6 +37,9 @@ public class Feat {
     @Column(name = "prerequisite", columnDefinition = "TEXT")
     private List<String> prerequisites;
 
+    @Column(nullable = false)
+    private String source = "PHB";
+
     //Hechizos que otorga el feat automáticamente (ej: Magic Initiate)
     //Nota: algunos feats permiten elegir - eso se gestiona en el wizard
     @ManyToMany
@@ -108,4 +111,6 @@ public class Feat {
         this.grantedSpells = grantedSpells;
     }
 
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
 }

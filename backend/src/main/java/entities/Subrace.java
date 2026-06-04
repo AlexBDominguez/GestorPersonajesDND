@@ -39,6 +39,8 @@ public class Subrace {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(nullable = false)
+    private String source = "PHB";
 
     //Bonos de ability adicionales que se suman a los de la raza base
     @ElementCollection
@@ -116,5 +118,6 @@ public class Subrace {
         this.traits = traits;
     }
 
-    
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
 }

@@ -14,5 +14,6 @@ public interface SubclassRepository extends JpaRepository<Subclass, Long> {
 
     List<Subclass> findByDndClass(DndClass dndClass);
 
-} 
+    List<Subclass> findByDndClassAndSourceIn(DndClass dndClass, List<String> sources);
+}
 

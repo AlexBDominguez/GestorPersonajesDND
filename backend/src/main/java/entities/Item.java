@@ -51,6 +51,9 @@ public class Item {
     private Integer minimumStrength;
     private boolean stealthDisadvantage;
 
+    @Column(nullable = false)
+    private String source = "PHB";
+
     //Para magic items
     private String rarity;
     private boolean requiresAttunement;
@@ -274,4 +277,6 @@ public class Item {
     public Integer getSetChaTo() { return setChaTo; }
     public void setSetChaTo(Integer setChaTo) { this.setChaTo = setChaTo; }
 
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
 }

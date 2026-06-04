@@ -11,6 +11,7 @@ import repositories.ClassFeatureRepository;
 import repositories.DndClassRepository;
 import repositories.SubclassRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -31,10 +32,11 @@ public class DndClassService {
         this.subclassRepository = subclassRepository;
     }
 
-    public List<DndClassDto> getAll() {
-        return dndClassRepository.findAll().stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+    public List<DndClassDto> getAll(List<String> sources) {
+        List<DndClass> classes = (sources == null || sources.isEmpty())
+                ? dndClassRepository.findAll()
+                : dndClassRepository.findBySourceIn(sources);
+        return classes.stream().map(this::toDto).collect(Collectors.toList());
     }
 
     public DndClassDto getById(Long id) {
@@ -62,12 +64,13 @@ public class DndClassService {
                 .collect(Collectors.toList());
     }
 
-    public List<SubclassDto> getSubclassesByClassId(Long classId) {
+    public List<SubclassDto> getSubclassesByClassId(Long classId, List<String> sources) {
         DndClass dndClass = dndClassRepository.findById(Objects.requireNonNull(classId))
                 .orElseThrow(() -> new RuntimeException("DndClass not found with ID: " + classId));
-        return subclassRepository.findByDndClass(dndClass).stream()
-                .map(this::toSubclassDto)
-                .collect(Collectors.toList());
+        List<Subclass> subclasses = (sources == null || sources.isEmpty())
+                ? subclassRepository.findByDndClass(dndClass)
+                : subclassRepository.findByDndClassAndSourceIn(dndClass, sources);
+        return subclasses.stream().map(this::toSubclassDto).collect(Collectors.toList());
     }
 
     private DndClassDto toDto(DndClass dndClass) {

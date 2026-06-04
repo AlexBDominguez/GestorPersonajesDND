@@ -2,6 +2,7 @@ package entities;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -142,6 +143,11 @@ public class PlayerCharacter {
     // Preferencia de visualización de ability scores en la ficha
     // Valores: "SCORES_TOP" (por defecto) o "MODIFIERS_TOP"
     private String abilityDisplayMode = "SCORES_TOP";
+
+    @ElementCollection
+    @CollectionTable(name = "character_selected_sources", joinColumns = @JoinColumn(name = "character_id"))
+    @Column(name = "source")
+    private List<String> selectedSources = new ArrayList<>(List.of("PHB"));
 
 
     //Getters y setters
@@ -981,6 +987,9 @@ public class PlayerCharacter {
     public void setAbilityDisplayMode(String abilityDisplayMode) {
         this.abilityDisplayMode = abilityDisplayMode;
     }
+
+    public List<String> getSelectedSources() { return selectedSources; }
+    public void setSelectedSources(List<String> selectedSources) { this.selectedSources = selectedSources; }
 
 }
     

@@ -49,6 +49,9 @@ public class DndClass {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(nullable = false)
+    private String source = "PHB";
+
     @ManyToMany
     @JoinTable(
         name = "class_spells",
@@ -140,5 +143,7 @@ public class DndClass {
     public void setNumSkillChoices(int numSkillChoices) {
         this.numSkillChoices = numSkillChoices;
     }
-    
+
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
 }
