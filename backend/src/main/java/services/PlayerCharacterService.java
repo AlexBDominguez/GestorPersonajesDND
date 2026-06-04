@@ -276,6 +276,13 @@ public class PlayerCharacterService {
             }
         }
 
+        // Aplicar expertise elegida en el wizard directamente en la creación
+        if (dto.getExpertiseSkillNames() != null) {
+            for (String skillName : dto.getExpertiseSkillNames()) {
+                characterSkillService.applyExpertiseByName(saved, skillName);
+            }
+        }
+
         applyRaceSpells(saved);
 
         if (dto.getSpellIds() != null){

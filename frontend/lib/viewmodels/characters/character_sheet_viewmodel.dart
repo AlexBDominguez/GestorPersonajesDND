@@ -696,13 +696,14 @@ class CharacterSheetViewModel extends ChangeNotifier {
   Future<bool> resolveTask(int taskId, String choice, {String? extraData}) async{
     try{
       await _taskService.resolveTask(
-        characterId: characterId, 
-        taskId: taskId, 
+        characterId: characterId,
+        taskId: taskId,
         choice: choice,
         extraData: extraData,
         );
-      
+
       await _loadPendingTasks();
+      await silentRefresh();
       return true;
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception', '');

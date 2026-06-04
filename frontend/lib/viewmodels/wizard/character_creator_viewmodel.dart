@@ -1469,6 +1469,10 @@ void toggleItem(int itemId) {
         spellIds:    selectedSpellIds.toList(),
         magicalSecretSpellIds: [...magicalSecretIds, ...additionalMagicalSecretIds].toList(),
         classSkillIndices: _classSkillIndices.toList(),
+        expertiseSkillNames: featureChoices.entries
+            .where((e) => e.key.startsWith('EXPERTISE_PICK_') && e.value.isNotEmpty)
+            .map((e) => e.value)
+            .toList(),
         abilityScores: {
           'str': abilityScores['STR']!,
           'dex': abilityScores['DEX']!,

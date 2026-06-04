@@ -104,18 +104,17 @@ class TabSkills extends StatelessWidget{
                     if (expertise) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primary.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: AppTheme.primary.withOpacity(0.5)),
+                        width: 18, height: 18,
+                        decoration: const BoxDecoration(
+                          color: AppTheme.primary,
+                          shape: BoxShape.circle,
                         ),
-                        child: Text('EXP',
+                        alignment: Alignment.center,
+                        child: Text('E',
                           style: GoogleFonts.lato(
-                            color: AppTheme.primary,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5)),
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ]),

@@ -77,6 +77,7 @@ public class PlayerCharacterDto {
     private List<CharacterSkillDto> skills;
     private List<CharacterSavingThrowDto> savingThrows;
     private List<String> classSkillIndices; // input: class skill picks from wizard
+    private List<String> expertiseSkillNames; // input: expertise picks from wizard (display names, e.g. "Arcana")
     private List<String> selectedSources;
     
 
@@ -617,6 +618,14 @@ public class PlayerCharacterDto {
 
     public void setClassSkillIndices(List<String> classSkillIndices) {
         this.classSkillIndices = classSkillIndices;
+    }
+
+    public List<String> getExpertiseSkillNames() {
+        return expertiseSkillNames;
+    }
+
+    public void setExpertiseSkillNames(List<String> expertiseSkillNames) {
+        this.expertiseSkillNames = expertiseSkillNames;
     }
 
     public List<CharacterSpellSummaryDto> getCharacterSpells() {

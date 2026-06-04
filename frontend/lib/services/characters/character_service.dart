@@ -61,6 +61,7 @@ class CharacterService {
     List<int>? spellIds,
     List<int>? magicalSecretSpellIds,
     List<String>? classSkillIndices,
+    List<String>? expertiseSkillNames,
     List<String>? selectedSources,
     bool useEncumbrance = false,
     String abilityDisplayMode = 'SCORES_TOP',
@@ -89,6 +90,7 @@ class CharacterService {
       if (spellIds != null && spellIds.isNotEmpty) 'spellIds': spellIds,
       if (magicalSecretSpellIds != null && magicalSecretSpellIds.isNotEmpty) 'magicalSecretSpellIds': magicalSecretSpellIds,
       if (classSkillIndices != null && classSkillIndices.isNotEmpty) 'classSkillIndices': classSkillIndices,
+      if (expertiseSkillNames != null && expertiseSkillNames.isNotEmpty) 'expertiseSkillNames': expertiseSkillNames,
       if (selectedSources != null && selectedSources.isNotEmpty) 'selectedSources': selectedSources,
     };
     final res = await _api.post(ApiConfig.charactersPath, body: body);
