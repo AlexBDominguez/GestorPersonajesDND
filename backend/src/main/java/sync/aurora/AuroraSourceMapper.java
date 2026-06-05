@@ -25,7 +25,7 @@ public class AuroraSourceMapper {
         Map.entry("Icewind Dale: Rime of the Frostmaiden", "IDRotF"),
         Map.entry("Van Richten's Guide to Ravenloft", "VRGtR"),
         Map.entry("The Wild Beyond the Witchlight", "WBtW"),
-        Map.entry("Spelljammer: Adventures in Space", "SJA"),
+        Map.entry("Spelljammer: Adventures in Space", "AAG"),
         Map.entry("Dragonlance: Shadow of the Dragon Queen", "DSotDQ"),
         Map.entry("Bigby Presents: Glory of the Giants", "BGotG"),
         Map.entry("Phandelver and Below: The Shattered Obelisk", "PaBTSO"),
@@ -37,13 +37,11 @@ public class AuroraSourceMapper {
         Map.entry("Curse of Strahd", "CoS"),
         Map.entry("Keys from the Golden Vault", "KftGV"),
         Map.entry("Monsters of the Multiverse", "MoTM"),
-        Map.entry("Spelljammer: Adventures in Space", "AAG"),
         Map.entry("Journeys through the Radiant Citadel", "JttRC"),
         Map.entry("One Grung Above", "OGA"),
         Map.entry("Locathah Rising", "LR"),
         Map.entry("Lost Mine of Phandelver", "LMoP"),
-        Map.entry("Tomb of Annihilation", "ToA"),
-        Map.entry("Princes of the Apocalypse", "PotA")
+        Map.entry("Tomb of Annihilation", "ToA")
     );
 
     // Aurora XML files use smart/curly apostrophes (U+2019) in source names.
