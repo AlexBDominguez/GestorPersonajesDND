@@ -2,6 +2,8 @@ package sync;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import sync.aurora.AuroraBackgroundMapper;
+import sync.aurora.AuroraFeatMapper;
 import sync.aurora.AuroraRaceMapper;
 import sync.aurora.AuroraRegistry;
 
@@ -19,10 +21,17 @@ public class AuroraSyncController {
 
     private final AuroraSyncService auroraSync;
     private final AuroraRaceMapper raceMapper;
+    private final AuroraBackgroundMapper backgroundMapper;
+    private final AuroraFeatMapper featMapper;
 
-    public AuroraSyncController(AuroraSyncService auroraSync, AuroraRaceMapper raceMapper) {
+    public AuroraSyncController(AuroraSyncService auroraSync,
+                                AuroraRaceMapper raceMapper,
+                                AuroraBackgroundMapper backgroundMapper,
+                                AuroraFeatMapper featMapper) {
         this.auroraSync = auroraSync;
         this.raceMapper = raceMapper;
+        this.backgroundMapper = backgroundMapper;
+        this.featMapper = featMapper;
     }
 
     /**
@@ -56,6 +65,26 @@ public class AuroraSyncController {
     @PostMapping("/persist/races")
     public ResponseEntity<Map<String, Object>> persistRaces() {
         return ResponseEntity.ok(raceMapper.sync());
+    }
+
+    /**
+     * Persists all non-PHB backgrounds from the in-memory registry to the database.
+     *
+     * POST /api/sync/aurora/persist/backgrounds
+     */
+    @PostMapping("/persist/backgrounds")
+    public ResponseEntity<Map<String, Object>> persistBackgrounds() {
+        return ResponseEntity.ok(backgroundMapper.sync());
+    }
+
+    /**
+     * Persists all non-PHB feats from the in-memory registry to the database.
+     *
+     * POST /api/sync/aurora/persist/feats
+     */
+    @PostMapping("/persist/feats")
+    public ResponseEntity<Map<String, Object>> persistFeats() {
+        return ResponseEntity.ok(featMapper.sync());
     }
 
     /**
