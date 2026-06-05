@@ -79,6 +79,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/sync/**").permitAll()
 
                 // Reference data (read-only game data) accessible to all
+                .requestMatchers(HttpMethod.GET, "/api/content-sources").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/classes/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/races/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/backgrounds/**").permitAll()
