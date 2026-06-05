@@ -10,6 +10,7 @@ public class RaceDto {
     private int speed;
     private Map<String, Integer> abilityBonuses;
     private String description;
+    private String source;
 
     public Long getId() {
         return id;
@@ -65,5 +66,13 @@ public class RaceDto {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 }

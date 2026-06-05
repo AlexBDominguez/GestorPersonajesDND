@@ -41,34 +41,9 @@ class StepRace extends StatelessWidget {
               style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
         ),
 
-        // Si hay subraza seleccionada, muestra el selector expandido
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16),
-              itemCount: vm.races.length,
-              itemBuilder: (_, i) {
-                final race = vm.races[i];
-                final isSelected = vm.selectedRace?.id == race.id;
-                return Column(
-                  children: [
-                    _RaceCard(
-                      race: race,
-                      isSelected: isSelected,
-                      onTap: () => vm.selectRace(race),
-                    ),
-                    if (isSelected && (vm.subraces.isNotEmpty || vm.isLoadingSubraces))
-                      _SubraceSelector(vm: vm),
-                    if (isSelected && vm.selectedSubrace != null &&
-                        vm.subraceFeatureChoices.isNotEmpty)
-                      _SubraceChoiceSection(vm: vm),
-                    if (isSelected && vm.raceFeatureChoices.isNotEmpty)
-                      _RaceChoiceSection(vm: vm),
-                  ],
-                );
-              },
-            ),
-          ),
+          child: _GroupedRaceList(vm: vm),
+        ),
       ]);
   }
 }
@@ -539,6 +514,118 @@ class _RaceOptionTile extends StatelessWidget {
             ),
           ),
         ]),
+      ),
+    );
+  }
+}
+
+// ── Source names map ─────────────────────────────────────────────────────────
+const _sourceNames = <String, String>{
+  'PHB':    "Player's Handbook",
+  'DMG':    "Dungeon Master's Guide",
+  'XGtE':   "Xanathar's Guide to Everything",
+  'MToF':   "Mordenkainen's Tome of Foes",
+  'TCoE':   "Tasha's Cauldron of Everything",
+  'FToD':   "Fizban's Treasury of Dragons",
+  'VRGtR':  "Van Richten's Guide to Ravenloft",
+  'ERLW':   "Eberron: Rising from the Last War",
+  'SCoC':   "Strixhaven: A Curriculum of Chaos",
+  'AI':     "Acquisitions Incorporated",
+  'IDRotF': "Icewind Dale: Rime of the Frostmaiden",
+};
+
+String _sourceName(String code) => _sourceNames[code] ?? code;
+
+// ── Grouped list ─────────────────────────────────────────────────────────────
+
+class _GroupedRaceList extends StatelessWidget {
+  final CharacterCreatorViewModel vm;
+  const _GroupedRaceList({required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    // Build ordered list of unique sources preserving the order races arrive in
+    final seenSources = <String>{};
+    final sources = <String>[];
+    for (final r in vm.races) {
+      if (seenSources.add(r.source)) sources.add(r.source);
+    }
+
+    // Only show headers when there is more than one source
+    final showHeaders = sources.length > 1;
+
+    // Flat list of items: String = header, RaceOption = race card
+    final items = <Object>[];
+    for (final src in sources) {
+      if (showHeaders) items.add(src);
+      items.addAll(vm.races.where((r) => r.source == src));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: items.length,
+      itemBuilder: (_, i) {
+        final item = items[i];
+        if (item is String) {
+          return _SourceHeader(sourceCode: item);
+        }
+        final race = item as RaceOption;
+        final isSelected = vm.selectedRace?.id == race.id;
+        return Column(
+          children: [
+            _RaceCard(
+              race: race,
+              isSelected: isSelected,
+              onTap: () => vm.selectRace(race),
+            ),
+            if (isSelected && (vm.subraces.isNotEmpty || vm.isLoadingSubraces))
+              _SubraceSelector(vm: vm),
+            if (isSelected && vm.selectedSubrace != null &&
+                vm.subraceFeatureChoices.isNotEmpty)
+              _SubraceChoiceSection(vm: vm),
+            if (isSelected && vm.raceFeatureChoices.isNotEmpty)
+              _RaceChoiceSection(vm: vm),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SourceHeader extends StatelessWidget {
+  final String sourceCode;
+  const _SourceHeader({required this.sourceCode});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 20, bottom: 8),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Divider(
+              color: AppTheme.surfaceVariant,
+              thickness: 1,
+              endIndent: 10,
+            ),
+          ),
+          Text(
+            _sourceName(sourceCode),
+            style: GoogleFonts.libreBaskerville(
+              color: AppTheme.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const Expanded(
+            child: Divider(
+              color: AppTheme.surfaceVariant,
+              thickness: 1,
+              indent: 10,
+            ),
+          ),
+        ],
       ),
     );
   }

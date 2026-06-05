@@ -66,6 +66,7 @@ public class RaceService {
         dto.setSpeed(race.getSpeed());
         dto.setAbilityBonuses(race.getAbilityBonuses());
         dto.setDescription(race.getDescription());
+        dto.setSource(race.getSource());
         return dto;
     }
 
