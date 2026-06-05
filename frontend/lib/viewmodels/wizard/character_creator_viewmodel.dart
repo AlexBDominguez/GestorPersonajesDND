@@ -83,7 +83,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   })  : _refService  = refService  ?? WizardReferenceService(),
         _charService = charService ?? CharacterService(),
         _inventoryService = inventoryService ?? InventoryService(),
-        _pendingTaskService = pendingTaskService ?? PendingTaskService();
+        _pendingTaskService = pendingTaskService ?? PendingTaskService() {
+    _loadStepData(); // load content sources immediately on preferences step
+  }
 
   /// Constructor nombrado que pre-rellena el wizard a partir de un personaje existente para el modo edición.
   CharacterCreatorViewModel.forEdit(

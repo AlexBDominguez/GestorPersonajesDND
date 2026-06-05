@@ -31,6 +31,10 @@ public class ContentSourceService {
         seedIfAbsent("MOT",  "Mythic Odysseys of Theros",           "Ancient Greek-inspired setting races and subclasses.", false);
         seedIfAbsent("FToD", "Fizban's Treasury of Dragons",        "Draconic subclasses, spells and dragon lore.", false);
         seedIfAbsent("SCoC", "Strixhaven: A Curriculum of Chaos",   "Magic academy setting with new backgrounds and spells.", false);
+        seedIfAbsent("ERLW",  "Eberron: Rising from the Last War",   "Eberron setting — Warforged, Shifter, Changeling, Kalashtar and more.", false);
+        seedIfAbsent("AI",    "Acquisitions Incorporated",            "Humorous campaign setting — includes the Verdan race.", false);
+        seedIfAbsent("IDRotF","Icewind Dale: Rime of the Frostmaiden","2020 adventure setting with additional player options.", false);
+        seedIfAbsent("VRGtR", "Van Richten's Guide to Ravenloft",    "Gothic horror setting — Dhampir, Hexblood and Reborn lineages.", false);
     }
 
     private void seedIfAbsent(String shortName, String fullName, String description, boolean isBase) {
