@@ -35,19 +35,39 @@ public class AuroraSourceMapper {
         Map.entry("Waterdeep: Dragon Heist", "WDH"),
         Map.entry("Baldur's Gate: Descent into Avernus", "BGDIA"),
         Map.entry("Curse of Strahd", "CoS"),
-        Map.entry("Keys from the Golden Vault", "KftGV")
+        Map.entry("Keys from the Golden Vault", "KftGV"),
+        Map.entry("Monsters of the Multiverse", "MoTM"),
+        Map.entry("Spelljammer: Adventures in Space", "AAG"),
+        Map.entry("Journeys through the Radiant Citadel", "JttRC"),
+        Map.entry("One Grung Above", "OGA"),
+        Map.entry("Locathah Rising", "LR"),
+        Map.entry("Lost Mine of Phandelver", "LMoP"),
+        Map.entry("Tomb of Annihilation", "ToA"),
+        Map.entry("Princes of the Apocalypse", "PotA")
     );
+
+    // Aurora XML files use smart/curly apostrophes (U+2019) in source names.
+    // Normalize to straight apostrophe before map lookup.
+    private static String normalize(String s) {
+        return s.replace('’', '\'')   // RIGHT SINGLE QUOTATION MARK
+                .replace('‘', '\'')   // LEFT SINGLE QUOTATION MARK
+                .replace('ʼ', '\'')   // MODIFIER LETTER APOSTROPHE
+                .replace('′', '\'')   // PRIME
+                .trim();
+    }
 
     public static String toShortName(String fullName) {
         if (fullName == null || fullName.isBlank()) return "UNKNOWN";
-        String mapped = FULL_TO_SHORT.get(fullName.trim());
+        String normalized = normalize(fullName);
+        String mapped = FULL_TO_SHORT.get(normalized);
         if (mapped != null) return mapped;
         // Fallback: extract uppercase letters as acronym
-        String acronym = fullName.replaceAll("[^A-Z]", "");
-        return acronym.isEmpty() ? fullName.trim() : acronym;
+        String acronym = normalized.replaceAll("[^A-Z]", "");
+        return acronym.isEmpty() ? normalized : acronym;
     }
 
     public static boolean isKnownSource(String fullName) {
-        return fullName != null && FULL_TO_SHORT.containsKey(fullName.trim());
+        if (fullName == null) return false;
+        return FULL_TO_SHORT.containsKey(normalize(fullName));
     }
 }

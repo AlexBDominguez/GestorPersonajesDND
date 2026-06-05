@@ -2,6 +2,7 @@ package sync;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import sync.aurora.AuroraRaceMapper;
 import sync.aurora.AuroraRegistry;
 
 import java.util.List;
@@ -17,9 +18,11 @@ import java.util.stream.Collectors;
 public class AuroraSyncController {
 
     private final AuroraSyncService auroraSync;
+    private final AuroraRaceMapper raceMapper;
 
-    public AuroraSyncController(AuroraSyncService auroraSync) {
+    public AuroraSyncController(AuroraSyncService auroraSync, AuroraRaceMapper raceMapper) {
         this.auroraSync = auroraSync;
+        this.raceMapper = raceMapper;
     }
 
     /**
@@ -42,6 +45,17 @@ public class AuroraSyncController {
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> status() {
         return ResponseEntity.ok(auroraSync.getStatus());
+    }
+
+    /**
+     * Persists all non-PHB races and subraces from the in-memory registry to the database.
+     * Requires a prior call to POST /fetch to populate the registry.
+     *
+     * POST /api/sync/aurora/persist/races
+     */
+    @PostMapping("/persist/races")
+    public ResponseEntity<Map<String, Object>> persistRaces() {
+        return ResponseEntity.ok(raceMapper.sync());
     }
 
     /**

@@ -8,5 +8,6 @@ import java.util.Optional;
 
 public interface RaceRepository extends JpaRepository<Race, Long> {
     Optional<Race> findByIndexName(String indexName);
+    List<Race> findByName(String name);
     List<Race> findBySourceIn(List<String> sources);
 }
