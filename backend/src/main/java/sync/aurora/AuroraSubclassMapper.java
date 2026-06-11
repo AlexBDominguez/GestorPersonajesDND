@@ -37,6 +37,38 @@ public class AuroraSubclassMapper {
         "constitution",  "CON"
     );
 
+    /**
+     * Aurora stores archetype category names in the <supports> element, not class names.
+     * E.g. "Primal Path" (Barbarian), "Martial Archetype" (Fighter), "Arcane Tradition" (Wizard).
+     * Map every known variant to its parent class name.
+     */
+    private static final Map<String, String> CATEGORY_TO_CLASS = Map.ofEntries(
+        Map.entry("Primal Path",           "Barbarian"),
+        Map.entry("Bard College",          "Bard"),
+        Map.entry("College",               "Bard"),
+        Map.entry("Divine Domain",         "Cleric"),
+        Map.entry("Cleric Domain",         "Cleric"),
+        Map.entry("Domain",                "Cleric"),
+        Map.entry("Druid Circle",          "Druid"),
+        Map.entry("Circle",                "Druid"),
+        Map.entry("Martial Archetype",     "Fighter"),
+        Map.entry("Monastic Tradition",    "Monk"),
+        Map.entry("Monastic Order",        "Monk"),
+        Map.entry("Sacred Oath",           "Paladin"),
+        Map.entry("Paladin Archetype",     "Paladin"),
+        Map.entry("Ranger Archetype",      "Ranger"),
+        Map.entry("Ranger Conclave",       "Ranger"),
+        Map.entry("Ranger Subclass",       "Ranger"),
+        Map.entry("Roguish Archetype",     "Rogue"),
+        Map.entry("Sorcerous Origin",      "Sorcerer"),
+        Map.entry("Sorcerer Subclass",     "Sorcerer"),
+        Map.entry("Otherworldly Patron",   "Warlock"),
+        Map.entry("Eldritch Invocation",   "Warlock"),
+        Map.entry("Arcane Tradition",      "Wizard"),
+        Map.entry("Artificer Specialist",  "Artificer"),
+        Map.entry("Artificer Subclass",    "Artificer")
+    );
+
     public AuroraSubclassMapper(AuroraRegistry registry,
                                 SubclassRepository subclassRepo,
                                 SubclassFeatureRepository featureRepo,
@@ -111,13 +143,14 @@ public class AuroraSubclassMapper {
     // ── Parent class resolution ────────────────────────────────────────────────
 
     /**
-     * Aurora's supports field for Archetypes is a class name or comma-separated list.
-     * We try each candidate against the DB (case-insensitive).
-     * E.g. "Fighter" → Fighter; "Ranger,Revised Ranger" → Ranger (first hit wins).
+     * Aurora stores an archetype category name in supports (e.g. "Primal Path", "Martial Archetype").
+     * Resolve it via CATEGORY_TO_CLASS first; fall back to treating it as a direct class name
+     * (handles edge cases where some files already use the class name directly).
      */
     private DndClass resolveParentClass(AuroraElement el, Map<String, Optional<DndClass>> cache) {
         if (el.getSupports() == null || el.getSupports().isBlank()) return null;
-        for (String candidate : el.getSupports().split(",")) {
+        String resolved = CATEGORY_TO_CLASS.getOrDefault(el.getSupports().trim(), el.getSupports().trim());
+        for (String candidate : resolved.split(",")) {
             String name = candidate.trim();
             Optional<DndClass> found = cache.computeIfAbsent(name,
                 k -> classRepo.findByNameIgnoreCase(k));
