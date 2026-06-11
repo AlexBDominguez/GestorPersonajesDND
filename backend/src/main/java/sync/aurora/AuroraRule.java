@@ -10,6 +10,7 @@ public class AuroraRule {
     private String name;         // select: display name; stat: stat key name
     private Integer level;       // grant/select: minimum character level (null = always)
     private String supports;     // select: filter tag, e.g. "Fighting Style, Fighter"
+    private Integer number;      // select: how many choices the player can make
     private String requirements; // conditional logic string (IDs or expressions)
     private String value;        // stat/bonus: numeric value (as string to preserve +/-)
     private String bonus;        // stat: bonus type ("base", "ability", "proficiency", etc.)
@@ -31,6 +32,9 @@ public class AuroraRule {
 
     public String getSupports() { return supports; }
     public void setSupports(String supports) { this.supports = supports; }
+
+    public Integer getNumber() { return number; }
+    public void setNumber(Integer number) { this.number = number; }
 
     public String getRequirements() { return requirements; }
     public void setRequirements(String requirements) { this.requirements = requirements; }

@@ -130,6 +130,10 @@ public class AuroraXmlParser {
                 rule.setSupports(xml.getAttribute("supports"));
                 parseLevel(xml, rule);
                 rule.setRequirements(xml.getAttribute("requirements"));
+                String num = xml.getAttribute("number");
+                if (!num.isBlank()) {
+                    try { rule.setNumber(Integer.parseInt(num.trim())); } catch (NumberFormatException ignored) {}
+                }
             }
             case "stat" -> {
                 rule.setRuleType(AuroraRule.RuleType.STAT);

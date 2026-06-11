@@ -3,7 +3,9 @@ package sync;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sync.aurora.AuroraBackgroundMapper;
+import sync.aurora.AuroraClassMapper;
 import sync.aurora.AuroraFeatMapper;
+import sync.aurora.AuroraItemMapper;
 import sync.aurora.AuroraRaceMapper;
 import sync.aurora.AuroraRegistry;
 import sync.aurora.AuroraSpellMapper;
@@ -27,19 +29,25 @@ public class AuroraSyncController {
     private final AuroraFeatMapper featMapper;
     private final AuroraSpellMapper spellMapper;
     private final AuroraSubclassMapper subclassMapper;
+    private final AuroraClassMapper classMapper;
+    private final AuroraItemMapper itemMapper;
 
     public AuroraSyncController(AuroraSyncService auroraSync,
                                 AuroraRaceMapper raceMapper,
                                 AuroraBackgroundMapper backgroundMapper,
                                 AuroraFeatMapper featMapper,
                                 AuroraSpellMapper spellMapper,
-                                AuroraSubclassMapper subclassMapper) {
+                                AuroraSubclassMapper subclassMapper,
+                                AuroraClassMapper classMapper,
+                                AuroraItemMapper itemMapper) {
         this.auroraSync = auroraSync;
         this.raceMapper = raceMapper;
         this.backgroundMapper = backgroundMapper;
         this.featMapper = featMapper;
         this.spellMapper = spellMapper;
         this.subclassMapper = subclassMapper;
+        this.classMapper = classMapper;
+        this.itemMapper = itemMapper;
     }
 
     /**
@@ -113,6 +121,26 @@ public class AuroraSyncController {
     @PostMapping("/persist/subclasses")
     public ResponseEntity<Map<String, Object>> persistSubclasses() {
         return ResponseEntity.ok(subclassMapper.sync());
+    }
+
+    /**
+     * Persists all non-PHB classes (e.g. Artificer) from the in-memory registry.
+     *
+     * POST /api/sync/aurora/persist/classes
+     */
+    @PostMapping("/persist/classes")
+    public ResponseEntity<Map<String, Object>> persistClasses() {
+        return ResponseEntity.ok(classMapper.sync());
+    }
+
+    /**
+     * Persists all non-PHB weapons, armor, magic items and adventuring gear.
+     *
+     * POST /api/sync/aurora/persist/items
+     */
+    @PostMapping("/persist/items")
+    public ResponseEntity<Map<String, Object>> persistItems() {
+        return ResponseEntity.ok(itemMapper.sync());
     }
 
     /**
