@@ -62,10 +62,11 @@ public class AuroraXmlParser {
     }
 
     private AuroraElement parseElement(Element xml) {
-        String id     = xml.getAttribute("id");
-        String name   = xml.getAttribute("name");
-        String type   = xml.getAttribute("type");
-        String source = xml.getAttribute("source");
+        String id       = xml.getAttribute("id");
+        String name     = xml.getAttribute("name");
+        String type     = xml.getAttribute("type");
+        String source   = xml.getAttribute("source");
+        String supports = xml.getAttribute("supports"); // attribute form (used by Archetype, Sub Race, etc.)
 
         if (id.isBlank() || name.isBlank() || type.isBlank()) return null;
 
@@ -74,6 +75,7 @@ public class AuroraXmlParser {
         el.setName(name.trim());
         el.setType(type.trim());
         el.setSource(source.trim());
+        if (!supports.isBlank()) el.setSupports(supports.trim()); // child <supports> may override below
 
         for (Node child = xml.getFirstChild(); child != null; child = child.getNextSibling()) {
             if (child.getNodeType() != Node.ELEMENT_NODE) continue;
