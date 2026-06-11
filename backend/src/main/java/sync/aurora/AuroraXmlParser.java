@@ -83,7 +83,10 @@ public class AuroraXmlParser {
             switch (c.getNodeName()) {
                 case "description" -> el.setDescription(extractText(c).trim());
                 case "sheet"       -> parseSheet(c, el);
-                case "supports"    -> el.setSupports(c.getTextContent().trim());
+                // Child <supports> only used when no supports attribute on the element tag.
+                // For Archetype: attribute="Barbarian" (parent class), child="Primal Path" (group) — attribute wins.
+                // For Spell: attribute empty, child="Wizard, Druid" (spell lists) — child sets it.
+                case "supports"    -> { if (el.getSupports() == null || el.getSupports().isBlank()) el.setSupports(c.getTextContent().trim()); }
                 case "requirements"-> el.setRequirements(c.getTextContent().trim());
                 case "rules"       -> parseRules(c, el);
                 case "setters"     -> parseSetters(c, el);
