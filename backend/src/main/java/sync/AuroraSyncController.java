@@ -6,6 +6,8 @@ import sync.aurora.AuroraBackgroundMapper;
 import sync.aurora.AuroraFeatMapper;
 import sync.aurora.AuroraRaceMapper;
 import sync.aurora.AuroraRegistry;
+import sync.aurora.AuroraSpellMapper;
+import sync.aurora.AuroraSubclassMapper;
 
 import java.util.List;
 import java.util.Map;
@@ -23,15 +25,21 @@ public class AuroraSyncController {
     private final AuroraRaceMapper raceMapper;
     private final AuroraBackgroundMapper backgroundMapper;
     private final AuroraFeatMapper featMapper;
+    private final AuroraSpellMapper spellMapper;
+    private final AuroraSubclassMapper subclassMapper;
 
     public AuroraSyncController(AuroraSyncService auroraSync,
                                 AuroraRaceMapper raceMapper,
                                 AuroraBackgroundMapper backgroundMapper,
-                                AuroraFeatMapper featMapper) {
+                                AuroraFeatMapper featMapper,
+                                AuroraSpellMapper spellMapper,
+                                AuroraSubclassMapper subclassMapper) {
         this.auroraSync = auroraSync;
         this.raceMapper = raceMapper;
         this.backgroundMapper = backgroundMapper;
         this.featMapper = featMapper;
+        this.spellMapper = spellMapper;
+        this.subclassMapper = subclassMapper;
     }
 
     /**
@@ -85,6 +93,26 @@ public class AuroraSyncController {
     @PostMapping("/persist/feats")
     public ResponseEntity<Map<String, Object>> persistFeats() {
         return ResponseEntity.ok(featMapper.sync());
+    }
+
+    /**
+     * Persists all non-PHB spells from the in-memory registry to the database.
+     *
+     * POST /api/sync/aurora/persist/spells
+     */
+    @PostMapping("/persist/spells")
+    public ResponseEntity<Map<String, Object>> persistSpells() {
+        return ResponseEntity.ok(spellMapper.sync());
+    }
+
+    /**
+     * Persists all non-PHB subclasses and their features from the in-memory registry.
+     *
+     * POST /api/sync/aurora/persist/subclasses
+     */
+    @PostMapping("/persist/subclasses")
+    public ResponseEntity<Map<String, Object>> persistSubclasses() {
+        return ResponseEntity.ok(subclassMapper.sync());
     }
 
     /**
