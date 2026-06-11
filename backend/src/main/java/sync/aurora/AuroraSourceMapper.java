@@ -27,6 +27,7 @@ public class AuroraSourceMapper {
         Map.entry("Van Richten's Guide to Ravenloft", "VRGtR"),
         Map.entry("Van Richten's Guide To Ravenloft", "VRGtR"),
         Map.entry("The Wild Beyond the Witchlight", "WBtW"),
+        Map.entry("The Wild Beyond The Witchlight", "WBtW"),
         Map.entry("Spelljammer: Adventures in Space", "AAG"),
         Map.entry("Dragonlance: Shadow of the Dragon Queen", "DSotDQ"),
         Map.entry("Bigby Presents: Glory of the Giants", "BGotG"),
