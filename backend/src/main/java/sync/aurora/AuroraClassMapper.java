@@ -67,16 +67,29 @@ public class AuroraClassMapper {
         Set<String> allowed = allowedSources();
         int created = 0, updated = 0, skipped = 0;
 
+        // Collect allowed elements first so we can detect name collisions in memory
+        List<AuroraElement> toProcess = new ArrayList<>();
         for (AuroraElement el : registry.getByType("Class")) {
             String src = AuroraSourceMapper.toShortName(el.getSource());
             if ("PHB".equals(src) || !allowed.contains(src)) { skipped++; continue; }
+            toProcess.add(el);
+        }
+
+        // Names that appear more than once across allowed Aurora Class elements
+        Map<String, Long> nameCount = toProcess.stream()
+            .collect(Collectors.groupingBy(el -> el.getName().toLowerCase(), Collectors.counting()));
+
+        for (AuroraElement el : toProcess) {
+            String src = AuroraSourceMapper.toShortName(el.getSource());
 
             try {
                 DndClass cls = classRepo.findByIndexName(el.getId()).orElse(new DndClass());
                 boolean isNew = cls.getId() == null;
 
                 cls.setIndexName(el.getId());
-                cls.setName(el.getName());
+                // When multiple Aurora sources provide the same class name, disambiguate with source abbreviation
+                boolean isDuplicate = nameCount.getOrDefault(el.getName().toLowerCase(), 0L) > 1;
+                cls.setName(isDuplicate ? el.getName() + " (" + src + ")" : el.getName());
                 cls.setSource(src);
                 cls.setDescription(el.getDescription());
                 cls.setHitDie(parseHitDie(el));
