@@ -43,13 +43,13 @@ ArreglosRequirements.md
 # IntelliJ IDEA
 .idea/
 
-# Database backups
+# Database backups (dumps reales, no scripts de seed/patch)
 backup.sql
 backup*.sql
 *_backup*.sql
 dnd_backup*.sql
 *.sql.gz
-backups/
+backups/dnd_backup*
 
 seed_subraces_v2.sql
 backend/SEED_EXECUTION_STEPS.md

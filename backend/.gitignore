@@ -18,9 +18,9 @@ app.log
 mysql_data/
 mysql-data/
 
-# Database backups
+# Database backups (dumps reales, no scripts de seed/patch)
 *.sql.gz
-backups/
+backups/dnd_backup*
 *_backup*.sql
 backup*.sql
 dnd_backup*.sql
