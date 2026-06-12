@@ -179,6 +179,10 @@ class _TaskResolver extends StatelessWidget {
         return _MultiPickOptionResolver(
             task: task, vm: vm, options: kFourElementsDisciplines);
 
+      // Circle of the Land Druid — single land type pick
+      case 'LAND_TYPE_CHOICE':
+        return _OptionListResolver(task: task, vm: vm, options: kLandTypes);
+
       default:
         // Fallback: campo de texto libre para tipos no mapeados todavía
         return _FreeTextResolver(task: task, vm: vm);

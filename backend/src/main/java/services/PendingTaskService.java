@@ -48,6 +48,7 @@ public class PendingTaskService {
     private final CharacterFeatRepository characterFeatRepository;
     private final FeatRepository featRepository;
     private final SubclassRepository subclassRepository;
+    private final SubclassSpellService subclassSpellService;
 
     public PendingTaskService(PendingTaskRepository taskRepository,
                               PlayerCharacterRepository characterRepository,
@@ -60,7 +61,8 @@ public class PendingTaskService {
                               SpellRepository spellRepository,
                               CharacterFeatRepository characterFeatRepository,
                               FeatRepository featRepository,
-                              SubclassRepository subclassRepository) {
+                              SubclassRepository subclassRepository,
+                              SubclassSpellService subclassSpellService) {
         this.taskRepository = taskRepository;
         this.characterRepository = characterRepository;
         this.characterSkillService = characterSkillService;
@@ -73,6 +75,7 @@ public class PendingTaskService {
         this.characterFeatRepository = characterFeatRepository;
         this.featRepository = featRepository;
         this.subclassRepository = subclassRepository;
+        this.subclassSpellService = subclassSpellService;
     }
 
     /** Todas las tareas pendientes (sin completar) de un personaje */
@@ -251,8 +254,17 @@ public class PendingTaskService {
                             subclasses.stream()
                                     .filter(sc -> sc.getName().equalsIgnoreCase(choice.trim()))
                                     .findFirst()
-                                    .ifPresent(character::setSubclass);
+                                    .ifPresent(sc -> {
+                                        character.setSubclass(sc);
+                                        subclassSpellService.applySubclassSpells(character, sc, character.getLevel());
+                                    });
                         }
+                        break;
+                }
+
+                case "LAND_TYPE_CHOICE": {
+                        // choice = land type name, e.g. "Forest"
+                        subclassSpellService.applyLandCircleSpells(character, choice.trim(), character.getLevel());
                         break;
                 }
 

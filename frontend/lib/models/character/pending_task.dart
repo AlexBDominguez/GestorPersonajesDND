@@ -65,6 +65,7 @@ class PendingTask{
       case 'HUNTER_MULTIATTACK': return '🏹';
       case 'SUPERIOR_HUNTERS_DEFENSE': return '🌿';
       case 'ELEMENTAL_DISCIPLINE': return '🌊';
+      case 'LAND_TYPE_CHOICE':  return '🌍';
       default:                  return '📋';
     }
   }
@@ -95,6 +96,7 @@ class PendingTask{
       case 'HUNTER_MULTIATTACK': return 'Multiattack (Hunter)';
       case 'SUPERIOR_HUNTERS_DEFENSE': return "Superior Hunter's Defense";
       case 'ELEMENTAL_DISCIPLINE': return 'Elemental Discipline';
+      case 'LAND_TYPE_CHOICE':  return 'Circle of the Land';
       default:                  return taskType;
     }
   }

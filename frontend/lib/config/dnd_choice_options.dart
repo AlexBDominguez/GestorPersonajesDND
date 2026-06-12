@@ -337,3 +337,14 @@ const kEldritchInvocations = <DndChoiceOption>[
   DndChoiceOption('Whispers of the Grave',    'Cast Speak with Dead at will, no slot. (Req: lv 9)'),
   DndChoiceOption('Witch Sight',              'See true forms of shapechangers within 30 ft. (Req: lv 15)'),
 ];
+
+const kLandTypes = [
+  DndChoiceOption('Arctic',     'Frozen tundra — spells of ice and cold.'),
+  DndChoiceOption('Coast',      'Shoreline — spells of water and mist.'),
+  DndChoiceOption('Desert',     'Arid wasteland — spells of heat and illusion.'),
+  DndChoiceOption('Forest',     'Dense woodland — spells of growth and shadow.'),
+  DndChoiceOption('Grassland',  'Open plains — spells of speed and invisibility.'),
+  DndChoiceOption('Mountain',   'Rocky peaks — spells of stone and lightning.'),
+  DndChoiceOption('Swamp',      'Murky wetlands — spells of acid and darkness.'),
+  DndChoiceOption('Underdark',  'Deep underground — spells of poison and shadow.'),
+];

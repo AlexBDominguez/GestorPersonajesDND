@@ -45,6 +45,7 @@ public class PlayerCharacterService {
     private final CharacterInventoryRepository characterInventoryRepository;
     private final UserRepository userRepository;
     private final CharacterFeatService characterFeatService;
+    private final SubclassSpellService subclassSpellService;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -67,7 +68,8 @@ public class PlayerCharacterService {
             CharacterActiveEffectRepository characterActiveEffectRepository,
             CharacterInventoryRepository characterInventoryRepository,
             UserRepository userRepository,
-            CharacterFeatService characterFeatService
+            CharacterFeatService characterFeatService,
+            SubclassSpellService subclassSpellService
 
         ) {
         this.characterRepository = characterRepository;
@@ -76,6 +78,7 @@ public class PlayerCharacterService {
         this.characterSpellRepository = characterSpellRepository;
         this.userRepository = userRepository;
         this.characterFeatService = characterFeatService;
+        this.subclassSpellService = subclassSpellService;
         this.spellRepository = spellRepository;
         this.spellSlotProgressionRepository = spellSlotProgressionRepository;
         this.slotRepository = slotRepository;
@@ -310,6 +313,9 @@ public class PlayerCharacterService {
 
         // Generar tareas pendientes específicas de la subclase (Battle Master, Totem Warrior, etc.)
         generateSubclassChoiceTasksForCreation(saved);
+
+        // Aplicar hechizos automáticos de subclase (Dominios de Clérigo, Juramentos de Paladín, etc.)
+        subclassSpellService.applySubclassSpells(saved, saved.getSubclass(), saved.getLevel());
 
         return toDto(saved);
     }
@@ -1233,6 +1239,9 @@ public class PlayerCharacterService {
 
         // Tareas adicionales específicas de la subclase (Battle Master, Totem Warrior, etc.)
         createSubclassLevelTasks(character, newLevel);
+
+        // Aplicar hechizos automáticos de subclase desbloqueados al nuevo nivel
+        subclassSpellService.applySubclassSpells(character, character.getSubclass(), newLevel);
     }
 
     /**
@@ -1516,6 +1525,12 @@ public class PlayerCharacterService {
                 else if (level == 6 || level == 11 || level == 17)
                     createSubclassTask(character, level, "ELEMENTAL_DISCIPLINE",
                             "Choose an additional Elemental Discipline", "{\"count\":1}");
+                break;
+
+            case "land":
+                if (level == 3)
+                    createSubclassTask(character, level, "LAND_TYPE_CHOICE",
+                            "Choose your Land type (Arctic, Coast, Desert, Forest, Grassland, Mountain, Swamp, or Underdark)", null);
                 break;
         }
     }
