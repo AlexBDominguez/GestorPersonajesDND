@@ -72,6 +72,14 @@ public class AuroraClassFeatureMapper {
         return r;
     }
 
+    /** Removes Aurora's redundant level header line, e.g. "3rd-level artificer feature". */
+    private String stripLevelHeader(String desc) {
+        if (desc == null || desc.isBlank()) return desc;
+        // Match "Nth-level <word(s)> feature" at the very start, followed by newline or end
+        String stripped = desc.replaceFirst("(?i)^\\d+(st|nd|rd|th)-level [\\w ]+ feature\\.?\\n?", "").trim();
+        return stripped.isEmpty() ? desc : stripped;
+    }
+
     private int[] persistFeatures(AuroraElement classEl, DndClass dndClass) {
         int created = 0, updated = 0;
 
@@ -98,7 +106,7 @@ public class AuroraClassFeatureMapper {
 
                 String desc = feat.getDescription();
                 if (desc == null || desc.isBlank()) desc = feat.getSheetDescription();
-                cf.setDescription(desc != null ? desc.trim() : "");
+                cf.setDescription(desc != null ? stripLevelHeader(desc.trim()) : "");
                 cf.setApiUrl(null);
 
                 featureRepo.save(cf);

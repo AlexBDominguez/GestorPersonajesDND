@@ -190,7 +190,7 @@ public class AuroraSubclassMapper {
                 sf.setLevel(level > 0 ? level : deriveLevel(feat));
                 String desc = feat.getDescription();
                 if (desc == null || desc.isBlank()) desc = feat.getSheetDescription();
-                sf.setDescription(desc);
+                sf.setDescription(stripLevelHeader(desc));
                 sf.setApiUrl(null);
 
                 featureRepo.save(sf);
@@ -212,6 +212,15 @@ public class AuroraSubclassMapper {
             try { return Integer.parseInt(levelStr.trim()); } catch (NumberFormatException ignored) {}
         }
         return 0;
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /** Removes Aurora's redundant level header line, e.g. "3rd-level artificer feature". */
+    private String stripLevelHeader(String desc) {
+        if (desc == null || desc.isBlank()) return desc;
+        String stripped = desc.replaceFirst("(?i)^\\d+(st|nd|rd|th)-level [\\w ]+ feature\\.?\\n?", "").trim();
+        return stripped.isEmpty() ? desc : stripped;
     }
 
     // ── Spellcasting ability detection ─────────────────────────────────────────
