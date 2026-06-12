@@ -150,6 +150,35 @@ class _TaskResolver extends StatelessWidget {
         return _SubclassResolver(task: task, vm: vm);
       case 'ASI_OR_FEAT':
         return _AsiOrFeatResolver(task: task, vm: vm);
+
+      // Battle Master — multi-selección con límite (count en metadata)
+      case 'MANEUVER_CHOICE':
+        return _MultiPickOptionResolver(
+            task: task, vm: vm, options: kBattleMasterManeuvers);
+
+      // Totem Warrior — una opción por tarea
+      case 'TOTEM_SPIRIT':
+        return _OptionListResolver(task: task, vm: vm, options: kTotemSpirit);
+      case 'TOTEM_ASPECT':
+        return _OptionListResolver(task: task, vm: vm, options: kTotemAspect);
+      case 'TOTEM_ATTUNEMENT':
+        return _OptionListResolver(task: task, vm: vm, options: kTotemicAttunement);
+
+      // Hunter Ranger — una opción por tarea
+      case 'HUNTERS_PREY':
+        return _OptionListResolver(task: task, vm: vm, options: kHuntersPrey);
+      case 'DEFENSIVE_TACTICS':
+        return _OptionListResolver(task: task, vm: vm, options: kDefensiveTactics);
+      case 'HUNTER_MULTIATTACK':
+        return _OptionListResolver(task: task, vm: vm, options: kHunterMultiattack);
+      case 'SUPERIOR_HUNTERS_DEFENSE':
+        return _OptionListResolver(task: task, vm: vm, options: kSuperiorHuntersDefense);
+
+      // Four Elements Monk — multi-selección con límite (count en metadata)
+      case 'ELEMENTAL_DISCIPLINE':
+        return _MultiPickOptionResolver(
+            task: task, vm: vm, options: kFourElementsDisciplines);
+
       default:
         // Fallback: campo de texto libre para tipos no mapeados todavía
         return _FreeTextResolver(task: task, vm: vm);
@@ -821,6 +850,151 @@ class _SubclassResolverState extends State<_SubclassResolver> {
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Subclass chosen: $_selected!'),
+        backgroundColor: AppTheme.primary,
+        duration: const Duration(seconds: 2),
+      ));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Error saving choice. Try again.'),
+        backgroundColor: AppTheme.accent,
+      ));
+    }
+  }
+}
+
+// ── Multi-pick resolver — elige N opciones de una lista (Battle Master, Four Elements, etc.) ──
+
+class _MultiPickOptionResolver extends StatefulWidget {
+  final PendingTask task;
+  final CharacterSheetViewModel vm;
+  final List<DndChoiceOption> options;
+  const _MultiPickOptionResolver(
+      {required this.task, required this.vm, required this.options});
+
+  @override
+  State<_MultiPickOptionResolver> createState() => _MultiPickOptionResolverState();
+}
+
+class _MultiPickOptionResolverState extends State<_MultiPickOptionResolver> {
+  final Set<String> _selected = {};
+  bool _saving = false;
+
+  int get _maxPicks {
+    try {
+      final meta = widget.task.metadata;
+      if (meta != null && meta.contains('"count"')) {
+        final match = RegExp(r'"count"\s*:\s*(\d+)').firstMatch(meta);
+        if (match != null) return int.parse(match.group(1)!);
+      }
+    } catch (_) {}
+    return 1;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final max = _maxPicks;
+    final remaining = max - _selected.length;
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(
+        'Choose $max option${max == 1 ? '' : 's'}.${remaining > 0 ? '  ($remaining remaining)' : ''}',
+        style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 14),
+      ),
+      const SizedBox(height: 10),
+      ...widget.options.map((opt) {
+        final isSelected = _selected.contains(opt.name);
+        final isDisabled = !isSelected && remaining == 0;
+        return GestureDetector(
+          onTap: isDisabled
+              ? null
+              : () => setState(() {
+                    if (isSelected) _selected.remove(opt.name);
+                    else _selected.add(opt.name);
+                  }),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppTheme.primary.withOpacity(0.12)
+                  : isDisabled
+                      ? AppTheme.surfaceVariant.withOpacity(0.2)
+                      : AppTheme.surfaceVariant.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isSelected ? AppTheme.primary : AppTheme.divider,
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Row(children: [
+              Icon(
+                isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                size: 16,
+                color: isSelected
+                    ? AppTheme.primary
+                    : isDisabled
+                        ? AppTheme.textSecondary.withOpacity(0.3)
+                        : AppTheme.textSecondary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(opt.name,
+                      style: GoogleFonts.libreBaskerville(
+                          color: isSelected
+                              ? AppTheme.primary
+                              : isDisabled
+                                  ? AppTheme.textSecondary.withOpacity(0.4)
+                                  : AppTheme.textPrimary,
+                          fontSize: 13,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                  if (opt.description.isNotEmpty)
+                    Text(opt.description,
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary.withOpacity(0.7),
+                            fontSize: 10,
+                            height: 1.4)),
+                ]),
+              ),
+            ]),
+          ),
+        );
+      }),
+      const SizedBox(height: 12),
+      SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: _selected.length < max || _saving ? null : () => _confirm(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primary,
+            foregroundColor: Colors.white,
+            disabledBackgroundColor: AppTheme.surfaceVariant,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          child: _saving
+              ? const SizedBox(width: 18, height: 18,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : Text(
+                  remaining > 0
+                      ? 'Select $remaining more'
+                      : 'Confirm (${_selected.length})',
+                  style: GoogleFonts.libreBaskerville(fontSize: 14, fontWeight: FontWeight.bold)),
+        ),
+      ),
+    ]);
+  }
+
+  Future<void> _confirm(BuildContext context) async {
+    setState(() => _saving = true);
+    final choice = _selected.join(',');
+    final ok = await widget.vm.resolveTask(widget.task.id, choice);
+    if (!context.mounted) return;
+    setState(() => _saving = false);
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('${widget.task.displayName}: ${_selected.join(', ')} confirmed!'),
         backgroundColor: AppTheme.primary,
         duration: const Duration(seconds: 2),
       ));

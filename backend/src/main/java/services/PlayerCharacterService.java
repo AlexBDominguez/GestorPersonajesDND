@@ -307,7 +307,10 @@ public class PlayerCharacterService {
 
         // Generar tareas pendientes para las elecciones de raza (p.ej., Dragonborn Draconic Ancestry)
         generateRaceChoiceTasksForCreation(saved);
-        
+
+        // Generar tareas pendientes específicas de la subclase (Battle Master, Totem Warrior, etc.)
+        generateSubclassChoiceTasksForCreation(saved);
+
         return toDto(saved);
     }
 
@@ -1227,6 +1230,9 @@ public class PlayerCharacterService {
                 applyAutomaticFeature(character, newLevel, feature);
             }
         }
+
+        // Tareas adicionales específicas de la subclase (Battle Master, Totem Warrior, etc.)
+        createSubclassLevelTasks(character, newLevel);
     }
 
     /**
@@ -1444,6 +1450,93 @@ public class PlayerCharacterService {
             pendingTaskRepository.save(task);
             System.out.println("Race task created: " + taskType + " for " + character.getName());
         }
+    }
+
+    /**
+     * Crea PendingTasks específicas de la subclase del personaje para todos los niveles
+     * del 1 al nivel actual (usado durante create()).
+     */
+    private void generateSubclassChoiceTasksForCreation(PlayerCharacter character) {
+        if (character.getSubclass() == null) return;
+        for (int level = 1; level <= character.getLevel(); level++) {
+            createSubclassLevelTasks(character, level);
+        }
+    }
+
+    /**
+     * Crea las PendingTasks de subclase que corresponden a un nivel concreto.
+     * Llamado tanto durante la creación como al subir de nivel.
+     */
+    private void createSubclassLevelTasks(PlayerCharacter character, int level) {
+        if (character.getSubclass() == null) return;
+        String sub = character.getSubclass().getIndexName();
+        if (sub == null) return;
+
+        switch (sub) {
+            case "battle-master":
+                if (level == 3)
+                    createSubclassTask(character, level, "MANEUVER_CHOICE",
+                            "Choose 3 Battle Master Maneuvers", "{\"count\":3}");
+                else if (level == 7 || level == 15)
+                    createSubclassTask(character, level, "MANEUVER_CHOICE",
+                            "Choose 2 additional Battle Master Maneuvers", "{\"count\":2}");
+                break;
+
+            case "path-of-the-totem-warrior":
+                if (level == 3)
+                    createSubclassTask(character, level, "TOTEM_SPIRIT",
+                            "Choose your Totem Spirit (Bear, Eagle, or Wolf)", null);
+                else if (level == 6)
+                    createSubclassTask(character, level, "TOTEM_ASPECT",
+                            "Choose your Aspect of the Beast (Bear, Eagle, or Wolf)", null);
+                else if (level == 14)
+                    createSubclassTask(character, level, "TOTEM_ATTUNEMENT",
+                            "Choose your Totemic Attunement (Bear, Eagle, or Wolf)", null);
+                break;
+
+            case "hunter":
+                if (level == 3)
+                    createSubclassTask(character, level, "HUNTERS_PREY",
+                            "Choose your Hunter's Prey ability", null);
+                else if (level == 7)
+                    createSubclassTask(character, level, "DEFENSIVE_TACTICS",
+                            "Choose your Defensive Tactics", null);
+                else if (level == 11)
+                    createSubclassTask(character, level, "HUNTER_MULTIATTACK",
+                            "Choose your Multiattack style", null);
+                else if (level == 15)
+                    createSubclassTask(character, level, "SUPERIOR_HUNTERS_DEFENSE",
+                            "Choose your Superior Hunter's Defense", null);
+                break;
+
+            case "way-of-the-four-elements":
+                if (level == 3)
+                    createSubclassTask(character, level, "ELEMENTAL_DISCIPLINE",
+                            "Choose 2 Elemental Disciplines", "{\"count\":2}");
+                else if (level == 6 || level == 11 || level == 17)
+                    createSubclassTask(character, level, "ELEMENTAL_DISCIPLINE",
+                            "Choose an additional Elemental Discipline", "{\"count\":1}");
+                break;
+        }
+    }
+
+    /** Crea una PendingTask de subclase evitando duplicados por tipo+nivel. */
+    private void createSubclassTask(PlayerCharacter character, int level,
+                                    String taskType, String description, String initialMetadata) {
+        boolean alreadyExists = pendingTaskRepository.findByCharacter(character).stream()
+                .anyMatch(t -> taskType.equals(t.getTaskType()) && t.getRelatedLevel() == level);
+        if (alreadyExists) return;
+
+        PendingTask task = new PendingTask();
+        task.setCharacter(character);
+        task.setRelatedLevel(level);
+        task.setTaskType(taskType);
+        task.setDescription(description);
+        task.setMetadata(initialMetadata);
+        task.setCompleted(false);
+        pendingTaskRepository.save(task);
+        System.out.println("Subclass task created: " + taskType + " at level " + level
+                + " for " + character.getName());
     }
 
     private void applyAutomaticFeature(PlayerCharacter character, int level, ClassLevelFeature feature) {

@@ -256,9 +256,30 @@ public class PendingTaskService {
                         break;
                 }
 
+                // Battle Master — maneuvers stored as comma-separated names in metadata
+                case "MANEUVER_CHOICE":
+                        break;
+
+                // Totem Warrior — choice stored in metadata
+                case "TOTEM_SPIRIT":
+                case "TOTEM_ASPECT":
+                case "TOTEM_ATTUNEMENT":
+                        break;
+
+                // Hunter Ranger — choices stored in metadata
+                case "HUNTERS_PREY":
+                case "DEFENSIVE_TACTICS":
+                case "HUNTER_MULTIATTACK":
+                case "SUPERIOR_HUNTERS_DEFENSE":
+                        break;
+
+                // Four Elements Monk — disciplines stored as comma-separated names in metadata
+                case "ELEMENTAL_DISCIPLINE":
+                        break;
+
                 default:
                         System.out.println("No apply logic for task type: " + task.getTaskType());
-                }    
+                }
         }
 
         private PendingTaskDto toDto(PendingTask t) {

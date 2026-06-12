@@ -56,6 +56,15 @@ class PendingTask{
       case 'LEARN_SPELLS':      return '✨';
       case 'METAMAGIC':         return '🌀';
       case 'INVOCATION':        return '👁️';
+      case 'MANEUVER_CHOICE':   return '⚔️';
+      case 'TOTEM_SPIRIT':      return '🐻';
+      case 'TOTEM_ASPECT':      return '🦅';
+      case 'TOTEM_ATTUNEMENT':  return '🐺';
+      case 'HUNTERS_PREY':      return '🎯';
+      case 'DEFENSIVE_TACTICS': return '🛡️';
+      case 'HUNTER_MULTIATTACK': return '🏹';
+      case 'SUPERIOR_HUNTERS_DEFENSE': return '🌿';
+      case 'ELEMENTAL_DISCIPLINE': return '🌊';
       default:                  return '📋';
     }
   }
@@ -77,6 +86,15 @@ class PendingTask{
       case 'LEARN_SPELLS':      return 'Learn Spells';
       case 'METAMAGIC':         return 'Metamagic';
       case 'INVOCATION':        return 'Eldritch Invocation';
+      case 'MANEUVER_CHOICE':   return 'Battle Master Maneuvers';
+      case 'TOTEM_SPIRIT':      return 'Totem Spirit';
+      case 'TOTEM_ASPECT':      return 'Aspect of the Beast';
+      case 'TOTEM_ATTUNEMENT':  return 'Totemic Attunement';
+      case 'HUNTERS_PREY':      return "Hunter's Prey";
+      case 'DEFENSIVE_TACTICS': return 'Defensive Tactics';
+      case 'HUNTER_MULTIATTACK': return 'Multiattack (Hunter)';
+      case 'SUPERIOR_HUNTERS_DEFENSE': return "Superior Hunter's Defense";
+      case 'ELEMENTAL_DISCIPLINE': return 'Elemental Discipline';
       default:                  return taskType;
     }
   }
