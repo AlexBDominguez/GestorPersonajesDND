@@ -36,6 +36,7 @@ public class ContentSourceService {
         seedIfAbsent("IDRotF","Icewind Dale: Rime of the Frostmaiden","2020 adventure setting with additional player options.", false);
         seedIfAbsent("VRGtR", "Van Richten's Guide to Ravenloft",    "Gothic horror setting — Dhampir, Hexblood and Reborn lineages.", false);
         seedIfAbsent("WBtW",  "The Wild Beyond the Witchlight",      "2021 Feywild adventure — Fairy and Harengon races.", false);
+        seedIfAbsent("CR",    "Critical Role (Homebrew)",             "Contenido de Matt Mercer: Blood Hunter, Gunslinger y más.", false);
     }
 
     private void seedIfAbsent(String shortName, String fullName, String description, boolean isBase) {
