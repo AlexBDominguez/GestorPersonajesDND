@@ -8,6 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Git
+
+Never include `Co-Authored-By:` lines in commit messages.
+
+---
+
 ## Commands
 
 ### Backend (from `backend/`)

@@ -3,6 +3,7 @@ package sync;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sync.aurora.AuroraBackgroundMapper;
+import sync.aurora.AuroraClassFeatureMapper;
 import sync.aurora.AuroraClassMapper;
 import sync.aurora.AuroraFeatMapper;
 import sync.aurora.AuroraItemMapper;
@@ -30,6 +31,7 @@ public class AuroraSyncController {
     private final AuroraSpellMapper spellMapper;
     private final AuroraSubclassMapper subclassMapper;
     private final AuroraClassMapper classMapper;
+    private final AuroraClassFeatureMapper classFeatureMapper;
     private final AuroraItemMapper itemMapper;
 
     public AuroraSyncController(AuroraSyncService auroraSync,
@@ -39,6 +41,7 @@ public class AuroraSyncController {
                                 AuroraSpellMapper spellMapper,
                                 AuroraSubclassMapper subclassMapper,
                                 AuroraClassMapper classMapper,
+                                AuroraClassFeatureMapper classFeatureMapper,
                                 AuroraItemMapper itemMapper) {
         this.auroraSync = auroraSync;
         this.raceMapper = raceMapper;
@@ -47,6 +50,7 @@ public class AuroraSyncController {
         this.spellMapper = spellMapper;
         this.subclassMapper = subclassMapper;
         this.classMapper = classMapper;
+        this.classFeatureMapper = classFeatureMapper;
         this.itemMapper = itemMapper;
     }
 
@@ -131,6 +135,17 @@ public class AuroraSyncController {
     @PostMapping("/persist/classes")
     public ResponseEntity<Map<String, Object>> persistClasses() {
         return ResponseEntity.ok(classMapper.sync());
+    }
+
+    /**
+     * Persists class features for non-PHB classes (e.g. Artificer levels 1-20).
+     * Requires persist/classes to have run first so the parent DndClass rows exist.
+     *
+     * POST /api/sync/aurora/persist/class-features
+     */
+    @PostMapping("/persist/class-features")
+    public ResponseEntity<Map<String, Object>> persistClassFeatures() {
+        return ResponseEntity.ok(classFeatureMapper.sync());
     }
 
     /**
