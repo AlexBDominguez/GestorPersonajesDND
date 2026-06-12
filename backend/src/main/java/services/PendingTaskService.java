@@ -49,6 +49,7 @@ public class PendingTaskService {
     private final FeatRepository featRepository;
     private final SubclassRepository subclassRepository;
     private final SubclassSpellService subclassSpellService;
+    private final SubclassProficiencyService subclassProficiencyService;
 
     public PendingTaskService(PendingTaskRepository taskRepository,
                               PlayerCharacterRepository characterRepository,
@@ -62,7 +63,8 @@ public class PendingTaskService {
                               CharacterFeatRepository characterFeatRepository,
                               FeatRepository featRepository,
                               SubclassRepository subclassRepository,
-                              SubclassSpellService subclassSpellService) {
+                              SubclassSpellService subclassSpellService,
+                              SubclassProficiencyService subclassProficiencyService) {
         this.taskRepository = taskRepository;
         this.characterRepository = characterRepository;
         this.characterSkillService = characterSkillService;
@@ -76,6 +78,7 @@ public class PendingTaskService {
         this.featRepository = featRepository;
         this.subclassRepository = subclassRepository;
         this.subclassSpellService = subclassSpellService;
+        this.subclassProficiencyService = subclassProficiencyService;
     }
 
     /** Todas las tareas pendientes (sin completar) de un personaje */
@@ -257,6 +260,7 @@ public class PendingTaskService {
                                     .ifPresent(sc -> {
                                         character.setSubclass(sc);
                                         subclassSpellService.applySubclassSpells(character, sc, character.getLevel());
+                                        subclassProficiencyService.applySubclassProficiencies(character, sc);
                                     });
                         }
                         break;
@@ -287,6 +291,67 @@ public class PendingTaskService {
 
                 // Four Elements Monk — disciplines stored as comma-separated names in metadata
                 case "ELEMENTAL_DISCIPLINE":
+                        break;
+
+                // Knowledge Domain — choice = comma-separated skill names; apply expertise to each
+                case "KNOWLEDGE_DOMAIN_SKILLS": {
+                        for (String skillName : choice.split(",")) {
+                            characterSkillService.applyExpertiseByName(character, skillName.trim());
+                        }
+                        break;
+                }
+
+                // Nature Domain — choice = cantrip name; add as SUBCLASS spell
+                case "NATURE_DOMAIN_CANTRIP": {
+                        List<Spell> cantrips = spellRepository.findByNameContainingIgnoreCase(choice.trim());
+                        if (!cantrips.isEmpty()) {
+                            Spell cantrip = cantrips.get(0);
+                            boolean alreadyHas = characterSpellRepository
+                                    .findByCharacterIdAndSpellId(character.getId(), cantrip.getId())
+                                    .isPresent();
+                            if (!alreadyHas) {
+                                characterSpellRepository.save(new CharacterSpell(character, cantrip, "SUBCLASS"));
+                            }
+                        } else {
+                            System.out.println("Nature domain cantrip not found: " + choice);
+                        }
+                        break;
+                }
+
+                // College of Lore — choice = comma-separated skill names; apply proficiency to each
+                case "LORE_BARD_SKILLS": {
+                        for (String skillName : choice.split(",")) {
+                            characterSkillService.applySkillProficiencyByName(character, skillName.trim());
+                        }
+                        break;
+                }
+
+                // Battle Master — choice = tool name or language name
+                case "BATTLE_MASTER_TOOL": {
+                        List<Proficiency> profs = proficiencyRepository.findByNameContainingIgnoreCase(choice.trim());
+                        if (!profs.isEmpty()) {
+                            Proficiency prof = profs.get(0);
+                            if (!characterProficiencyRepository.existsByCharacterAndProficiency(character, prof)) {
+                                characterProficiencyRepository.save(new CharacterProficiency(character, prof, "SUBCLASS"));
+                            }
+                        } else {
+                            // Try as a language
+                            List<Language> langs = languageRepository.findByNameContainingIgnoreCase(choice.trim());
+                            if (!langs.isEmpty()) {
+                                Language lang = langs.get(0);
+                                if (!characterLanguageRepository.existsByCharacterAndLanguage(character, lang)) {
+                                    characterLanguageRepository.save(new CharacterLanguage(character, lang, "SUBCLASS"));
+                                }
+                            } else {
+                                System.out.println("Battle Master tool/language not found: " + choice);
+                            }
+                        }
+                        break;
+                }
+
+                // Blood Hunter Order of the Lycan / Order of the Profane Soul — stored in metadata
+                case "LYCAN_TYPE":
+                case "PROFANE_SOUL_PATRON":
                         break;
 
                 default:

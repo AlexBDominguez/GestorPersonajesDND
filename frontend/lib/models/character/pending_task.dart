@@ -65,8 +65,14 @@ class PendingTask{
       case 'HUNTER_MULTIATTACK': return '🏹';
       case 'SUPERIOR_HUNTERS_DEFENSE': return '🌿';
       case 'ELEMENTAL_DISCIPLINE': return '🌊';
-      case 'LAND_TYPE_CHOICE':  return '🌍';
-      default:                  return '📋';
+      case 'LAND_TYPE_CHOICE':         return '🌍';
+      case 'KNOWLEDGE_DOMAIN_SKILLS':  return '📚';
+      case 'NATURE_DOMAIN_CANTRIP':    return '🌿';
+      case 'LORE_BARD_SKILLS':         return '🎶';
+      case 'BATTLE_MASTER_TOOL':       return '🔨';
+      case 'LYCAN_TYPE':               return '🐺';
+      case 'PROFANE_SOUL_PATRON':      return '👁️';
+      default:                         return '📋';
     }
   }
 
@@ -96,8 +102,14 @@ class PendingTask{
       case 'HUNTER_MULTIATTACK': return 'Multiattack (Hunter)';
       case 'SUPERIOR_HUNTERS_DEFENSE': return "Superior Hunter's Defense";
       case 'ELEMENTAL_DISCIPLINE': return 'Elemental Discipline';
-      case 'LAND_TYPE_CHOICE':  return 'Circle of the Land';
-      default:                  return taskType;
+      case 'LAND_TYPE_CHOICE':         return 'Circle of the Land';
+      case 'KNOWLEDGE_DOMAIN_SKILLS':  return 'Knowledge Domain Skills';
+      case 'NATURE_DOMAIN_CANTRIP':    return 'Nature Domain Cantrip';
+      case 'LORE_BARD_SKILLS':         return 'College of Lore Skills';
+      case 'BATTLE_MASTER_TOOL':       return 'Battle Master Proficiency';
+      case 'LYCAN_TYPE':               return 'Lycanthrope Type';
+      case 'PROFANE_SOUL_PATRON':      return 'Otherworldly Patron';
+      default:                         return taskType;
     }
   }
 }

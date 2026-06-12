@@ -338,6 +338,56 @@ const kEldritchInvocations = <DndChoiceOption>[
   DndChoiceOption('Witch Sight',              'See true forms of shapechangers within 30 ft. (Req: lv 15)'),
 ];
 
+const kKnowledgeDomainSkills = [
+  DndChoiceOption('Arcana',   'Knowledge of magic, spells, and mystical lore.'),
+  DndChoiceOption('History',  'Knowledge of historical events, legends, and lore.'),
+  DndChoiceOption('Nature',   'Knowledge of the natural world, plants, and animals.'),
+  DndChoiceOption('Religion', 'Knowledge of deities, rites, prayers, and holy symbols.'),
+];
+
+const kNatureDomainCantrips = [
+  DndChoiceOption('Animal Friendship', 'Charm an animal for 24 hours (level 1 spell).'),
+  DndChoiceOption('Poison Spray',      'Spray a puff of noxious gas dealing 1d12 poison damage.'),
+  DndChoiceOption('Shillelagh',        'Your club or quarterstaff deals 1d8 + spellcasting modifier.'),
+  DndChoiceOption('Thorn Whip',        'A vine whip deals 1d6 piercing and pulls the target 10 ft.'),
+];
+
+const kBattleMasterToolOrLanguage = [
+  DndChoiceOption('Forgery Kit',        'Artisan\'s tool — used to create forged documents.'),
+  DndChoiceOption('Herbalism Kit',      'Artisan\'s tool — used to identify and apply herbs.'),
+  DndChoiceOption('Navigator\'s Tools', 'Artisan\'s tool — used to navigate by sea or land.'),
+  DndChoiceOption('Thieves\' Tools',    'Artisan\'s tool — used for lockpicking and disabling traps.'),
+  DndChoiceOption('Dwarvish',    'Language spoken by dwarves.'),
+  DndChoiceOption('Elvish',      'Language spoken by elves.'),
+  DndChoiceOption('Giant',       'Language spoken by giants.'),
+  DndChoiceOption('Gnomish',     'Language spoken by gnomes.'),
+  DndChoiceOption('Goblin',      'Language spoken by goblins.'),
+  DndChoiceOption('Halfling',    'Language spoken by halflings.'),
+  DndChoiceOption('Orc',         'Language spoken by orcs.'),
+  DndChoiceOption('Abyssal',     'Language of demons and the Abyss.'),
+  DndChoiceOption('Celestial',   'Language of celestials.'),
+  DndChoiceOption('Draconic',    'Language of dragons and used in magic.'),
+  DndChoiceOption('Deep Speech', 'Language of aberrations and the Far Realm.'),
+  DndChoiceOption('Infernal',    'Language of devils and the Nine Hells.'),
+  DndChoiceOption('Primordial',  'Language of elementals.'),
+  DndChoiceOption('Sylvan',      'Language of the Feywild and fey creatures.'),
+  DndChoiceOption('Undercommon', 'Trade language of the Underdark.'),
+];
+
+const kLycanTypes = [
+  DndChoiceOption('Bear',  'Curse of the Werebear — natural armor 11+CON, claws deal 2d8+STR.'),
+  DndChoiceOption('Rat',   'Curse of the Wererat — Stealth advantage, bite deals 1d4+STR.'),
+  DndChoiceOption('Tiger', 'Curse of the Weretiger — 40 ft speed, claws deal 1d8+STR.'),
+  DndChoiceOption('Wolf',  'Curse of the Werewolf — knock prone on bite, claws deal 2d4+STR.'),
+  DndChoiceOption('Boar',  'Curse of the Wereboar — knock prone on charge, tusks deal 2d6+STR.'),
+];
+
+const kProfaneSoulPatrons = [
+  DndChoiceOption('The Archfey',     'Patron of the Feywild — enchantment and illusion magic.'),
+  DndChoiceOption('The Fiend',       'Patron from the lower planes — fire and destruction magic.'),
+  DndChoiceOption('The Great Old One','Alien entity from beyond — telepathy and mind magic.'),
+];
+
 const kLandTypes = [
   DndChoiceOption('Arctic',     'Frozen tundra — spells of ice and cold.'),
   DndChoiceOption('Coast',      'Shoreline — spells of water and mist.'),

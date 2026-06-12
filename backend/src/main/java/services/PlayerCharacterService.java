@@ -46,6 +46,7 @@ public class PlayerCharacterService {
     private final UserRepository userRepository;
     private final CharacterFeatService characterFeatService;
     private final SubclassSpellService subclassSpellService;
+    private final SubclassProficiencyService subclassProficiencyService;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -69,7 +70,8 @@ public class PlayerCharacterService {
             CharacterInventoryRepository characterInventoryRepository,
             UserRepository userRepository,
             CharacterFeatService characterFeatService,
-            SubclassSpellService subclassSpellService
+            SubclassSpellService subclassSpellService,
+            SubclassProficiencyService subclassProficiencyService
 
         ) {
         this.characterRepository = characterRepository;
@@ -79,6 +81,7 @@ public class PlayerCharacterService {
         this.userRepository = userRepository;
         this.characterFeatService = characterFeatService;
         this.subclassSpellService = subclassSpellService;
+        this.subclassProficiencyService = subclassProficiencyService;
         this.spellRepository = spellRepository;
         this.spellSlotProgressionRepository = spellSlotProgressionRepository;
         this.slotRepository = slotRepository;
@@ -316,6 +319,9 @@ public class PlayerCharacterService {
 
         // Aplicar hechizos automáticos de subclase (Dominios de Clérigo, Juramentos de Paladín, etc.)
         subclassSpellService.applySubclassSpells(saved, saved.getSubclass(), saved.getLevel());
+
+        // Aplicar proficiencias automáticas de subclase y crear tareas de elección
+        subclassProficiencyService.applySubclassProficiencies(saved, saved.getSubclass());
 
         return toDto(saved);
     }

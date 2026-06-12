@@ -530,6 +530,8 @@ CREATE TABLE subclass_spells (
 
 ---
 
+
+
 ## FASE 5 — Proficiencias Extra por Subclase
 
 Algunas subclases conceden proficiencias adicionales que deben aplicarse al personaje al elegir la subclase.
@@ -562,6 +564,8 @@ Algunas subclases conceden proficiencias adicionales que deben aplicarse al pers
 | Order of the Profane Soul | Elección de Warlock patron → PendingTask `PROFANE_SOUL_PATRON` |
 
 ---
+
+*IMPLEMENTADO HASTA AQUÍ - SUPUESTAMENTE (aún no testeado)*
 
 ## FASE 6 — Efectos de Dotes (Feats)
 

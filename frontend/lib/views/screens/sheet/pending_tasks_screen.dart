@@ -183,6 +183,31 @@ class _TaskResolver extends StatelessWidget {
       case 'LAND_TYPE_CHOICE':
         return _OptionListResolver(task: task, vm: vm, options: kLandTypes);
 
+      // Knowledge Domain Cleric — multi-pick 2 skills with expertise
+      case 'KNOWLEDGE_DOMAIN_SKILLS':
+        return _MultiPickOptionResolver(
+            task: task, vm: vm, options: kKnowledgeDomainSkills);
+
+      // Nature Domain Cleric — pick 1 cantrip
+      case 'NATURE_DOMAIN_CANTRIP':
+        return _OptionListResolver(task: task, vm: vm, options: kNatureDomainCantrips);
+
+      // College of Lore Bard — multi-pick 3 skills
+      case 'LORE_BARD_SKILLS':
+        return _MultiPickOptionResolver(task: task, vm: vm, options: kSkills);
+
+      // Battle Master — pick 1 artisan's tool or language
+      case 'BATTLE_MASTER_TOOL':
+        return _OptionListResolver(task: task, vm: vm, options: kBattleMasterToolOrLanguage);
+
+      // Blood Hunter Order of the Lycan — pick lycanthrope type
+      case 'LYCAN_TYPE':
+        return _OptionListResolver(task: task, vm: vm, options: kLycanTypes);
+
+      // Blood Hunter Order of the Profane Soul — pick Warlock patron
+      case 'PROFANE_SOUL_PATRON':
+        return _OptionListResolver(task: task, vm: vm, options: kProfaneSoulPatrons);
+
       default:
         // Fallback: campo de texto libre para tipos no mapeados todavía
         return _FreeTextResolver(task: task, vm: vm);
