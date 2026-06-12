@@ -68,9 +68,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
                   // Descripción
                   if (cls.description.isNotEmpty) ...[
-                    Text(cls.description,
-                        style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary, fontSize: 13)),
+                    _DescriptionText(cls.description),
                     const SizedBox(height: 20),
                   ],
 
@@ -135,6 +133,26 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 }
 
 // ── Widgets internos ──────────────────────────────────────────────────────────
+
+class _DescriptionText extends StatelessWidget {
+  final String text;
+  const _DescriptionText(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    final paragraphs = text.split('\n').where((p) => p.trim().isNotEmpty).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (int i = 0; i < paragraphs.length; i++) ...[
+          Text(paragraphs[i].trim(),
+              style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+          if (i < paragraphs.length - 1) const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+}
 
 class _ClassHeader extends StatelessWidget {
   final ClassOption cls;
@@ -339,9 +357,7 @@ class _FeatureTile extends StatelessWidget {
               const Divider(height: 1, color: AppTheme.divider),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                child: Text(feature.description,
-                    style: GoogleFonts.lato(
-                        color: AppTheme.textSecondary, fontSize: 14)),
+                child: _DescriptionText(feature.description),
               ),
             ],
           ],

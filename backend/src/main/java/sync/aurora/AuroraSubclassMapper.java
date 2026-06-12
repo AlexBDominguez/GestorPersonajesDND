@@ -112,6 +112,7 @@ public class AuroraSubclassMapper {
                 sub.setName(el.getName());
                 sub.setDndClass(parentClass);
                 sub.setSource(src);
+                sub.setSubclassFlavor(el.getSupports() != null ? el.getSupports().trim() : null);
                 sub.setDescription(el.getDescription());
                 sub.setSpellcastingAbility(detectSpellcastingAbility(el));
 
