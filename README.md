@@ -2,7 +2,7 @@
 
 Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot, MySQL y Flutter.
 
-> Estado del Proyecto: El backend está completo con todas las funcionalidades implementadas y operativas. El frontend está completo para esta versión (lista para presentar), con el flujo de creación de personajes (7 pasos), modo de edición, subida de nivel y la ficha de personaje interactiva ya implementados. Hay funcionalidades implementadas en el backend (slots de equipamiento por parte del cuerpo, encumbrance, sistema XP) que están pendientes de integración en el frontend para una versión futura.
+> Estado del Proyecto: El backend está completo con todas las funcionalidades implementadas y operativas, incluyendo las mecánicas de subclases, hechizos de subclase y proficiencias de subclase implementadas en las últimas fases. El frontend está completo para esta versión (lista para presentar), con el flujo de creación de personajes (7 pasos), modo de edición, subida de nivel, pantalla de tareas pendientes y la ficha de personaje interactiva. Hay funcionalidades implementadas en el backend (slots de equipamiento por parte del cuerpo, encumbrance, sistema XP, efectos mecánicos de dotes, Unarmored Defense) que están pendientes de integración en el frontend para una versión futura.
 
 ## Descripción
 
@@ -24,6 +24,8 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Catálogo de items sincronizado desde la D&D 5e API (armas, armaduras, herramientas, monturas, etc.)
 - Gestión de idiomas y competencias (proficiencies)
 - Sistema de feats (dotes) y recursos de clase
+- Hechizos de subclase (Domain/Oath/Circle spells) aplicados automáticamente al asignar subclase
+- Proficiencias de subclase aplicadas automáticamente al asignar subclase
 - Gestión de condiciones y efectos activos
 - Resistencias y vulnerabilidades a tipos de daño
 - Sistema de descansos (cortos y largos)
@@ -86,6 +88,7 @@ Sistema completo para gestionar personajes de D&D 5e:
 > - 28+ subclases con sus características por nivel (subclass features)
 > - Subraces con sus bonificadores raciales
 > - Características de subclase
+> - Hechizos de subclase (Domain/Oath/Circle spells) con su relación a cada subclase
 
 #### Lógica de Negocio
 - Inicialización automática de habilidades y salvaciones al crear personaje
@@ -248,6 +251,10 @@ frontend/lib/
   - Invocaciones
   - Metamagia
   - Características de clase generales
+  - Elecciones de Battle Master (maneuvers)
+  - Elecciones de Totem Warrior (totems)
+  - Elecciones de Hunter Ranger
+  - Elecciones de Monk 4 Elements
 
 ### Sistema de Hechizos
 - Gestión de hechizos disponibles por clase
@@ -322,6 +329,8 @@ frontend/lib/
 - Catálogo de subclases por clase
 - Asignación de subclase al personaje
 - Características específicas de subclase por nivel
+- Hechizos de subclase (Domain/Oath/Circle spells) añadidos automáticamente al personaje al escoger subclase
+- Proficiencias extra de subclase (armaduras, armas) aplicadas automáticamente al escoger subclase
 - Sincronización desde D&D 5e API
 
 ### Sistema de Descansos
@@ -470,9 +479,10 @@ El proyecto incluye configuración de Docker para facilitar el desarrollo y desp
 - `init-db.sql` - Script de inicialización de base de datos
 
 ### Servicios Docker
-El `docker-compose.yml` levanta dos contenedores:
+El `docker-compose.yml` levanta tres contenedores:
 - `dnd-mysql` — MySQL 8.0 accesible en el puerto `3306`
 - `dnd-backend` — Aplicación Spring Boot accesible en el puerto `8081`
+- `dnd-nginx` — Nginx en el puerto `80`, sirve el build web de Flutter desde `./frontend-dist/` y hace proxy de `/api/` al backend
 
 ### Comandos Docker útiles
 ```bash
@@ -811,13 +821,16 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 - Sistema de feats (dotes)
 - Sistema de condiciones y efectos activos
 - Resistencias y vulnerabilidades a tipos de daño
-- Recursos de clase (Ki, Rage, Sorcery Points, etc.)
+- Recursos de clase (Ki, Rage, Sorcery Points, etc.) con escala de Barbarian Rage corregida
 - Sistema de descansos cortos y largos
 - Sistema de death saves y HP temporal
 - Cálculos automáticos de CA, velocidad, iniciativa
 - Percepción pasiva, investigación e intuición
 - Autenticación JWT con Spring Security
 - Gestión de usuarios del sistema (admin)
+- Hechizos de subclase (Domain/Oath/Circle spells) aplicados automáticamente
+- Proficiencias de subclase aplicadas automáticamente
+- PendingTasks para subclases PHB: Battle Master, Totem Warrior, Hunter Ranger, Monk 4 Elements
 
 ### Frontend Mobile - Completo para esta versión
 - Sistema de autenticación con login y gestión de tokens JWT
@@ -839,8 +852,9 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 - Tab Spells con slot tracker interactivo y detalle de hechizo con botón de lanzamiento
 - Tab Combat con acciones, acciones de bonus y reacciones siempre visibles
 - Gestión de descansos cortos y largos desde la ficha
+- Pantalla de tareas pendientes (PendingTasksScreen) para resolución de elecciones de subida de nivel: ASI/Feat, subclase, hechizos, Fighting Style, Expertise, Invocaciones, Metamagic, Battle Master maneuvers, Totem Warrior, Hunter Ranger, Monk 4 Elements
 
-> **Funcionalidades pendientes para versiones futuras:** gestión visual de slots de equipamiento por parte del cuerpo, sistema XP (el backend ya lo soporta, la UI siempre usa Milestone), toggle de Encumbrance, soporte multi-idioma.
+> **Funcionalidades pendientes para versiones futuras:** gestión visual de slots de equipamiento por parte del cuerpo, sistema XP (el backend ya lo soporta, la UI siempre usa Milestone), toggle de Encumbrance, efectos mecánicos de dotes aplicados automáticamente, Unarmored Defense para Bárbaro y Monje, efectos de objetos mágicos sintonizados aplicados a la ficha, soporte multi-idioma.
 
 
 
