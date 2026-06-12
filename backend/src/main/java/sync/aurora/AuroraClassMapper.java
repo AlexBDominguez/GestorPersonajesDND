@@ -91,7 +91,7 @@ public class AuroraClassMapper {
                 boolean isDuplicate = nameCount.getOrDefault(el.getName().toLowerCase(), 0L) > 1;
                 cls.setName(isDuplicate ? el.getName() + " (" + src + ")" : el.getName());
                 cls.setSource(src);
-                cls.setDescription(el.getDescription());
+                cls.setDescription(extractFlavorDescription(el.getDescription()));
                 cls.setHitDie(parseHitDie(el));
                 cls.setSavingThrows(extractSavingThrows(el));
                 cls.setProficiencies(extractArmorWeaponProficiencies(el));
@@ -184,6 +184,32 @@ public class AuroraClassMapper {
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
+
+    /**
+     * Extracts only the flavor/intro paragraphs from an Aurora class description,
+     * discarding structural sections (all-caps headers, proficiency lines, equipment lists).
+     * Aurora class descriptions embed the full rulebook chapter; we only want the intro.
+     */
+    private String extractFlavorDescription(String full) {
+        if (full == null || full.isBlank()) return "";
+        String[] paragraphs = full.split("\n");
+        List<String> result = new ArrayList<>();
+        for (String p : paragraphs) {
+            String trimmed = p.trim();
+            if (trimmed.isEmpty()) continue;
+            // All-caps section headers like "EQUIPMENT" or "THE ARTIFICER" mark end of flavor text
+            if (trimmed.length() > 2 && trimmed.equals(trimmed.toUpperCase())
+                    && trimmed.matches("[A-Z][A-Z ]+")) break;
+            // Structural proficiency/equipment lines like "Weapons: ...", "Tools: ..."
+            if (trimmed.matches("^(Weapons|Tools|Armor|Skills|Saving Throws?|Equipment|Proficiencies):.*")) {
+                if (!result.isEmpty()) break;
+                continue; // skip if we haven't found flavor text yet
+            }
+            result.add(trimmed);
+            if (result.size() >= 4) break; // cap at 4 flavor paragraphs
+        }
+        return String.join("\n", result);
+    }
 
     private Set<String> allowedSources() {
         return sourceRepo.findAll().stream()

@@ -185,6 +185,8 @@ public class AuroraXmlParser {
                 if (!t.isBlank()) sb.append(t.strip()).append(' ');
             } else if (child.getNodeType() == Node.ELEMENT_NODE) {
                 String tag = child.getNodeName().toLowerCase();
+                // Skip tables entirely — level progression tables are unreadable as plain text
+                if (tag.equals("table")) continue;
                 extractTextRec(child, sb);
                 if (tag.equals("p") || tag.startsWith("h") || tag.equals("div") || tag.equals("li")) {
                     // Trim trailing space and add newline between paragraphs
