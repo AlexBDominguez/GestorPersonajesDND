@@ -561,60 +561,72 @@ public class PlayerCharacter {
      */
     @Transient
     public int getArmorClass(CharacterEquipment equipment, List<CharacterActiveEffect> activeEffects) {
-        int baseAC = 10;
         int dexModifier = calculateAbilityModifier("dex");
-        
-        // Si tiene armadura equipada
-        if (equipment != null && equipment.getArmor() != null) {
-            Item armor = equipment.getArmor();
-            Integer armorAC = armor.getArmorClass();
-            
-            if (armorAC != null) {
-                String armorType = armor.getArmorType();
-                
-                if ("Light".equalsIgnoreCase(armorType)) {
-                    baseAC = armorAC + dexModifier;
-                    
-                } else if ("Medium".equalsIgnoreCase(armorType)) {
-                    int maxDexBonus = armor.getMaxDexBonus() != null ? armor.getMaxDexBonus() : 2;
-                    baseAC = armorAC + Math.min(dexModifier, maxDexBonus);
-                    
-                } else if ("Heavy".equalsIgnoreCase(armorType)) {
-                    baseAC = armorAC;
-                }
+        String classIndex = dndClass != null ? dndClass.getIndexName() : "";
+
+        Item armor = equipment != null ? equipment.getArmor() : null;
+        Item offHand = equipment != null ? equipment.getOffHand() : null;
+
+        boolean hasShield = offHand != null && "Shield".equalsIgnoreCase(offHand.getArmorType());
+
+        int baseAC;
+
+        if (armor != null && armor.getArmorClass() != null) {
+            int armorAC = armor.getArmorClass();
+            String armorType = armor.getArmorType();
+
+            if ("Light".equalsIgnoreCase(armorType)) {
+                baseAC = armorAC + dexModifier;
+            } else if ("Medium".equalsIgnoreCase(armorType)) {
+                int maxDexBonus = armor.getMaxDexBonus() != null ? armor.getMaxDexBonus() : 2;
+                baseAC = armorAC + Math.min(dexModifier, maxDexBonus);
+            } else if ("Heavy".equalsIgnoreCase(armorType)) {
+                baseAC = armorAC;
+            } else {
+                baseAC = armorAC + dexModifier;
             }
         } else {
-            // Sin armadura: 10 + DEX
-            baseAC = baseAC + dexModifier;
-            
-            // Bonificador de armadura natural (algunas razas)
+            // Sin armadura: aplicar Unarmored Defense según la clase
+            boolean isBarbarian = "barbarian".equalsIgnoreCase(classIndex);
+            // El Monje pierde Unarmored Defense si lleva escudo
+            boolean isMonkUnarmored = "monk".equalsIgnoreCase(classIndex) && !hasShield;
+
+            if (isBarbarian) {
+                // Unarmored Defense del Bárbaro: 10 + DEX + CON (escudo permitido)
+                int conModifier = calculateAbilityModifier("con");
+                baseAC = 10 + dexModifier + conModifier;
+            } else if (isMonkUnarmored) {
+                // Unarmored Defense del Monje: 10 + DEX + WIS
+                int wisModifier = calculateAbilityModifier("wis");
+                baseAC = 10 + dexModifier + wisModifier;
+            } else {
+                baseAC = 10 + dexModifier;
+            }
+
+            // Armadura natural (Draconic Sorcerer, etc.): tomar el mayor
             if (naturalArmorBonus != null) {
                 baseAC = Math.max(baseAC, naturalArmorBonus + dexModifier);
             }
         }
-        
-        // Escudo (bonus AC según el armorClass del item) en offHand
-        if (equipment != null && equipment.getOffHand() != null) {
-            Item offHand = equipment.getOffHand();
-            if ("Shield".equalsIgnoreCase(offHand.getArmorType())) {
-                int shieldBonus = offHand.getArmorClass() != null ? offHand.getArmorClass() : 2;
-                baseAC += shieldBonus;
-            }
+
+        // Escudo — el Monje con Unarmored Defense ya está excluido (isMonkUnarmored requiere !hasShield)
+        if (hasShield) {
+            int shieldBonus = equipment.getOffHand().getArmorClass() != null
+                    ? equipment.getOffHand().getArmorClass() : 2;
+            baseAC += shieldBonus;
         }
-        
+
         // Bonificadores de efectos activos (ej: Shield of Faith, Shield spell, etc.)
         if (activeEffects != null) {
             for (CharacterActiveEffect effect : activeEffects) {
-                if (effect.isActive() && 
-                    effect.getEffect().getModifierTypes() != null && 
+                if (effect.isActive() &&
+                    effect.getEffect().getModifierTypes() != null &&
                     effect.getEffect().getModifierTypes().contains(enumeration.EffectModifierType.AC)) {
-                    
-                    String modifierValue = effect.getEffect().getModifierValue();
-                    baseAC += parseModifier(modifierValue);
+                    baseAC += parseModifier(effect.getEffect().getModifierValue());
                 }
             }
         }
-        
+
         return baseAC;
     }
 

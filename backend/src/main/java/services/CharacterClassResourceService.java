@@ -156,27 +156,33 @@ public class CharacterClassResourceService {
         switch (formula.toLowerCase()) {
             case "level":
                 return character.getLevel();
-            
-            case "level_monk": // Ki Points = Monk level
+
+            case "level_monk":
                 return character.getLevel();
-            
-            case "level_sorcerer": // Sorcery Points = Sorcerer level
+
+            case "level_sorcerer":
                 return character.getLevel();
-            
-            case "proficiency_bonus": // Bardic Inspiration = Proficiency Bonus
+
+            case "proficiency_bonus":
                 return character.getProficiencyBonus();
-            
-            case "charisma_modifier": // Para algunas habilidades de Warlock/Sorcerer
+
+            case "charisma_modifier":
                 return Math.max(1, character.calculateAbilityModifier("cha"));
-            
-            case "level_half": // Channel Divinity
+
+            case "level_half":
                 return Math.max(1, character.getLevel() / 2);
-            
-            case "level_divided_3": // Para algunas habilidades
+
+            case "level_divided_3":
                 return Math.max(1, character.getLevel() / 3);
-            
+
+            case "wisdom_modifier_min1":
+                return Math.max(1, character.calculateAbilityModifier("wis"));
+
+            // Tabla de usos de Furia del Bárbaro (no sigue proficiency bonus)
+            case "barbarian_rage_table":
+                return barbarianRageUses(character.getLevel());
+
             default:
-                // Si es un número directo
                 try {
                     return Integer.parseInt(formula);
                 } catch (NumberFormatException e) {
@@ -184,6 +190,15 @@ public class CharacterClassResourceService {
                     return 0;
                 }
         }
+    }
+
+    private int barbarianRageUses(int level) {
+        if (level >= 20) return 999;
+        if (level >= 17) return 6;
+        if (level >= 12) return 5;
+        if (level >= 6)  return 4;
+        if (level >= 3)  return 3;
+        return 2;
     }
 
     @Transactional
