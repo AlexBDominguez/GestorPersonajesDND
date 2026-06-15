@@ -128,7 +128,7 @@ public class CharacterSkillService {
     public void applySavingThrowProficiency(PlayerCharacter character, String ability) {
         List<CharacterSavingThrow> savingThrows = characterSavingThrowRepository.findByCharacter(character);
         for (CharacterSavingThrow st : savingThrows) {
-            if (st.getAbility().equalsIgnoreCase(ability)) {
+            if (st.getAbilityScore().equalsIgnoreCase(ability)) {
                 st.setProficient(true);
                 characterSavingThrowRepository.save(st);
                 return;
