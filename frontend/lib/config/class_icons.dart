@@ -14,8 +14,8 @@ final Map<String, IconData> kClassIcons = {
   'sorcerer': MdiIcons.fire,
   'warlock': MdiIcons.skull,
   'wizard': MdiIcons.autoFix,
-  'artificer': MdiIcons.hammerWrench, 
-  'blood hunter': MdiIcons.pentagram
+  'artificer': MdiIcons.hammerWrench,
+  'blood hunter': MdiIcons.water,
 };
 
 final Map<int, String> _classKeyById = {
@@ -49,7 +49,8 @@ final Map<String, String> _classAliases = {
   'hechicero': 'sorcerer',
   'brujo': 'warlock',
   'mago': 'wizard',
-  
+  'artificer (erlw)': 'artificer',
+  'artificer (tce)': 'artificer',
 };
 
 String _normalizeClassKey(String raw) {
@@ -68,6 +69,7 @@ String _normalizeClassKey(String raw) {
       .replaceAll('_', ' ')
       .replaceAll('-', ' ')
       .replaceAll(RegExp(r'\s+'), ' ')
+      .replaceAll(RegExp(r'\s*\([^)]*\)\s*$'), '')
       .trim();
 
   return _classAliases[compact] ?? compact;
