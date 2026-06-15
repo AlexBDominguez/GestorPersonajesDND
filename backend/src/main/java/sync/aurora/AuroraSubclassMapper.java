@@ -150,23 +150,42 @@ public class AuroraSubclassMapper {
      */
     private DndClass resolveParentClass(AuroraElement el, Map<String, Optional<DndClass>> cache) {
         if (el.getSupports() == null || el.getSupports().isBlank()) return null;
-        String resolved = CATEGORY_TO_CLASS.getOrDefault(el.getSupports().trim(), el.getSupports().trim());
         String srcShort = AuroraSourceMapper.toShortName(el.getSource());
-        for (String candidate : resolved.split(",")) {
-            String name = candidate.trim();
-            // Exact name lookup (covers unambiguous class names like "Fighter", "Wizard")
+
+        // Split by comma first, then map each token through CATEGORY_TO_CLASS.
+        // Some elements use compound supports like "Artificer Specialist, ERLW Version"
+        // where "ERLW Version" / "TCOE Base" are Aurora-internal filter tags, not class names.
+        // The old approach did the CATEGORY_TO_CLASS lookup on the FULL string before splitting,
+        // causing "Artificer Specialist, ERLW Version" to fail the map lookup entirely.
+        for (String part : el.getSupports().split(",")) {
+            String token = part.trim();
+            if (token.isEmpty()) continue;
+
+            // Map category name → class name (e.g. "Artificer Specialist" → "Artificer")
+            String name = CATEGORY_TO_CLASS.get(token);
+            if (name == null) {
+                // Not a known category — skip Aurora-internal filter tags like "ERLW Version",
+                // "TCOE Base", or bare abbreviations like "PHB". Otherwise use as a direct class name.
+                if (token.endsWith(" Version") || token.endsWith(" Base") ||
+                        token.endsWith(" Update") || token.matches("[A-Z0-9]+")) continue;
+                name = token;
+            }
+
+            // Exact class name lookup (e.g. "Fighter", "Wizard")
             Optional<DndClass> found = cache.computeIfAbsent(name,
                 k -> classRepo.findByNameIgnoreCase(k));
             if (found.isPresent()) return found.get();
-            // Source-aware lookup: when multiple Aurora sources produce the same base class,
+
+            // Source-aware lookup: when the same base class is provided by multiple Aurora sources,
             // the DB disambiguates as "Artificer (ERLW)" / "Artificer (TCE)".
-            // Use the subclass element's own source to find the matching parent.
+            // Match using the subclass element's own source for precise linking.
             if (srcShort != null && !srcShort.isBlank()) {
                 String srcKey = name + "_SRC_" + srcShort;
                 Optional<DndClass> srcFound = cache.computeIfAbsent(srcKey,
                     k -> classRepo.findByNameIgnoreCase(name + " (" + srcShort + ")"));
                 if (srcFound.isPresent()) return srcFound.get();
             }
+
             // Last resort: find any class whose name starts with "Artificer ("
             String prefixKey = name + "_PREFIX_FALLBACK";
             Optional<DndClass> prefixFound = cache.computeIfAbsent(prefixKey,
