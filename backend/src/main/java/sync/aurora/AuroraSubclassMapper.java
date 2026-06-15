@@ -170,9 +170,11 @@ public class AuroraSubclassMapper {
                         token.endsWith(" Update") || token.matches("[A-Z0-9]+")) continue;
                 name = token;
             }
+            // Capture as final so lambdas below can reference it
+            final String className = name;
 
             // Exact class name lookup (e.g. "Fighter", "Wizard")
-            Optional<DndClass> found = cache.computeIfAbsent(name,
+            Optional<DndClass> found = cache.computeIfAbsent(className,
                 k -> classRepo.findByNameIgnoreCase(k));
             if (found.isPresent()) return found.get();
 
@@ -180,16 +182,16 @@ public class AuroraSubclassMapper {
             // the DB disambiguates as "Artificer (ERLW)" / "Artificer (TCE)".
             // Match using the subclass element's own source for precise linking.
             if (srcShort != null && !srcShort.isBlank()) {
-                String srcKey = name + "_SRC_" + srcShort;
+                String srcKey = className + "_SRC_" + srcShort;
                 Optional<DndClass> srcFound = cache.computeIfAbsent(srcKey,
-                    k -> classRepo.findByNameIgnoreCase(name + " (" + srcShort + ")"));
+                    k -> classRepo.findByNameIgnoreCase(className + " (" + srcShort + ")"));
                 if (srcFound.isPresent()) return srcFound.get();
             }
 
             // Last resort: find any class whose name starts with "Artificer ("
-            String prefixKey = name + "_PREFIX_FALLBACK";
+            String prefixKey = className + "_PREFIX_FALLBACK";
             Optional<DndClass> prefixFound = cache.computeIfAbsent(prefixKey,
-                k -> classRepo.findFirstByNameStartingWithIgnoreCase(name + " ("));
+                k -> classRepo.findFirstByNameStartingWithIgnoreCase(className + " ("));
             if (prefixFound.isPresent()) return prefixFound.get();
         }
         return null;
