@@ -208,6 +208,10 @@ class _TaskResolver extends StatelessWidget {
       case 'PROFANE_SOUL_PATRON':
         return _OptionListResolver(task: task, vm: vm, options: kProfaneSoulPatrons);
 
+      // MoTM flexible ASI — choose +2 to one ability and +1 to another
+      case 'RACIAL_ASI_CHOICE':
+        return _RacialAsiResolver(task: task, vm: vm);
+
       default:
         // Fallback: campo de texto libre para tipos no mapeados todavía
         return _FreeTextResolver(task: task, vm: vm);
@@ -1162,6 +1166,129 @@ class _ExpertiseResolverState extends State<_ExpertiseResolver> {
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Expertise granted: ${_selected.join(', ')}!'),
+        backgroundColor: AppTheme.primary,
+        duration: const Duration(seconds: 2),
+      ));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Error saving choice. Try again.'),
+        backgroundColor: AppTheme.accent,
+      ));
+    }
+  }
+}
+
+// ── MoTM Flexible ASI resolver ────────────────────────────────────────────────
+// Player picks which ability gets +2 and which gets +1 (must be different).
+class _RacialAsiResolver extends StatefulWidget {
+  final PendingTask task;
+  final CharacterSheetViewModel vm;
+  const _RacialAsiResolver({required this.task, required this.vm});
+
+  @override
+  State<_RacialAsiResolver> createState() => _RacialAsiResolverState();
+}
+
+class _RacialAsiResolverState extends State<_RacialAsiResolver> {
+  static const _abilities = [
+    ('str', 'Strength'),
+    ('dex', 'Dexterity'),
+    ('con', 'Constitution'),
+    ('int', 'Intelligence'),
+    ('wis', 'Wisdom'),
+    ('cha', 'Charisma'),
+  ];
+
+  String? _plus2;
+  String? _plus1;
+  bool _saving = false;
+
+  bool get _valid => _plus2 != null && _plus1 != null && _plus2 != _plus1;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('Apply +2 to:', style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: _plus2,
+          dropdownColor: AppTheme.surface,
+          style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 14),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppTheme.background,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppTheme.primary.withOpacity(0.4)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          ),
+          hint: Text('Choose ability', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+          items: _abilities.map((e) => DropdownMenuItem(
+            value: e.$1,
+            child: Text(e.$2),
+          )).toList(),
+          onChanged: (v) => setState(() => _plus2 = v),
+        ),
+        const SizedBox(height: 16),
+        Text('Apply +1 to:', style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: _plus1,
+          dropdownColor: AppTheme.surface,
+          style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 14),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppTheme.background,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppTheme.primary.withOpacity(0.4)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          ),
+          hint: Text('Choose ability', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+          items: _abilities
+              .where((e) => e.$1 != _plus2)
+              .map((e) => DropdownMenuItem(value: e.$1, child: Text(e.$2)))
+              .toList(),
+          onChanged: (v) => setState(() => _plus1 = v),
+        ),
+        const SizedBox(height: 20),
+        ElevatedButton(
+          onPressed: _valid && !_saving ? () => _confirm(context) : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primary,
+            disabledBackgroundColor: AppTheme.primary.withOpacity(0.3),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          child: _saving
+              ? const SizedBox(width: 18, height: 18,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : Text(
+                  _valid
+                      ? 'Confirm: ${_abilityName(_plus2!)} +2, ${_abilityName(_plus1!)} +1'
+                      : 'Select two different abilities',
+                  style: GoogleFonts.libreBaskerville(fontSize: 13, fontWeight: FontWeight.bold)),
+        ),
+      ]),
+    );
+  }
+
+  String _abilityName(String key) =>
+      _abilities.firstWhere((e) => e.$1 == key, orElse: () => (key, key)).$2;
+
+  Future<void> _confirm(BuildContext context) async {
+    setState(() => _saving = true);
+    final choice = '${_plus2!}:2,${_plus1!}:1';
+    final ok = await widget.vm.resolveTask(widget.task.id, choice);
+    if (!context.mounted) return;
+    setState(() => _saving = false);
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('${_abilityName(_plus2!)} +2, ${_abilityName(_plus1!)} +1 applied!'),
         backgroundColor: AppTheme.primary,
         duration: const Duration(seconds: 2),
       ));

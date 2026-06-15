@@ -1465,6 +1465,21 @@ public class PlayerCharacterService {
             pendingTaskRepository.save(task);
             System.out.println("Race task created: " + taskType + " for " + character.getName());
         }
+
+        // Flexible ASI (MoTM-style): the race has no fixed bonuses — player chooses +2 to one ability and +1 to another.
+        if (race != null && race.isFlexibleAsi()) {
+            boolean exists = pendingTaskRepository.findByCharacter(character).stream()
+                .anyMatch(t -> "RACIAL_ASI_CHOICE".equals(t.getTaskType()));
+            if (!exists) {
+                PendingTask asiTask = new PendingTask();
+                asiTask.setCharacter(character);
+                asiTask.setRelatedLevel(1);
+                asiTask.setCompleted(false);
+                asiTask.setTaskType("RACIAL_ASI_CHOICE");
+                asiTask.setDescription("Choose your racial Ability Score Increases: apply +2 to one ability and +1 to a different ability");
+                pendingTaskRepository.save(asiTask);
+            }
+        }
     }
 
     /**

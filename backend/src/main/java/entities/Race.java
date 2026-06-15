@@ -48,6 +48,9 @@ public class Race {
     @Column(nullable = false)
     private String source = "PHB";
 
+    @Column(nullable = false)
+    private boolean flexibleAsi = false;
+
     public Race() {
     }
 
@@ -125,4 +128,7 @@ public class Race {
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }
+
+    public boolean isFlexibleAsi() { return flexibleAsi; }
+    public void setFlexibleAsi(boolean flexibleAsi) { this.flexibleAsi = flexibleAsi; }
 }

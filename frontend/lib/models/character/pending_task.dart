@@ -65,6 +65,7 @@ class PendingTask{
       case 'HUNTER_MULTIATTACK': return '🏹';
       case 'SUPERIOR_HUNTERS_DEFENSE': return '🌿';
       case 'ELEMENTAL_DISCIPLINE': return '🌊';
+      case 'RACIAL_ASI_CHOICE':         return '⬆️';
       case 'LAND_TYPE_CHOICE':         return '🌍';
       case 'KNOWLEDGE_DOMAIN_SKILLS':  return '📚';
       case 'NATURE_DOMAIN_CANTRIP':    return '🌿';
@@ -102,6 +103,7 @@ class PendingTask{
       case 'HUNTER_MULTIATTACK': return 'Multiattack (Hunter)';
       case 'SUPERIOR_HUNTERS_DEFENSE': return "Superior Hunter's Defense";
       case 'ELEMENTAL_DISCIPLINE': return 'Elemental Discipline';
+      case 'RACIAL_ASI_CHOICE':         return 'Racial Ability Score Increase';
       case 'LAND_TYPE_CHOICE':         return 'Circle of the Land';
       case 'KNOWLEDGE_DOMAIN_SKILLS':  return 'Knowledge Domain Skills';
       case 'NATURE_DOMAIN_CANTRIP':    return 'Nature Domain Cantrip';

@@ -349,6 +349,22 @@ public class PendingTaskService {
                         break;
                 }
 
+                // MoTM-style flexible ASI: choice format "str:2,con:1"
+                case "RACIAL_ASI_CHOICE": {
+                        java.util.Map<String, Integer> scores = new java.util.HashMap<>(character.getAbilityScores());
+                        for (String part : choice.split(",")) {
+                                String[] kv = part.trim().split(":");
+                                if (kv.length != 2) continue;
+                                String ability = kv[0].trim().toLowerCase();
+                                try {
+                                        int bonus = Integer.parseInt(kv[1].trim());
+                                        scores.merge(ability, bonus, Integer::sum);
+                                } catch (NumberFormatException ignored) {}
+                        }
+                        character.setAbilityScores(scores);
+                        break;
+                }
+
                 // Blood Hunter Order of the Lycan / Order of the Profane Soul — stored in metadata
                 case "LYCAN_TYPE":
                 case "PROFANE_SOUL_PATRON":

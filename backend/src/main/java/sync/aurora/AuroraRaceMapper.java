@@ -2,6 +2,7 @@ package sync.aurora;
 
 import entities.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import repositories.*;
 
 import java.util.*;
@@ -43,6 +44,7 @@ public class AuroraRaceMapper {
         this.sourceRepo = sourceRepo;
     }
 
+    @Transactional
     public Map<String, Object> sync() {
         if (registry.isEmpty()) {
             return Map.of("error", "Registry is empty — run POST /api/sync/aurora/fetch first.");
@@ -72,7 +74,18 @@ public class AuroraRaceMapper {
             race.setDescription(el.getDescription());
             race.setSpeed(extractSpeed(el));
             race.setSize(extractSize(el));
-            race.setAbilityBonuses(extractAbilityBonuses(el));
+
+            // Update @ElementCollection in-place so Hibernate dirty-tracking works correctly
+            // for both new (persist) and existing (managed within @Transactional) entities.
+            Map<String, Integer> newBonuses = extractAbilityBonuses(el);
+            if (race.getAbilityBonuses() == null) {
+                race.setAbilityBonuses(new LinkedHashMap<>(newBonuses));
+            } else {
+                race.getAbilityBonuses().clear();
+                race.getAbilityBonuses().putAll(newBonuses);
+            }
+
+            race.setFlexibleAsi(hasFlexibleAsi(el));
             race.setTraits(extractTraits(el));
 
             raceRepo.save(race);
@@ -108,7 +121,15 @@ public class AuroraRaceMapper {
             sub.setSource(src);
             sub.setDescription(el.getDescription());
             sub.setRace(parent);
-            sub.setAbilityBonuses(extractAbilityBonuses(el));
+
+            Map<String, Integer> subBonuses = extractAbilityBonuses(el);
+            if (sub.getAbilityBonuses() == null) {
+                sub.setAbilityBonuses(new LinkedHashMap<>(subBonuses));
+            } else {
+                sub.getAbilityBonuses().clear();
+                sub.getAbilityBonuses().putAll(subBonuses);
+            }
+
             sub.setTraits(extractTraits(el));
 
             subraceRepo.save(sub);
@@ -164,6 +185,23 @@ public class AuroraRaceMapper {
             });
         }
         return bonuses;
+    }
+
+    /**
+     * True only when a race has NO fixed ability stat rules and instead relies entirely on a
+     * player-choice ASI select (MoTM-style). VGtM/ERLW races have fixed <stat> rules AND an
+     * optional Tasha's select — those must NOT be treated as flexible.
+     */
+    private boolean hasFlexibleAsi(AuroraElement el) {
+        boolean hasAsiSelect = el.getRules().stream().anyMatch(r ->
+            r.getRuleType() == AuroraRule.RuleType.SELECT
+            && "Ability Score Improvement".equals(r.getType()));
+        if (!hasAsiSelect) return false;
+        boolean hasFixedAbilityBonus = el.getRules().stream().anyMatch(r ->
+            r.getRuleType() == AuroraRule.RuleType.STAT
+            && ABILITY_KEYS.containsKey(r.getName())
+            && parseInt(r.getValue(), 0) > 0);
+        return !hasFixedAbilityBonus;
     }
 
     private void collectAbilityStats(AuroraElement el, Map<String, Integer> bonuses) {
