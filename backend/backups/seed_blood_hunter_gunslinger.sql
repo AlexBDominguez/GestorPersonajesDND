@@ -41,8 +41,8 @@ INSERT IGNORE INTO class_proficiencies (class_id, proficiency) VALUES
 
 -- Tiradas de salvación
 INSERT IGNORE INTO class_saving_throws (class_id, saving_throw) VALUES
-(@bh_id, 'dexterity'),
-(@bh_id, 'intelligence');
+(@bh_id, 'dex'),
+(@bh_id, 'int');
 
 -- Opciones de habilidades (elige 3 de estas 8)
 INSERT IGNORE INTO class_skill_choices (class_id, skill_index) VALUES
