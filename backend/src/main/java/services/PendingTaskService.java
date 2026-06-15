@@ -262,6 +262,7 @@ public class PendingTaskService {
                                         character.setSubclass(sc);
                                         subclassSpellService.applySubclassSpells(character, sc, character.getLevel());
                                         subclassProficiencyService.applySubclassProficiencies(character, sc);
+                                        applySubclassStatEffects(character, sc);
                                     });
                         }
                         break;
@@ -413,6 +414,11 @@ public class PendingTaskService {
                 case "SPELL_SNIPER_CANTRIP":
                 case "MARTIAL_ADEPT_MANEUVER":
                 case "ELEMENTAL_ADEPT_TYPE":
+                        break;
+
+                // Blood Hunter — curses/shots stored in metadata for display
+                case "BLOOD_CURSE_CHOICE":
+                case "TRICK_SHOT_CHOICE":
                         break;
 
                 default:
@@ -594,6 +600,19 @@ public class PendingTaskService {
                 dto.setCompleted(t.isCompleted());
                 dto.setMetadata(t.getMetadata());
                 return dto;
+        }
+
+        private void applySubclassStatEffects(PlayerCharacter character, Subclass subclass) {
+                if (subclass == null) return;
+                switch (subclass.getIndexName()) {
+                        case "draconic-bloodline":
+                                if (character.getNaturalArmorBonus() == null) {
+                                        character.setNaturalArmorBonus(13);
+                                }
+                                break;
+                        default:
+                                break;
+                }
         }
 
         private String escapeJson(String s) {

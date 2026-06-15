@@ -95,10 +95,17 @@ public class CharacterClassResourceService {
         PlayerCharacter character = characterRepository.findById(characterId)
                 .orElseThrow(() -> new RuntimeException("Character not found"));
 
-        // Obtener recursos de la clase del personaje según su nivel
+        // Obtener recursos de la clase del personaje según su nivel, filtrando por subclase si aplica
+        String subclassIndex = character.getSubclass() != null
+                ? character.getSubclass().getIndexName() : null;
+
         List<ClassResource> classResources = classResourceRepository
                 .findByDndClassAndLevelUnlockedLessThanEqual(
-                        character.getDndClass(), character.getLevel());
+                        character.getDndClass(), character.getLevel())
+                .stream()
+                .filter(r -> r.getSubclassRestriction() == null
+                        || r.getSubclassRestriction().equals(subclassIndex))
+                .collect(java.util.stream.Collectors.toList());
 
         for (ClassResource resource : classResources) {
             // Verificar si ya existe

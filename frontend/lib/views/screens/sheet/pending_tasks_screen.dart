@@ -242,6 +242,14 @@ class _TaskResolver extends StatelessWidget {
       case 'ELEMENTAL_ADEPT_TYPE':
         return _OptionListResolver(task: task, vm: vm, options: kElementalAdeptTypes);
 
+      // Blood Hunter — pick one Blood Curse
+      case 'BLOOD_CURSE_CHOICE':
+        return _OptionListResolver(task: task, vm: vm, options: kBloodCurses);
+
+      // Gunslinger — pick one Trick Shot
+      case 'TRICK_SHOT_CHOICE':
+        return _OptionListResolver(task: task, vm: vm, options: kTrickShots);
+
       default:
         // Fallback: campo de texto libre para tipos no mapeados todavía
         return _FreeTextResolver(task: task, vm: vm);

@@ -326,6 +326,9 @@ public class PlayerCharacterService {
         // Aplicar proficiencias automáticas de subclase y crear tareas de elección
         subclassProficiencyService.applySubclassProficiencies(saved, saved.getSubclass());
 
+        // Aplicar efectos de stat de subclase (Natural Armor, etc.)
+        applySubclassStatEffects(saved, saved.getSubclass());
+
         // Aplicar efectos automáticos de traits raciales (proficiencias y hechizos sin elección)
         racialTraitService.applyAutomaticRacialTraits(saved);
 
@@ -537,6 +540,14 @@ public class PlayerCharacterService {
         //Saving throws con proficiencia y bonus calculado
         List<CharacterSavingThrow> savingThrows =
                 characterSkillService.getCharacterSavingThrows(playerCharacter);
+
+        // Paladin Aura of Protection (nivel 6+): +CHA modifier a todas las saving throws propias
+        boolean hasPaladinAura = playerCharacter.getDndClass() != null
+                && "paladin".equals(playerCharacter.getDndClass().getIndexName())
+                && playerCharacter.getLevel() >= 6;
+        int paladinAuraBonus = hasPaladinAura
+                ? Math.max(0, playerCharacter.calculateAbilityModifier("cha")) : 0;
+
         List<CharacterSavingThrowDto> savingThrowDtos = new ArrayList<>();
         for (CharacterSavingThrow st: savingThrows){
             CharacterSavingThrowDto stDto = new CharacterSavingThrowDto();
@@ -545,7 +556,7 @@ public class PlayerCharacterService {
             stDto.setProficient(st.isProficient());
             int abilityMod = playerCharacter.calculateAbilityModifier(st.getAbilityScore());
             int profBonus = st.isProficient() ? playerCharacter.getProficiencyBonus() : 0;
-            stDto.setBonus(abilityMod + profBonus + itemBonusSavingThrows);
+            stDto.setBonus(abilityMod + profBonus + itemBonusSavingThrows + paladinAuraBonus);
             savingThrowDtos.add(stDto);
         }
         dto.setSavingThrows(savingThrowDtos);
@@ -1367,6 +1378,18 @@ public class PlayerCharacterService {
                 task.setMetadata(feature.getMetadata()); // numero de skills a elegir
                 break;
 
+            case BLOOD_CURSE_CHOICE:
+                task.setTaskType("BLOOD_CURSE_CHOICE");
+                task.setDescription("Choose a Blood Curse (Blood Hunter)");
+                task.setMetadata(feature.getMetadata());
+                break;
+
+            case TRICK_SHOT_CHOICE:
+                task.setTaskType("TRICK_SHOT_CHOICE");
+                task.setDescription("Choose a Trick Shot (Gunslinger)");
+                task.setMetadata(feature.getMetadata());
+                break;
+
             default:
                 System.out.println("Unknown task type for: " + feature.getType());
                 return;
@@ -1564,6 +1587,15 @@ public class PlayerCharacterService {
                 if (level == 3)
                     createSubclassTask(character, level, "LAND_TYPE_CHOICE",
                             "Choose your Land type (Arctic, Coast, Desert, Forest, Grassland, Mountain, Swamp, or Underdark)", null);
+                break;
+
+            case "gunslinger":
+                if (level == 3)
+                    createSubclassTask(character, level, "TRICK_SHOT_CHOICE",
+                            "Choose 2 Trick Shots (Gunslinger)", "{\"count\":2}");
+                else if (level == 7 || level == 10 || level == 15 || level == 18)
+                    createSubclassTask(character, level, "TRICK_SHOT_CHOICE",
+                            "Choose an additional Trick Shot (Gunslinger)", "{\"count\":1}");
                 break;
         }
     }
@@ -1774,6 +1806,20 @@ public class PlayerCharacterService {
         dto.setTemporaryHP(character.getTemporaryHP());
         
         return dto;
+    }
+
+    private void applySubclassStatEffects(PlayerCharacter character, Subclass subclass) {
+        if (subclass == null) return;
+        switch (subclass.getIndexName()) {
+            case "draconic-bloodline":
+                // Natural Armor: AC = 13 + DEX when unarmored (Draconic Resilience)
+                if (character.getNaturalArmorBonus() == null) {
+                    character.setNaturalArmorBonus(13);
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     private void applyRaceSpells(PlayerCharacter character){

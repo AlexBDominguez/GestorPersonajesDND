@@ -452,3 +452,34 @@ const kWeaponProficiencies = [
   DndChoiceOption('Heavy Crossbow',   '1d10 piercing, heavy, loading, two-handed, ranged (100/400).'),
   DndChoiceOption('Longbow',          '1d8 piercing, heavy, two-handed, ranged (150/600).'),
 ];
+
+// Blood Hunter — Blood Curses (Order of the Crimson Rite)
+const kBloodCurses = [
+  DndChoiceOption('Blood Curse of the Anxious',    'Impose disadvantage on a concentration check as a bonus action.'),
+  DndChoiceOption('Blood Curse of Binding',        'Reduce the speed of a creature to 0 until the end of your next turn (bonus action).'),
+  DndChoiceOption('Blood Curse of Bloated Agony',  'Force a creature to have disadvantage on STR and DEX checks/saves and take necrotic damage if it moves (bonus action).'),
+  DndChoiceOption('Blood Curse of Corrosion',      'A creature begins to rot, taking necrotic damage at the end of each of its turns (bonus action).'),
+  DndChoiceOption('Blood Curse of the Exorcist',   'Expel a possessing entity or end the charmed/frightened condition on a creature (bonus action).'),
+  DndChoiceOption('Blood Curse of Exposure',       'Remove resistances to a damage type for a creature until the end of your next turn (reaction).'),
+  DndChoiceOption('Blood Curse of the Eyeless',    'Blind a creature until the end of your next turn (bonus action).'),
+  DndChoiceOption('Blood Curse of the Fallen Puppet', 'When a humanoid near you dies, use your reaction to make it attack once before falling.'),
+  DndChoiceOption('Blood Curse of the Marked',     'Mark a creature; your attacks against it deal extra necrotic damage (bonus action).'),
+  DndChoiceOption('Blood Curse of the Muddled Mind', 'Impose disadvantage on a creature\'s next concentration check (reaction).'),
+  DndChoiceOption('Blood Curse of the Souleater',  'When a creature is reduced to 0 HP, claim its soul and gain temporary HP (reaction).'),
+  DndChoiceOption('Blood Curse of the Spiteful Puppet', 'A creature must use its reaction to attack another target of your choice.'),
+  DndChoiceOption('Blood Curse of the Watcher',    'As a reaction when you are targeted, add +4 to your AC or impose disadvantage on the attack.'),
+  DndChoiceOption('Blood Curse of the Weakened Mind', 'Force a creature to have disadvantage on its next WIS saving throw (bonus action).'),
+  DndChoiceOption('Blood Curse of the Wounded',    'Force a bleeding creature to take damage equal to the blood hunter\'s level when it takes damage.'),
+];
+
+// Gunslinger (Fighter subclass) — Trick Shots
+const kTrickShots = [
+  DndChoiceOption('Bullying Shot',    'Intimidate a creature so it has disadvantage on its next attack roll.'),
+  DndChoiceOption('Dazing Shot',      'Disorient a target so it can\'t take reactions and has disadvantage on WIS saves.'),
+  DndChoiceOption('Disarming Shot',   'Force a target to drop one item it is holding.'),
+  DndChoiceOption('Forceful Shot',    'Knock a target prone or push it 15 feet away.'),
+  DndChoiceOption('Piercing Shot',    'Shoot through a target and hit another creature in a line behind it.'),
+  DndChoiceOption('Violent Shot',     'Spend extra Grit for a more powerful shot with increased save DC.'),
+  DndChoiceOption('Winging Shot',     'Reduce a target\'s speed to 0 until the end of its next turn.'),
+  DndChoiceOption('Blinding Shot',    'Blind a target until the end of its next turn on a failed CON save.'),
+];

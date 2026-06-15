@@ -38,6 +38,9 @@ public class ClassResource {
     //Nivel de clase al que se desbloquea
     private int levelUnlocked;
 
+    // Si no es null, el recurso solo se concede a personajes con esta subclase
+    private String subclassRestriction;
+
     public ClassResource() {
     }
 
@@ -105,5 +108,11 @@ public class ClassResource {
         this.levelUnlocked = levelUnlocked;
     }
 
-    
+    public String getSubclassRestriction() {
+        return subclassRestriction;
+    }
+
+    public void setSubclassRestriction(String subclassRestriction) {
+        this.subclassRestriction = subclassRestriction;
+    }
 }

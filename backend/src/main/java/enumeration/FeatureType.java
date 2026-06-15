@@ -14,5 +14,7 @@ public enum FeatureType {
     FAVORED_ENEMY, // Elegir un enemigo favorecido (Ranger)
     FAVORED_TERRAIN, // Elegir un terreno favorecido (Ranger)
     DRACONIC_ANCESTRY, // Elegir una ascendencia dracónica (Dragonborn)
-    EXPERTISE // Elegir habilidades para la competencia experta (Bard
+    EXPERTISE, // Elegir habilidades para la competencia experta (Bard)
+    BLOOD_CURSE_CHOICE, // Elegir una Blood Curse (Blood Hunter)
+    TRICK_SHOT_CHOICE  // Elegir un Trick Shot (Gunslinger)
 }
