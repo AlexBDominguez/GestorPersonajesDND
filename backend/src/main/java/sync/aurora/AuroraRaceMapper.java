@@ -172,7 +172,7 @@ public class AuroraRaceMapper {
             String key = ABILITY_KEYS.get(rule.getName());
             if (key == null || rule.getValue() == null) continue;
             int val = parseInt(rule.getValue(), 0);
-            if (val != 0) bonuses.merge(key, val, Integer::sum);
+            if (val > 0) bonuses.merge(key, val, Integer::sum);
         }
     }
 
