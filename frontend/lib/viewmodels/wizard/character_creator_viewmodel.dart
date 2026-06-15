@@ -1208,6 +1208,26 @@ void toggleItem(int itemId) {
         options: kRangerFightingStyles,
       ));
     }
+    // Blood Hunter: Fighting Style en el nivel 2 (opciones limitadas)
+    if ((className.contains('blood hunter') || className.contains('blood-hunter')) && level >= 2) {
+      choices.add(const WizardChoiceConfig(
+        type: 'FIGHTING_STYLE', level: 2,
+        label: 'Fighting Style',
+        options: kBloodHunterFightingStyles,
+      ));
+    }
+    // Blood Hunter: Blood Curse en los niveles 1 (Blood Maledict), 6, 10, 14, 18
+    if (className.contains('blood hunter') || className.contains('blood-hunter')) {
+      for (final l in [1, 6, 10, 14, 18]) {
+        if (level >= l) {
+          choices.add(WizardChoiceConfig(
+            type: 'BLOOD_CURSE_CHOICE', level: l,
+            label: l == 1 ? 'Blood Curse (Blood Maledict)' : 'Blood Curse (lv $l)',
+            options: kBloodCurses,
+          ));
+        }
+      }
+    }
     // Ranger: Favored Enemy en los niveles 1, 6, 14
     if (className.contains('ranger')) {
       for (final l in [1, 6, 14]) {
@@ -1231,13 +1251,16 @@ void toggleItem(int itemId) {
       }
     }
     // ASI_OR_FEAT — disponible en los niveles 4, 8, 12, 16, 19 para la mayoría de clases;
-    // Fighter también en 6, 14; Rogue también en 10, 18. Marcado como opcional (no bloqueante).
+    // Fighter también en 6, 14; Rogue también en 10, 18. Artificer en 20 (no 19).
+    // Marcado como opcional (no bloqueante).
     {
       final List<int> asiLevels;
       if (className.contains('fighter')) {
         asiLevels = [4, 6, 8, 12, 14, 16, 19];
       } else if (className.contains('rogue')) {
         asiLevels = [4, 8, 10, 12, 16, 18];
+      } else if (className.contains('artificer')) {
+        asiLevels = [4, 8, 12, 16, 20];
       } else {
         asiLevels = [4, 8, 12, 16, 19];
       }
@@ -1454,6 +1477,48 @@ void toggleItem(int itemId) {
         type: 'DRACONIC_ANCESTRY', level: 1,
         label: 'Draconic Ancestry',
         options: kDraconicAncestries,
+      ));
+    }
+
+    // Gunslinger Fighter: 2 Trick Shots at lv3, +1 at lv7/10/15/18
+    if (subcIdx.contains('gunslinger')) {
+      if (level >= 3) {
+        choices.add(WizardChoiceConfig(type: 'TRICK_SHOT_CHOICE_1', level: 3, label: 'Trick Shot 1', options: kTrickShots));
+        choices.add(WizardChoiceConfig(type: 'TRICK_SHOT_CHOICE_2', level: 3, label: 'Trick Shot 2', options: kTrickShots));
+      }
+      if (level >= 7)  choices.add(WizardChoiceConfig(type: 'TRICK_SHOT_CHOICE_3', level: 7,  label: 'Trick Shot 3',  options: kTrickShots));
+      if (level >= 10) choices.add(WizardChoiceConfig(type: 'TRICK_SHOT_CHOICE_4', level: 10, label: 'Trick Shot 4',  options: kTrickShots));
+      if (level >= 15) choices.add(WizardChoiceConfig(type: 'TRICK_SHOT_CHOICE_5', level: 15, label: 'Trick Shot 5',  options: kTrickShots));
+      if (level >= 18) choices.add(WizardChoiceConfig(type: 'TRICK_SHOT_CHOICE_6', level: 18, label: 'Trick Shot 6',  options: kTrickShots));
+    }
+
+    // Blood Hunter — Order of the Lycan: choose Hybrid Transformation type at lv3
+    if (subcIdx.contains('lycan') && level >= 3) {
+      choices.add(const WizardChoiceConfig(
+        type: 'LYCAN_TYPE', level: 3,
+        label: 'Hybrid Transformation',
+        options: kLycanTypes,
+      ));
+    }
+
+    // Blood Hunter — Order of the Profane Soul: choose patron at lv3
+    if (subcIdx.contains('profane-soul') || subcIdx.contains('profane soul')) {
+      if (level >= 3) {
+        choices.add(const WizardChoiceConfig(
+          type: 'PROFANE_SOUL_PATRON', level: 3,
+          label: 'Profane Soul Patron',
+          options: kProfaneSoulPatrons,
+        ));
+      }
+    }
+
+    // Blood Hunter — Order of the Mutant: choose mutagenic formulas at lv3 (optional)
+    if (subcIdx.contains('mutant') && level >= 3) {
+      choices.add(WizardChoiceConfig(
+        type: 'MUTAGEN_CHOICE', level: 3,
+        label: 'Mutagenic Formula',
+        options: kMutagens,
+        required: false,
       ));
     }
 

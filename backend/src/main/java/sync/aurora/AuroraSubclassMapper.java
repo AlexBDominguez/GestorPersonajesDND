@@ -153,9 +153,16 @@ public class AuroraSubclassMapper {
         String resolved = CATEGORY_TO_CLASS.getOrDefault(el.getSupports().trim(), el.getSupports().trim());
         for (String candidate : resolved.split(",")) {
             String name = candidate.trim();
+            // Exact name lookup
             Optional<DndClass> found = cache.computeIfAbsent(name,
                 k -> classRepo.findByNameIgnoreCase(k));
             if (found.isPresent()) return found.get();
+            // Fallback: when multiple Aurora sources produce the same class the name is
+            // disambiguated as "Artificer (ERLW)" / "Artificer (TCE)".  Search by prefix.
+            String prefixKey = name + "_PREFIX_FALLBACK";
+            Optional<DndClass> prefixFound = cache.computeIfAbsent(prefixKey,
+                k -> classRepo.findFirstByNameStartingWithIgnoreCase(name + " ("));
+            if (prefixFound.isPresent()) return prefixFound.get();
         }
         return null;
     }

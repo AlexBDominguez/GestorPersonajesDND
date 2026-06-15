@@ -453,6 +453,34 @@ const kWeaponProficiencies = [
   DndChoiceOption('Longbow',          '1d8 piercing, heavy, two-handed, ranged (150/600).'),
 ];
 
+// Blood Hunter — Fighting Style (opciones limitadas según la clase)
+const kBloodHunterFightingStyles = [
+  DndChoiceOption('Archery',           '+2 bonus to attack rolls with ranged weapons.'),
+  DndChoiceOption('Defense',           '+1 to AC while wearing armor.'),
+  DndChoiceOption('Dueling',           '+2 to damage rolls when wielding a melee weapon in one hand and no other weapons.'),
+  DndChoiceOption('Two-Weapon Fighting','Add your ability modifier to the damage of your off-hand attack.'),
+];
+
+// Blood Hunter — Order of the Mutant Mutagenic Formulas
+const kMutagens = [
+  DndChoiceOption('Aether',        'Grow a pair of wings; gain a flying speed of 20 ft. Cannot wear armor that doesn\'t accommodate wings.'),
+  DndChoiceOption('Bloodlust',     'Gain +2 bonus to melee weapon attack rolls. On a hit you deal +1d6 necrotic damage but lose 1d4 HP.'),
+  DndChoiceOption('Celerity',      'Gain +10 ft bonus to your movement speed. Difficult terrain doesn\'t cost extra movement.'),
+  DndChoiceOption('Conversance',   'Gain advantage on Intelligence (Arcana) and Intelligence (Nature) checks.'),
+  DndChoiceOption('Cruelty',       'Gain an additional bonus action each turn that can be used to take the Attack action (one weapon attack only).'),
+  DndChoiceOption('Deftness',      'Gain +2 bonus to Dexterity saving throws. On successful DEX save that allows half damage, you take no damage.'),
+  DndChoiceOption('Embers',        'Gain resistance to fire damage. Weapon attacks deal +1d4 fire damage.'),
+  DndChoiceOption('Gelid',         'Gain resistance to cold damage. Creatures that hit you with melee attacks have their speed reduced by 10 ft until the end of their next turn.'),
+  DndChoiceOption('Impetus',       'Gain advantage on Strength saving throws and Strength (Athletics) checks. Double your carrying capacity.'),
+  DndChoiceOption('Mobility',      'Gain immunity to the grappled and restrained conditions. Moving through difficult terrain costs no extra movement.'),
+  DndChoiceOption('Psychedelic',   'Gain blindsight with a range of 10 ft, and advantage on Wisdom saving throws.'),
+  DndChoiceOption('Rapidity',      'Gain an additional reaction each round. On a hit, you can use your reaction to make an additional attack.'),
+  DndChoiceOption('Reconstruction','Gain regeneration equal to your Constitution modifier (minimum 1) at the start of your turn if you have at least 1 HP.'),
+  DndChoiceOption('Sagacity',      'Gain advantage on Intelligence saving throws. You can add your Intelligence modifier to Charisma (Persuasion) checks.'),
+  DndChoiceOption('Sheen',         'Gain resistance to poison damage and advantage on saving throws against being poisoned.'),
+  DndChoiceOption('Unbreakable',   'Gain resistance to bludgeoning, piercing, and slashing damage from non-magical attacks.'),
+];
+
 // Blood Hunter — Blood Curses (Order of the Crimson Rite)
 const kBloodCurses = [
   DndChoiceOption('Blood Curse of the Anxious',    'Impose disadvantage on a concentration check as a bonus action.'),

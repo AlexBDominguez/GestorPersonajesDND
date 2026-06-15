@@ -14,6 +14,8 @@ final Map<String, IconData> kClassIcons = {
   'sorcerer': MdiIcons.fire,
   'warlock': MdiIcons.skull,
   'wizard': MdiIcons.autoFix,
+  'artificer': MdiIcons.hammerWrench, 
+  'blood hunter': MdiIcons.pentagram
 };
 
 final Map<int, String> _classKeyById = {
@@ -29,6 +31,8 @@ final Map<int, String> _classKeyById = {
   10: 'sorcerer',
   11: 'warlock',
   12: 'wizard',
+  13: 'artificer',
+  14: 'blood hunter'
 };
 
 final Map<String, String> _classAliases = {
@@ -45,6 +49,7 @@ final Map<String, String> _classAliases = {
   'hechicero': 'sorcerer',
   'brujo': 'warlock',
   'mago': 'wizard',
+  
 };
 
 String _normalizeClassKey(String raw) {

@@ -27,6 +27,8 @@ String? _displayChoiceForFeature(
       'EXPERTISE'         => name.contains('expertise'),
       'METAMAGIC'         => name.contains('metamagic'),
       'INVOCATION'        => name.contains('eldritch invocation'),
+      'BLOOD_CURSE_CHOICE'=> name.contains('blood maledict') ||
+                             name.contains('blood curse'),
       _                   => false,
     };
     if (matches) return vm.featureChoices[c.key];
@@ -51,6 +53,8 @@ WizardChoiceConfig? _choiceForFeature(
       'EXPERTISE'        => name.contains('expertise'),
       'METAMAGIC'        => name.contains('metamagic'),
       'INVOCATION'       => name.contains('eldritch invocation'),
+      'BLOOD_CURSE_CHOICE'=> name.contains('blood maledict') ||
+                             name.contains('blood curse'),
       _                  => false,
     };
     if (matches) return c;
@@ -154,7 +158,10 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
         n.contains('otherworldly patron') ||
         n.contains('ranger archetype') ||
         n.contains('druid circle') ||
-        n.contains('circle of ');
+        n.contains('circle of ') ||
+        n.contains('blood hunter order') ||
+        n.contains('artificer specialist') ||
+        n.contains('artificer subclass');
   }
 
   List<ClassFeature> get _featuresUpToLevel {
