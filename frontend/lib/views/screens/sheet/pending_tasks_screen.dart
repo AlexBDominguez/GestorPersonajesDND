@@ -212,6 +212,36 @@ class _TaskResolver extends StatelessWidget {
       case 'RACIAL_ASI_CHOICE':
         return _RacialAsiResolver(task: task, vm: vm);
 
+      // Feat: Resilient — choose any ability for +1 and saving throw proficiency
+      case 'RESILIENT_ABILITY':
+        return _OptionListResolver(task: task, vm: vm, options: kAllAbilities);
+
+      // Feat: ability +1 choice with options encoded in metadata (str/dex, str/con, int/wis…)
+      case 'FEAT_ABILITY_CHOICE':
+        return _FeatAbilityChoiceResolver(task: task, vm: vm);
+
+      // Feat: Skilled — multi-pick 3 skills or tools
+      case 'SKILLED_CHOICES':
+        return _MultiPickOptionResolver(task: task, vm: vm, options: kSkills);
+
+      // Feat: Weapon Master — multi-pick 4 weapons
+      case 'WEAPON_MASTER_CHOICES':
+        return _MultiPickOptionResolver(task: task, vm: vm, options: kWeaponProficiencies);
+
+      // Feat: Magic Initiate / Ritual Caster / Spell Sniper — choose a spellcasting class
+      case 'MAGIC_INITIATE':
+      case 'RITUAL_CASTER_CLASS':
+      case 'SPELL_SNIPER_CANTRIP':
+        return _OptionListResolver(task: task, vm: vm, options: kSpellcastingClasses);
+
+      // Feat: Martial Adept — choose a Battle Master maneuver
+      case 'MARTIAL_ADEPT_MANEUVER':
+        return _OptionListResolver(task: task, vm: vm, options: kBattleMasterManeuvers);
+
+      // Feat: Elemental Adept — choose an element
+      case 'ELEMENTAL_ADEPT_TYPE':
+        return _OptionListResolver(task: task, vm: vm, options: kElementalAdeptTypes);
+
       default:
         // Fallback: campo de texto libre para tipos no mapeados todavía
         return _FreeTextResolver(task: task, vm: vm);
@@ -599,6 +629,95 @@ class _AbilityDropdown extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+//---- Resolver para FEAT_ABILITY_CHOICE: muestra las opciones de ability del metadata JSON
+// Metadata format: {"options":["str","dex"],"count":1}
+class _FeatAbilityChoiceResolver extends StatefulWidget {
+  final PendingTask task;
+  final CharacterSheetViewModel vm;
+  const _FeatAbilityChoiceResolver({required this.task, required this.vm});
+
+  @override
+  State<_FeatAbilityChoiceResolver> createState() => _FeatAbilityChoiceResolverState();
+}
+
+class _FeatAbilityChoiceResolverState extends State<_FeatAbilityChoiceResolver> {
+  static const _allAbilities = [
+    ('str', 'Strength'),
+    ('dex', 'Dexterity'),
+    ('con', 'Constitution'),
+    ('int', 'Intelligence'),
+    ('wis', 'Wisdom'),
+    ('cha', 'Charisma'),
+  ];
+
+  String? _selected;
+  bool _saving = false;
+
+  List<(String, String)> get _options {
+    try {
+      final meta = widget.task.metadata;
+      if (meta != null) {
+        final match = RegExp(r'"options"\s*:\s*\[([^\]]+)\]').firstMatch(meta);
+        if (match != null) {
+          final keys = match.group(1)!
+              .replaceAll('"', '')
+              .split(',')
+              .map((s) => s.trim())
+              .toList();
+          return _allAbilities.where((a) => keys.contains(a.$1)).toList();
+        }
+      }
+    } catch (_) {}
+    return _allAbilities.toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final opts = _options;
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('Choose +1 to:', style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          value: _selected,
+          dropdownColor: AppTheme.surface,
+          style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 14),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppTheme.background,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppTheme.primary.withOpacity(0.4)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          ),
+          hint: Text('Choose ability', style: GoogleFonts.lato(color: AppTheme.textSecondary)),
+          items: opts.map((e) => DropdownMenuItem(value: e.$1, child: Text(e.$2))).toList(),
+          onChanged: (v) => setState(() => _selected = v),
+        ),
+        const SizedBox(height: 20),
+        ElevatedButton(
+          onPressed: _selected != null && !_saving ? _confirm : null,
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+          child: _saving
+              ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : Text('Confirm', style: GoogleFonts.lato(color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
+      ]),
+    );
+  }
+
+  Future<void> _confirm() async {
+    setState(() => _saving = true);
+    try {
+      await widget.vm.resolveTask(widget.task.id, _selected!);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 }
 

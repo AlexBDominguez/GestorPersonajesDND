@@ -398,3 +398,57 @@ const kLandTypes = [
   DndChoiceOption('Swamp',      'Murky wetlands — spells of acid and darkness.'),
   DndChoiceOption('Underdark',  'Deep underground — spells of poison and shadow.'),
 ];
+
+// All six abilities with lowercase backend keys — used by FEAT_ABILITY_CHOICE and RESILIENT_ABILITY
+const kAllAbilities = [
+  DndChoiceOption('str', 'Strength'),
+  DndChoiceOption('dex', 'Dexterity'),
+  DndChoiceOption('con', 'Constitution'),
+  DndChoiceOption('int', 'Intelligence'),
+  DndChoiceOption('wis', 'Wisdom'),
+  DndChoiceOption('cha', 'Charisma'),
+];
+
+// Spellcasting classes — used by MAGIC_INITIATE, RITUAL_CASTER_CLASS, SPELL_SNIPER_CANTRIP
+const kSpellcastingClasses = [
+  DndChoiceOption('Bard',     'Charisma-based caster — enchantment and illusion.'),
+  DndChoiceOption('Cleric',   'Wisdom-based caster — healing and divine magic.'),
+  DndChoiceOption('Druid',    'Wisdom-based caster — nature and transformation.'),
+  DndChoiceOption('Sorcerer', 'Charisma-based caster — innate arcane magic.'),
+  DndChoiceOption('Warlock',  'Charisma-based caster — pact magic.'),
+  DndChoiceOption('Wizard',   'Intelligence-based caster — prepared arcane magic.'),
+];
+
+// Elements — used by ELEMENTAL_ADEPT_TYPE
+const kElementalAdeptTypes = [
+  DndChoiceOption('Acid',      'Ignore resistance to acid damage; treat 1s as 2s on acid damage rolls.'),
+  DndChoiceOption('Cold',      'Ignore resistance to cold damage; treat 1s as 2s on cold damage rolls.'),
+  DndChoiceOption('Fire',      'Ignore resistance to fire damage; treat 1s as 2s on fire damage rolls.'),
+  DndChoiceOption('Lightning', 'Ignore resistance to lightning damage; treat 1s as 2s on lightning damage rolls.'),
+  DndChoiceOption('Thunder',   'Ignore resistance to thunder damage; treat 1s as 2s on thunder damage rolls.'),
+];
+
+// Common weapons — used by WEAPON_MASTER_CHOICES
+const kWeaponProficiencies = [
+  DndChoiceOption('Battleaxe',        'Versatile (1d8/1d10) slashing weapon.'),
+  DndChoiceOption('Flail',            '1d8 bludgeoning weapon.'),
+  DndChoiceOption('Glaive',           '1d10 slashing, reach, two-handed.'),
+  DndChoiceOption('Greataxe',         '1d12 slashing, heavy, two-handed.'),
+  DndChoiceOption('Greatsword',       '2d6 slashing, heavy, two-handed.'),
+  DndChoiceOption('Halberd',          '1d10 slashing, heavy, reach, two-handed.'),
+  DndChoiceOption('Lance',            '1d12 piercing, reach, special.'),
+  DndChoiceOption('Longsword',        'Versatile (1d8/1d10) slashing weapon.'),
+  DndChoiceOption('Maul',             '2d6 bludgeoning, heavy, two-handed.'),
+  DndChoiceOption('Morningstar',      '1d8 piercing weapon.'),
+  DndChoiceOption('Pike',             '1d10 piercing, heavy, reach, two-handed.'),
+  DndChoiceOption('Rapier',           '1d8 piercing, finesse weapon.'),
+  DndChoiceOption('Scimitar',         '1d6 slashing, light, finesse weapon.'),
+  DndChoiceOption('Shortsword',       '1d6 piercing, light, finesse weapon.'),
+  DndChoiceOption('Trident',          'Versatile (1d6/1d8) piercing weapon.'),
+  DndChoiceOption('War Pick',         '1d8 piercing weapon.'),
+  DndChoiceOption('Warhammer',        'Versatile (1d8/1d10) bludgeoning weapon.'),
+  DndChoiceOption('Whip',             '1d4 slashing, reach, finesse weapon.'),
+  DndChoiceOption('Hand Crossbow',    '1d6 piercing, light, loading, ranged (30/120).'),
+  DndChoiceOption('Heavy Crossbow',   '1d10 piercing, heavy, loading, two-handed, ranged (100/400).'),
+  DndChoiceOption('Longbow',          '1d8 piercing, heavy, two-handed, ranged (150/600).'),
+];

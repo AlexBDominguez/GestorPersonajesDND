@@ -47,6 +47,7 @@ public class PlayerCharacterService {
     private final CharacterFeatService characterFeatService;
     private final SubclassSpellService subclassSpellService;
     private final SubclassProficiencyService subclassProficiencyService;
+    private final RacialTraitService racialTraitService;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -71,7 +72,8 @@ public class PlayerCharacterService {
             UserRepository userRepository,
             CharacterFeatService characterFeatService,
             SubclassSpellService subclassSpellService,
-            SubclassProficiencyService subclassProficiencyService
+            SubclassProficiencyService subclassProficiencyService,
+            RacialTraitService racialTraitService
 
         ) {
         this.characterRepository = characterRepository;
@@ -82,6 +84,7 @@ public class PlayerCharacterService {
         this.characterFeatService = characterFeatService;
         this.subclassSpellService = subclassSpellService;
         this.subclassProficiencyService = subclassProficiencyService;
+        this.racialTraitService = racialTraitService;
         this.spellRepository = spellRepository;
         this.spellSlotProgressionRepository = spellSlotProgressionRepository;
         this.slotRepository = slotRepository;
@@ -322,6 +325,9 @@ public class PlayerCharacterService {
 
         // Aplicar proficiencias automáticas de subclase y crear tareas de elección
         subclassProficiencyService.applySubclassProficiencies(saved, saved.getSubclass());
+
+        // Aplicar efectos automáticos de traits raciales (proficiencias y hechizos sin elección)
+        racialTraitService.applyAutomaticRacialTraits(saved);
 
         return toDto(saved);
     }
@@ -934,7 +940,10 @@ public class PlayerCharacterService {
         characterClassResourceService.initializeClassResourcesForCharacter(character.getId());
         characterClassResourceService.updateResourceMaximums(character.getId());
 
-        // 5. Guardar cambios
+        // 5. Aplicar traits raciales con hechizos desbloqueados por nivel (p.ej. Drow Magic)
+        racialTraitService.applyAutomaticRacialTraits(character);
+
+        // 6. Guardar cambios
         characterRepository.save(character);
 
         System.out.println("=== Level up complete! ===");
@@ -1384,8 +1393,11 @@ public class PlayerCharacterService {
             allTraits.addAll(subrace.getTraits());
         }
 
-        // Estos traits derivan de draconic-ancestry — no necesitan su propia tarea
-        java.util.Set<String> derivedTraits = java.util.Set.of("breath-weapon", "damage-resistance");
+        // Traits que se gestionan por otros mecanismos y no necesitan PendingTask
+        java.util.Set<String> derivedTraits = java.util.Set.of(
+            "breath-weapon", "damage-resistance",
+            "natural-illusionist" // aplicado automáticamente en RacialTraitService
+        );
 
         List<PendingTask> existing = pendingTaskRepository.findByCharacter(character);
 

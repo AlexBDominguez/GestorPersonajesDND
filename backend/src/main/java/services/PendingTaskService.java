@@ -243,6 +243,7 @@ public class PendingTaskService {
                                     characterFeatRepository.save(
                                         new CharacterFeat(character, feat, character.getLevel()));
                                 }
+                                applyFeatEffects(character, feat);
                             } else {
                                 System.out.println("Feat not found: " + featName);
                             }
@@ -370,9 +371,218 @@ public class PendingTaskService {
                 case "PROFANE_SOUL_PATRON":
                         break;
 
+                // Resilient — choice = ability name (str/dex/con/int/wis/cha): +1 + saving throw proficiency
+                case "RESILIENT_ABILITY": {
+                        String ability = choice.trim().toLowerCase();
+                        Map<String, Integer> scores = new HashMap<>(character.getAbilityScores());
+                        scores.merge(ability, 1, Integer::sum);
+                        character.setAbilityScores(scores);
+                        characterSkillService.applySavingThrowProficiency(character, ability);
+                        break;
+                }
+
+                // Feat ability choice — choice = ability name: +1 to that ability
+                case "FEAT_ABILITY_CHOICE": {
+                        String ability = choice.trim().toLowerCase();
+                        Map<String, Integer> scores = new HashMap<>(character.getAbilityScores());
+                        scores.merge(ability, 1, Integer::sum);
+                        character.setAbilityScores(scores);
+                        break;
+                }
+
+                // Skilled / Weapon Master — choice = comma-separated proficiency display names
+                case "SKILLED_CHOICES":
+                case "WEAPON_MASTER_CHOICES": {
+                        for (String profName : choice.split(",")) {
+                                List<Proficiency> profs = proficiencyRepository.findByNameContainingIgnoreCase(profName.trim());
+                                if (!profs.isEmpty()) {
+                                        Proficiency prof = profs.get(0);
+                                        if (!characterProficiencyRepository.existsByCharacterAndProficiency(character, prof)) {
+                                                characterProficiencyRepository.save(new CharacterProficiency(character, prof, "FEAT"));
+                                        }
+                                } else {
+                                        characterSkillService.applySkillProficiencyByName(character, profName.trim());
+                                }
+                        }
+                        break;
+                }
+
+                // Purely descriptive feat choices — stored in metadata for display
+                case "MAGIC_INITIATE":
+                case "RITUAL_CASTER_CLASS":
+                case "SPELL_SNIPER_CANTRIP":
+                case "MARTIAL_ADEPT_MANEUVER":
+                case "ELEMENTAL_ADEPT_TYPE":
+                        break;
+
                 default:
                         System.out.println("No apply logic for task type: " + task.getTaskType());
                 }
+        }
+
+        private void applyFeatEffects(PlayerCharacter character, Feat feat) {
+                String index = feat.getIndexName();
+                if (index == null) return;
+
+                Map<String, Integer> scores = new HashMap<>(character.getAbilityScores());
+
+                switch (index) {
+                        case "alert":
+                                character.setInitiativeBonus(character.getInitiativeBonus() + 5);
+                                break;
+
+                        case "tough": {
+                                int hpBonus = 2 * character.getLevel();
+                                character.setMaxHP(character.getMaxHP() + hpBonus);
+                                character.setCurrentHP(character.getCurrentHP() + hpBonus);
+                                break;
+                        }
+
+                        case "actor":
+                                scores.merge("cha", 1, Integer::sum);
+                                character.setAbilityScores(scores);
+                                break;
+
+                        case "durable":
+                                scores.merge("con", 1, Integer::sum);
+                                character.setAbilityScores(scores);
+                                break;
+
+                        case "keen-mind":
+                                scores.merge("int", 1, Integer::sum);
+                                character.setAbilityScores(scores);
+                                break;
+
+                        case "heavily-armored":
+                                scores.merge("str", 1, Integer::sum);
+                                character.setAbilityScores(scores);
+                                grantProficiency(character, "armor-heavy");
+                                break;
+
+                        case "heavy-armor-master":
+                                scores.merge("str", 1, Integer::sum);
+                                character.setAbilityScores(scores);
+                                break;
+
+                        case "linguist":
+                                scores.merge("int", 1, Integer::sum);
+                                character.setAbilityScores(scores);
+                                for (int i = 1; i <= 3; i++) {
+                                        createFeatTask(character, "EXTRA_LANGUAGE",
+                                                "Choose a language (Linguist — " + i + " of 3)");
+                                }
+                                break;
+
+                        case "observant":
+                                character.setPassiveSensesBonus(character.getPassiveSensesBonus() + 5);
+                                createFeatTask(character, "FEAT_ABILITY_CHOICE",
+                                        "Choose +1 to Intelligence or Wisdom (Observant)",
+                                        "{\"options\":[\"int\",\"wis\"],\"count\":1}");
+                                break;
+
+                        case "resilient":
+                                createFeatTask(character, "RESILIENT_ABILITY",
+                                        "Choose an ability score: gain +1 and saving throw proficiency (Resilient)");
+                                break;
+
+                        case "skilled":
+                                createFeatTask(character, "SKILLED_CHOICES",
+                                        "Choose 3 skill or tool proficiencies (Skilled)",
+                                        "{\"count\":3}");
+                                break;
+
+                        case "athlete":
+                                createFeatTask(character, "FEAT_ABILITY_CHOICE",
+                                        "Choose +1 to Strength or Dexterity (Athlete)",
+                                        "{\"options\":[\"str\",\"dex\"],\"count\":1}");
+                                break;
+
+                        case "tavern-brawler":
+                                createFeatTask(character, "FEAT_ABILITY_CHOICE",
+                                        "Choose +1 to Strength or Constitution (Tavern Brawler)",
+                                        "{\"options\":[\"str\",\"con\"],\"count\":1}");
+                                break;
+
+                        case "lightly-armored":
+                                grantProficiency(character, "armor-light");
+                                grantProficiency(character, "armor-shields");
+                                createFeatTask(character, "FEAT_ABILITY_CHOICE",
+                                        "Choose +1 to Strength or Dexterity (Lightly Armored)",
+                                        "{\"options\":[\"str\",\"dex\"],\"count\":1}");
+                                break;
+
+                        case "moderately-armored":
+                                grantProficiency(character, "armor-medium");
+                                grantProficiency(character, "armor-shields");
+                                createFeatTask(character, "FEAT_ABILITY_CHOICE",
+                                        "Choose +1 to Strength or Dexterity (Moderately Armored)",
+                                        "{\"options\":[\"str\",\"dex\"],\"count\":1}");
+                                break;
+
+                        case "weapon-master":
+                                createFeatTask(character, "FEAT_ABILITY_CHOICE",
+                                        "Choose +1 to Strength or Dexterity (Weapon Master)",
+                                        "{\"options\":[\"str\",\"dex\"],\"count\":1}");
+                                createFeatTask(character, "WEAPON_MASTER_CHOICES",
+                                        "Choose 4 weapon proficiencies (Weapon Master)",
+                                        "{\"count\":4}");
+                                break;
+
+                        case "magic-initiate":
+                                createFeatTask(character, "MAGIC_INITIATE",
+                                        "Choose a class and learn 2 cantrips + 1 1st-level spell (Magic Initiate)");
+                                break;
+
+                        case "ritual-caster":
+                                createFeatTask(character, "RITUAL_CASTER_CLASS",
+                                        "Choose a class and learn 2 ritual spells (Ritual Caster)");
+                                break;
+
+                        case "spell-sniper":
+                                createFeatTask(character, "SPELL_SNIPER_CANTRIP",
+                                        "Choose a class and learn an attack cantrip (Spell Sniper)");
+                                break;
+
+                        case "martial-adept":
+                                createFeatTask(character, "MARTIAL_ADEPT_MANEUVER",
+                                        "Choose a Battle Master maneuver (Martial Adept)");
+                                break;
+
+                        case "elemental-adept":
+                                createFeatTask(character, "ELEMENTAL_ADEPT_TYPE",
+                                        "Choose an element: acid, cold, fire, lightning, or thunder (Elemental Adept)");
+                                break;
+
+                        default:
+                                break;
+                }
+        }
+
+        private void grantProficiency(PlayerCharacter character, String indexName) {
+                proficiencyRepository.findByIndexName(indexName).ifPresent(prof -> {
+                        if (!characterProficiencyRepository.existsByCharacterAndProficiency(character, prof)) {
+                                characterProficiencyRepository.save(new CharacterProficiency(character, prof, "FEAT"));
+                        }
+                });
+        }
+
+        private void createFeatTask(PlayerCharacter character, String taskType, String description) {
+                createFeatTask(character, taskType, description, null);
+        }
+
+        private void createFeatTask(PlayerCharacter character, String taskType,
+                                    String description, String metadata) {
+                boolean exists = taskRepository.findByCharacter(character).stream()
+                        .anyMatch(t -> taskType.equals(t.getTaskType()) && description.equals(t.getDescription()));
+                if (exists) return;
+                PendingTask task = new PendingTask();
+                task.setCharacter(character);
+                task.setRelatedLevel(character.getLevel());
+                task.setTaskType(taskType);
+                task.setDescription(description);
+                task.setMetadata(metadata);
+                task.setCompleted(false);
+                taskRepository.save(task);
         }
 
         private PendingTaskDto toDto(PendingTask t) {

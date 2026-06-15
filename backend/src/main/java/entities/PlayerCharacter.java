@@ -105,6 +105,9 @@ public class PlayerCharacter {
     //Initiative bonus adicional (además del DEX mod)
     private int initiativeBonus = 0;
 
+    //Bonus a Passive Perception y Passive Investigation (p.ej. dote Observant: +5)
+    private int passiveSensesBonus = 0;
+
     //Hit Dice disponibles (para recuperar HP durante un descanso corto)
     private int availableHitDice;
 
@@ -416,6 +419,14 @@ public class PlayerCharacter {
 
     public void setInitiativeBonus(int initiativeBonus) {
         this.initiativeBonus = initiativeBonus;
+    }
+
+    public int getPassiveSensesBonus() {
+        return passiveSensesBonus;
+    }
+
+    public void setPassiveSensesBonus(int passiveSensesBonus) {
+        this.passiveSensesBonus = passiveSensesBonus;
     }
 
     public int getAvailableHitDice() {
@@ -852,16 +863,16 @@ public class PlayerCharacter {
     @Transient
     public int getPassivePerception(List<CharacterSkill> characterSkills) {
         int wisModifier = calculateAbilityModifier("wis");
-        int bonus = 10 + wisModifier;
-        
+        int bonus = 10 + wisModifier + passiveSensesBonus;
+
         // Verificar si tiene proficiencia en Perception
         boolean hasProficiency = characterSkills.stream()
                 .anyMatch(cs -> cs.getSkill().getIndexName().equals("perception") && cs.isProficient());
-        
+
         if (hasProficiency) {
             bonus += proficiencyBonus;
         }
-        
+
         return bonus;
     }
 
@@ -872,12 +883,12 @@ public class PlayerCharacter {
     @Transient
     public int getPassiveInvestigation(List<CharacterSkill> characterSkills) {
         int intModifier = calculateAbilityModifier("int");
-        int bonus = 10 + intModifier;
-        
+        int bonus = 10 + intModifier + passiveSensesBonus;
+
         // Verificar si tiene proficiencia en Investigation
         boolean hasProficiency = characterSkills.stream()
                 .anyMatch(cs -> cs.getSkill().getIndexName().equals("investigation") && cs.isProficient());
-        
+
         if (hasProficiency) {
             bonus += proficiencyBonus;
         }

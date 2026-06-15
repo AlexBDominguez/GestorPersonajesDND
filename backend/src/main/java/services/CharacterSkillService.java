@@ -123,6 +123,19 @@ public class CharacterSkillService {
         System.out.println("Skill not found for proficiency: " + skillName + " on " + character.getName());
     }
 
+    /** Marca la saving throw del ability dado como proficient (p.ej. para la dote Resilient). */
+    @Transactional
+    public void applySavingThrowProficiency(PlayerCharacter character, String ability) {
+        List<CharacterSavingThrow> savingThrows = characterSavingThrowRepository.findByCharacter(character);
+        for (CharacterSavingThrow st : savingThrows) {
+            if (st.getAbility().equalsIgnoreCase(ability)) {
+                st.setProficient(true);
+                characterSavingThrowRepository.save(st);
+                return;
+            }
+        }
+    }
+
     @Transactional
 public void applySkillProficiencyByIndex(PlayerCharacter character, String skillIndex) {
     // Las proficiencias de skill del background llegan como p.ej. "skill-insight" desde la API,
