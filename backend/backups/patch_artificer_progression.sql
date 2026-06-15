@@ -11,10 +11,9 @@ SET NAMES utf8mb4;
 -- (puede haber una sola si sólo una fuente está activa, o dos si hay ERLW y TCE)
 DROP TEMPORARY TABLE IF EXISTS tmp_artificer_ids;
 CREATE TEMPORARY TABLE tmp_artificer_ids AS
-  SELECT id FROM classes WHERE LOWER(index_name) LIKE '%artificer%';
+  SELECT id, index_name FROM classes WHERE LOWER(index_name) LIKE '%artificer%';
 
--- Helper procedure para un nivel concreto de UN artífice.
--- Usamos un cursor implícito con una tabla de niveles.
+-- Helper: tabla de niveles 1-20
 DROP TEMPORARY TABLE IF EXISTS tmp_art_levels;
 CREATE TEMPORARY TABLE tmp_art_levels (lvl INT);
 INSERT INTO tmp_art_levels VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),
@@ -75,18 +74,19 @@ WHERE p.level IN (4, 8, 12, 16, 20)
 -- =====================================================================
 -- class_features — Ability Score Improvement (lv 4, 8, 12, 16, 20)
 -- El wizard las necesita para mostrar el selector ASI/Feat.
--- Sólo inserta si no existe ya un feature con ese nombre y nivel para ese artífice.
+-- Usa el index_name de la clase para que cada artífice tenga su propio
+-- index_name y no colisionen (p.ej. "artificer-erlw-asi-8" vs "artificer-tce-asi-8").
 -- =====================================================================
 INSERT INTO class_features (class_id, index_name, name, level, description)
 SELECT a.id,
-       CONCAT('artificer-asi-', l.lvl),
+       CONCAT(a.index_name, '-asi-', l.lvl),
        'Ability Score Improvement', l.lvl,
        'Your ability scores improve. Increase one score by 2, or two scores by 1 each (max 20). As an optional rule, you may instead take a feat.'
 FROM tmp_artificer_ids a
 JOIN (SELECT 4 AS lvl UNION SELECT 8 UNION SELECT 12 UNION SELECT 16 UNION SELECT 20) l ON TRUE
 WHERE NOT EXISTS (
   SELECT 1 FROM class_features cf
-  WHERE cf.class_id = a.id AND cf.level = l.lvl AND cf.name = 'Ability Score Improvement'
+  WHERE cf.index_name = CONCAT(a.index_name, '-asi-', l.lvl)
 );
 
 DROP TEMPORARY TABLE IF EXISTS tmp_artificer_ids;
