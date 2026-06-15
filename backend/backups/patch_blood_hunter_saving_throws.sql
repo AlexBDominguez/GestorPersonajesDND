@@ -16,7 +16,7 @@ SELECT id, 'int' FROM classes WHERE index_name = 'blood-hunter';
 
 -- Fix existing Blood Hunter characters: mark DEX and INT saving throws as proficient
 UPDATE character_saving_throws cst
-JOIN player_characters pc ON cst.character_id = pc.id
+JOIN characters pc ON cst.character_id = pc.id
 JOIN classes c ON pc.class_id = c.id
 SET cst.proficient = 1
 WHERE c.index_name = 'blood-hunter'
