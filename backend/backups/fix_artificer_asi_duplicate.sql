@@ -45,7 +45,12 @@ ORDER BY c.name, p.level;
 -- ninguna tarjeta si Aurora no llegó a importarla).
 -- =====================================================================
 
-DELETE cf_patch FROM class_features cf_patch
+-- MySQL no permite referenciar `class_features` en una subconsulta EXISTS del
+-- propio DELETE sobre esa tabla, así que materializamos los IDs a borrar antes.
+DROP TEMPORARY TABLE IF EXISTS tmp_asi_dupe_ids;
+CREATE TEMPORARY TABLE tmp_asi_dupe_ids AS
+SELECT cf_patch.id AS id
+FROM class_features cf_patch
 JOIN classes c ON c.id = cf_patch.class_id
 WHERE LOWER(c.index_name) LIKE '%artificer%'
   AND cf_patch.name = 'Ability Score Improvement'
@@ -57,6 +62,10 @@ WHERE LOWER(c.index_name) LIKE '%artificer%'
       AND cf_other.name = 'Ability Score Improvement'
       AND cf_other.id <> cf_patch.id
   );
+
+DELETE FROM class_features WHERE id IN (SELECT id FROM tmp_asi_dupe_ids);
+
+DROP TEMPORARY TABLE IF EXISTS tmp_asi_dupe_ids;
 
 -- =====================================================================
 -- PASO 2 — Mover el ASI_OR_FEAT del nivel 20 (incorrecto) al nivel 19 (oficial)
