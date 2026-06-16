@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import repositories.*;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -26,6 +27,8 @@ public class AuroraSubclassMapper {
     private final SubclassFeatureRepository featureRepo;
     private final DndClassRepository classRepo;
     private final ContentSourceRepository sourceRepo;
+    private final SpellRepository spellRepo;
+    private final SubclassSpellRepository subclassSpellRepo;
 
     // Aurora ability stat name → short ability key used elsewhere in the app
     private static final Map<String, String> ABILITY_STAT = Map.of(
@@ -73,12 +76,16 @@ public class AuroraSubclassMapper {
                                 SubclassRepository subclassRepo,
                                 SubclassFeatureRepository featureRepo,
                                 DndClassRepository classRepo,
-                                ContentSourceRepository sourceRepo) {
+                                ContentSourceRepository sourceRepo,
+                                SpellRepository spellRepo,
+                                SubclassSpellRepository subclassSpellRepo) {
         this.registry = registry;
         this.subclassRepo = subclassRepo;
         this.featureRepo = featureRepo;
         this.classRepo = classRepo;
         this.sourceRepo = sourceRepo;
+        this.spellRepo = spellRepo;
+        this.subclassSpellRepo = subclassSpellRepo;
     }
 
     public Map<String, Object> sync() {
@@ -232,11 +239,59 @@ public class AuroraSubclassMapper {
 
                 featureRepo.save(sf);
                 if (isNew) created++; else updated++;
+
+                grantFeatureSpells(feat, sub, sf.getLevel());
             } catch (Exception e) {
                 System.err.printf("[Aurora] Feature '%s': %s%n", feat.getName(), e.getMessage());
             }
         }
         return new int[]{created, updated};
+    }
+
+    /**
+     * Some Archetype Feature elements grant a spell directly (e.g. Drakewarden's
+     * "Drake Companion" grants Thaumaturgy via &lt;grant type="Spell" id="..."/&gt;).
+     * These were previously ignored by persistFeatures, so the spell never reached
+     * the character sheet even though it appears in the feature's description.
+     * Resolves each such grant to a Spell row and links it via SubclassSpell so
+     * SubclassSpellService.applySubclassSpells() picks it up automatically.
+     */
+    private void grantFeatureSpells(AuroraElement feat, Subclass sub, int featureLevel) {
+        for (AuroraRule rule : feat.getRules()) {
+            if (rule.getRuleType() != AuroraRule.RuleType.GRANT) continue;
+            if (!"Spell".equals(rule.getType()) || rule.getId() == null) continue;
+
+            Spell spell = resolveSpell(rule.getId());
+            if (spell == null) {
+                System.err.printf("[Aurora] Could not resolve spell grant '%s' on feature '%s'%n",
+                    rule.getId(), feat.getName());
+                continue;
+            }
+
+            int level = rule.getLevel() != null ? rule.getLevel() : featureLevel;
+            if (subclassSpellRepo.findBySubclassAndSpell(sub, spell).isEmpty()) {
+                subclassSpellRepo.save(new SubclassSpell(sub, spell, level));
+            }
+        }
+    }
+
+    /**
+     * Resolves an Aurora spell grant ID to a persisted Spell. Aurora-defined spells
+     * are stored with indexApi = their Aurora ID; spells synced from dnd5eapi.co use
+     * the public API slug instead, so we fall back to deriving that slug from the ID
+     * (e.g. "ID_PHB_SPELL_THAUMATURGY" -> "thaumaturgy").
+     */
+    private static final Pattern SPELL_ID_PREFIX = Pattern.compile("^.*_SPELL_");
+
+    private Spell resolveSpell(String auroraSpellId) {
+        Optional<Spell> direct = spellRepo.findByIndexApi(auroraSpellId);
+        if (direct.isPresent()) return direct.get();
+
+        String slug = SPELL_ID_PREFIX.matcher(auroraSpellId).replaceFirst("")
+            .toLowerCase()
+            .replace('_', '-')
+            .replace("'", "");
+        return spellRepo.findByIndexApi(slug).orElse(null);
     }
 
     /**

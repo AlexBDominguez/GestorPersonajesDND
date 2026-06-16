@@ -166,7 +166,7 @@ class _SelectedClassBadge extends StatelessWidget {
         border: Border.all(color: AppTheme.primary, width: 1.5),
       ),
       child: Row(children: [
-        FaIcon(classIcon(cls.indexName),
+        FaIcon(classIcon(cls.name),
             color: AppTheme.primary, size: 18),
         const SizedBox(width: 10),
         Expanded(
@@ -215,7 +215,7 @@ class _ClassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = classIcon(cls.indexName);
+    final icon = classIcon(cls.name);
 
     return GestureDetector(
       onTap: onTap,

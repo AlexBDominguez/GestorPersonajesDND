@@ -537,6 +537,12 @@ public class PlayerCharacter {
 
     @Transient
     public int getMaxAttunementSlots(){
+        // Magic Item Adept (Artificer, nivel 10): sube el máximo de objetos sintonizados de 3 a 4.
+        if (dndClass != null && dndClass.getName() != null
+                && dndClass.getName().toLowerCase().startsWith("artificer")
+                && getLevel() >= 10) {
+            return 4;
+        }
         return 3;
     }
 

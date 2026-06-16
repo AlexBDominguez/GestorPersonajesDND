@@ -213,7 +213,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final icon = classIcon(cls.indexName);
+    final icon = classIcon(cls.name);
 
     return Scaffold(
       backgroundColor: AppTheme.background,

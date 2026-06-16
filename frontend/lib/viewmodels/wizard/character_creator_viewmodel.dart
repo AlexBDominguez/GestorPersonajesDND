@@ -812,6 +812,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _setError(null);
     try{
       backgrounds = await _refService.getBackgrounds(sources: selectedSourcesList);
+      backgrounds.sort((a, b) => a.name.compareTo(b.name));
       // Modo edición: seleccionar automáticamente el background existente del personaje
       if (_editMode && _initialBackgroundId != null && selectedBackground == null) {
         final matches = backgrounds.where((b) => b.id == _initialBackgroundId);
@@ -924,6 +925,17 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _markDirty(WizardStep.race);
     notifyListeners();
     _loadSubracesFor(r.id);
+  }
+
+  /// Colapsa la raza actualmente seleccionada (segundo tap sobre la misma raza).
+  void deselectRace() {
+    for (final c in raceFeatureChoices) featureChoices.remove(c.key);
+    for (final c in subraceFeatureChoices) featureChoices.remove(c.key);
+    selectedRace = null;
+    selectedSubrace = null;
+    subraces = [];
+    _markDirty(WizardStep.race);
+    notifyListeners();
   }
 
   Future<void> _loadSubracesFor(int raceId) async {
@@ -1512,12 +1524,15 @@ void toggleItem(int itemId) {
       }
     }
 
-    // Blood Hunter — Order of the Mutant: choose mutagenic formulas at lv3 (optional)
+    // Blood Hunter — Order of the Mutant: number of mutagenic formulas known
+    // scales with Intelligence modifier (minimum 1), not a fixed single pick.
     if (subcIdx.contains('mutant') && level >= 3) {
+      final formulaCount = abilityModifier('INT').clamp(1, 99);
       choices.add(WizardChoiceConfig(
         type: 'MUTAGEN_CHOICE', level: 3,
         label: 'Mutagenic Formula',
         options: kMutagens,
+        pickCount: formulaCount,
         required: false,
       ));
     }

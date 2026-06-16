@@ -47,6 +47,7 @@ public class PlayerCharacterDto {
     private String additionalTreasure;
     private String characterHistory;
     private int armorClass;
+    private int maxAttunementSlots;
     private int spellSaveDC;
     private int spellAttackBonus;
     private int initiativeModifier;
@@ -427,6 +428,14 @@ public class PlayerCharacterDto {
 
     public void setArmorClass(int armorClass) {
         this.armorClass = armorClass;
+    }
+
+    public int getMaxAttunementSlots() {
+        return maxAttunementSlots;
+    }
+
+    public void setMaxAttunementSlots(int maxAttunementSlots) {
+        this.maxAttunementSlots = maxAttunementSlots;
     }
 
     public int getSpellSaveDC() {

@@ -105,13 +105,15 @@ public class CharacterInventoryService {
         CharacterInventory inventory = inventoryRepository.findById(inventoryId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inventory item not found"));
 
-        // Verificar límite de attunement (máximo 3 items attuned)
+        // Verificar límite de attunement (3 por defecto, 4 con Magic Item Adept)
         if (!inventory.isAttuned()) {
+            int maxAttunement = inventory.getCharacter().getMaxAttunementSlots();
             long attunedCount = inventoryRepository.findByCharacterIdAndAttuned(
                     inventory.getCharacter().getId(), true).size();
 
-            if (attunedCount >= 3) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Character already has 3 attuned items (maximum)");
+            if (attunedCount >= maxAttunement) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Character already has " + maxAttunement + " attuned items (maximum)");
             }
         }
 

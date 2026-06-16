@@ -23,6 +23,7 @@ class PlayerCharacter{
   final int temporaryHp;
   final int proficiencyBonus;
   final int armorClass;
+  final int maxAttunementSlots;
   final int initiativeModifier;
   final int currentSpeed;
   final int deathSaveSuccesses;
@@ -91,6 +92,7 @@ class PlayerCharacter{
     required this.temporaryHp,
     required this.proficiencyBonus,
     required this.armorClass,
+    this.maxAttunementSlots = 3,
     required this.initiativeModifier,
     required this.currentSpeed,
     required this.deathSaveSuccesses,
@@ -167,6 +169,7 @@ class PlayerCharacter{
       temporaryHp:         (j['temporaryHP'] as num?)?.toInt() ?? 0,
       proficiencyBonus:    (j['proficiencyBonus'] as num?)?.toInt() ?? 2,
       armorClass:          (j['armorClass'] as num?)?.toInt() ?? 10,
+      maxAttunementSlots:  (j['maxAttunementSlots'] as num?)?.toInt() ?? 3,
       initiativeModifier:  (j['initiativeModifier'] as num?)?.toInt() ?? 0,
       currentSpeed:        (j['currentSpeed'] as num?)?.toInt() ?? 30,
       deathSaveSuccesses:  (j['deathSaveSuccesses'] as num?)?.toInt() ?? 0,

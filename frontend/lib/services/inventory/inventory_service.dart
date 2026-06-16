@@ -67,7 +67,7 @@ class InventoryService {
         return InventoryItem.fromJson(
           jsonDecode(res.body) as Map<String, dynamic>);
       }
-      if (res.statusCode == 409) throw Exception('Attunement limit reached (max 3 items)');
+      if (res.statusCode == 409) throw Exception('Attunement limit reached');
       if (res.statusCode == 404) throw Exception('Item not found');
       throw Exception('Failed to toggle attunement (${res.statusCode})');
     }

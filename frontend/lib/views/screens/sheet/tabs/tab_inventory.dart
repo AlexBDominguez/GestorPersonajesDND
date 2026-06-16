@@ -268,6 +268,7 @@ class _TabInventoryState extends State<TabInventory> {
           //  Attuned (DragTarget)
           _AttunedDropZone(
             items: attuned,
+            maxAttunementSlots: widget.character.maxAttunementSlots,
             isDragging: _isDragging,
             showWeight: useEncumbrance,
             onDropped: (item) => _attuneWithUndo(item),
@@ -484,6 +485,7 @@ class _EquippedDropZoneState extends State<_EquippedDropZone> {
 //Drop Zone: Attuned
 class _AttunedDropZone extends StatefulWidget {
   final List<InventoryItem> items;
+  final int maxAttunementSlots;
   final bool isDragging;
   final bool showWeight;
   final void Function(InventoryItem) onDropped;
@@ -492,6 +494,7 @@ class _AttunedDropZone extends StatefulWidget {
 
   const _AttunedDropZone({
     required this.items,
+    required this.maxAttunementSlots,
     required this.isDragging,
     required this.showWeight,
     required this.onDropped,
@@ -547,7 +550,8 @@ class _AttunedDropZoneState extends State<_AttunedDropZone> {
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Expanded(
-                child: _SectionTitle('Attuned (${widget.items.length}/3)'),
+                child: _SectionTitle(
+                    'Attuned (${widget.items.length}/${widget.maxAttunementSlots})'),
               ),
               if (invalidHover)
                 Padding(

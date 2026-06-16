@@ -538,12 +538,40 @@ String _sourceName(String code) => _sourceNames[code] ?? code;
 
 // ── Grouped list ─────────────────────────────────────────────────────────────
 
-class _GroupedRaceList extends StatelessWidget {
+class _GroupedRaceList extends StatefulWidget {
   final CharacterCreatorViewModel vm;
   const _GroupedRaceList({required this.vm});
 
   @override
+  State<_GroupedRaceList> createState() => _GroupedRaceListState();
+}
+
+class _GroupedRaceListState extends State<_GroupedRaceList> {
+  final Map<int, GlobalKey> _raceKeys = {};
+
+  GlobalKey _keyFor(int raceId) =>
+      _raceKeys.putIfAbsent(raceId, () => GlobalKey());
+
+  void _onRaceTap(RaceOption race, bool isSelected) {
+    if (isSelected) {
+      widget.vm.deselectRace();
+      return;
+    }
+    widget.vm.selectRace(race);
+    // Mantiene el foco visual sobre la raza seleccionada en vez de dejar
+    // que la lista salte al final cuando aparecen las subrazas debajo.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _keyFor(race.id).currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(ctx,
+            alignment: 0.0, duration: const Duration(milliseconds: 200));
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final vm = widget.vm;
     // Build ordered list of unique sources preserving the order races arrive in
     final seenSources = <String>{};
     final sources = <String>[];
@@ -572,11 +600,12 @@ class _GroupedRaceList extends StatelessWidget {
         final race = item as RaceOption;
         final isSelected = vm.selectedRace?.id == race.id;
         return Column(
+          key: _keyFor(race.id),
           children: [
             _RaceCard(
               race: race,
               isSelected: isSelected,
-              onTap: () => vm.selectRace(race),
+              onTap: () => _onRaceTap(race, isSelected),
             ),
             if (isSelected && (vm.subraces.isNotEmpty || vm.isLoadingSubraces))
               _SubraceSelector(vm: vm),

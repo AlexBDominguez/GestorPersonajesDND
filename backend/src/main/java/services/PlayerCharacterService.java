@@ -497,6 +497,7 @@ public class PlayerCharacterService {
         dto.setAbilityScores(effectiveScores);
 
         dto.setArmorClass(playerCharacter.getArmorClass(equipment, activeEffects) + itemBonusAc + fightingStyleAcBonus);
+        dto.setMaxAttunementSlots(playerCharacter.getMaxAttunementSlots());
         dto.setSpellSaveDC(playerCharacter.getSpellSaveDC());
         dto.setSpellAttackBonus(playerCharacter.getSpellAttackBonus());
         dto.setInitiativeModifier(playerCharacter.getInitiativeModifier());
@@ -1780,6 +1781,7 @@ public class PlayerCharacterService {
         CharacterEquipment equipment = equipmentRepository.findByCharacterId(character.getId()).orElse(null);
         List<CharacterActiveEffect> activeEffects = characterActiveEffectRepository.findByCharacterId(character.getId());
         dto.setArmorClass(character.getArmorClass(equipment, activeEffects));
+        dto.setMaxAttunementSlots(character.getMaxAttunementSlots());
         
         if (character.getBackground() != null) {
             dto.setBackgroundId(character.getBackground().getId());

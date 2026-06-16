@@ -9,7 +9,7 @@ const kCombatActionFeatures = <String>{
   // Barbarian
   'reckless-attack', 'frenzy', 'retaliation', 'intimidating-presence',
   // Rogue
-  'sneak-attack', 'assassinate', 'death-strike', 'use-magic-device',
+  'assassinate', 'death-strike', 'use-magic-device',
   // Monk
   'stunning-strike', 'ki-empowered-strikes', 'quivering-palm', 'empty-body', 
   'perfect-self', 'diamond-soul',

@@ -34,7 +34,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final cls = widget.classOption;
-    final icon = classIcon(cls.indexName);
+    final icon = classIcon(cls.name);
 
     // Agrupar features por nivel
     final Map<int, List<ClassFeature>> byLevel = {};
