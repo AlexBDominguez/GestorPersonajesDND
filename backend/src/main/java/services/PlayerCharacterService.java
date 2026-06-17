@@ -501,7 +501,7 @@ public class PlayerCharacterService {
         dto.setSpellSaveDC(playerCharacter.getSpellSaveDC());
         dto.setSpellAttackBonus(playerCharacter.getSpellAttackBonus());
         dto.setInitiativeModifier(playerCharacter.getInitiativeModifier());
-        dto.setCurrentSpeed(playerCharacter.getCurrentSpeed());
+        dto.setCurrentSpeed(playerCharacter.getCurrentSpeed(activeEffects));
         dto.setMaxPreparedSpells(playerCharacter.getMaxPreparedSpells());
         dto.setEncumberedThreshold(playerCharacter.getEncumberedThreshold());
         dto.setHeavilyEncumberedThreshold(playerCharacter.getHeavilyEncumberedThreshold());

@@ -2,10 +2,13 @@ package entities;
 
 import java.util.List;
 
+import enumeration.EffectModifierType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -39,6 +42,15 @@ public class Feat {
 
     @Column(nullable = false)
     private String source = "PHB";
+
+    // Bono numérico genérico que otorga el feat (p. ej. SPEED "+10", AC "+1", INITIATIVE "+5").
+    // Sirve como fallback para feats que no tienen lógica específica hardcodeada
+    // (ver PendingTaskService.applyFeatEffects) — típicamente feats sincronizados desde Aurora.
+    // Feats con efectos más complejos (elecciones, recursos, etc.) siguen necesitando código dedicado.
+    @Enumerated(EnumType.STRING)
+    private EffectModifierType effectModifierType;
+
+    private String effectModifierValue;
 
     //Hechizos que otorga el feat automáticamente (ej: Magic Initiate)
     //Nota: algunos feats permiten elegir - eso se gestiona en el wizard
@@ -113,4 +125,10 @@ public class Feat {
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }
+
+    public EffectModifierType getEffectModifierType() { return effectModifierType; }
+    public void setEffectModifierType(EffectModifierType effectModifierType) { this.effectModifierType = effectModifierType; }
+
+    public String getEffectModifierValue() { return effectModifierValue; }
+    public void setEffectModifierValue(String effectModifierValue) { this.effectModifierValue = effectModifierValue; }
 }

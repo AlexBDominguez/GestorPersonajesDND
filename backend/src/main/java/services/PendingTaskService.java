@@ -50,6 +50,7 @@ public class PendingTaskService {
     private final SubclassRepository subclassRepository;
     private final SubclassSpellService subclassSpellService;
     private final SubclassProficiencyService subclassProficiencyService;
+    private final FeatMechanicalEffectService featMechanicalEffectService;
 
     public PendingTaskService(PendingTaskRepository taskRepository,
                               PlayerCharacterRepository characterRepository,
@@ -64,7 +65,8 @@ public class PendingTaskService {
                               FeatRepository featRepository,
                               SubclassRepository subclassRepository,
                               SubclassSpellService subclassSpellService,
-                              SubclassProficiencyService subclassProficiencyService) {
+                              SubclassProficiencyService subclassProficiencyService,
+                              FeatMechanicalEffectService featMechanicalEffectService) {
         this.taskRepository = taskRepository;
         this.characterRepository = characterRepository;
         this.characterSkillService = characterSkillService;
@@ -79,6 +81,7 @@ public class PendingTaskService {
         this.subclassRepository = subclassRepository;
         this.subclassSpellService = subclassSpellService;
         this.subclassProficiencyService = subclassProficiencyService;
+        this.featMechanicalEffectService = featMechanicalEffectService;
     }
 
     /** Todas las tareas pendientes (sin completar) de un personaje */
@@ -559,7 +562,11 @@ public class PendingTaskService {
                                         "Choose an element: acid, cold, fire, lightning, or thunder (Elemental Adept)");
                                 break;
 
+                        // Feats sin lógica dedicada (típicamente de Aurora): si declaran un bono
+                        // numérico estructurado (effectModifierType/effectModifierValue), se aplica
+                        // genéricamente como CharacterActiveEffect.
                         default:
+                                featMechanicalEffectService.applyFeatModifier(character, feat);
                                 break;
                 }
         }

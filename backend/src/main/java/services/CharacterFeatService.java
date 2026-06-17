@@ -19,13 +19,16 @@ public class CharacterFeatService {
     private final CharacterFeatRepository characterFeatRepository;
     private final PlayerCharacterRepository characterRepository;
     private final FeatRepository featRepository;
+    private final FeatMechanicalEffectService featMechanicalEffectService;
 
     public CharacterFeatService(CharacterFeatRepository characterFeatRepository,
                                PlayerCharacterRepository characterRepository,
-                               FeatRepository featRepository) {
+                               FeatRepository featRepository,
+                               FeatMechanicalEffectService featMechanicalEffectService) {
         this.characterFeatRepository = characterFeatRepository;
         this.characterRepository = characterRepository;
         this.featRepository = featRepository;
+        this.featMechanicalEffectService = featMechanicalEffectService;
     }
 
     public List<CharacterFeatDto> getCharacterFeats(Long characterId) {
@@ -51,6 +54,7 @@ public class CharacterFeatService {
         characterFeat.setNotes(notes);
 
         characterFeatRepository.save(characterFeat);
+        featMechanicalEffectService.applyFeatModifier(character, feat);
 
         return toDto(characterFeat);
     }
@@ -67,6 +71,7 @@ public class CharacterFeatService {
                 .orElseThrow(() -> new RuntimeException("Character does not have this feat"));
 
         characterFeatRepository.delete(characterFeat);
+        featMechanicalEffectService.removeFeatModifier(character, feat);
     }
 
     private CharacterFeatDto toDto(CharacterFeat characterFeat) {

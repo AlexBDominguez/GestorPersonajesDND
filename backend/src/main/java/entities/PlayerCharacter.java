@@ -728,7 +728,7 @@ public class PlayerCharacter {
      * Base: velocidad de la raza + modificadores + bonificaciones de clase
      */
     @Transient
-    public int getCurrentSpeed(){
+    public int getCurrentSpeed(List<CharacterActiveEffect> activeEffects){
         if(race == null) {
             return 30; // Velocidad base si no se ha seleccionado raza
         }
@@ -754,6 +754,17 @@ public class PlayerCharacter {
                     else if (level >=  6) bonus = 15;
                     else                  bonus = 10;
                     totalSpeed += bonus;
+                }
+            }
+        }
+
+        // Bonificadores de feats/features genéricos (ver FeatMechanicalEffectService)
+        if (activeEffects != null) {
+            for (CharacterActiveEffect effect : activeEffects) {
+                if (effect.isActive() &&
+                    effect.getEffect().getModifierTypes() != null &&
+                    effect.getEffect().getModifierTypes().contains(enumeration.EffectModifierType.SPEED)) {
+                    totalSpeed += parseModifier(effect.getEffect().getModifierValue());
                 }
             }
         }
