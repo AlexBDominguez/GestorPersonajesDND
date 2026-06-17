@@ -33,15 +33,20 @@ public class AuroraRaceMapper {
     private final SubraceRepository subraceRepo;
     private final RacialTraitRepository traitRepo;
     private final ContentSourceRepository sourceRepo;
+    private final AuroraSpellResolver spellResolver;
+    private final RacialTraitSpellRepository traitSpellRepo;
 
     public AuroraRaceMapper(AuroraRegistry registry, RaceRepository raceRepo,
                             SubraceRepository subraceRepo, RacialTraitRepository traitRepo,
-                            ContentSourceRepository sourceRepo) {
+                            ContentSourceRepository sourceRepo, AuroraSpellResolver spellResolver,
+                            RacialTraitSpellRepository traitSpellRepo) {
         this.registry = registry;
         this.raceRepo = raceRepo;
         this.subraceRepo = subraceRepo;
         this.traitRepo = traitRepo;
         this.sourceRepo = sourceRepo;
+        this.spellResolver = spellResolver;
+        this.traitSpellRepo = traitSpellRepo;
     }
 
     @Transactional
@@ -241,7 +246,31 @@ public class AuroraRaceMapper {
             ? el.getDescription() : el.getSheetDescription();
         t.setDescription(desc);
         t.setTraitType(classifyTrait(el));
-        return traitRepo.save(t);
+        RacialTrait saved = traitRepo.save(t);
+        grantTraitSpells(el, saved);
+        return saved;
+    }
+
+    /**
+     * Resolves any &lt;grant type="Spell"&gt; rule on the trait itself (e.g. Drow Magic's
+     * Dancing Lights at 1st / Faerie Fire at 3rd / Darkness at 5th, Forest Gnome's Natural
+     * Illusionist). Previously these were silently dropped for any non-PHB race — see
+     * RacialTraitService.applyAutomaticRacialTraits for the generic fallback that now
+     * consumes these rows.
+     */
+    private void grantTraitSpells(AuroraElement el, RacialTrait trait) {
+        for (AuroraRule rule : el.getRules()) {
+            if (rule.getRuleType() != AuroraRule.RuleType.GRANT) continue;
+            if (!"Spell".equals(rule.getType()) || rule.getId() == null) continue;
+
+            Spell spell = spellResolver.resolve(rule.getId());
+            if (spell == null) continue;
+
+            int level = rule.getLevel() != null ? rule.getLevel() : 1;
+            if (!traitSpellRepo.existsByRacialTraitAndSpell(trait, spell)) {
+                traitSpellRepo.save(new RacialTraitSpell(trait, spell, level));
+            }
+        }
     }
 
     private String classifyTrait(AuroraElement el) {

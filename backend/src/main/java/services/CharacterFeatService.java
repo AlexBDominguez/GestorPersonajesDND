@@ -55,6 +55,7 @@ public class CharacterFeatService {
 
         characterFeatRepository.save(characterFeat);
         featMechanicalEffectService.applyFeatModifier(character, feat);
+        featMechanicalEffectService.applyFeatSpells(character, feat);
 
         return toDto(characterFeat);
     }

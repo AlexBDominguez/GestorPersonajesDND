@@ -10,8 +10,8 @@ import java.util.stream.Collectors;
 /**
  * Maps Aurora "Feat" elements to Feat JPA entities.
  * PHB feats are skipped (already in DB from SQL scripts).
- * grantedSpells is left empty — spell linking requires the spell registry,
- * which will be wired when AuroraSpellMapper runs.
+ * grantedSpells is populated from the feat's own &lt;grant type="Spell"&gt; rules
+ * (e.g. a Magic Initiate-style homebrew feat) via AuroraSpellResolver.
  */
 @Service
 public class AuroraFeatMapper {
@@ -19,13 +19,16 @@ public class AuroraFeatMapper {
     private final AuroraRegistry registry;
     private final FeatRepository featRepo;
     private final ContentSourceRepository sourceRepo;
+    private final AuroraSpellResolver spellResolver;
 
     public AuroraFeatMapper(AuroraRegistry registry,
                             FeatRepository featRepo,
-                            ContentSourceRepository sourceRepo) {
+                            ContentSourceRepository sourceRepo,
+                            AuroraSpellResolver spellResolver) {
         this.registry = registry;
         this.featRepo = featRepo;
         this.sourceRepo = sourceRepo;
+        this.spellResolver = spellResolver;
     }
 
     public Map<String, Object> sync() {
@@ -48,6 +51,7 @@ public class AuroraFeatMapper {
                 feat.setSource(src);
                 feat.setDescription(el.getDescription());
                 feat.setPrerequisites(extractPrerequisites(el));
+                feat.setGrantedSpells(extractGrantedSpells(el));
 
                 featRepo.save(feat);
                 if (isNew) created++; else updated++;
@@ -61,6 +65,23 @@ public class AuroraFeatMapper {
         Map<String, Object> r = new LinkedHashMap<>();
         r.put("created", created); r.put("updated", updated); r.put("skipped", skipped);
         return r;
+    }
+
+    /**
+     * Resolves any &lt;grant type="Spell"&gt; rule on the feat itself to a persisted Spell
+     * (e.g. a homebrew Magic Initiate-style feat that always grants a fixed spell).
+     * Feats that let the player CHOOSE a spell are handled separately via PendingTask,
+     * not here — those have a SELECT rule instead of a fixed GRANT.
+     */
+    private List<Spell> extractGrantedSpells(AuroraElement el) {
+        List<Spell> spells = new ArrayList<>();
+        for (AuroraRule rule : el.getRules()) {
+            if (rule.getRuleType() != AuroraRule.RuleType.GRANT) continue;
+            if (!"Spell".equals(rule.getType()) || rule.getId() == null) continue;
+            Spell spell = spellResolver.resolve(rule.getId());
+            if (spell != null) spells.add(spell);
+        }
+        return spells;
     }
 
     /**

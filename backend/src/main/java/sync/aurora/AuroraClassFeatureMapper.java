@@ -1,9 +1,12 @@
 package sync.aurora;
 
 import entities.ClassFeature;
+import entities.ClassSpell;
 import entities.DndClass;
+import entities.Spell;
 import org.springframework.stereotype.Service;
 import repositories.ClassFeatureRepository;
+import repositories.ClassSpellRepository;
 import repositories.DndClassRepository;
 
 import java.util.*;
@@ -25,13 +28,19 @@ public class AuroraClassFeatureMapper {
     private final AuroraRegistry registry;
     private final ClassFeatureRepository featureRepo;
     private final DndClassRepository classRepo;
+    private final AuroraSpellResolver spellResolver;
+    private final ClassSpellRepository classSpellRepo;
 
     public AuroraClassFeatureMapper(AuroraRegistry registry,
                                     ClassFeatureRepository featureRepo,
-                                    DndClassRepository classRepo) {
+                                    DndClassRepository classRepo,
+                                    AuroraSpellResolver spellResolver,
+                                    ClassSpellRepository classSpellRepo) {
         this.registry = registry;
         this.featureRepo = featureRepo;
         this.classRepo = classRepo;
+        this.spellResolver = spellResolver;
+        this.classSpellRepo = classSpellRepo;
     }
 
     public Map<String, Object> sync() {
@@ -111,11 +120,38 @@ public class AuroraClassFeatureMapper {
 
                 featureRepo.save(cf);
                 if (isNew) created++; else updated++;
+
+                grantFeatureSpells(feat, dndClass, level);
             } catch (Exception e) {
                 System.err.printf("[Aurora] ClassFeature '%s' for class '%s': %s%n",
                     feat.getName(), dndClass.getName(), e.getMessage());
             }
         }
         return new int[]{created, updated};
+    }
+
+    /**
+     * Some base Class Feature elements grant a spell directly via
+     * &lt;grant type="Spell" .../&gt; (e.g. Bard's Magical Secrets-style features).
+     * These were previously ignored — see AuroraSubclassMapper.grantFeatureSpells
+     * for the equivalent subclass-level fix and rationale.
+     */
+    private void grantFeatureSpells(AuroraElement feat, DndClass dndClass, int featureLevel) {
+        for (AuroraRule rule : feat.getRules()) {
+            if (rule.getRuleType() != AuroraRule.RuleType.GRANT) continue;
+            if (!"Spell".equals(rule.getType()) || rule.getId() == null) continue;
+
+            Spell spell = spellResolver.resolve(rule.getId());
+            if (spell == null) {
+                System.err.printf("[Aurora] Could not resolve spell grant '%s' on feature '%s'%n",
+                    rule.getId(), feat.getName());
+                continue;
+            }
+
+            int level = rule.getLevel() != null ? rule.getLevel() : featureLevel;
+            if (classSpellRepo.findByDndClassAndSpell(dndClass, spell).isEmpty()) {
+                classSpellRepo.save(new ClassSpell(dndClass, spell, level));
+            }
+        }
     }
 }

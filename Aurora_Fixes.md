@@ -197,3 +197,7 @@ Actualmente los usuarios pueden cambiar su contraseña pero no su nombre de usua
 **Prioridad: Media**
 - Tras el Aurora Sync, se introdujeron una cantidad nueva y grande de items, algunos de ellos requieren attunement, con lo que funcionalmente en la app deberían serlo también (de manera que en inventory sólo puedan ser equipados como attuned)
 - Revisar si hay items de armas de fuego introducidas de las canon en D&D, ya que es necesario.
+
+### 15. Fixes que me voy encontrando o dudas.
+- Fighting Style suma donde tiene que sumar? Porque si escoges archery, se suma el bonificador de ataque a sólo armas a distancia?
+- Creo que las subrazas de tiefling están sumando mal los bonificadores. Tiefling aparece como +2 CHA +1 INT, pero luego cada subraza parece añadir muchos bonificadores más. Y según los manuales, Tiefling como tal te da un bonificador y la subclase un bonificador secundario. Temo que tal como está ahora sume demasiadas cosas.

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import repositories.CharacterProficiencyRepository;
 import repositories.CharacterSpellRepository;
 import repositories.ProficiencyRepository;
+import repositories.RacialTraitSpellRepository;
 import repositories.SpellRepository;
 
 import java.util.ArrayList;
@@ -18,15 +19,18 @@ public class RacialTraitService {
     private final ProficiencyRepository proficiencyRepository;
     private final CharacterSpellRepository characterSpellRepository;
     private final SpellRepository spellRepository;
+    private final RacialTraitSpellRepository racialTraitSpellRepository;
 
     public RacialTraitService(CharacterProficiencyRepository characterProficiencyRepository,
                               ProficiencyRepository proficiencyRepository,
                               CharacterSpellRepository characterSpellRepository,
-                              SpellRepository spellRepository) {
+                              SpellRepository spellRepository,
+                              RacialTraitSpellRepository racialTraitSpellRepository) {
         this.characterProficiencyRepository = characterProficiencyRepository;
         this.proficiencyRepository = proficiencyRepository;
         this.characterSpellRepository = characterSpellRepository;
         this.spellRepository = spellRepository;
+        this.racialTraitSpellRepository = racialTraitSpellRepository;
     }
 
     /**
@@ -45,6 +49,26 @@ public class RacialTraitService {
         }
         for (RacialTrait trait : allTraits) {
             applyTrait(character, trait.getIndexName());
+        }
+        applyGenericGrantedSpells(character, allTraits);
+    }
+
+    /**
+     * Fallback for traits without a dedicated case in applyTrait (mainly Aurora-sourced
+     * races, which were silently ignored before — see AuroraRaceMapper.grantTraitSpells).
+     * Respects each spell's required level (e.g. Drow Magic: Dancing Lights at 1st,
+     * Faerie Fire at 3rd, Darkness at 5th).
+     */
+    private void applyGenericGrantedSpells(PlayerCharacter character, List<RacialTrait> traits) {
+        if (traits.isEmpty()) return;
+        for (RacialTraitSpell entry : racialTraitSpellRepository
+                .findByRacialTraitInAndRequiredLevelLessThanEqual(traits, character.getLevel())) {
+            boolean alreadyHas = characterSpellRepository
+                    .findByCharacterIdAndSpellId(character.getId(), entry.getSpell().getId())
+                    .isPresent();
+            if (!alreadyHas) {
+                characterSpellRepository.save(new CharacterSpell(character, entry.getSpell(), "RACE"));
+            }
         }
     }
 

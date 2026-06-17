@@ -28,74 +28,80 @@ public class SubclassProficiencyService {
 
     @Transactional
     public void applySubclassProficiencies(PlayerCharacter character, Subclass subclass) {
-        if (subclass == null) return;
-        String index = subclass.getIndexName();
-        if (index == null) return;
+        if (subclass == null || subclass.getIndexName() == null) return;
 
-        switch (index) {
-            case "tempest":
-            case "war":
-                grant(character, "armor-heavy");
-                grant(character, "weapons-martial");
-                break;
+        // PHB subclasses have clean slugs as indexName (synced from dnd5eapi.co), but
+        // Aurora-sourced subclasses (Artificer, Blood Hunter, ...) store the raw Aurora
+        // element ID instead (e.g. "ID_WOTC_TCOE_ARCHETYPE_ARTIFICER_ALCHEMIST"), so an
+        // exact-match switch never matches those. Use substring matching on the lowercased
+        // indexName instead — same convention already used in the frontend wizard
+        // (character_creator_viewmodel.dart's subclass feature-choice detection).
+        String idx = subclass.getIndexName().toLowerCase();
 
-            case "knowledge":
-                createTask(character, "KNOWLEDGE_DOMAIN_SKILLS",
-                        "Choose 2 skills to gain Expertise (Knowledge Domain)", "{\"count\":2}");
-                createTask(character, "EXTRA_LANGUAGE",
-                        "Choose an extra language (Knowledge Domain — 1st)");
-                createTask(character, "EXTRA_LANGUAGE",
-                        "Choose a second extra language (Knowledge Domain — 2nd)");
-                break;
+        if (idx.contains("tempest") || idx.equals("war") || idx.contains("oath-of-the-war")) {
+            grant(character, "armor-heavy");
+            grant(character, "weapons-martial");
+        }
 
-            case "nature":
-                grant(character, "armor-heavy");
-                createTask(character, "NATURE_DOMAIN_CANTRIP",
-                        "Choose a cantrip from the Nature Domain list (Animal Friendship, Poison Spray, Shillelagh, or Thorn Whip)");
-                break;
+        if (idx.contains("knowledge")) {
+            createTask(character, "KNOWLEDGE_DOMAIN_SKILLS",
+                    "Choose 2 skills to gain Expertise (Knowledge Domain)", "{\"count\":2}");
+            createTask(character, "EXTRA_LANGUAGE",
+                    "Choose an extra language (Knowledge Domain — 1st)");
+            createTask(character, "EXTRA_LANGUAGE",
+                    "Choose a second extra language (Knowledge Domain — 2nd)");
+        }
 
-            case "valor":
-                grant(character, "armor-medium");
-                grant(character, "armor-shields");
-                grant(character, "weapons-martial");
-                break;
+        if (idx.contains("nature")) {
+            grant(character, "armor-heavy");
+            createTask(character, "NATURE_DOMAIN_CANTRIP",
+                    "Choose a cantrip from the Nature Domain list (Animal Friendship, Poison Spray, Shillelagh, or Thorn Whip)");
+        }
 
-            case "lore":
-                createTask(character, "LORE_BARD_SKILLS",
-                        "Choose 3 additional skill proficiencies (College of Lore)", "{\"count\":3}");
-                break;
+        if (idx.contains("valor")) {
+            grant(character, "armor-medium");
+            grant(character, "armor-shields");
+            grant(character, "weapons-martial");
+        }
 
-            case "battle-master":
-                createTask(character, "BATTLE_MASTER_TOOL",
-                        "Choose one artisan's tool or language proficiency (Battle Master)");
-                break;
+        // "lore" alone would also match unrelated subclasses like "...ranger_explorer"
+        // (the substring "lore" appears inside "explorer"), so require a word boundary.
+        if (idx.equals("lore") || idx.contains("_lore") || idx.contains("-lore")
+                || idx.contains("college of lore") || idx.contains("college-of-lore")) {
+            createTask(character, "LORE_BARD_SKILLS",
+                    "Choose 3 additional skill proficiencies (College of Lore)", "{\"count\":3}");
+        }
 
-            case "armorer":
-                grant(character, "armor-heavy");
-                break;
+        if (idx.contains("battle-master") || idx.contains("battle master") || idx.contains("battlemaster")) {
+            createTask(character, "BATTLE_MASTER_TOOL",
+                    "Choose one artisan's tool or language proficiency (Battle Master)");
+        }
 
-            case "battle-smith":
-                grant(character, "weapons-martial");
-                grant(character, "smiths-tools");
-                break;
+        if (idx.contains("armorer")) {
+            grant(character, "armor-heavy");
+        }
 
-            case "alchemist":
-                grant(character, "alchemists-supplies");
-                break;
+        if (idx.contains("battle_smith") || idx.contains("battle-smith") || idx.contains("battlesmith")) {
+            grant(character, "weapons-martial");
+            grant(character, "smiths-tools");
+        }
 
-            case "artillerist":
-                grant(character, "woodcarvers-tools");
-                break;
+        if (idx.contains("alchemist")) {
+            grant(character, "alchemists-supplies");
+        }
 
-            case "lycan":
-                createTask(character, "LYCAN_TYPE",
-                        "Choose your Lycanthrope type");
-                break;
+        if (idx.contains("artillerist")) {
+            grant(character, "woodcarvers-tools");
+        }
 
-            case "profane-soul":
-                createTask(character, "PROFANE_SOUL_PATRON",
-                        "Choose your Otherworldly Patron");
-                break;
+        if (idx.contains("lycan")) {
+            createTask(character, "LYCAN_TYPE",
+                    "Choose your Lycanthrope type");
+        }
+
+        if (idx.contains("profane")) {
+            createTask(character, "PROFANE_SOUL_PATRON",
+                    "Choose your Otherworldly Patron");
         }
     }
 

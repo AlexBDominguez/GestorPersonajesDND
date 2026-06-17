@@ -48,6 +48,7 @@ public class PlayerCharacterService {
     private final SubclassSpellService subclassSpellService;
     private final SubclassProficiencyService subclassProficiencyService;
     private final RacialTraitService racialTraitService;
+    private final ClassSpellService classSpellService;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -73,7 +74,8 @@ public class PlayerCharacterService {
             CharacterFeatService characterFeatService,
             SubclassSpellService subclassSpellService,
             SubclassProficiencyService subclassProficiencyService,
-            RacialTraitService racialTraitService
+            RacialTraitService racialTraitService,
+            ClassSpellService classSpellService
 
         ) {
         this.characterRepository = characterRepository;
@@ -85,6 +87,7 @@ public class PlayerCharacterService {
         this.subclassSpellService = subclassSpellService;
         this.subclassProficiencyService = subclassProficiencyService;
         this.racialTraitService = racialTraitService;
+        this.classSpellService = classSpellService;
         this.spellRepository = spellRepository;
         this.spellSlotProgressionRepository = spellSlotProgressionRepository;
         this.slotRepository = slotRepository;
@@ -322,6 +325,9 @@ public class PlayerCharacterService {
 
         // Aplicar hechizos automáticos de subclase (Dominios de Clérigo, Juramentos de Paladín, etc.)
         subclassSpellService.applySubclassSpells(saved, saved.getSubclass(), saved.getLevel());
+
+        // Aplicar hechizos automáticos otorgados por features de la clase base (p.ej. Artificer)
+        classSpellService.applyClassSpells(saved, saved.getDndClass(), saved.getLevel());
 
         // Aplicar proficiencias automáticas de subclase y crear tareas de elección
         subclassProficiencyService.applySubclassProficiencies(saved, saved.getSubclass());
@@ -1269,6 +1275,9 @@ public class PlayerCharacterService {
 
         // Aplicar hechizos automáticos de subclase desbloqueados al nuevo nivel
         subclassSpellService.applySubclassSpells(character, character.getSubclass(), newLevel);
+
+        // Aplicar hechizos automáticos de la clase base desbloqueados al nuevo nivel
+        classSpellService.applyClassSpells(character, character.getDndClass(), newLevel);
     }
 
     /**

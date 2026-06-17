@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import repositories.*;
 
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -27,7 +26,7 @@ public class AuroraSubclassMapper {
     private final SubclassFeatureRepository featureRepo;
     private final DndClassRepository classRepo;
     private final ContentSourceRepository sourceRepo;
-    private final SpellRepository spellRepo;
+    private final AuroraSpellResolver spellResolver;
     private final SubclassSpellRepository subclassSpellRepo;
 
     // Aurora ability stat name → short ability key used elsewhere in the app
@@ -77,14 +76,14 @@ public class AuroraSubclassMapper {
                                 SubclassFeatureRepository featureRepo,
                                 DndClassRepository classRepo,
                                 ContentSourceRepository sourceRepo,
-                                SpellRepository spellRepo,
+                                AuroraSpellResolver spellResolver,
                                 SubclassSpellRepository subclassSpellRepo) {
         this.registry = registry;
         this.subclassRepo = subclassRepo;
         this.featureRepo = featureRepo;
         this.classRepo = classRepo;
         this.sourceRepo = sourceRepo;
-        this.spellRepo = spellRepo;
+        this.spellResolver = spellResolver;
         this.subclassSpellRepo = subclassSpellRepo;
     }
 
@@ -261,7 +260,7 @@ public class AuroraSubclassMapper {
             if (rule.getRuleType() != AuroraRule.RuleType.GRANT) continue;
             if (!"Spell".equals(rule.getType()) || rule.getId() == null) continue;
 
-            Spell spell = resolveSpell(rule.getId());
+            Spell spell = spellResolver.resolve(rule.getId());
             if (spell == null) {
                 System.err.printf("[Aurora] Could not resolve spell grant '%s' on feature '%s'%n",
                     rule.getId(), feat.getName());
@@ -273,25 +272,6 @@ public class AuroraSubclassMapper {
                 subclassSpellRepo.save(new SubclassSpell(sub, spell, level));
             }
         }
-    }
-
-    /**
-     * Resolves an Aurora spell grant ID to a persisted Spell. Aurora-defined spells
-     * are stored with indexApi = their Aurora ID; spells synced from dnd5eapi.co use
-     * the public API slug instead, so we fall back to deriving that slug from the ID
-     * (e.g. "ID_PHB_SPELL_THAUMATURGY" -> "thaumaturgy").
-     */
-    private static final Pattern SPELL_ID_PREFIX = Pattern.compile("^.*_SPELL_");
-
-    private Spell resolveSpell(String auroraSpellId) {
-        Optional<Spell> direct = spellRepo.findByIndexApi(auroraSpellId);
-        if (direct.isPresent()) return direct.get();
-
-        String slug = SPELL_ID_PREFIX.matcher(auroraSpellId).replaceFirst("")
-            .toLowerCase()
-            .replace('_', '-')
-            .replace("'", "");
-        return spellRepo.findByIndexApi(slug).orElse(null);
     }
 
     /**
