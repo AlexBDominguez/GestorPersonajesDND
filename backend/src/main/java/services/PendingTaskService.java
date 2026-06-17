@@ -431,6 +431,7 @@ public class PendingTaskService {
 
         private void applyFeatEffects(PlayerCharacter character, Feat feat) {
                 featMechanicalEffectService.applyFeatSpells(character, feat);
+                featMechanicalEffectService.applyFeatChoices(character, feat);
 
                 String index = feat.getIndexName();
                 if (index == null) return;

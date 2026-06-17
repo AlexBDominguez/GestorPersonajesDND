@@ -52,6 +52,7 @@ public class AuroraFeatMapper {
                 feat.setDescription(el.getDescription());
                 feat.setPrerequisites(extractPrerequisites(el));
                 feat.setGrantedSpells(extractGrantedSpells(el));
+                feat.setChoiceProficiencyCount(extractChoiceProficiencyCount(el));
 
                 featRepo.save(feat);
                 if (isNew) created++; else updated++;
@@ -82,6 +83,26 @@ public class AuroraFeatMapper {
             if (spell != null) spells.add(spell);
         }
         return spells;
+    }
+
+    /**
+     * Detects a "choose N skill/tool proficiencies" pattern (e.g. Skilled, Weapon Master),
+     * the same shape already handled for the PHB "Skilled" feat via the SKILLED_CHOICES
+     * pending task. Reads the SELECT rule's "number" attribute when its supports mentions
+     * Skill or Tool proficiencies.
+     */
+    private Integer extractChoiceProficiencyCount(AuroraElement el) {
+        for (AuroraRule rule : el.getRules()) {
+            if (rule.getRuleType() != AuroraRule.RuleType.SELECT) continue;
+            if (!"Proficiency".equals(rule.getType())) continue;
+            String supports = rule.getSupports();
+            if (supports == null) continue;
+            String lower = supports.toLowerCase();
+            if ((lower.contains("skill") || lower.contains("tool")) && rule.getNumber() != null) {
+                return rule.getNumber();
+            }
+        }
+        return null;
     }
 
     /**

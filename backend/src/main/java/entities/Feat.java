@@ -52,6 +52,12 @@ public class Feat {
 
     private String effectModifierValue;
 
+    // Cuántas proficiencias de habilidad/herramienta puede elegir el jugador al obtener
+    // este feat (p. ej. Skilled = 3). Cuando no es null, se genera una PendingTask de tipo
+    // SKILLED_CHOICES — la misma mecánica de elección que ya usa el feat "Skilled" del PHB —
+    // para que el jugador escoja, en vez de aplicar nada automáticamente.
+    private Integer choiceProficiencyCount;
+
     //Hechizos que otorga el feat automáticamente (ej: Magic Initiate)
     //Nota: algunos feats permiten elegir - eso se gestiona en el wizard
     @ManyToMany
@@ -131,4 +137,7 @@ public class Feat {
 
     public String getEffectModifierValue() { return effectModifierValue; }
     public void setEffectModifierValue(String effectModifierValue) { this.effectModifierValue = effectModifierValue; }
+
+    public Integer getChoiceProficiencyCount() { return choiceProficiencyCount; }
+    public void setChoiceProficiencyCount(Integer choiceProficiencyCount) { this.choiceProficiencyCount = choiceProficiencyCount; }
 }
