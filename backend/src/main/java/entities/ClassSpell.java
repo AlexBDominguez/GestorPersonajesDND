@@ -9,7 +9,7 @@ import jakarta.persistence.*;
  * how they're applied to a character.
  */
 @Entity
-@Table(name = "class_spells",
+@Table(name = "class_granted_spells",
         uniqueConstraints = @UniqueConstraint(columnNames = {"dnd_class_id", "spell_id"}))
 public class ClassSpell {
 
