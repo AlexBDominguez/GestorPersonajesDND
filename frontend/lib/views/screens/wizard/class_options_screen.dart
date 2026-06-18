@@ -368,7 +368,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                               'SUPERIOR_HUNTERS_DEFENSE' => fname.contains("superior hunter"),
                               'TOTEM_SPIRIT'             => fname.contains('totem spirit'),
                               'TOTEM_ASPECT'             => fname.contains('aspect of the beast'),
-                              'TOTEMIC_ATTUNEMENT'       => fname.contains('totemic attunement'),
+                              'TOTEM_ATTUNEMENT'         => fname.contains('totemic attunement'),
                               'BATTLEMASTER_MANEUVER_1' ||
                               'BATTLEMASTER_MANEUVER_2' ||
                               'BATTLEMASTER_MANEUVER_3' ||

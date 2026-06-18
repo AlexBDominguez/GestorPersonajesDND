@@ -1,4 +1,5 @@
 class CharacterSkill {
+  final int? id;
   final String skillName;
   final String abilityScore; // lowercase key, e.g. "dex", "wis"
   final bool proficient;
@@ -6,6 +7,7 @@ class CharacterSkill {
   final int bonus;
 
   const CharacterSkill({
+    this.id,
     required this.skillName,
     required this.abilityScore,
     required this.proficient,
@@ -14,6 +16,7 @@ class CharacterSkill {
   });
 
   factory CharacterSkill.fromJson(Map<String, dynamic> j) => CharacterSkill(
+        id:           (j['id'] as num?)?.toInt(),
         skillName:    j['skillName']    as String? ?? '',
         abilityScore: j['abilityScore'] as String? ?? '',
         proficient:   j['proficient']   as bool?   ?? false,

@@ -3,6 +3,7 @@ package entities;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,15 @@ public class PlayerCharacter {
 
     private int maxHP;
     private int currentHP;
+
+    // Tirada de HP por nivel (nivel → valor tirado, sin incluir nivel 1, que siempre es
+    // dado máximo + conMod). Si un nivel no tiene entrada aquí, su contribución al HP se
+    // calculó con la media del dado (hitDie/2 + 1) en vez de una tirada manual del jugador.
+    @ElementCollection
+    @CollectionTable(name = "character_hp_rolls", joinColumns = @JoinColumn(name = "character_id"))
+    @MapKeyColumn(name = "level")
+    @Column(name = "roll")
+    private Map<Integer, Integer> hpRolls = new HashMap<>();
 
     private int proficiencyBonus;
 
@@ -219,6 +229,14 @@ public class PlayerCharacter {
 
     public void setMaxHP(int maxHP) {
         this.maxHP = maxHP;
+    }
+
+    public Map<Integer, Integer> getHpRolls() {
+        return hpRolls;
+    }
+
+    public void setHpRolls(Map<Integer, Integer> hpRolls) {
+        this.hpRolls = hpRolls;
     }
 
     public int getCurrentHP() {

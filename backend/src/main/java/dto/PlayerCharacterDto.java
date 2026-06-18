@@ -14,6 +14,7 @@ public class PlayerCharacterDto {
     private Map<String, Integer> abilityScores;
     private int maxHp;
     private int currentHp;
+    private Map<Integer, Integer> hpRolls;
     private int proficiencyBonus;
     private String backstory;
     private Long backgroundId;
@@ -156,6 +157,14 @@ public class PlayerCharacterDto {
 
     public void setMaxHp(int maxHp) {
         this.maxHp = maxHp;
+    }
+
+    public Map<Integer, Integer> getHpRolls() {
+        return hpRolls;
+    }
+
+    public void setHpRolls(Map<Integer, Integer> hpRolls) {
+        this.hpRolls = hpRolls;
     }
 
     public int getCurrentHp() {

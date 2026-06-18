@@ -130,6 +130,10 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     selectedSpellIds.addAll(_preExistingSpellIds);
     // Guardar skills del personaje para pre-popular la selección de clase tras cargar los datos
     _editCharSkills = char.skills;
+    // Pre-rellenar las tiradas de HP por nivel ya guardadas, para que "Manage HP" no
+    // aparezca vacío al editar (bug #1 del backlog) y para no sobrescribirlas con null
+    // si el usuario confirma la pantalla de clase sin tocar el HP.
+    _hpRolls.addAll(char.hpRolls);
   }
 
   /// Constructor nombrado para subir de nivel a un personaje existente.
@@ -450,18 +454,15 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void _clearCatalogSelections() {
+    // Reutiliza el mismo núcleo de limpieza que clearClass()/deselectRace(),
+    // para no dejar huérfanos _classSkillIndices, _classSkillRequiredCount,
+    // featureChoices, _hpRolls o magical secrets (bug #2 del backlog).
+    // No marca dndClass/race como dirty aquí: el usuario puede no haber
+    // visitado esos pasos todavía y no deben aparecer con "!" prematuramente.
+    _resetClassState();
     classes = [];
-    selectedClass = null;
-    selectedSubclass = null;
-    subclasses = [];
-    classFeatures = [];
-    subclassFeatures = [];
-    selectedSpellIds.clear();
-    availableSpells.clear();
+    _resetRaceState();
     races = [];
-    selectedRace = null;
-    selectedSubrace = null;
-    subraces = [];
     backgrounds = [];
     selectedBackground = null;
   }
@@ -533,6 +534,15 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void clearClass() {
+    _resetClassState();
+    _markDirty(WizardStep.dndClass);
+    notifyListeners();
+  }
+
+  /// Limpieza pura del estado de clase/subclase, sin marcar el paso como
+  /// dirty ni notificar — usado por clearClass() y por _clearCatalogSelections()
+  /// (esta última no debe forzar el "!" en pasos que el usuario no ha visitado).
+  void _resetClassState() {
     // Limpiar elecciones de features de clase antes de limpiar selectedClass
     for (final c in classFeatureChoices) {
       featureChoices.remove(c.key);
@@ -554,8 +564,6 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     additionalMagicalSecretIds.clear();
     magicalSecretsPool.clear();
     _spellsStepVisited = false;
-    _markDirty(WizardStep.dndClass);
-    notifyListeners();
   }
 
   bool get isLoadingSubclasses => subclasses.isEmpty && selectedClass != null;
@@ -733,8 +741,16 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         _classSkillIndices.add(idx);
       }
     }
+    // Snapshot de la selección original — usado en _submitEdit() para detectar
+    // qué skills añadió/quitó el usuario y sincronizar solo esos cambios.
+    _originalClassSkillIndices = Set.of(_classSkillIndices);
     notifyListeners();
   }
+
+  /// Selección de skills de clase tal como estaba al entrar en modo edición
+  /// (snapshot tomado por _prePopulateClassSkillsForEdit). Permite diffear
+  /// contra _classSkillIndices al guardar y sincronizar solo lo que cambió.
+  Set<String> _originalClassSkillIndices = {};
 
   /// Skills otorgadas por el background seleccionado actualmente (indices normalizados).
   /// Usadas por el selector de skills de clase para bloquear las ya cubiertas.
@@ -929,13 +945,19 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   /// Colapsa la raza actualmente seleccionada (segundo tap sobre la misma raza).
   void deselectRace() {
+    _resetRaceState();
+    _markDirty(WizardStep.race);
+    notifyListeners();
+  }
+
+  /// Limpieza pura del estado de raza/subraza, sin marcar el paso como dirty
+  /// ni notificar — usado por deselectRace() y por _clearCatalogSelections().
+  void _resetRaceState() {
     for (final c in raceFeatureChoices) featureChoices.remove(c.key);
     for (final c in subraceFeatureChoices) featureChoices.remove(c.key);
     selectedRace = null;
     selectedSubrace = null;
     subraces = [];
-    _markDirty(WizardStep.race);
-    notifyListeners();
   }
 
   Future<void> _loadSubracesFor(int raceId) async {
@@ -1449,7 +1471,10 @@ void toggleItem(int itemId) {
     if (subcIdx.contains('totem')) {
       if (level >= 3)  choices.add(const WizardChoiceConfig(type: 'TOTEM_SPIRIT',       level: 3,  label: 'Totem Spirit',       options: kTotemSpirit));
       if (level >= 6)  choices.add(const WizardChoiceConfig(type: 'TOTEM_ASPECT',       level: 6,  label: 'Aspect of the Beast', options: kTotemAspect));
-      if (level >= 14) choices.add(const WizardChoiceConfig(type: 'TOTEMIC_ATTUNEMENT', level: 14, label: 'Totemic Attunement',  options: kTotemicAttunement));
+      // Type debe coincidir EXACTAMENTE con PlayerCharacterService.createSubclassTask
+      // ("TOTEM_ATTUNEMENT", sin "IC") — antes decía 'TOTEMIC_ATTUNEMENT' y la elección
+      // nunca se resolvía contra ninguna PendingTask real (bug #1 del backlog).
+      if (level >= 14) choices.add(const WizardChoiceConfig(type: 'TOTEM_ATTUNEMENT', level: 14, label: 'Totemic Attunement',  options: kTotemicAttunement));
     }
 
     // Battle Master Fighter (choose 3 maneuvers at lv3, +2 at lv7, +2 at lv15)
@@ -1612,6 +1637,9 @@ void toggleItem(int itemId) {
             .where((e) => e.key.startsWith('EXPERTISE_PICK_') && e.value.isNotEmpty)
             .map((e) => e.value)
             .toList(),
+        hpRolls: Map.fromEntries(_hpRolls.entries
+            .where((e) => e.value != null)
+            .map((e) => MapEntry(e.key, e.value!))),
         abilityScores: {
           'str': abilityScores['STR']!,
           'dex': abilityScores['DEX']!,
@@ -1672,6 +1700,100 @@ void toggleItem(int itemId) {
     _prePopulateClassSkillsForEdit(); // cross-reference skills una vez clase + background están listos
     await loadRaces();
     if (isSpellcaster) await loadAvailableSpells();
+    await _prePopulateFeatureChoicesForEdit();
+  }
+
+  /// Pre-carga en featureChoices las elecciones de features ya resueltas (Fighting Style,
+  /// Expertise, Favored Enemy, elecciones de raza/subraza, etc.) para que no aparezcan
+  /// vacías al entrar en modo edición — de lo contrario el usuario las ve como pendientes
+  /// y, si las vuelve a elegir, puede sobrescribir la elección original (bug #1 del backlog).
+  Future<void> _prePopulateFeatureChoicesForEdit() async {
+    if (_editCharacterId == null) return;
+    try {
+      final tasks = await _pendingTaskService.getPendingTasks(_editCharacterId!);
+      final allConfigs = [
+        ...allClassFeatureChoices,
+        ...subclassFeatureChoices,
+        ...raceFeatureChoices,
+        ...subraceFeatureChoices,
+      ];
+      for (final t in tasks) {
+        if (!t.completed || t.resolvedChoice == null) continue;
+        final key = '${t.taskType}_${t.relatedLevel}';
+        if (t.taskType == 'ASI_OR_FEAT') {
+          _prePopulateAsiOrFeatChoice(t.relatedLevel, t.resolvedChoice!);
+          continue;
+        }
+        if (_slottedChoicePrefixByTaskType.containsKey(t.taskType)) {
+          _prePopulateSlottedChoice(
+              _slottedChoicePrefixByTaskType[t.taskType]!,
+              t.relatedLevel,
+              t.resolvedChoice!,
+              allConfigs);
+          continue;
+        }
+        featureChoices[key] = t.resolvedChoice!;
+        final config = allConfigs.where((c) => c.key == key).firstOrNull;
+        if (config != null && config.pickCount > 1) {
+          final picks = t.resolvedChoice!.split(',').map((s) => s.trim()).toList();
+          for (int i = 0; i < picks.length && i < config.pickCount; i++) {
+            featureChoices['${t.taskType}_PICK_${i}_${t.relatedLevel}'] = picks[i];
+          }
+        }
+      }
+      notifyListeners();
+    } catch (_) {} // silencioso, igual que loadLevelUpData
+  }
+
+  /// Reparte un resolvedChoice separado por comas ('Maneuver A,Maneuver B,...') entre
+  /// los slots numerados del wizard para ese nivel (p.ej. BATTLEMASTER_MANEUVER_1_3,
+  /// BATTLEMASTER_MANEUVER_2_3...), en el mismo orden en que aparecen en [allConfigs].
+  void _prePopulateSlottedChoice(String prefix, int level, String resolvedChoice,
+      List<WizardChoiceConfig> allConfigs) {
+    final names = resolvedChoice.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    if (names.isEmpty) return;
+    final slotKeys = allConfigs
+        .where((c) => c.level == level && c.type.startsWith('${prefix}_'))
+        .map((c) => c.key)
+        .toList();
+    for (int i = 0; i < names.length && i < slotKeys.length; i++) {
+      featureChoices[slotKeys[i]] = names[i];
+    }
+  }
+
+  /// Reconstruye las claves locales del wizard (ASI_A_n, ASI_B_n, FEAT_CHOICE_n y el badge
+  /// resumen) a partir del string que guarda el backend ('ASI:STR:+2', 'ASI:STR:+1+DEX:+1' o
+  /// 'FEAT:NombreDote'). Si el valor no tiene ese formato — personajes de prueba creados antes
+  /// de este fix, que guardaron literalmente el texto del badge ('Str / Con' / 'Feat') — no se
+  /// pre-rellena nada y la elección aparece vacía, igual que antes.
+  void _prePopulateAsiOrFeatChoice(int level, String resolvedChoice) {
+    if (resolvedChoice.startsWith('FEAT:')) {
+      featureChoices['FEAT_CHOICE_$level'] = resolvedChoice.substring(5).trim();
+      featureChoices['ASI_OR_FEAT_$level'] = 'Feat';
+      return;
+    }
+    if (!resolvedChoice.startsWith('ASI:')) return;
+
+    final parts = resolvedChoice.substring(4).split(':');
+    String? abbrevA, abbrevB;
+    if (parts.length == 2) {
+      abbrevA = abbrevB = parts[0];
+    } else if (parts.length == 3) {
+      abbrevA = parts[0];
+      abbrevB = parts[1].split('+').last;
+    }
+    if (abbrevA == null || abbrevB == null) return;
+
+    String? fullName(String abbrev) =>
+        kAbilityScoreNames.where((a) => a.description == abbrev).firstOrNull?.name;
+    final nameA = fullName(abbrevA);
+    final nameB = fullName(abbrevB);
+    if (nameA == null || nameB == null) return;
+
+    featureChoices['ASI_A_$level'] = nameA;
+    featureChoices['ASI_B_$level'] = nameB;
+    String shorten(String s) => s.length > 3 ? s.substring(0, 3) : s;
+    featureChoices['ASI_OR_FEAT_$level'] = '${shorten(nameA)} / ${shorten(nameB)}';
   }
 
   /// Pre-carga los datos de clase para el modo nivel-up y selecciona la clase existente.
@@ -1701,11 +1823,13 @@ void toggleItem(int itemId) {
     _error = null;
     notifyListeners();
     try {
-      // 1. Level-up if needed (one POST per level gained)
+      // 1. Level-up if needed (one POST per level gained), enviando la tirada de HP
+      // que el usuario hizo para ese nivel concreto en "Manage HP" (si la hizo).
       final levelsGained = selectedLevel - _originalLevel;
       if (levelsGained > 0) {
         for (int i = 0; i < levelsGained; i++) {
-          await _charService.levelUp(_editCharacterId!);
+          final newLevel = _originalLevel + i + 1;
+          await _charService.levelUp(_editCharacterId!, hpRoll: _hpRolls[newLevel]);
         }
       }
 
@@ -1771,6 +1895,12 @@ void toggleItem(int itemId) {
         }
       }
 
+      // 5. Sincronizar skills de clase: solo los índices que el usuario añadió/quitó
+      // respecto al snapshot original (ver _prePopulateClassSkillsForEdit), no en modo nivel-up.
+      if (!_levelUpMode) {
+        await _syncClassSkillChanges();
+      }
+
       _saveSuccess = true;
     } catch (e) {
       _setError('Error saving changes: $e');
@@ -1778,6 +1908,78 @@ void toggleItem(int itemId) {
       _isSaving = false;
       notifyListeners();
     }
+  }
+
+  /// Sincroniza con el backend los índices de skill de clase que el usuario añadió o quitó
+  /// en modo edición, comparando contra el snapshot tomado al cargar el wizard (bug #1 del backlog).
+  /// Resuelve el índice a un ID de skill numérico vía _editCharSkills (requiere que el nombre
+  /// coincida — las skills nuevas que el personaje no tenía aún no se pueden resolver así).
+  Future<void> _syncClassSkillChanges() async {
+    if (_editCharacterId == null) return;
+    final added   = _classSkillIndices.difference(_originalClassSkillIndices);
+    final removed = _originalClassSkillIndices.difference(_classSkillIndices);
+    if (added.isEmpty && removed.isEmpty) return;
+
+    Future<void> apply(String idx, bool proficient) async {
+      final name = _skillIndexToDisplay(idx).toLowerCase();
+      final skill = _editCharSkills.where((s) => s.skillName.toLowerCase() == name).firstOrNull;
+      if (skill?.id == null) return; // skill no encontrada en el personaje — no se puede resolver el ID
+      await _charService.setSkillProficiency(
+        characterId: _editCharacterId!,
+        skillId: skill!.id!,
+        proficient: proficient,
+      );
+    }
+
+    for (final idx in added)   { await apply(idx, true); }
+    for (final idx in removed) { await apply(idx, false); }
+  }
+
+  /// Devuelve la abreviatura de 3 letras (p.ej. 'STR') de un nombre completo
+  /// de habilidad (p.ej. 'Strength'), tal como las guarda kAbilityScoreNames.
+  String? _abilityAbbrev(String fullName) =>
+      kAbilityScoreNames.where((a) => a.name == fullName).firstOrNull?.description;
+
+  /// Construye el string de resolución que PendingTaskService.java espera para
+  /// una tarea ASI_OR_FEAT ('ASI:STR:+2', 'ASI:STR:+1+DEX:+1' o 'FEAT:NombreDote'),
+  /// a partir de las claves locales del wizard (ASI_A_n, ASI_B_n, FEAT_CHOICE_n).
+  /// Antes se enviaba directamente el texto del badge ('Str / Con' o 'Feat'), que el
+  /// backend no reconoce — el ASI/Feat elegido en el wizard nunca se aplicaba (bug #1).
+  String? _resolveAsiOrFeatChoice(int level) {
+    final feat = featureChoices['FEAT_CHOICE_$level'];
+    if (feat != null) return 'FEAT:$feat';
+
+    final asiA = featureChoices['ASI_A_$level'];
+    final asiB = featureChoices['ASI_B_$level'];
+    if (asiA == null || asiB == null) return null;
+    final abbrevA = _abilityAbbrev(asiA);
+    final abbrevB = _abilityAbbrev(asiB);
+    if (abbrevA == null || abbrevB == null) return null;
+    return asiA == asiB ? 'ASI:$abbrevA:+2' : 'ASI:$abbrevA:+1+$abbrevB:+1';
+  }
+
+  /// Algunas elecciones de subclase se modelan en el wizard como varios "slots"
+  /// numerados (un WizardChoiceConfig por elemento elegido, p.ej.
+  /// 'BATTLEMASTER_MANEUVER_1'..'_7'), pero el backend las espera como UNA sola
+  /// PendingTask por nivel cuyo resolvedChoice es la lista completa separada por
+  /// comas (ver PlayerCharacterService.createSubclassTask). Sin este mapeo, el
+  /// taskType del backend nunca coincidía con ninguna clave del wizard y la
+  /// elección no se aplicaba nunca (bug #1 del backlog, mismo patrón que ASI/Feat).
+  static const Map<String, String> _slottedChoicePrefixByTaskType = {
+    'MANEUVER_CHOICE': 'BATTLEMASTER_MANEUVER',
+    'ELEMENTAL_DISCIPLINE': 'FOUR_ELEM_DISC',
+    'TRICK_SHOT_CHOICE': 'TRICK_SHOT_CHOICE',
+  };
+
+  /// Recoge los valores de todos los slots `${prefix}_N_$level` (N = 1, 2, 3...)
+  /// y los une en una sola cadena separada por comas, en el orden de los slots.
+  String? _resolveSlottedChoice(String prefix, int level) {
+    final re = RegExp('^${RegExp.escape(prefix)}_(\\d+)_$level\$');
+    final entries = featureChoices.entries.where((e) => re.hasMatch(e.key)).toList()
+      ..sort((a, b) => int.parse(re.firstMatch(a.key)!.group(1)!)
+          .compareTo(int.parse(re.firstMatch(b.key)!.group(1)!)));
+    final values = entries.map((e) => e.value).where((v) => v.isNotEmpty).toList();
+    return values.isEmpty ? null : values.join(',');
   }
 
   /// Carga las tareas pendientes del personaje recién creado y resuelve silenciosamente
@@ -1788,20 +1990,28 @@ void toggleItem(int itemId) {
       for (final task in tasks) {
         final key = '${task.taskType}_${task.relatedLevel}';
 
-        // Multi-pick tasks (e.g. EXPERTISE_PICK_0_1, EXPERTISE_PICK_1_1):
-        // aggregate all individual picks into a comma-separated string.
-        final multiKeys = featureChoices.keys
-            .where((k) => k.startsWith('${task.taskType}_PICK_') && k.endsWith('_${task.relatedLevel}'))
-            .toList()
-          ..sort();
-        final multiPicks = multiKeys
-            .map((k) => featureChoices[k])
-            .whereType<String>()
-            .toList();
+        String? choice;
+        if (task.taskType == 'ASI_OR_FEAT') {
+          choice = _resolveAsiOrFeatChoice(task.relatedLevel);
+        } else if (_slottedChoicePrefixByTaskType.containsKey(task.taskType)) {
+          choice = _resolveSlottedChoice(
+              _slottedChoicePrefixByTaskType[task.taskType]!, task.relatedLevel);
+        } else {
+          // Multi-pick tasks (e.g. EXPERTISE_PICK_0_1, EXPERTISE_PICK_1_1):
+          // aggregate all individual picks into a comma-separated string.
+          final multiKeys = featureChoices.keys
+              .where((k) => k.startsWith('${task.taskType}_PICK_') && k.endsWith('_${task.relatedLevel}'))
+              .toList()
+            ..sort();
+          final multiPicks = multiKeys
+              .map((k) => featureChoices[k])
+              .whereType<String>()
+              .toList();
 
-        final choice = multiPicks.isNotEmpty
-            ? multiPicks.join(',')
-            : featureChoices[key];
+          choice = multiPicks.isNotEmpty
+              ? multiPicks.join(',')
+              : featureChoices[key];
+        }
 
         if (choice != null && choice.isNotEmpty) {
           await _pendingTaskService.resolveTask(

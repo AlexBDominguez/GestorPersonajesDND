@@ -58,6 +58,24 @@ const _kConsumableFeaturePrefixes = <String>{
 };
 
 class CharacterSheetViewModel extends ChangeNotifier {
+  // Varios métodos de carga (_loadSubclassFeaturesIfNeeded, _loadClassFeaturesIfNeeded, etc.)
+  // se disparan sin esperar (`fire-and-forget`) desde loadCharacter() y pueden resolver después
+  // de que la pantalla se haya cerrado y el ViewModel se haya dispose()ado, provocando
+  // "used after being disposed". Se ignora silenciosamente en vez de propagar el error.
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (_disposed) return;
+    super.notifyListeners();
+  }
+
   final CharacterService _service;
   final int characterId;
   final SpellService _spellService;
@@ -204,8 +222,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
       character = await _service.getCharacterById(characterId);
       _fromCache = false;
       _cacheTimestamp = null;
-      // TODO(DASH-02): re-enable once level-up flow is redesigned
-      // await _loadPendingTasks();
+      await _loadPendingTasks();
       _initSpellSlots();
       _loadInventory();
       if (character?.dndClassId != null && _classFeatures.isEmpty) {

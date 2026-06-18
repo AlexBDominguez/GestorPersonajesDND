@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
-// TODO(DASH-02): re-enable PendingTasksScreen once level-up flow is redesigned
-// import 'package:gestor_personajes_dnd/views/screens/sheet/pending_tasks_screen.dart';
+import 'package:gestor_personajes_dnd/views/screens/sheet/pending_tasks_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/wizard/edit_character_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/wizard/level_up_screen.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/tabs/tab_abilities.dart';
@@ -271,31 +270,30 @@ class _NavBar extends StatelessWidget {
             ),
           ),
           
-          // TODO(DASH-02): Pending tasks - desactivado hasta rediseñar flow de level-up
-          // if (vm.hasPendingTasks)
-          //   IconButton(
-          //     onPressed: () => Navigator.push(
-          //       context,
-          //       MaterialPageRoute(
-          //         builder: (_) => PendingTasksScreen(vm: vm),
-          //       ),
-          //     ),
-          //     icon: Stack(
-          //       clipBehavior: Clip.none,
-          //       children: [
-          //         const Icon(Icons.assignment_late_outlined, color: AppTheme.primary),
-          //         Positioned(
-          //           right: -4, top: -4,
-          //           child: Container(
-          //             width: 10, height: 10,
-          //             decoration: const BoxDecoration(
-          //               shape: BoxShape.circle, color: AppTheme.accent),
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //     tooltip: '${vm.pendingTasks.length} pending choice(s)',
-          //   ),
+          if (vm.hasPendingTasks)
+            IconButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PendingTasksScreen(vm: vm),
+                ),
+              ),
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.assignment_late_outlined, color: AppTheme.primary),
+                  Positioned(
+                    right: -4, top: -4,
+                    child: Container(
+                      width: 10, height: 10,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle, color: AppTheme.accent),
+                    ),
+                  ),
+                ],
+              ),
+              tooltip: '${vm.pendingTasks.length} pending choice(s)',
+            ),
 
           // Gear menu — Edit Character + future settings
           _GearMenuButton(character: character, vm: vm),

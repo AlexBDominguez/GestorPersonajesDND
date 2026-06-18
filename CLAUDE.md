@@ -14,6 +14,12 @@ Never include `Co-Authored-By:` lines in commit messages.
 
 ---
 
+## Local environment
+
+**The real backend + MySQL database run on the user's VPS, not locally.** There is no local Docker MySQL/backend with production-equivalent data — do not attempt to start `docker compose up -d mysql-db` / `backend` to "test" or "verify" a change or to inspect data; any local container is empty/stale and not representative. To check live data or behavior, ask the user to run the query/check on the VPS, or reason from the source code instead.
+
+---
+
 ## Commands
 
 ### Backend (from `backend/`)

@@ -624,10 +624,14 @@ class _AbilityDropdown extends StatelessWidget {
           value: value,
           hint: Text('Select ability…',
               style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13)),
+          // value = abreviatura ('STR'), no el nombre completo — PendingTaskService.java
+          // espera 'ASI:STR:+2' / 'ASI:STR:+1+DEX:+1'; enviar el nombre completo
+          // ("Strength") hacía que el backend insertara una clave inválida y la
+          // mejora de característica nunca se aplicara.
           items: kAbilityScoreNames
-              .where((a) => !exclude.contains(a.name))
+              .where((a) => !exclude.contains(a.description))
               .map((a) => DropdownMenuItem<String>(
-                    value: a.name,
+                    value: a.description,
                     child: Text(a.name,
                         style: GoogleFonts.lato(
                             color: AppTheme.textPrimary, fontSize: 13)),

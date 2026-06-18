@@ -142,11 +142,13 @@ public class PlayerCharacterController {
         }
 
     @PostMapping("/{id}/level-up")
-    public ResponseEntity<String> levelUp(@PathVariable Long id){
+    public ResponseEntity<String> levelUp(
+            @PathVariable Long id,
+            @RequestParam(required = false) Integer hpRoll){
         verifyCharacterOwnership(id);
-        playerCharacterService.levelUp(id);
+        playerCharacterService.levelUp(id, hpRoll);
         return ResponseEntity.ok("Character leveled up!");
-    } 
+    }
 
     // ========== ENDPOINTS PARA GESTIÓN DE COMBATE Y ESTADO ==========
 

@@ -63,6 +63,7 @@ class CharacterService {
     List<String>? classSkillIndices,
     List<String>? expertiseSkillNames,
     List<String>? selectedSources,
+    Map<int, int>? hpRolls,
     bool useEncumbrance = false,
     String abilityDisplayMode = 'SCORES_TOP',
   }) async {
@@ -92,6 +93,8 @@ class CharacterService {
       if (classSkillIndices != null && classSkillIndices.isNotEmpty) 'classSkillIndices': classSkillIndices,
       if (expertiseSkillNames != null && expertiseSkillNames.isNotEmpty) 'expertiseSkillNames': expertiseSkillNames,
       if (selectedSources != null && selectedSources.isNotEmpty) 'selectedSources': selectedSources,
+      if (hpRolls != null && hpRolls.isNotEmpty)
+        'hpRolls': hpRolls.map((level, roll) => MapEntry(level.toString(), roll)),
     };
     final res = await _api.post(ApiConfig.charactersPath, body: body);
     if (res.statusCode == 200 || res.statusCode == 201) {
@@ -284,8 +287,10 @@ class CharacterService {
     }
 
     // POST level-up
-    Future<void> levelUp(int characterId) async {
-      final res = await _api.post('${ApiConfig.charactersPath}/$characterId/level-up');
+    Future<void> levelUp(int characterId, {int? hpRoll}) async {
+      final path = '${ApiConfig.charactersPath}/$characterId/level-up'
+          '${hpRoll != null ? '?hpRoll=$hpRoll' : ''}';
+      final res = await _api.post(path);
       if (res.statusCode == 200) return;
       if (res.statusCode == 400) {
         final msg = res.body.isNotEmpty ? res.body : 'Character is already at max level';
@@ -348,6 +353,21 @@ class CharacterService {
       if (res.statusCode == 403) throw Exception('Access denied');
       if (res.statusCode == 404) throw Exception('Character not found');
       throw Exception('Failed to update profile (${res.statusCode})');
+    }
+
+    // PUT skill proficiency (used when editing class skill choices for an existing character)
+    Future<void> setSkillProficiency({
+      required int characterId,
+      required int skillId,
+      required bool proficient,
+    }) async {
+      final res = await _api.put(
+        '${ApiConfig.charactersPath}/$characterId/skills/$skillId/proficiency?proficient=$proficient',
+      );
+      if (res.statusCode == 200) return;
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      throw Exception('Failed to update skill proficiency (${res.statusCode})');
     }
 }
 

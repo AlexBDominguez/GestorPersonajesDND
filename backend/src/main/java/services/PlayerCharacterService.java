@@ -189,16 +189,29 @@ public class PlayerCharacterService {
                 .orElseThrow(() -> new RuntimeException("DndClass not found"));
         playerCharacter.setDndClass(dndClass);
 
+        // Tiradas de HP por nivel hechas en el wizard (nivel → valor tirado). Si un nivel
+        // no tiene tirada aquí, su contribución se calcula con la media del dado.
+        Map<Integer, Integer> hpRolls = dto.getHpRolls() != null
+                ? new HashMap<>(dto.getHpRolls())
+                : new HashMap<>();
+        playerCharacter.setHpRolls(hpRolls);
+
         //Solo calcular si el DTO no trae HP válido
         if (dto.getMaxHp() <= 0 ) {
-            //Calcular HP inicial escalado al nivel: nivel 1 = dado máximo + conMod; niveles adicionales = media (hitDie/2+1) + conMod
+            //Calcular HP inicial escalado al nivel: nivel 1 = dado máximo + conMod;
+            //niveles adicionales = tirada del jugador (si existe) o media (hitDie/2+1), + conMod
             int conScore = dto.getAbilityScores() != null
                     ? dto.getAbilityScores().getOrDefault("con", 10)
                     : 10;
             int conMod = (conScore - 10) / 2;
             int level = playerCharacter.getLevel() > 0 ? playerCharacter.getLevel() : 1;
             int hitDie = dndClass.getHitDie();
-            int calcHp = (hitDie + conMod) + ((hitDie / 2 + 1 + conMod) * (level - 1));
+            int calcHp = hitDie + conMod;
+            for (int lvl = 2; lvl <= level; lvl++) {
+                Integer roll = hpRolls.get(lvl);
+                int gain = (roll != null ? roll : (hitDie / 2 + 1)) + conMod;
+                calcHp += Math.max(1, gain);
+            }
             int startingHp = Math.max(level, calcHp);
             playerCharacter.setMaxHP(startingHp);
             playerCharacter.setCurrentHP(startingHp);
@@ -441,6 +454,7 @@ public class PlayerCharacterService {
         dto.setBackstory(playerCharacter.getBackstory());
         dto.setCurrentHp(playerCharacter.getCurrentHP());
         dto.setMaxHp(playerCharacter.getMaxHP());
+        dto.setHpRolls(playerCharacter.getHpRolls());
         dto.setUserId(playerCharacter.getUser() != null ? playerCharacter.getUser().getId():null);
 
         
@@ -933,6 +947,11 @@ public class PlayerCharacterService {
 
     @Transactional
     public PlayerCharacter levelUp(Long characterId) {
+        return levelUp(characterId, null);
+    }
+
+    @Transactional
+    public PlayerCharacter levelUp(Long characterId, Integer hpRoll) {
         PlayerCharacter character = characterRepository.findById(characterId)
                 .orElseThrow(() -> new RuntimeException("Character not found"));
 
@@ -943,13 +962,22 @@ public class PlayerCharacterService {
         int newLevel = character.getLevel() + 1;
         character.setLevel(newLevel);
 
+        if (hpRoll != null) {
+            Map<Integer, Integer> hpRolls = character.getHpRolls();
+            if (hpRolls == null) {
+                hpRolls = new HashMap<>();
+            }
+            hpRolls.put(newLevel, hpRoll);
+            character.setHpRolls(hpRolls);
+        }
+
         System.out.println("=== Leveling up " + character.getName() + " to level " + newLevel + " ===");
 
         // 1. Actualizar proficiency bonus
         updateProficiency(character);
 
         // 2. Procesar ClassLevelFeatures (sistema de mecánicas)
-        processClassLevelFeatures(character, newLevel);
+        processClassLevelFeatures(character, newLevel, hpRoll);
 
         // 3. Añadir ClassFeatures descriptivas del API
         addClassFeaturesFromAPI(character, newLevel);
@@ -1237,7 +1265,7 @@ public class PlayerCharacterService {
         System.out.println("Proficiency bonus updated to: " + proficiency);
     }
 
-    private void processClassLevelFeatures(PlayerCharacter character, int newLevel) {
+    private void processClassLevelFeatures(PlayerCharacter character, int newLevel, Integer hpRoll) {
         DndClass dndClass = character.getDndClass();
 
         if (dndClass == null) {
@@ -1267,7 +1295,7 @@ public class PlayerCharacterService {
             if (feature.isRequiresChoice()) {
                 createTask(character, newLevel, feature);
             } else {
-                applyAutomaticFeature(character, newLevel, feature);
+                applyAutomaticFeature(character, newLevel, feature, hpRoll);
             }
         }
 
@@ -1630,12 +1658,12 @@ public class PlayerCharacterService {
                 + " for " + character.getName());
     }
 
-    private void applyAutomaticFeature(PlayerCharacter character, int level, ClassLevelFeature feature) {
+    private void applyAutomaticFeature(PlayerCharacter character, int level, ClassLevelFeature feature, Integer hpRoll) {
         System.out.println("Applying automatic feature: " + feature.getType());
 
         switch (feature.getType()) {
             case HP_INCREASE:
-                addHitPoints(character);
+                addHitPoints(character, hpRoll);
                 break;
 
             case SPELL_SLOT_UPDATE:
@@ -1651,7 +1679,7 @@ public class PlayerCharacterService {
         }
     }
 
-    private void addHitPoints(PlayerCharacter character) {
+    private void addHitPoints(PlayerCharacter character, Integer hpRoll) {
         DndClass dndClass = character.getDndClass();
 
         if (dndClass == null) {
@@ -1660,12 +1688,13 @@ public class PlayerCharacterService {
 
         int hitDie = dndClass.getHitDie();
 
-        // Fórmula: promedio del dado + modificador CON
         int constitutionModifier = calculateAbilityModifier(
                 character.getAbilityScores().getOrDefault("con", 10)
         );
 
-        int hpGain = (hitDie / 2) + 1 + constitutionModifier;
+        // Si el jugador tiró el dado de HP manualmente en el wizard, usar esa tirada;
+        // si no, usar la media del dado (comportamiento previo).
+        int hpGain = (hpRoll != null ? hpRoll : (hitDie / 2) + 1) + constitutionModifier;
 
         // Mínimo 1 HP por nivel
         if (hpGain < 1) {
