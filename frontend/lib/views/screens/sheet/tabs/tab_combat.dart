@@ -1237,26 +1237,40 @@ class _SpellRow extends StatelessWidget {
 
 // ── Spell Detail Sheet ─────────────────────────────────────────────────────────
 
-class _SpellDetailSheet extends StatelessWidget {
+class _SpellDetailSheet extends StatefulWidget {
   final CharacterSpell spell;
   final CharacterSheetViewModel vm;
   const _SpellDetailSheet({required this.spell, required this.vm});
 
   @override
+  State<_SpellDetailSheet> createState() => _SpellDetailSheetState();
+}
+
+class _SpellDetailSheetState extends State<_SpellDetailSheet> {
+  late int _selectedLevel = widget.spell.level;
+
+  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: vm,
+      listenable: widget.vm,
       builder: (context, _) => _buildContent(context),
     );
   }
 
   Widget _buildContent(BuildContext context) {
+    final spell = widget.spell;
+    final vm = widget.vm;
     final isCantrip = spell.isCantrip;
-    final level     = spell.level;
+    final level     = isCantrip ? spell.level : _selectedLevel;
     final maxSl     = vm.maxSlots(level);
     final usedSl    = vm.usedSlots(level);
     final hasSlots  = vm.availableSlots(level) > 0;
     final canCast   = isCantrip || hasSlots;
+    final maxSlotLevel = vm.character?.spellSlots
+            .where((s) => s.maxSlots > 0)
+            .map((s) => s.spellLevel)
+            .fold(0, (a, b) => a > b ? a : b) ??
+        0;
 
     return DraggableScrollableSheet(
       expand: false,
@@ -1296,7 +1310,7 @@ class _SpellDetailSheet extends StatelessWidget {
                             fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
                     Text(
-                      '${spell.levelLabel}'
+                      '${level == 0 ? "Cantrip" : "Level $level"}'
                       '${spell.school != null ? ' · ${spell.school}' : ''}',
                       style: GoogleFonts.lato(
                           color: AppTheme.textSecondary, fontSize: 13),
@@ -1337,6 +1351,20 @@ class _SpellDetailSheet extends StatelessWidget {
               ),
             ],
           ]),
+
+          // Cast-at-level picker (upcast): only shown when the character has
+          // slots above the spell's base level.
+          if (!isCantrip && maxSlotLevel > spell.level) ...[
+            const SizedBox(height: 12),
+            Wrap(spacing: 6, runSpacing: 6, children: [
+              for (int lvl = spell.level; lvl <= maxSlotLevel; lvl++)
+                ChoiceChip(
+                  label: Text('Lv.$lvl'),
+                  selected: _selectedLevel == lvl,
+                  onSelected: (_) => setState(() => _selectedLevel = lvl),
+                ),
+            ]),
+          ],
 
           // Interactive slot tracker
           if (!isCantrip && maxSl > 0) ...[
@@ -1382,6 +1410,9 @@ class _SpellDetailSheet extends StatelessWidget {
           if (spell.duration != null) _DetailRow('Duration', spell.duration!),
           if (spell.components != null)
             _DetailRow('Components', spell.components!),
+          if (spell.damageAtLevel(level) != null)
+            _DetailRow('Damage',
+                '${spell.damageAtLevel(level)}${spell.damageType != null ? ' ${spell.damageType}' : ''}'),
           if (!isCantrip)
             _DetailRow('Status', spell.prepared ? 'Prepared ✓' : 'Learned'),
           if (spell.description != null && spell.description!.isNotEmpty) ...[

@@ -1,5 +1,7 @@
 package dto;
 
+import java.util.Map;
+
 public class CharacterSpellSummaryDto {
     private Long id; //ID del spell
     private String name;
@@ -17,6 +19,9 @@ public class CharacterSpellSummaryDto {
     private String dcType;
     private String damageType;
     private String damageBase;
+    // Daño por nivel de lanzamiento; el frontend la usa para mostrar el hechizo repetido
+    // en cada nivel de slot disponible (upcast) con el daño correcto en cada uno.
+    private Map<Integer, String> damageAtSlotLevel;
 
     public CharacterSpellSummaryDto() {}
 
@@ -127,5 +132,7 @@ public class CharacterSpellSummaryDto {
 
     public String getDamageBase() { return damageBase; }
     public void setDamageBase(String damageBase) { this.damageBase = damageBase; }
-    
+
+    public Map<Integer, String> getDamageAtSlotLevel() { return damageAtSlotLevel; }
+    public void setDamageAtSlotLevel(Map<Integer, String> damageAtSlotLevel) { this.damageAtSlotLevel = damageAtSlotLevel; }
 }

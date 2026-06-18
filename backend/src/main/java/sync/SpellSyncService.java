@@ -93,7 +93,9 @@ public class SpellSyncService {
                 if (damageTypeMap != null) {
                     spell.setDamageType((String) damageTypeMap.get("name"));
                 }
-                // Base damage: slot-level for leveled spells, character-level for cantrips
+                // Base damage: slot-level for leveled spells, character-level for cantrips.
+                // The full table is kept too (damageAtSlotLevel) so the sheet can show the
+                // correct damage when a spell is cast/upcast at a different level.
                 Map<String, String> slotDmg = (Map<String, String>) damage.get("damage_at_slot_level");
                 Map<String, String> charDmg = (Map<String, String>) damage.get("damage_at_character_level");
                 if (slotDmg != null && !slotDmg.isEmpty()) {
@@ -101,10 +103,12 @@ public class SpellSyncService {
                     String base = slotDmg.get(String.valueOf(spellLevel));
                     if (base == null) base = slotDmg.values().iterator().next();
                     spell.setDamageBase(base);
+                    spell.setDamageAtSlotLevel(toIntKeyedMap(slotDmg));
                 } else if (charDmg != null && !charDmg.isEmpty()) {
                     String base = charDmg.get("1");
                     if (base == null) base = charDmg.values().iterator().next();
                     spell.setDamageBase(base);
+                    spell.setDamageAtSlotLevel(toIntKeyedMap(charDmg));
                 }
             }
 
@@ -113,6 +117,17 @@ public class SpellSyncService {
         }
 
         System.out.println("Spells synchronized correctly.");
+    }
+
+    /** Converts the API's String-keyed level map ("1", "2", ...) to Integer keys. */
+    private Map<Integer, String> toIntKeyedMap(Map<String, String> stringKeyed) {
+        Map<Integer, String> result = new java.util.HashMap<>();
+        for (Map.Entry<String, String> entry : stringKeyed.entrySet()) {
+            try {
+                result.put(Integer.parseInt(entry.getKey()), entry.getValue());
+            } catch (NumberFormatException ignored) {}
+        }
+        return result;
     }
 }
 

@@ -591,6 +591,7 @@ public class PlayerCharacterService {
             spellDto.setDcType(s.getDcType());
             spellDto.setDamageType(s.getDamageType());
             spellDto.setDamageBase(s.getDamageBase());
+            spellDto.setDamageAtSlotLevel(s.getDamageAtSlotLevel());
             spellDtos.add(spellDto);
         }
         dto.setCharacterSpells(spellDtos);

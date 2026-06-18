@@ -22,10 +22,25 @@ class TabSpells extends StatelessWidget{
   Widget build(BuildContext context) {
     final spells = vm.currentSpells;
 
-    //Agrupa spells por nivel
+    // Nivel de slot más alto que el personaje puede usar actualmente.
+    final maxSlotLevel = character.spellSlots
+        .where((s) => s.maxSlots > 0)
+        .map((s) => s.spellLevel)
+        .fold(0, (a, b) => a > b ? a : b);
+
+    // Agrupa spells por nivel. Los hechizos con nivel (no cantrips) se repiten en
+    // cada nivel de slot al que se pueden lanzar (upcast), para que el CAST de cada
+    // fila gaste el slot de ese nivel concreto y el daño mostrado sea el correcto.
     final Map<int, List<CharacterSpell>> byLevel = {};
     for (final s in spells) {
-      byLevel.putIfAbsent(s.level, () => []).add(s);
+      if (s.isCantrip) {
+        byLevel.putIfAbsent(0, () => []).add(s);
+      } else {
+        final upTo = s.level > maxSlotLevel ? s.level : maxSlotLevel;
+        for (int lvl = s.level; lvl <= upTo; lvl++) {
+          byLevel.putIfAbsent(lvl, () => []).add(s);
+        }
+      }
     }
     final sortedLevels = byLevel.keys.toList()..sort();
 
@@ -358,7 +373,7 @@ class _SpellRow extends StatelessWidget {
               const SizedBox(width: _kColGap),
               SizedBox(
                 width: _kDmgW,
-                child: _DamageCell(spell: spell),
+                child: _DamageCell(spell: spell, castLevel: level),
               ),
               const SizedBox(width: _kCastPad),
               _CastButton(
@@ -391,9 +406,9 @@ class _SpellRow extends StatelessWidget {
       builder: (_) => ListenableBuilder(
         listenable: vm,
         builder: (ctx, __) {
-          final maxSl2 = vm.maxSlots(spell.level);
-          final usedSl2 = vm.usedSlots(spell.level);
-          final hasSlots2 = vm.availableSlots(spell.level) > 0;
+          final maxSl2 = vm.maxSlots(level);
+          final usedSl2 = vm.usedSlots(level);
+          final hasSlots2 = vm.availableSlots(level) > 0;
           final canCast2 = spell.isCantrip || hasSlots2;
           return DraggableScrollableSheet(
             expand: false,
@@ -428,7 +443,7 @@ class _SpellRow extends StatelessWidget {
                               fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
                       Text(
-                        '${spell.levelLabel}'
+                        '${level == 0 ? "Cantrip" : "Level $level"}'
                         '${spell.school != null ? ' · ${spell.school}' : ''}'
                         ' · ${spell.sourceLabel}',
                         style: GoogleFonts.lato(
@@ -442,10 +457,10 @@ class _SpellRow extends StatelessWidget {
                       width: 72, height: 38,
                       child: OutlinedButton(
                         onPressed: canCast2 ? () async {
-                          final ok = await vm.castSpell(spell.level);
+                          final ok = await vm.castSpell(level);
                           if (!ok && ctx.mounted) {
                             ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                              content: Text('No slots for level ${spell.level}'),
+                              content: Text('No slots for level $level'),
                               backgroundColor: AppTheme.accent,
                               duration: const Duration(seconds: 2)));
                           }
@@ -466,7 +481,7 @@ class _SpellRow extends StatelessWidget {
                 if (!spell.isCantrip && maxSl2 > 0) ...[
                   const SizedBox(height: 12),
                   Row(children: [
-                    Text('Slots Lv.${spell.level}',
+                    Text('Slots Lv.$level',
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary,
                             fontSize: 14,
@@ -478,9 +493,9 @@ class _SpellRow extends StatelessWidget {
                       return GestureDetector(
                         onTap: () async {
                           if (isFull) {
-                            await vm.restoreSpellSlot(spell.level);
+                            await vm.restoreSpellSlot(level);
                           } else {
-                            await vm.castSpell(spell.level);
+                            await vm.castSpell(level);
                           }
                         },
                         child: Padding(
@@ -504,6 +519,9 @@ class _SpellRow extends StatelessWidget {
                   _DetailRow('Duration', spell.duration!),
                 if (spell.components != null)
                   _DetailRow('Components', spell.components!),
+                if (spell.damageAtLevel(level) != null)
+                  _DetailRow('Damage',
+                      '${spell.damageAtLevel(level)}${spell.damageType != null ? ' ${spell.damageType}' : ''}'),
                 if (!spell.isCantrip)
                   _DetailRow('Status', spell.prepared ? 'Prepared ✓' : 'Learned'),
                 if (spell.description != null && spell.description!.isNotEmpty) ...[
@@ -612,13 +630,14 @@ class _CastButton extends StatelessWidget {
 // ── Damage cell: dice above, type below (same size, uppercase) ────────────────
 class _DamageCell extends StatelessWidget {
   final CharacterSpell spell;
-  const _DamageCell({required this.spell});
+  final int? castLevel;
+  const _DamageCell({required this.spell, this.castLevel});
 
   static const _kColor = Color(0xFFCB7A48);
 
   @override
   Widget build(BuildContext context) {
-    final base = spell.damageBase;
+    final base = castLevel != null ? spell.damageAtLevel(castLevel!) : spell.damageBase;
     final type = spell.damageType;
     if (base == null || base.isEmpty) {
       return Text('—', textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600));

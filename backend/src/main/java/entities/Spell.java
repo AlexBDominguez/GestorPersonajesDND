@@ -1,6 +1,7 @@
 package entities;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import jakarta.persistence.*;
@@ -39,6 +40,14 @@ public class Spell {
     private String damageType;   // "Fire", "Cold", etc.
     private String damageBase;   // base damage: "8d6", "1d10", etc.
     private boolean extendedDataSynced = false;
+
+    // Daño por nivel de lanzamiento (hechizos con nivel) o por nivel de personaje (cantrips).
+    // Permite mostrar el daño correcto cuando el hechizo se lanza a un nivel superior (upcast).
+    @ElementCollection
+    @CollectionTable(name = "spell_damage_at_slot_level", joinColumns = @JoinColumn(name = "spell_id"))
+    @MapKeyColumn(name = "slot_level")
+    @Column(name = "damage")
+    private Map<Integer, String> damageAtSlotLevel;
 
 
     @OneToMany(mappedBy = "spell")
@@ -159,6 +168,9 @@ public class Spell {
 
         public String getDamageBase() { return damageBase; }
         public void setDamageBase(String damageBase) { this.damageBase = damageBase; }
+
+        public Map<Integer, String> getDamageAtSlotLevel() { return damageAtSlotLevel; }
+        public void setDamageAtSlotLevel(Map<Integer, String> damageAtSlotLevel) { this.damageAtSlotLevel = damageAtSlotLevel; }
 
         public boolean isExtendedDataSynced() { return extendedDataSynced; }
         public void setExtendedDataSynced(boolean extendedDataSynced) { this.extendedDataSynced = extendedDataSynced; }

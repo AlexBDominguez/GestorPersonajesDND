@@ -16,6 +16,7 @@ class CharacterSpell {
   final String? dcType;      // "DEX", "CON", etc. or null (attack)
   final String? damageType;  // "Fire", "Cold", etc.
   final String? damageBase;  // "8d6", "1d10", etc.
+  final Map<int, String> damageAtSlotLevel; // nivel de slot -> daño (para upcast)
 
 
   const CharacterSpell({
@@ -36,9 +37,15 @@ class CharacterSpell {
     this.dcType,
     this.damageType,
     this.damageBase,
+    this.damageAtSlotLevel = const {},
   });
 
   bool get isCantrip => level == 0;
+
+  /// Daño en un nivel de lanzamiento concreto (para upcast); cae a [damageBase] si
+  /// ese nivel no está en la tabla de escalado.
+  String? damageAtLevel(int castLevel) =>
+      damageAtSlotLevel[castLevel] ?? damageBase;
 
   CharacterSpell copyWith({bool? prepared}) => CharacterSpell(
     id: id, spellId: spellId, name: name, level: level,
@@ -47,6 +54,7 @@ class CharacterSpell {
     prepared: prepared ?? this.prepared, learned: learned,
     spellSource: spellSource, attackType: attackType, dcType: dcType,
     damageType: damageType, damageBase: damageBase,
+    damageAtSlotLevel: damageAtSlotLevel,
   );
 
   String get levelLabel => isCantrip ? 'Cantrip' : 'Level $level';
@@ -78,5 +86,9 @@ class CharacterSpell {
     dcType: j['dcType'] as String?,
     damageType: j['damageType'] as String?,
     damageBase: j['damageBase'] as String?,
+    damageAtSlotLevel: (j['damageAtSlotLevel'] as Map<String, dynamic>?)?.map(
+          (k, v) => MapEntry(int.parse(k), v as String),
+        ) ??
+        const {},
   );
 }
