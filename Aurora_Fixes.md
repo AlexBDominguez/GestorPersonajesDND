@@ -135,6 +135,29 @@ Permitir que los administradores creen contenido personalizado directamente desd
 
 ---
 
+### 16. Hechizos de Aurora sin datos de combate (Hit/DC, daño, escalado) — necesita parseador de descripción
+**Prioridad: Media-Alta** — Para asignar a otro agente
+
+Confirmado (2026-06-18): los hechizos sincronizados desde Aurora (no-PHB) llegan a la base de datos sin `attackType`, `dcType`, `damageType`, `damageBase` ni la tabla de escalado por nivel (`damageAtSlotLevel`, ver punto #4 ya resuelto para PHB). Está documentado como limitación conocida en `AuroraSpellMapper.java` ("Combat fields are left null — they require per-spell analysis").
+
+**Causa de fondo:** la API pública de D&D 5e da estos datos en JSON estructurado y uniforme (`damage.damage_at_slot_level`, `dc.dc_type`, `attack_type`...). Aurora, en cambio, solo trae la descripción del hechizo como texto libre, sin esa estructura — cada sourcebook describe el daño/tirada de forma distinta.
+
+**Lo que hace falta:** un parseador que extraiga de la descripción de cada hechizo de Aurora:
+- Si es de ataque (ranged/melee) o de tirada de salvación (y de qué habilidad).
+- Tipo y dados de daño base.
+- Cómo escala el daño con el nivel de lanzamiento (cuando aplica — algunos hechizos escalan con más dados, otros con más "proyectiles/efectos" como Magic Missile/Scorching Ray, que ni siquiera la API pública resuelve bien, ver hallazgo de hoy).
+
+**Por qué es más que un fix puntual:** el usuario quiere en el futuro un panel de admin para crear contenido nuevo (clases, razas, hechizos...) directamente desde la app (ver #9). Este parseador no debería ser un script suelto solo para Aurora, sino parte de una infraestructura común de extracción/normalización de datos de reglas, reutilizable tanto para el sync de Aurora como para lo que un admin meta a mano. Vale la pena diseñarlo pensando en ambos casos a la vez, no solo en tapar el agujero de Aurora.
+
+---
+
+### 17. Pestaña Combat no se actualiza igual que Spells al añadir hechizos nuevos
+**Prioridad: Media**
+
+Confirmado (2026-06-18): al añadir hechizos nuevos a un personaje, la pestaña **Spells** los muestra correctamente, pero la pestaña **Combat** no — por ejemplo, Scorching Ray y Magic Missile no aparecen ahí tras añadirlos. Pendiente de investigar la causa (¿filtro distinto de qué hechizos se listan en Combat? ¿caché/estado no se refresca igual que en Spells?).
+
+---
+
 ## 🧹 Deuda técnica
 
 ### 10. Revisar y reemplazar usos de `withOpacity`
