@@ -177,6 +177,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       abilityScores[key] = char.abilityScores[key] ?? 10;
     }
     scoreMethod = AbilityScoreMethod.manual;
+    // Necesario para poder resolver nombre de skill → ID al sincronizar Expertise
+    // ganada en este level-up (_syncExpertiseChanges en _submitEdit()).
+    _editCharSkills = char.skills;
     _currentStep = WizardStep.dndClass;
   }
 
@@ -751,6 +754,40 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   /// (snapshot tomado por _prePopulateClassSkillsForEdit). Permite diffear
   /// contra _classSkillIndices al guardar y sincronizar solo lo que cambió.
   Set<String> _originalClassSkillIndices = {};
+
+  /// En modo edición: pre-pobla los picks de Expertise (EXPERTISE_PICK_n_level) a partir
+  /// de las skills con expertise=true en el personaje. Necesario porque, igual que las
+  /// class skills, Expertise se aplica directamente en la creación (PlayerCharacterService
+  /// .create(), vía dto.getExpertiseSkillNames()) y NUNCA pasa por una PendingTask — por
+  /// eso _prePopulateFeatureChoicesForEdit() (que solo lee PendingTasks) nunca encuentra
+  /// nada que restaurar y el picker aparecía vacío al editar.
+  void _prePopulateExpertiseForEdit() {
+    if (!_editMode || selectedClass == null || _editCharSkills.isEmpty) return;
+
+    final expertNames = _editCharSkills.where((s) => s.expertise).map((s) => s.skillName).toList();
+    if (expertNames.isEmpty) return;
+
+    final expertiseConfigs = allClassFeatureChoices.where((c) => c.type == 'EXPERTISE').toList()
+      ..sort((a, b) => a.level.compareTo(b.level));
+
+    int idx = 0;
+    for (final config in expertiseConfigs) {
+      final picks = <String>[];
+      for (int i = 0; i < config.pickCount && idx < expertNames.length; i++, idx++) {
+        featureChoices['EXPERTISE_PICK_${i}_${config.level}'] = expertNames[idx];
+        picks.add(expertNames[idx]);
+      }
+      if (picks.isNotEmpty) featureChoices[config.key] = picks.join(', ');
+    }
+    // Snapshot — usado en _submitEdit() para detectar qué skills de expertise
+    // añadió/quitó el usuario y sincronizar solo esos cambios.
+    _originalExpertiseSkillNames = expertNames.take(idx).toSet();
+    notifyListeners();
+  }
+
+  /// Skills con expertise tal como estaban al entrar en modo edición (snapshot tomado
+  /// por _prePopulateExpertiseForEdit). Permite diffear al guardar.
+  Set<String> _originalExpertiseSkillNames = {};
 
   /// Skills otorgadas por el background seleccionado actualmente (indices normalizados).
   /// Usadas por el selector de skills de clase para bloquear las ya cubiertas.
@@ -1698,6 +1735,7 @@ void toggleItem(int itemId) {
     await loadClasses();     // also triggers _loadSubclassesFor → auto-selects subclass
     await loadBackgrounds();
     _prePopulateClassSkillsForEdit(); // cross-reference skills una vez clase + background están listos
+    _prePopulateExpertiseForEdit();
     await loadRaces();
     if (isSpellcaster) await loadAvailableSpells();
     await _prePopulateFeatureChoicesForEdit();
@@ -1901,6 +1939,11 @@ void toggleItem(int itemId) {
         await _syncClassSkillChanges();
       }
 
+      // 6. Sincronizar Expertise: tanto en edición (cambios sobre lo ya elegido) como en
+      // nivel-up (nueva Expertise ganada al nivel nuevo, p.ej. Rogue nivel 6) — Expertise
+      // nunca pasa por PendingTask, así que sin esto no se guarda en ninguno de los dos modos.
+      await _syncExpertiseChanges();
+
       _saveSuccess = true;
     } catch (e) {
       _setError('Error saving changes: $e');
@@ -1933,6 +1976,41 @@ void toggleItem(int itemId) {
 
     for (final idx in added)   { await apply(idx, true); }
     for (final idx in removed) { await apply(idx, false); }
+  }
+
+  /// Nombres de skill con Expertise según las claves EXPERTISE_PICK_* actualmente
+  /// presentes en featureChoices (todas las que el wizard tiene cargadas — en modo
+  /// edición incluye las ya existentes gracias a _prePopulateExpertiseForEdit; en modo
+  /// nivel-up solo las del nivel nuevo, ya que classFeatureChoices filtra niveles viejos).
+  Set<String> get _currentExpertiseSkillNames => featureChoices.entries
+      .where((e) => e.key.contains('EXPERTISE_PICK'))
+      .map((e) => e.value)
+      .toSet();
+
+  /// Sincroniza con el backend la Expertise que el usuario añadió o quitó, comparando
+  /// contra el snapshot tomado al cargar el wizard (_originalExpertiseSkillNames, vacío
+  /// en modo nivel-up ya que ahí solo importan los picks nuevos). Expertise se aplica
+  /// directamente en la creación (igual que las class skills) y nunca pasa por una
+  /// PendingTask, así que _autoResolveFeatureChoices() nunca la resuelve por su cuenta.
+  Future<void> _syncExpertiseChanges() async {
+    if (_editCharacterId == null) return;
+    final current = _currentExpertiseSkillNames;
+    final added   = current.difference(_originalExpertiseSkillNames);
+    final removed = _originalExpertiseSkillNames.difference(current);
+    if (added.isEmpty && removed.isEmpty) return;
+
+    Future<void> apply(String skillName, bool expertise) async {
+      final skill = _editCharSkills.where((s) => s.skillName.toLowerCase() == skillName.toLowerCase()).firstOrNull;
+      if (skill?.id == null) return; // skill no encontrada en el personaje — no se puede resolver el ID
+      await _charService.setSkillExpertise(
+        characterId: _editCharacterId!,
+        skillId: skill!.id!,
+        expertise: expertise,
+      );
+    }
+
+    for (final name in added)   { await apply(name, true); }
+    for (final name in removed) { await apply(name, false); }
   }
 
   /// Devuelve la abreviatura de 3 letras (p.ej. 'STR') de un nombre completo

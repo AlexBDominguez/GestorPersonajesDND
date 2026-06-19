@@ -369,5 +369,20 @@ class CharacterService {
       if (res.statusCode == 403) throw Exception('Access denied');
       throw Exception('Failed to update skill proficiency (${res.statusCode})');
     }
+
+    // PUT skill expertise (used when editing Expertise choices for an existing character)
+    Future<void> setSkillExpertise({
+      required int characterId,
+      required int skillId,
+      required bool expertise,
+    }) async {
+      final res = await _api.put(
+        '${ApiConfig.charactersPath}/$characterId/skills/$skillId/expertise?expertise=$expertise',
+      );
+      if (res.statusCode == 200) return;
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      throw Exception('Failed to update skill expertise (${res.statusCode})');
+    }
 }
 

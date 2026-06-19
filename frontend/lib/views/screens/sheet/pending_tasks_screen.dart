@@ -36,7 +36,7 @@ class PendingTasksScreen extends StatelessWidget {
                   const Icon(Icons.check_circle_outline,
                     color: AppTheme.primary, size: 52),
                   const SizedBox(height: 16),
-                  Text('All chocies resolved!',
+                  Text('All choices resolved!',
                     style: GoogleFonts.libreBaskerville(
                       color: AppTheme.primary,
                       fontSize: 16,
