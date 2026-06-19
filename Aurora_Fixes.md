@@ -6,7 +6,7 @@ Lista de bugs y mejoras pendientes, organizados por área. Cada entrada incluye 
 
 ## 🐛 Creación y edición de personajes
 
-### 1. La edición de un personaje reinicia datos ya configurados
+### 1. La edición de un personaje reinicia datos ya configurados ✅HECHO.
 **Prioridad: Alta**
 
 Al entrar en modo edición del wizard (`frontend/lib/views/screens/wizard/`), algunos datos se pierden o se recalculan desde cero (skills, expertise, puntos de vida y otros valores derivados), en vez de partir del estado real del personaje.
