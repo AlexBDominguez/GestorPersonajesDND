@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
+import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
@@ -70,12 +71,17 @@ class _TabCombatState extends State<TabCombat> {
         // Standard Actions are actions — show them first inside Actions
         _StandardActionsCard(),
         const SizedBox(height: 8),
+        if (c.fightingStyle != null) ...[
+          _FightingStyleBadge(style: c.fightingStyle!),
+          const SizedBox(height: 8),
+        ],
         if (vm.equippedWeapons.where((w) => w.id != vm.offhandWeapon?.id).isNotEmpty) ...[
           _WeaponAttackTable(
             weapons: vm.equippedWeapons
                 .where((w) => w.id != vm.offhandWeapon?.id)
                 .toList(),
             character: c,
+            vm: vm,
           ),
           const SizedBox(height: 8),
         ],
@@ -857,12 +863,57 @@ class _OffhandWeaponCard extends StatelessWidget {
   }
 }
 
+// ── Fighting Style badge ────────────────────────────────────────────────────────
+/// Muestra el Fighting Style elegido con su efecto. Archery/Defense/Dueling/
+/// Two-Weapon Fighting ya se reflejan numéricamente en el resto de la ficha
+/// (AC, ataques, daño); Great Weapon Fighting (reroll de dados) y Protection
+/// (reacción defensiva sobre aliados) no son representables como un número en
+/// esta app, así que al menos se muestran aquí para que el jugador sepa que su
+/// elección no se ha "perdido".
+class _FightingStyleBadge extends StatelessWidget {
+  final String style;
+  const _FightingStyleBadge({required this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    final desc = kFightingStyles
+        .where((o) => o.name.toLowerCase() == style.toLowerCase())
+        .map((o) => o.description)
+        .firstOrNull;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppTheme.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+      ),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Icon(Icons.sports_martial_arts, color: AppTheme.primary, size: 16),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Fighting Style: $style',
+                style: GoogleFonts.libreBaskerville(
+                    color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.bold)),
+            if (desc != null) ...[
+              const SizedBox(height: 2),
+              Text(desc,
+                  style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 11)),
+            ],
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
 // ── Weapon Attack Table ────────────────────────────────────────────────────────
 
 class _WeaponAttackTable extends StatelessWidget {
   final List<InventoryItem> weapons;
   final PlayerCharacter character;
-  const _WeaponAttackTable({required this.weapons, required this.character});
+  final CharacterSheetViewModel vm;
+  const _WeaponAttackTable({required this.weapons, required this.character, required this.vm});
 
   @override
   Widget build(BuildContext context) {
@@ -912,7 +963,7 @@ class _WeaponAttackTable extends StatelessWidget {
             ),
           ]),
         ),
-        ...weapons.map((w) => _WeaponRow(weapon: w, character: character)),
+        ...weapons.map((w) => _WeaponRow(weapon: w, character: character, vm: vm)),
       ]),
     );
   }
@@ -921,13 +972,21 @@ class _WeaponAttackTable extends StatelessWidget {
 class _WeaponRow extends StatelessWidget {
   final InventoryItem weapon;
   final PlayerCharacter character;
-  const _WeaponRow({required this.weapon, required this.character});
+  final CharacterSheetViewModel vm;
+  const _WeaponRow({required this.weapon, required this.character, required this.vm});
 
   bool get _isRanged =>
       weapon.weaponRange?.toLowerCase() == 'ranged';
 
   bool get _isFinesse =>
       weapon.weaponProperties.any((p) => p.toLowerCase().contains('finesse'));
+
+  bool get _isTwoHanded =>
+      weapon.weaponProperties.any((p) => p.toLowerCase().contains('two-handed'));
+
+  /// Dueling: +2 al daño cma cuando empuña un arma a una mano y ninguna otra arma.
+  bool get _duelingApplies =>
+      vm.hasDueling && !_isRanged && !_isTwoHanded && vm.equippedWeapons.length == 1;
 
   int get _abilityMod {
     final str = character.modifier('STR');
@@ -947,7 +1006,7 @@ class _WeaponRow extends StatelessWidget {
   String get _damageText {
     final dice = weapon.damageDice ?? '';
     if (dice.isEmpty) return '—';
-    final mod = _abilityMod;
+    final mod = _abilityMod + (_duelingApplies ? 2 : 0);
     if (mod > 0) return '$dice+$mod';
     if (mod < 0) return '$dice$mod';
     return dice;

@@ -132,10 +132,17 @@ class CharacterSheetViewModel extends ChangeNotifier {
           i.damageDice!.isNotEmpty)
       .firstOrNull;
 
-  /// True si el personaje tiene el fighting style "Two-Weapon Fighting".
+  /// True si el personaje eligió el fighting style "Two-Weapon Fighting".
+  /// Antes comprobaba una ClassFeature con indexName 'two-weapon-fighting' que nunca
+  /// existe — Fighting Style es una elección (PendingTask), no una feature de clase —
+  /// así que esto nunca era true (bug #15 del backlog). Ahora lee el campo real.
   bool get hasTwoWeaponFighting =>
-      _classFeatures.any((f) => f.indexName == 'two-weapon-fighting') ||
-      _subclassFeatures.any((f) => f.indexName == 'two-weapon-fighting');
+      character?.fightingStyle?.toLowerCase() == 'two-weapon fighting';
+
+  /// True si el personaje eligió el fighting style "Dueling" (+2 al daño cuerpo a
+  /// cuerpo cuando empuña un arma a una mano y ninguna otra arma).
+  bool get hasDueling =>
+      character?.fightingStyle?.toLowerCase() == 'dueling';
 
   /// True si el personaje tiene el feat "Dual Wielder".
   bool get hasDualWielderFeat => _characterFeats

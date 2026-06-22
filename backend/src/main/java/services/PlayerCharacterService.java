@@ -512,6 +512,10 @@ public class PlayerCharacterService {
         } else if ("Archery".equalsIgnoreCase(fightingStyle)) {
             fightingStyleRangedBonus = 2;
         }
+        // Expuesto al frontend para Dueling (+2 daño cma con una sola arma) y para
+        // corregir la detección de Two-Weapon Fighting (antes comprobaba una ClassFeature
+        // que nunca existe, ya que el Fighting Style es una elección, no una feature de clase).
+        dto.setFightingStyle(fightingStyle);
 
         // Ability scores efectivos (con overrides de items ya aplicados al personaje)
         dto.setAbilityScores(effectiveScores);

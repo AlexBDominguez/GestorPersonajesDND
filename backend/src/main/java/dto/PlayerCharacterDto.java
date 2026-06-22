@@ -15,6 +15,7 @@ public class PlayerCharacterDto {
     private int maxHp;
     private int currentHp;
     private Map<Integer, Integer> hpRolls;
+    private String fightingStyle;
     private int proficiencyBonus;
     private String backstory;
     private Long backgroundId;
@@ -165,6 +166,14 @@ public class PlayerCharacterDto {
 
     public void setHpRolls(Map<Integer, Integer> hpRolls) {
         this.hpRolls = hpRolls;
+    }
+
+    public String getFightingStyle() {
+        return fightingStyle;
+    }
+
+    public void setFightingStyle(String fightingStyle) {
+        this.fightingStyle = fightingStyle;
     }
 
     public int getCurrentHp() {

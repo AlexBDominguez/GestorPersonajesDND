@@ -21,6 +21,7 @@ class PlayerCharacter{
   final int maxHp;
   final int currentHp;
   final Map<int, int> hpRolls;
+  final String? fightingStyle;
   final int temporaryHp;
   final int proficiencyBonus;
   final int armorClass;
@@ -91,6 +92,7 @@ class PlayerCharacter{
     required this.maxHp,
     required this.currentHp,
     this.hpRolls = const {},
+    this.fightingStyle,
     required this.temporaryHp,
     required this.proficiencyBonus,
     required this.armorClass,
@@ -170,6 +172,7 @@ class PlayerCharacter{
       currentHp:           (j['currentHp'] as num?)?.toInt() ?? 0,
       hpRolls:             (j['hpRolls'] as Map<String, dynamic>? ?? {}).map(
                                (k, v) => MapEntry(int.parse(k), (v as num).toInt())),
+      fightingStyle:       j['fightingStyle'] as String?,
       temporaryHp:         (j['temporaryHP'] as num?)?.toInt() ?? 0,
       proficiencyBonus:    (j['proficiencyBonus'] as num?)?.toInt() ?? 2,
       armorClass:          (j['armorClass'] as num?)?.toInt() ?? 10,
