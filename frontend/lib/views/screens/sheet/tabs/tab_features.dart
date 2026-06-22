@@ -78,6 +78,13 @@ class TabFeatures extends StatelessWidget {
           }(),
         ],
 
+        // Confirmación simple de qué Fighting Style se eligió — siempre visible aquí,
+        // sin repetir el número ya aplicado en tab_combat (ver hallazgo #15 del backlog).
+        if (character.fightingStyle != null) ...[
+          const SizedBox(height: 8),
+          _InfoLine(icon: Icons.sports_martial_arts, text: 'Fighting Style: ${character.fightingStyle}'),
+        ],
+
         const SizedBox(height: 24),
 
         //-- Racial Traits
@@ -643,6 +650,30 @@ class _EmptyCard extends StatelessWidget {
     ]),
   );
 }
+class _InfoLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _InfoLine({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: AppTheme.surfaceVariant),
+    ),
+    child: Row(children: [
+      Icon(icon, color: AppTheme.primary, size: 16),
+      const SizedBox(width: 8),
+      Text(text,
+          style: GoogleFonts.libreBaskerville(
+              color: AppTheme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+    ]),
+  );
+}
+
 class _LoadingRow extends StatelessWidget {
   const _LoadingRow();
   @override

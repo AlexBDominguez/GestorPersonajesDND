@@ -14,6 +14,11 @@ const double _kHitDcW = 62.0;
 const double _kDmgW   = 80.0;
 const double _kColGap =  8.0;
 
+/// Fighting Styles cuyo efecto ya se refleja numéricamente en esta misma pestaña
+/// (AC, ataques, daño) — para estos no se muestra el badge descriptivo, para evitar
+/// que el jugador piense que tiene que sumarlo a mano (ver hallazgo #15 del backlog).
+const _kFightingStylesWithAutoEffect = {'archery', 'defense', 'dueling', 'two-weapon fighting'};
+
 // ── Tab Combat ────────────────────────────────────────────────────────────────
 
 class TabCombat extends StatefulWidget {
@@ -71,7 +76,12 @@ class _TabCombatState extends State<TabCombat> {
         // Standard Actions are actions — show them first inside Actions
         _StandardActionsCard(),
         const SizedBox(height: 8),
-        if (c.fightingStyle != null) ...[
+        // Solo se muestra aquí si el estilo NO tiene ya un efecto numérico automático
+        // reflejado en esta misma pestaña (AC, ataques, daño) — mostrarlo en ambos sitios
+        // confundía al jugador, que podía pensar que tenía que sumarlo a mano (ver #15).
+        // Archery/Defense/Dueling/Two-Weapon Fighting sí lo aplican; el resto (Great Weapon
+        // Fighting, Protection, y los de Tasha's) no son representables como número aquí.
+        if (c.fightingStyle != null && !_kFightingStylesWithAutoEffect.contains(c.fightingStyle!.toLowerCase())) ...[
           _FightingStyleBadge(style: c.fightingStyle!),
           const SizedBox(height: 8),
         ],

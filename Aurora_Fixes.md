@@ -24,7 +24,7 @@ Al entrar en modo edición del wizard (`frontend/lib/views/screens/wizard/`), al
 - **Bug más profundo encontrado de paso: el wizard nunca enviaba el formato que el backend espera para resolver `ASI_OR_FEAT`** (mandaba el texto del badge "Str / Con" / "Feat" en vez de "ASI:STR:+1+DEX:+1" / "FEAT:NombreDote") — el ASI/Feat elegido en el wizard no se aplicaba mecánicamente, desde siempre, ni en creación ni en edición. Corregido en `_resolveAsiOrFeatChoice`/`_prePopulateAsiOrFeatChoice`. El mismo bug existía en `PendingTasksScreen` (enviaba nombre completo de habilidad en vez de abreviatura) — corregido también.
 - Mismatches de nombre/formato entre el wizard y las `PendingTask` reales: `TOTEMIC_ATTUNEMENT` (frontend) vs `TOTEM_ATTUNEMENT` (backend); Battle Master Maneuvers / Four Elements Disciplines / Trick Shots, que el wizard modela como slots individuales pero el backend espera una sola tarea por nivel con lista separada por comas. Corregido con `_resolveSlottedChoice`/`_prePopulateSlottedChoice`.
 - HP por nivel: el backend nunca usó las tiradas manuales del jugador, ni siquiera en creación — siempre calculó con la media del dado. Nueva columna `character_hp_rolls`, expuesta en el DTO; creación y level-up (`POST /level-up?hpRoll=N`) ya respetan la tirada real si se envía.
-- Reactivada `PendingTasksScreen` (estaba deshabilitada, ver #15) — los feats elegidos por ASI/Feat ya aparecen en `tab_features`.
+- Reactivada `PendingTasksScreen` (estaba deshabilitada, ver #18) — los feats elegidos por ASI/Feat ya aparecen en `tab_features`.
 
 **Gaps conocidos sin arreglar (necesitan trabajo de backend nuevo, no solo de envío):** `LORE_BONUS_PROF` (College of Lore Bard) y `MUTAGEN_CHOICE` (Blood Hunter Mutante) no tienen ninguna `PendingTask` creada en el backend.
 
@@ -54,7 +54,7 @@ Si el usuario vuelve al paso de Preferencias (`step_preferences.dart`) y cambia 
 ### 3. Algunas features de clase/subclase no se aplican correctamente en la ficha
 **Prioridad: Alta**
 
-Casos detectados (no exhaustivo, ver punto 8 para auditoría completa):
+Casos detectados (no exhaustivo, ver puntos 8 y 8.1 para la auditoría completa):
 - **Ranger → Drakewarden**: otorga *Thaumaturgy*. El hechizo aparece en la descripción de la subclase pero nunca se añade realmente a la ficha del personaje.
 - **Artificer → Magic Item Adept**: debería aumentar el máximo de *attunement* de 3 a 4. Revisar `CharacterInventoryService.java` / `Item.java` (campo attunement) y el punto donde se calcula el máximo de attunement del personaje — probablemente no contempla este feature de subclase.
 - **Blood Hunter → Mutagen Formula**: la cantidad de fórmulas conocidas depende del modificador de INT y debe gestionarse como un recurso escalable, no fijo.
@@ -129,6 +129,41 @@ Dado que ya se han encontrado errores puntuales (Drakewarden + Thaumaturgy, ver 
 
 ---
 
+### 8.1. Inventario de features de clase/subclase que requieren implementación mecánica (recursos, bonificadores, skills, hechizos)
+**Prioridad: Media-Alta** — Detalle del punto 8, con casos concretos detectados clase por clase
+
+Detectado a raíz de revisar Psi-Warrior (Fighter): la feature "Psionic Power" da una reserva de dados a gastar, igual que Action Surge o Second Wind, pero no tiene ningún contador de usos implementado — ni siquiera el tracker frontend-only que sí tienen Action Surge/Second Wind/Rage. Al tirar de esto hacia atrás, queda claro que **el problema es estructural, no puntual**: hoy existen tres mecanismos paralelos y todos requieren registro manual por feature, sin ninguna fuente de verdad única ni detección automática desde el texto de la feature.
+
+**Cómo funciona hoy (y por qué cualquier feature nueva se queda "solo descriptiva" por defecto):**
+- **Recursos con usos limitados** (`ClassResource` / `CharacterClassResource`, `entities/`): el modelo de datos existe (`maxFormula`, `recoveryType`, `levelUnlocked`, `subclassRestriction`...) pero **solo hay 2 filas reales en la BD**: `blood-maledict` (Blood Hunter) y `grit` (Blood Hunter/Gunslinger). Todo lo demás que parece "tener usos" en la ficha (Action Surge, Second Wind, Rage, Bardic Inspiration, Wild Shape, Superiority Dice...) funciona porque está **hardcodeado en el frontend**, en el mapa `_kConsumableFeatures` de `CharacterSheetViewModel` (`frontend/lib/viewmodels/characters/character_sheet_viewmodel.dart`), con fórmulas mágicas por constantes negativas (-1 = mod. CHA, -3 = nivel, -4 = tabla Barbarian, -6 = tabla Superiority Dice...) y prefijos tipo `bardic-inspiration-*`/`wild-shape-*`. El backend no valida ni repone estos usos: es solo UI.
+- **Bonificadores numéricos** (ej. Fighting Style): hardcodeados como `if/else` sobre el string del nombre elegido en `PlayerCharacterService.java` (ver punto 18). Cualquier estilo/feature nuevo necesita una rama nueva escrita a mano.
+- **Otorgar skills/competencias/hechizos automáticamente**: tres vías distintas y no homogéneas — `RacialTraitService.java` (switch hardcodeado por `indexName` de rasgo racial), `SubclassSpellService.java` (sí es data-driven vía tabla `subclass_spells` + `seed_subclass_spells.sql`, salvo Circle of the Land que tiene un switch hardcodeado aparte por tipo de terreno), y features de clase sueltas resueltas caso por caso en `PlayerCharacterService` (aquí es donde vivía el bug de Drakewarden/Thaumaturgy del punto 3).
+- **Conclusión:** dar de alta una feature nueva con efecto mecánico requiere "triple registro" manual (BD/recurso, backend si es bonificador o grant, frontend si es un recurso con usos) y nada avisa si falta alguno de los tres — de ahí que Psi-Warrior se haya quedado sin tracker sin que nadie lo notara hasta mirarlo a mano.
+
+**Lista por clase de qué necesita mecánica (no solo texto) y su estado conocido.** Basado en lo confirmado en código + conocimiento de reglas de 5e; las subclases que llegan vía Aurora (contenido dinámico, no en SQL estático del repo — `AuroraSyncService.java`) no se han podido verificar feature a feature contra la BD real, así que esta lista es un punto de partida para auditar, no un resultado cerrado:
+
+- **Bárbaro** — *Rage*: ⚠️ usos trackeados solo en frontend (constante -4 + tabla), sin `ClassResource` real ni reposición validada por backend. *Path of the Totem Warrior*: bonificadores de Totemic Attunement (oso/águila/lobo/elk) — revisar si dan efecto real o solo texto, más allá del fix de nombre `TOTEM_ATTUNEMENT` ya hecho en el punto #1. *Frenzy* (Berserker): atacar con bonus action y ganar exhaustion al salir de Rage — sin implementar.
+- **Bardo** — *Bardic Inspiration*: ⚠️ usos solo en frontend (`bardic-inspiration-*`). *College of Lore* (Cutting Words) y *College of Valor* (Combat Inspiration) reutilizan ese mismo dado para efectos reactivos — no hay lógica de "gastar un dado de Inspiration para X efecto distinto a inspirar", es responsabilidad manual del jugador hoy. *Additional Magical Secrets* (Lore, nivel 6): otorga 2 hechizos de cualquier clase — ¿existe alguna `PendingTask` para esta elección o se pierde?
+- **Clérigo** — **Channel Divinity es un gap entero, no solo de una subclase**: el recurso base (2 usos a partir de nivel 6, normalmente 1 antes) no aparece en la lista de `ClassResource` confirmados, y cada Dominio añade una opción propia de Channel Divinity (Preserve Life en Life, Knowledge of the Ages en Knowledge, Warding Flare en Light, Destructive Wrath en Tempest, Invoke Duplicity en Trickery, Guided Strike/War Domain). Si el recurso base no está, ninguna de las 7 variantes de dominio puede estarlo tampoco.
+- **Druida** — *Wild Shape*: ⚠️ usos solo en frontend (`wild-shape-*`), sin enforcement de CR/restricciones de forma por nivel. *Circle of the Moon* (Combat Wild Shape: gasto de slot de hechizo para recuperar usos de Wild Shape en combate, curación al cambiar de forma, acceso a CR superior) — no hay evidencia de que estas reglas extra estén implementadas más allá del Wild Shape base. *Circle of the Land*: ya es data-driven (`subclass_spells` + switch de terreno) — único caso de subclase con grant de hechizos correctamente resuelto.
+- **Guerrero** — *Action Surge*/*Second Wind*: ⚠️ solo frontend, sin `ClassResource`. *Fighting Style*: solo Defense+Archery con efecto real (punto 18). *Battle Master* (Superiority Dice): el recurso sí tiene constante dedicada (-6) en el frontend, y las maniobras ya se resolvieron a nivel de selección (punto #1), pero falta deshabilitar maniobras ya elegidas al elegir la siguiente (punto 18, último ítem) y verificar que cada maniobra aplique su efecto real, no solo consuma el dado. *Champion* (Improved/Superior Critical: ampliar rango de crítico; Remarkable Athlete: bonificador a pruebas de habilidad) — sin evidencia de implementación, son cambios de regla numérica que normalmente se calculan en frontend al tirar dados. *Eldritch Knight*: spellcasting de subclase + War Magic (nivel 7, atacar con bonus action tras lanzar conjuro de acción) — la parte de economía de acciones no está modelada. **Psi-Warrior** (Psionic Power): ❌ sin ningún tracker de usos, ni siquiera frontend-only — el hallazgo que originó este punto.
+- **Mago** — School features (7 escuelas seedeadas): revisar caso por caso, pero al menos *Evocation* (Sculpt Spells: excluir aliados del área; Empowered Evocation: +mod. INT al daño una vez por turno; Overchannel: daño extra con coste de daño necrótico acumulativo y usos limitados por día) son bonificadores/recursos que no aparecen en ningún sitio confirmado del backend.
+- **Mediano (Monje)** — *Ki points*: no hay evidencia de que exista como recurso (ni siquiera frontend-only, a diferencia de Rage/Bardic Inspiration) — esto bloquearía mecánicamente todas las features que gastan Ki: Flurry of Blows, Patient Defense, Step of the Wind, y las específicas de subclase como *Way of Shadow* (Darkness, Pass without Trace, Silence, Shadow Step) que son básicamente "hechizos" pagados con Ki, no con slots.
+- **Paladín** — Comparte el gap de Channel Divinity del Clérigo (Sacred Weapon + Turn the Unholy en Devotion, y la segunda jura seedeada). *Auras* (Devotion, Protection... según nivel) son pasivas de rango que no implican recurso pero sí lógica de "aplica a aliados a X pies", a confirmar si existe.
+- **Pícaro** — *Sneak Attack* ya señalado como mal clasificado (punto 7), pero además revisar que el cálculo de dados escale con nivel correctamente. *Thief* (Fast Hands, Second-Story Work) y *Arcane Trickster* (Mage Hand Legerdemain) son en su mayoría utilidad pasiva, impacto mecánico bajo pero a confirmar que Fast Hands realmente permita una acción de objeto adicional.
+- **Brujo (Warlock)** — *Pact Magic* (slots de hechizo independientes, se recuperan en descanso corto, no largo) — confirmar que el sistema de slots no los mezcle con los de un multiclase de lanzador (relevante también para el punto #17). *Eldritch Invocations* ya resueltas a nivel de elección (punto #1) pero cada invocation puede tener efecto mecánico propio (p. ej. Agonizing Blast: +mod. CHA al daño de Eldritch Blast) — confirmar que estos efectos se aplican y no solo se registra la elección. *Fiend* (Dark One's Blessing: PG temporales al matar) — trigger basado en evento de combate, normalmente no implementado en apps de ficha.
+- **Hechicero (Sorcerer)** — *Sorcery Points*: confirmar si existen como recurso (mismo patrón de duda que Ki). *Draconic Bloodline* (Draconic Resilience: +1 PG por nivel + CA base alternativa; Elemental Affinity: +mod. CHA al daño de hechizos de un tipo elegido) — bonificadores numéricos que necesitan lógica dedicada, no solo texto.
+- **Artificiero** (2 variantes, TCE/ERLW) — *Infusions*: sistema completo de "número de infusiones conocidas según nivel" + "vincular un efecto mágico a un objeto" — no hay evidencia de que exista nada parecido a un sistema de infusiones; probablemente el gap más grande de todo este inventario porque es una mecánica entera, no una feature suelta. *Magic Item Adept* (+1 a attunement máximo) ya señalado en el punto #3.
+- **Blood Hunter** (homebrew, Critical Role) — *Blood Maledict*: ✅ es el único recurso de clase con `ClassResource` real en BD. *Crimson Rite* (convierte daño del arma + daño extra, coste de PG por uso) — mezcla de bonificador y recurso, confirmar si el coste de PG y el daño extra se aplican. *Order of the Lycan* (Hybrid Transformation, usos limitados) y *Order of the Mutant* (Mutagen Formula, ya señalado en el punto #3 como gap conocido de backend) — sin implementar. *Order of the Gunslinger*: ✅ `grit` sí tiene `ClassResource` real.
+
+**Nota sobre alcance:** esta lista cubre las subclases confirmadas en `seed_subclasses.sql` (28, todas PHB) más los casos ya detectados fuera de ese fichero (Psi-Warrior vía Aurora). Las subclases que llegan dinámicamente desde Aurora (`AuroraSyncService.java`) no están en el repo como datos estáticos, así que cualquier subclase de esa fuente (probablemente la mayoría del contenido "expandido" tipo Tasha's) necesita pasar por esta misma auditoría una vez se pueda inspeccionar en una base de datos real — no se puede confirmar desde el código solo.
+
+**Idea para cuando se aborde esto (a futuro, no parte de este punto):** en vez de seguir resolviendo cada gap a mano feature por feature, tendría sentido construir una capa de "mecánicas" como infraestructura reutilizable: un esquema/API interna donde cada feature se describe de forma declarativa según el tipo de efecto que produce — por ejemplo `RESOURCE_POOL` (fórmula de usos + tipo de descanso para reponerlos), `NUMERIC_BONUS` (campo al que suma, condición de aplicación), `GRANT_SPELL` / `GRANT_PROFICIENCY` (nivel al que se desbloquea) — y que tanto backend como frontend lean esa descripción para activar el comportamiento automáticamente, sin necesitar una rama de código nueva por feature. Esto conectaría directamente con la creación manual de contenido para administradores (punto #9): al definir una clase, subclase o feat nueva desde el panel, el admin podría marcar qué "tipo de mecánica" tiene cada feature y la app la aplicaría sola. Y de cara a mantenerse sincronizado con fuentes externas, si una fuente expone sus datos con suficiente estructura (como ya hace la API pública de D&D 5e con `damage_at_slot_level`, `dc_type`, etc.), esta misma capa permitiría mapear esos campos directamente a una mecánica conocida sin escribir un caso especial por fuente. Para Aurora esto no sustituye al parseador de descripción que hace falta de todos modos (punto #10) — su contenido es texto libre, así que primero habría que extraer la estructura y después sí podría alimentar esta capa de mecánicas como cualquier otra fuente.
+
+**Dónde mirar probablemente:** `entities/ClassResource.java`, `entities/CharacterClassResource.java`, `frontend/lib/viewmodels/characters/character_sheet_viewmodel.dart` (`_kConsumableFeatures`), `services/PlayerCharacterService.java` (bonificadores y grants ad-hoc), `services/RacialTraitService.java`, `services/SubclassSpellService.java`, `backups/seed_subclasses.sql` / `seed_subclass_spells.sql`, `sync/AuroraSyncService.java`.
+
+---
+
 ## 👨‍💼 Panel de administración
 
 ### 9. Creación manual de contenido por administradores
@@ -147,7 +182,7 @@ Permitir que los administradores creen contenido personalizado directamente desd
 
 ---
 
-### 16. Hechizos de Aurora sin datos de combate (Hit/DC, daño, escalado) — necesita parseador de descripción
+### 10. Hechizos de Aurora sin datos de combate (Hit/DC, daño, escalado) — necesita parseador de descripción
 **Prioridad: Media-Alta** — Para asignar a otro agente
 
 Confirmado (2026-06-18): los hechizos sincronizados desde Aurora (no-PHB) llegan a la base de datos sin `attackType`, `dcType`, `damageType`, `damageBase` ni la tabla de escalado por nivel (`damageAtSlotLevel`, ver punto #4 ya resuelto para PHB). Está documentado como limitación conocida en `AuroraSpellMapper.java` ("Combat fields are left null — they require per-spell analysis").
@@ -163,7 +198,7 @@ Confirmado (2026-06-18): los hechizos sincronizados desde Aurora (no-PHB) llegan
 
 ---
 
-### 17. Pestaña Combat no se actualiza igual que Spells al añadir hechizos nuevos
+### 11. Pestaña Combat no se actualiza igual que Spells al añadir hechizos nuevos
 **Prioridad: Media**
 
 Confirmado (2026-06-18): al añadir hechizos nuevos a un personaje, la pestaña **Spells** los muestra correctamente, pero la pestaña **Combat** no — por ejemplo, Scorching Ray y Magic Missile no aparecen ahí tras añadirlos. Pendiente de investigar la causa (¿filtro distinto de qué hechizos se listan en Combat? ¿caché/estado no se refresca igual que en Spells?).
@@ -172,7 +207,7 @@ Confirmado (2026-06-18): al añadir hechizos nuevos a un personaje, la pestaña 
 
 ## 🧹 Deuda técnica
 
-### 10. Revisar y reemplazar usos de `withOpacity`
+### 12. Revisar y reemplazar usos de `withOpacity`
 **Prioridad: Baja**
 
 `withOpacity` está deprecado en Flutter (genera warnings) y debe sustituirse por `.withValues(alpha: ...)` o el mecanismo recomendado actual.
@@ -185,7 +220,7 @@ Confirmado (2026-06-18): al añadir hechizos nuevos a un personaje, la pestaña 
 
 ## 🚀 Infraestructura y despliegue
 
-### 11. Dominio y publicación de la aplicación
+### 13. Dominio y publicación de la aplicación
 **Prioridad: Alta (cuando se acerque la release)**
 
 Tareas pendientes para pasar a producción real:
@@ -200,7 +235,7 @@ Tareas pendientes para pasar a producción real:
 
 ## 📝 Limpieza de textos y contenido
 
-### 12. Texto duplicado "2nd class feature" en las especializaciones de Artificiero
+### 14. Texto duplicado "2nd class feature" en las especializaciones de Artificiero
 **Prioridad: Baja**
 
 Las dos especializaciones del Artificiero muestran la frase "2nd class feature" u otras dependiendo del nivel de forma redundante en su descripción. Revisar el origen del texto (datos sync/manual del Artificiero) y el formateo de descripciones generadas para subclases.
@@ -209,7 +244,7 @@ Las dos especializaciones del Artificiero muestran la frase "2nd class feature" 
 
 ## 👤 Gestión de cuenta
 
-### 13. Permitir cambiar el nombre de usuario
+### 15. Permitir cambiar el nombre de usuario
 **Prioridad: Media** — Nueva funcionalidad
 
 Actualmente los usuarios pueden cambiar su contraseña pero no su nombre de usuario.
@@ -228,12 +263,40 @@ Actualmente los usuarios pueden cambiar su contraseña pero no su nombre de usua
 
 ## Items mágicos
 
-### 14. Revisar qué items requieren attunement y aplicarlo funcionalmente en la app
+### 16. Revisar qué items requieren attunement y aplicarlo funcionalmente en la app
 **Prioridad: Media**
 - Tras el Aurora Sync, se introdujeron una cantidad nueva y grande de items, algunos de ellos requieren attunement, con lo que funcionalmente en la app deberían serlo también (de manera que en inventory sólo puedan ser equipados como attuned)
 - Revisar si hay items de armas de fuego introducidas de las canon en D&D, ya que es necesario.
 
-### 15. Fixes que me voy encontrando o dudas.
+## Multiclase
+
+### 17. Añadir funcionalidad de multiclase
+**Prioridad: Baja** — Nueva funcionalidad grande, toca modelo de datos, level-up y front
+
+Hoy el modelo es estrictamente mono-clase: `PlayerCharacter` tiene un único `int level` y un único `@ManyToOne DndClass dndClass` (+ `subclass`), y toda la lógica de nivel/hechizos/features asume ese único par (clase, nivel de personaje). Añadir multiclase no es solo "permitir elegir otra clase", son varios subsistemas que hay que tocar a la vez:
+
+**1. Modelo de datos (lo que falta de raíz):**
+- No existe ninguna entidad que relacione un personaje con varias clases y el nivel que tiene en cada una. Hay que crear una entidad puente (p. ej. `PlayerCharacterClass`: personaje, clase, subclase, nivel-en-esa-clase) y migrar `dndClass`/`subclass`/`level` actuales de `PlayerCharacter` a ser, en la práctica, una vista derivada (clase principal = la primera tomada, nivel total = suma de niveles en cada clase) para no romper todo lo que ya lee esos campos directamente.
+
+**2. Level-up (`POST /api/characters/{id}/level-up`, `PlayerCharacterService.levelUp()`):**
+- Actualmente busca `ClassLevelProgression` por `(dndClass, newLevel)` asumiendo una sola clase — con multiclase hay que: (a) dejar elegir a qué clase se sube ese nivel (nueva clase o una ya existente), (b) si es una clase nueva, aplicar los requisitos de multiclase de 5e (mínimos de habilidad, p. ej. STR 13 para Fighter, DEX 13 para Rogue, etc. — actualmente no se valida nada de esto ni siquiera en creación), (c) calcular el nivel de competencia (`proficiency bonus`) sobre el **nivel total del personaje** (esto ya está bien, no depende de clase), pero todo lo demás (rasgos de clase, recursos de clase, ASI) debe evaluarse por **nivel dentro de esa clase concreta**, no por nivel de personaje.
+- Las limitaciones de uso multiclase a aplicar en el level-up, concretamente:
+  - **Hechizos (la parte más compleja):** los slots de conjuro no se calculan por clase sino sumando un "nivel de lanzador" (caster level) ponderado por clase según la tabla de multiclase del PHB (full caster cuenta 1, half caster cuenta 0.5 redondeando hacia abajo el total, third caster cuenta 1/3, Warlock no entra en este cómputo y mantiene sus Pact Magic aparte). Ahora mismo `generateSpellSlots()` solo mira `SpellSlotProgressionRepository.findByDndClassAndCharacterLevel(dndClass, character.getLevel())`, que asume una sola clase — habría que sustituirlo por una función que recoja todas las clases lanzadoras del personaje, calcule el caster level combinado y consulte la tabla multiclase en vez de la tabla por clase.
+  - **Cantidad de hechizos conocidos/preparados:** se calculan por clase individualmente (cada clase mantiene su propia lista de hechizos conocidos), pero los slots para lanzarlos son compartidos (ver punto anterior).
+  - **Competencias de armadura/armas que limitan lanzar conjuros:** una regla real de multiclase es que si el personaje no tiene competencia con la armadura que lleva, no puede lanzar conjuros de ninguna clase — no hay ninguna validación de esto en el código actual.
+  - **ASI/Feat:** los niveles de ASI (4, 8, 12, 16, 19) son por clase, no por nivel de personaje — un Bardo 4/Guerrero 4 debería tener dos ASIs (uno en cada clase), no uno. El sistema de `PendingTask` actual genera estas tareas mirando `(feature, character_level)` sin contexto de clase; hay que añadir ese contexto para no perder ni duplicar ASIs.
+  - **Competencias nuevas al multiclasear:** las tablas de multiclase del PHB dan un subconjunto reducido de competencias (normalmente solo armas/armadura ligera, nunca salvación) respecto a las que se obtienen al elegir esa clase desde nivel 1 — `CharacterProficiency` no distingue origen por clase hoy (solo tiene `source` como string), así que aplicar esto bien requiere poder marcar "estas competencias vienen de tomar X como segunda clase" para no otorgar de más.
+  - **Hit Dice:** cada clase aporta su propio dado de golpe (d6/d8/d10/d12 según la clase), y al subir nivel hay que tirar/calcular con el dado de la clase en la que se sube, no con un dado fijo del personaje.
+
+**3. Frontend — mostrar multiclase en la ficha:**
+- La ficha (`character_sheet_screen.dart` y tabs) hoy asume "una clase, un nivel" en cualquier sitio donde se muestre el nombre/icono de clase o el nivel (cabecera del personaje, `tab_features.dart` al agrupar features por clase, `step_class.dart`/wizard si se reutiliza para añadir una segunda clase). Hay que decidir cómo se representa visualmente (p. ej. "Bardo 4 / Guerrero 4" en la cabecera) y agrupar features/recursos por clase de origen en vez de mostrarlos todos mezclados.
+- El wizard de creación (`CharacterCreatorViewModel`, pasos `step_class.dart`/`step_spells.dart`/`step_equipment.dart`) está diseñado para elegir una sola clase inicial; tomar una segunda clase probablemente debería ser un flujo distinto al de creación (algo más parecido a level-up con un selector de "clase nueva vs. clase existente"), no reutilizar el wizard completo.
+
+**Por qué es de prioridad baja pero hay que documentarlo bien:** es la funcionalidad más compleja y transversal del backlog (toca entidades, el endpoint de level-up, el cálculo de hechizos y el front a la vez), y antes de implementarla conviene haber resuelto primero los bugs base de progresión por nivel/hechizos que ya están detectados en otros puntos de este documento (especialmente #1 HP por nivel, #4 escalado de hechizos, y el bug de Fighting Style del punto 18), porque multiclase los vuelve a tocar todos y sería más caro arreglarlos después de meter multiclase que antes.
+
+**Dónde mirar probablemente:** `entities/PlayerCharacter.java` (clase/nivel actuales), `services/PlayerCharacterService.java` (`levelUp()`, `generateSpellSlots()`, `processClassLevelFeatures()`), `repositories/SpellSlotProgressionRepository.java` y `ClassLevelProgressionRepository.java`, `entities/CharacterProficiency.java`, y en frontend `character_sheet_screen.dart`, `tab_features.dart`, `CharacterCreatorViewModel`.
+
+### 18. Fixes que me voy encontrando o dudas.
 - Fighting Style suma donde tiene que sumar? Porque si escoges archery, se suma el bonificador de ataque a sólo armas a distancia?
 - Creo que las subrazas de tiefling están sumando mal los bonificadores. Tiefling aparece como +2 CHA +1 INT, pero luego cada subraza parece añadir muchos bonificadores más. Y según los manuales, Tiefling como tal te da un bonificador y la subclase un bonificador secundario. Temo que tal como está ahora sume demasiadas cosas.
 - **Fighting Style: confirmado, bug real y de todas las clases (no solo Aurora).** En `PlayerCharacterService.java` solo hay lógica numérica para 2 de los 5 estilos: Defense (+1 AC si llevas armadura) y Archery (+2 a ataques a distancia). Dueling, Great Weapon Fighting, Protection y Two-Weapon Fighting no tienen ningún efecto mecánico implementado, nunca lo tuvieron. Además, incluso Defense/Archery dependen de que exista una `PendingTask` tipo `FIGHTING_STYLE` completada con la elección — si esa tarea no se resuelve correctamente, el bono nunca se aplica aunque el jugador haya "elegido" el estilo en el wizard.
