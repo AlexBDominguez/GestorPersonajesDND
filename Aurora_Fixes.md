@@ -324,4 +324,5 @@ Hoy el modelo es estrictamente mono-clase: `PlayerCharacter` tiene un único `in
   - `spellcasting_ability` NULL en BD → `scripts/patch_artificer_spellcasting.sql` (UPDATE a `'int'`).
   - `spell_slot_progression` con 0 filas para Artificiero (class_id 13/14) → `scripts/seed_artificer_spell_slots.sql` (tabla oficial TCE/ERLW completa, 20 niveles, tope 4º nivel de hechizo).
   - `maxSpellsKnown`/`maxSpellLevel`/`maxCantrips` en `CharacterCreatorViewModel` no tenían rama para `'artificer'` (caían a 0) — añadidas las fórmulas oficiales (preparación: mod. INT + mitad de nivel; tope de nivel de hechizo en 1/7/13/18; cantrips por tabla propia).
+  - **Cuarto hueco encontrado al probarlo:** `class_skill_choices` tampoco tenía ninguna fila para Artificiero (pedía elegir 2 skills sin ofrecer ninguna opción), así que el botón "Next" del step de Clase quedaba bloqueado para siempre. → `scripts/patch_artificer_skill_choices.sql` (Arcana, History, Investigation, Medicine, Nature, Perception, Sleight of Hand).
   - Scripts SQL ejecutados en el VPS por el usuario.
