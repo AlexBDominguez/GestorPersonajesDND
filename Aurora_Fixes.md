@@ -265,10 +265,10 @@ Actualmente los usuarios pueden cambiar su contraseña pero no su nombre de usua
 
 ## Items mágicos
 
-### 16. Revisar qué items requieren attunement y aplicarlo funcionalmente en la app
+### 16. Revisar qué items requieren attunement y aplicarlo funcionalmente en la app ✅HECHO.
 **Prioridad: Media**
-- Tras el Aurora Sync, se introdujeron una cantidad nueva y grande de items, algunos de ellos requieren attunement, con lo que funcionalmente en la app deberían serlo también (de manera que en inventory sólo puedan ser equipados como attuned)
-- Revisar si hay items de armas de fuego introducidas de las canon en D&D, ya que es necesario.
+- Tras el Aurora Sync, se introdujeron una cantidad nueva y grande de items, algunos de ellos requieren attunement, con lo que funcionalmente en la app deberían serlo también (de manera que en inventory sólo puedan ser equipados como attuned) — **Hecho (2026-06-19):** el frontend ya lo impedía vía drag-and-drop; añadida la misma validación en el backend (`CharacterInventoryService.toggleEquipped()`, 409 si el item requiere attunement y no está attuned) como defensa en profundidad. Confirmado que el sync de Aurora rellena `requiresAttunement` correctamente desde el campo `attunement` de la fuente.
+- Revisar si hay items de armas de fuego introducidas de las canon en D&D, ya que es necesario. — **Hecho (2026-06-19):** confirmado que no existía ninguna en la BD de producción. Añadidas las 7 armas de fuego del archetype Gunslinger (Palm Pistol, Pistol, Musket, Pepperbox, Blunderbuss, Bad News, Hand Mortar) vía `backend/scripts/seed_gunslinger_firearms.sql`, usando los stats ya descritos en el texto de la feature "Firearm Proficiency" de esa subclase. Ejecutado en el VPS.
 
 ## Multiclase
 

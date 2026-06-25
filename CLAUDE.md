@@ -37,14 +37,17 @@ mvn clean package
 # Deploy everything (MySQL + backend + Nginx for web Flutter)
 docker compose up -d
 
-# Execute SQL script against running container
-docker exec -i dnd-mysql mysql -u <MYSQL_USER> -p<MYSQL_PASSWORD> dnd_character_manager < scripts/my_script.sql
+# Execute SQL script against running container (root password from $MYSQL_ROOT_PASSWORD,
+# already exported in the user's VPS shell — never write the password literally)
+docker exec -i dnd-mysql mysql -u root -p$MYSQL_ROOT_PASSWORD dnd_character_manager < scripts/my_script.sql
 
 # Initial data sync from D&D 5e API (run once after first boot)
 curl -X POST http://localhost:8081/api/sync/all
 ```
 
 Required `.env` variables (copy from `.env.example`): `MYSQL_ROOT_PASSWORD`, `MYSQL_USER`, `MYSQL_PASSWORD`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `JWT_SECRET`, `ADMIN_INITIAL_PASSWORD`.
+
+**On the VPS, `$MYSQL_ROOT_PASSWORD` is already exported in the shell** — any `docker exec ... mysql` command given to the user should use `-p$MYSQL_ROOT_PASSWORD` (or the relevant `$VAR`), never a literal password, so it can be copy-pasted directly.
 
 ### Frontend (from `frontend/`)
 
