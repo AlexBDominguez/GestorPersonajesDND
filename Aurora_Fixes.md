@@ -214,6 +214,8 @@ Confirmado (2026-06-18): los hechizos sincronizados desde Aurora (no-PHB) llegan
 
 Confirmado (2026-06-18): al añadir hechizos nuevos a un personaje, la pestaña **Spells** los muestra correctamente, pero la pestaña **Combat** no — por ejemplo, Scorching Ray y Magic Missile no aparecen ahí tras añadirlos. Pendiente de investigar la causa (¿filtro distinto de qué hechizos se listan en Combat? ¿caché/estado no se refresca igual que en Spells?).
 
+**(2026-06-19) No reproducible.** Probado de nuevo añadiendo un hechizo de ataque tanto desde el wizard de edición como desde el botón de la propia ficha — aparece correctamente en Combat en ambos casos. Pudo arreglarse de forma incidental con otros cambios de esta sesión, o ser un problema puntual. Dejar abierto por si reaparece con más detalle (clase/hechizo/vía exacta).
+
 ---
 
 ## 🧹 Deuda técnica
@@ -326,3 +328,6 @@ Hoy el modelo es estrictamente mono-clase: `PlayerCharacter` tiene un único `in
   - `maxSpellsKnown`/`maxSpellLevel`/`maxCantrips` en `CharacterCreatorViewModel` no tenían rama para `'artificer'` (caían a 0) — añadidas las fórmulas oficiales (preparación: mod. INT + mitad de nivel; tope de nivel de hechizo en 1/7/13/18; cantrips por tabla propia).
   - **Cuarto hueco encontrado al probarlo:** `class_skill_choices` tampoco tenía ninguna fila para Artificiero (pedía elegir 2 skills sin ofrecer ninguna opción), así que el botón "Next" del step de Clase quedaba bloqueado para siempre. → `scripts/patch_artificer_skill_choices.sql` (Arcana, History, Investigation, Medicine, Nature, Perception, Sleight of Hand).
   - Scripts SQL ejecutados en el VPS por el usuario.
+- **(2026-06-19) Nuevo, urgente: el background se pierde al editar el personaje, y si se vuelve a escoger uno, "Save Changes" da error 500.** Sin investigar todavía.
+- **(2026-06-19) Nuevo: faltan hechizos de libros de expansión en la lista** (confirmado: Shadow Blade no aparece; puede haber más). Probablemente gap de sync de Aurora, no del wizard — pendiente de auditar qué hechizos de expansión existen en la BD vs. cuáles deberían.
+  

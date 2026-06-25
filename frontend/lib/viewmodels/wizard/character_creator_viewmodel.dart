@@ -134,6 +134,15 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     // aparezca vacío al editar (bug #1 del backlog) y para no sobrescribirlas con null
     // si el usuario confirma la pantalla de clase sin tocar el HP.
     _hpRolls.addAll(char.hpRolls);
+    // Restaurar las sources activas del personaje — sin esto, el wizard arrancaba
+    // siempre con solo PHB, dejando invisibles en los catálogos filtrados cualquier
+    // raza/clase/subclase/background de una source no-PHB (se "perdían" al editar).
+    if (char.selectedSources.isNotEmpty) {
+      selectedSources
+        ..clear()
+        ..addAll(char.selectedSources)
+        ..add('PHB');
+    }
   }
 
   /// Constructor nombrado para subir de nivel a un personaje existente.
@@ -180,6 +189,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     // Necesario para poder resolver nombre de skill → ID al sincronizar Expertise
     // ganada en este level-up (_syncExpertiseChanges en _submitEdit()).
     _editCharSkills = char.skills;
+    // Restaurar las sources activas (ver forEdit) — necesario para que loadClasses()
+    // pueda volver a encontrar la clase/subclase actual del personaje.
+    if (char.selectedSources.isNotEmpty) {
+      selectedSources
+        ..clear()
+        ..addAll(char.selectedSources)
+        ..add('PHB');
+    }
     _currentStep = WizardStep.dndClass;
   }
 
