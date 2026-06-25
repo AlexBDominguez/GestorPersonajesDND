@@ -2099,6 +2099,12 @@ void toggleItem(int itemId) {
     try {
       final tasks = await _pendingTaskService.getPendingTasks(characterId);
       for (final task in tasks) {
+        // Las tareas ya completadas no se pueden volver a resolver — el backend lo rechaza
+        // con un error. En modo edición, featureChoices puede tener un valor no-nulo para
+        // ellas (pre-rellenado solo para mostrarlas en el wizard, ver
+        // _prePopulateFeatureChoicesForEdit), pero eso no significa que haya que reenviarlas.
+        if (task.completed) continue;
+
         final key = '${task.taskType}_${task.relatedLevel}';
 
         String? choice;
