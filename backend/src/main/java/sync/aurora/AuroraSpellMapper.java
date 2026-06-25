@@ -15,9 +15,12 @@ import java.util.stream.Collectors;
  * they require per-spell analysis and can be populated later via the
  * existing extended-data sync mechanism.
  *
- * DndClass linking (ManyToMany) is skipped here. Aurora stores class lists in
- * the element's `supports` field; wiring that requires resolving class names
- * to DB rows and is handled separately.
+ * DndClass linking: Aurora's `supports` field mixes class names with other tags
+ * (e.g. "Sorcerer, Warlock, Wizard" or "Druid, Sorcerer, Wizard, Spell Saving Throw"),
+ * and subclass-qualified entries like "Rogue (Arcane Trickster)". We resolve each
+ * comma-separated token against known class names (prefix match, so "Artificer"
+ * matches both "Artificer (ERLW)" and "Artificer (TCE)"); tokens that don't match
+ * any class (tags like "Ranged", "Spell Attack") are silently ignored.
  */
 @Service
 public class AuroraSpellMapper {
@@ -25,13 +28,16 @@ public class AuroraSpellMapper {
     private final AuroraRegistry registry;
     private final SpellRepository spellRepo;
     private final ContentSourceRepository sourceRepo;
+    private final DndClassRepository classRepo;
 
     public AuroraSpellMapper(AuroraRegistry registry,
                              SpellRepository spellRepo,
-                             ContentSourceRepository sourceRepo) {
+                             ContentSourceRepository sourceRepo,
+                             DndClassRepository classRepo) {
         this.registry = registry;
         this.spellRepo = spellRepo;
         this.sourceRepo = sourceRepo;
+        this.classRepo = classRepo;
     }
 
     public Map<String, Object> sync() {
@@ -39,7 +45,8 @@ public class AuroraSpellMapper {
             return Map.of("error", "Registry is empty — run POST /api/sync/aurora/fetch first.");
         }
         Set<String> allowed = allowedSources();
-        int created = 0, updated = 0, skipped = 0;
+        List<DndClass> allClasses = classRepo.findAll();
+        int created = 0, updated = 0, skipped = 0, linked = 0;
 
         for (AuroraElement el : registry.getByType("Spell")) {
             String src = AuroraSourceMapper.toShortName(el.getSource());
@@ -62,16 +69,43 @@ public class AuroraSpellMapper {
 
                 spellRepo.save(spell);
                 if (isNew) created++; else updated++;
+
+                linked += linkClasses(spell, el.getSupports(), allClasses);
             } catch (Exception e) {
                 System.err.printf("[Aurora] Spell '%s' (%s): %s%n", el.getName(), src, e.getMessage());
                 skipped++;
             }
         }
 
-        System.out.printf("[Aurora] Spells: created=%d, updated=%d, skipped=%d%n", created, updated, skipped);
+        System.out.printf("[Aurora] Spells: created=%d, updated=%d, skipped=%d, classLinks=%d%n",
+                created, updated, skipped, linked);
         Map<String, Object> r = new LinkedHashMap<>();
-        r.put("created", created); r.put("updated", updated); r.put("skipped", skipped);
+        r.put("created", created); r.put("updated", updated); r.put("skipped", skipped); r.put("classLinks", linked);
         return r;
+    }
+
+    /**
+     * Resolves the class names embedded in Aurora's `supports` field and links the
+     * spell to each matching class via class_spells. Returns how many links were
+     * attempted (INSERT IGNORE makes re-running the sync safe).
+     */
+    private int linkClasses(Spell spell, String supports, List<DndClass> allClasses) {
+        if (supports == null || supports.isBlank()) return 0;
+        int count = 0;
+        for (String token : supports.split(",")) {
+            String name = token.trim();
+            int paren = name.indexOf('(');
+            if (paren > 0) name = name.substring(0, paren).trim(); // "Rogue (Arcane Trickster)" -> "Rogue"
+            if (name.isEmpty()) continue;
+            final String lname = name.toLowerCase();
+            for (DndClass dc : allClasses) {
+                if (dc.getName().toLowerCase().startsWith(lname)) {
+                    classRepo.linkSpell(dc.getId(), spell.getId());
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     // ── Field builders ─────────────────────────────────────────────────────────
