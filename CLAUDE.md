@@ -38,7 +38,7 @@ mvn clean package
 docker compose up -d
 
 # Execute SQL script against running container
-docker exec -i dnd-mysql mysql -u <MYSQL_USER> -p<MYSQL_PASSWORD> dnd_character_manager < backups/my_script.sql
+docker exec -i dnd-mysql mysql -u <MYSQL_USER> -p<MYSQL_PASSWORD> dnd_character_manager < scripts/my_script.sql
 
 # Initial data sync from D&D 5e API (run once after first boot)
 curl -X POST http://localhost:8081/api/sync/all
@@ -66,13 +66,13 @@ flutter analyze           # Static analysis
 
 Standard Spring Boot layered architecture: `Entity → Repository → Service → DTO → Controller`.
 
-- **`entities/`** — JPA entities, `ddl-auto=update` so Hibernate manages the schema. `PlayerCharacter` is the central entity with many `@OneToMany` relationships (spells, skills, inventory, feats, etc.).
+- **`entities/`** — JPA entities, `ddl-auto=update` so Hibernate manages the schema. `PlayerCharacter` is the central entity with many `@OneToMany` relationships (spells, skills, inventory, feats, etc.). DB column names are `snake_case` (Hibernate's default physical naming strategy converts camelCase fields automatically, e.g. `requiresAttunement` → `requires_attunement`) and **column order in the live table does not necessarily match the Java field declaration order** (e.g. on `items`, `source` is the last column, and `rarity` comes right after `stealth_disadvantage`, not where the entity declares it). When writing manual SQL scripts (`scripts/`) that insert into existing tables, always use explicit column names in the `INSERT` (`INSERT INTO table (col1, col2, ...) VALUES (...)`) instead of positional `VALUES (...)` — never assume the column order. If unsure, ask the user to run `DESCRIBE <table>;` on the VPS rather than guessing.
 - **`repositories/`** — Spring Data JPA interfaces. One oddity: `CharacterFeatService.java` is misplaced in the `repositories/` package.
 - **`services/`** — Business logic. `PlayerCharacterService` is the largest, orchestrating character creation, level-up, rests, and HP management.
 - **`controllers/`** — REST endpoints, all under `/api/` prefix, port `8081`.
 - **`dto/`** — DTOs used for all API input/output; entities are never returned directly.
 - **`security/`** — Stateless JWT auth. Access token = 15 min, refresh token = 30 days. `JwtAuthenticationFilter` validates every request. `SecurityConfig` whitelists reference-data GET endpoints and `/api/auth/*`.
-- **`sync/`** — Services that pull data from the public D&D 5e API (`https://www.dnd5eapi.co`). `BaseSyncService<T>` defines the contract. `SyncController` exposes `/api/sync/*` endpoints (publicly accessible, no auth required). Some data (feats, subclasses, subraces) was not available from the public API and is inserted manually via SQL scripts in `backups/`.
+- **`sync/`** — Services that pull data from the public D&D 5e API (`https://www.dnd5eapi.co`). `BaseSyncService<T>` defines the contract. `SyncController` exposes `/api/sync/*` endpoints (publicly accessible, no auth required). Some data (feats, subclasses, subraces) was not available from the public API and is inserted manually via SQL scripts in `scripts/` (patch/seed scripts for manual content — `backups/` is reserved for actual DB dumps).
 - **`config/`** — `AdminDataInitializer` seeds the admin user on startup using `ADMIN_INITIAL_PASSWORD`.
 
 ### Frontend

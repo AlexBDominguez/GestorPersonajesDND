@@ -134,6 +134,15 @@ public class CharacterInventoryService {
                 .orElseThrow(() -> new RuntimeException("Inventory item not found"));
 
         boolean willBeEquipped = !inventory.isEquipped();
+
+        // Los items que requieren attunement solo pueden equiparse si ya están
+        // attuned — el frontend ya lo impide vía drag-and-drop, esto es defensa en
+        // profundidad para que la regla se cumpla sin depender solo de la UI (#16).
+        if (willBeEquipped && inventory.getItem().isRequiresAttunement() && !inventory.isAttuned()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "This item requires attunement before it can be equipped");
+        }
+
         inventory.setEquipped(willBeEquipped);
 
         // Sincronizar CharacterEquipment para ARMOR y SHIELD -> impulsa el cálculo de AC

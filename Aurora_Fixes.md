@@ -32,7 +32,7 @@ Al entrar en modo edición del wizard (`frontend/lib/views/screens/wizard/`), al
 
 ---
 
-### 2. Cambiar las Sources (paso de Preferencias) rompe la configuración del personaje
+### 2. Cambiar las Sources (paso de Preferencias) rompe la configuración del personaje ✅HECHO.
 **Prioridad: Muy alta**
 
 Si el usuario vuelve al paso de Preferencias (`step_preferences.dart`) y cambia las fuentes (sources) activas, se producen inconsistencias:
@@ -48,6 +48,8 @@ Si el usuario vuelve al paso de Preferencias (`step_preferences.dart`) y cambia 
 **Sugerencia de mensaje UX:** *"No puedes desactivar esta fuente porque contiene elementos actualmente utilizados por tu personaje. Elimina primero esos elementos."*
 
 **Dónde mirar probablemente:** lógica de validación en `step_preferences.dart` / `CharacterCreatorViewModel`, y cómo se recalculan los pasos dependientes (clase, skills) al cambiar el set de sources activas.
+
+**Resumen de lo arreglado:** `_clearCatalogSelections()` ahora limpia correctamente clase/subclase/raza/background/skills/featureChoices (vía el mismo núcleo que usan `clearClass()`/`deselectRace()`, pero sin marcar esos pasos como "dirty" si el usuario no los había visitado todavía, para no mostrar el icono "!" prematuramente). Confirmado funcionando por el usuario.
 
 ---
 
@@ -160,7 +162,7 @@ Detectado a raíz de revisar Psi-Warrior (Fighter): la feature "Psionic Power" d
 
 **Idea para cuando se aborde esto (a futuro, no parte de este punto):** en vez de seguir resolviendo cada gap a mano feature por feature, tendría sentido construir una capa de "mecánicas" como infraestructura reutilizable: un esquema/API interna donde cada feature se describe de forma declarativa según el tipo de efecto que produce — por ejemplo `RESOURCE_POOL` (fórmula de usos + tipo de descanso para reponerlos), `NUMERIC_BONUS` (campo al que suma, condición de aplicación), `GRANT_SPELL` / `GRANT_PROFICIENCY` (nivel al que se desbloquea) — y que tanto backend como frontend lean esa descripción para activar el comportamiento automáticamente, sin necesitar una rama de código nueva por feature. Esto conectaría directamente con la creación manual de contenido para administradores (punto #9): al definir una clase, subclase o feat nueva desde el panel, el admin podría marcar qué "tipo de mecánica" tiene cada feature y la app la aplicaría sola. Y de cara a mantenerse sincronizado con fuentes externas, si una fuente expone sus datos con suficiente estructura (como ya hace la API pública de D&D 5e con `damage_at_slot_level`, `dc_type`, etc.), esta misma capa permitiría mapear esos campos directamente a una mecánica conocida sin escribir un caso especial por fuente. Para Aurora esto no sustituye al parseador de descripción que hace falta de todos modos (punto #10) — su contenido es texto libre, así que primero habría que extraer la estructura y después sí podría alimentar esta capa de mecánicas como cualquier otra fuente.
 
-**Dónde mirar probablemente:** `entities/ClassResource.java`, `entities/CharacterClassResource.java`, `frontend/lib/viewmodels/characters/character_sheet_viewmodel.dart` (`_kConsumableFeatures`), `services/PlayerCharacterService.java` (bonificadores y grants ad-hoc), `services/RacialTraitService.java`, `services/SubclassSpellService.java`, `backups/seed_subclasses.sql` / `seed_subclass_spells.sql`, `sync/AuroraSyncService.java`.
+**Dónde mirar probablemente:** `entities/ClassResource.java`, `entities/CharacterClassResource.java`, `frontend/lib/viewmodels/characters/character_sheet_viewmodel.dart` (`_kConsumableFeatures`), `services/PlayerCharacterService.java` (bonificadores y grants ad-hoc), `services/RacialTraitService.java`, `services/SubclassSpellService.java`, `scripts/seed_subclasses.sql` / `seed_subclass_spells.sql`, `sync/AuroraSyncService.java`.
 
 ---
 
@@ -169,7 +171,7 @@ Detectado a raíz de revisar Psi-Warrior (Fighter): la feature "Psionic Power" d
 ### 9. Creación manual de contenido por administradores
 **Prioridad: Media** — Nueva funcionalidad
 
-Permitir que los administradores creen contenido personalizado directamente desde la app (panel `admin_panel_screen.dart` / endpoints backend dedicados), sin depender de la sync con la API pública de D&D 5e ni de scripts SQL manuales en `backups/`:
+Permitir que los administradores creen contenido personalizado directamente desde la app (panel `admin_panel_screen.dart` / endpoints backend dedicados), sin depender de la sync con la API pública de D&D 5e ni de scripts SQL manuales en `scripts/`:
 - Razas, subrazas.
 - Clases, subclases.
 - Backgrounds.
@@ -297,9 +299,13 @@ Hoy el modelo es estrictamente mono-clase: `PlayerCharacter` tiene un único `in
 **Dónde mirar probablemente:** `entities/PlayerCharacter.java` (clase/nivel actuales), `services/PlayerCharacterService.java` (`levelUp()`, `generateSpellSlots()`, `processClassLevelFeatures()`), `repositories/SpellSlotProgressionRepository.java` y `ClassLevelProgressionRepository.java`, `entities/CharacterProficiency.java`, y en frontend `character_sheet_screen.dart`, `tab_features.dart`, `CharacterCreatorViewModel`.
 
 ### 18. Fixes que me voy encontrando o dudas.
-- Fighting Style suma donde tiene que sumar? Porque si escoges archery, se suma el bonificador de ataque a sólo armas a distancia?
+- Fighting Style suma donde tiene que sumar? Porque si escoges archery, se suma el bonificador de ataque a sólo armas a distancia? — ✅ Sí, confirmado y probado (Defense/Archery ya funcionaban; ver detalle abajo).
 - Creo que las subrazas de tiefling están sumando mal los bonificadores. Tiefling aparece como +2 CHA +1 INT, pero luego cada subraza parece añadir muchos bonificadores más. Y según los manuales, Tiefling como tal te da un bonificador y la subclase un bonificador secundario. Temo que tal como está ahora sume demasiadas cosas.
-- **Fighting Style: confirmado, bug real y de todas las clases (no solo Aurora).** En `PlayerCharacterService.java` solo hay lógica numérica para 2 de los 5 estilos: Defense (+1 AC si llevas armadura) y Archery (+2 a ataques a distancia). Dueling, Great Weapon Fighting, Protection y Two-Weapon Fighting no tienen ningún efecto mecánico implementado, nunca lo tuvieron. Además, incluso Defense/Archery dependen de que exista una `PendingTask` tipo `FIGHTING_STYLE` completada con la elección — si esa tarea no se resuelve correctamente, el bono nunca se aplica aunque el jugador haya "elegido" el estilo en el wizard.
+- **Fighting Style: ✅ HECHO (2026-06-19).** Confirmado bug real y de todas las clases (no solo Aurora): solo había lógica numérica para Defense y Archery. Arreglado:
+  - **Two-Weapon Fighting**: tenía un bug de detección (`hasTwoWeaponFighting` comprobaba una `ClassFeature` con `indexName=='two-weapon-fighting'` que nunca existe — el Fighting Style es una elección, no una feature de clase — así que nunca era `true`). Corregido para leer el campo real `character.fightingStyle` (nuevo, expuesto en `PlayerCharacterDto`).
+  - **Dueling**: implementado de cero (+2 al daño cma con un arma a una mano y ninguna otra), en `tab_combat.dart`.
+  - **Great Weapon Fighting / Protection**: no son representables como número (uno reroll de dados que la app no simula, el otro una reacción sobre aliados) — se muestran como badge descriptivo en Combat en vez de aplicar un efecto inexistente.
+  - UX: para evitar que el jugador piense que tiene que sumar el bonus a mano, el badge descriptivo en Combat solo aparece para los estilos SIN efecto numérico automático (GWF, Protection, los de Tasha's); para los que sí tienen efecto (Archery/Defense/Dueling/Two-Weapon Fighting) se confirma la elección en `tab_features.dart` en su lugar, sin repetir el número.
 - **`PendingTasksScreen` reactivada (2026-06-19).** Estaba deshabilitada (`character_sheet_screen.dart`, navegación comentada). Reactivada la carga (`_loadPendingTasks()` en `CharacterSheetViewModel.loadCharacter()`) y el botón de acceso. De paso se corrigió un bug igual al de ASI/Feat del wizard (#1): el resolver de ASI dentro de esta pantalla también enviaba el nombre completo de la habilidad ("Strength") en vez de la abreviatura ("STR") que espera el backend. Las elecciones de **seguimiento** generadas después de la creación (p. ej. las 3 skills de "Skilled", que solo se crean al resolver el ASI_OR_FEAT) ya deberían poder resolverse desde aquí — sin verificar todavía caso por caso.
 - Creo que el botón de "Crear Personaje" en el step de inventory no debería poder ser pulsado hasta que haya cargado bien el inventory, porque me he dado cuenta que da error 500 si pulsas el botón de Crear Personaje antes de que cargue inventory.
 - Las battle maneuver del battle master, cuando tienes que escoger varias, cuando escoges una, en las siguiente "battle maneuver" deberían deshabilitarse las ya escogidas.
