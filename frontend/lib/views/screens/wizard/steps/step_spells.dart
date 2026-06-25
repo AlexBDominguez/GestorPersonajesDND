@@ -506,14 +506,21 @@ class _SpellTile extends StatelessWidget {
                     ),
                   ]),
                   const SizedBox(height: 4),
-                  Row(children: [
-                    _LvTag(
-                      label: spell.isCantrip ? 'Cantrip' : 'Lv ${spell.level}',
-                      isCantrip: spell.isCantrip,
-                    ),
-                    if (spell.school != null) ...[const SizedBox(width: 4), _Tag(spell.school!)],
-                    if (spell.castingTime != null) ...[const SizedBox(width: 4), _Tag(spell.castingTime!)],
-                  ]),
+                  // Wrap en vez de Row: algunos hechizos de expansión (Aurora) tienen
+                  // castingTime muy largo (ej. reacciones con condición descrita en texto,
+                  // "1 reaction, which you take when..."), que con Row desbordaba el layout.
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: [
+                      _LvTag(
+                        label: spell.isCantrip ? 'Cantrip' : 'Lv ${spell.level}',
+                        isCantrip: spell.isCantrip,
+                      ),
+                      if (spell.school != null) _Tag(spell.school!),
+                      if (spell.castingTime != null) _Tag(spell.castingTime!),
+                    ],
+                  ),
                 ]),
           ),
 
@@ -643,11 +650,14 @@ class _Tag extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+        constraints: const BoxConstraints(maxWidth: 160),
         decoration: BoxDecoration(
           color: AppTheme.surfaceVariant,
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(text,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
             style: GoogleFonts.lato(
                 color: AppTheme.textSecondary, fontSize: 10)),
       );
