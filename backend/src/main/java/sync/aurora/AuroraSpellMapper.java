@@ -1,6 +1,7 @@
 package sync.aurora;
 
 import entities.*;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import repositories.*;
 
@@ -40,6 +41,7 @@ public class AuroraSpellMapper {
         this.classRepo = classRepo;
     }
 
+    @Transactional
     public Map<String, Object> sync() {
         if (registry.isEmpty()) {
             return Map.of("error", "Registry is empty — run POST /api/sync/aurora/fetch first.");
