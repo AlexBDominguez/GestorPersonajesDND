@@ -1770,7 +1770,13 @@ void toggleItem(int itemId) {
     _prePopulateClassSkillsForEdit(); // cross-reference skills una vez clase + background están listos
     _prePopulateExpertiseForEdit();
     await loadRaces();
-    if (isSpellcaster) await loadAvailableSpells();
+    if (isSpellcaster) {
+      await loadAvailableSpells();
+      // En edición los hechizos ya existentes se pre-cargan en el constructor — el
+      // paso ya es válido desde el principio, no depende de que el usuario lo visite
+      // (a diferencia de la creación, donde forzamos al menos una visita).
+      _spellsStepVisited = true;
+    }
     await _prePopulateFeatureChoicesForEdit();
   }
 
