@@ -248,6 +248,13 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       const table = [0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5];
       return table[level.clamp(0, 20)];
     }
+    if (className.contains('artificer')) {
+      // Progresión propia (TCE/ERLW): 1º desde nivel 1, 2º en 7, 3º en 13, 4º en 18 — nunca más alto.
+      if (level >= 18) return 4;
+      if (level >= 13) return 3;
+      if (level >= 7)  return 2;
+      return 1;
+    }
     return ((level / 2).ceil()).clamp(1, 9);
   }
 
@@ -282,7 +289,11 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       const table = [0, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4];
       return table[level.clamp(0, 20)];
     }
-    
+    if (className.contains('artificer')) {
+      const table = [0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4];
+      return table[level.clamp(0, 20)];
+    }
+
     // Eldritch Knight / Arcane Trickster: Empiezan con 2, suben a 3 al nivel 10
     if (selectedSubclass?.spellCastingAbility != null &&
         selectedClass?.spellCastingAbility == null) {
@@ -329,6 +340,11 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       if (level < 2) return 0; // No preparan hechizos a nivel 1
       // Half-caster: Nivel/2 (abajo) + Modificador
       return ((level / 2).floor() + abilityModifier('CHA')).clamp(1, 99);
+    }
+    if (className.contains('artificer')) {
+      // Mod. INT + mitad del nivel (redondeado abajo), mínimo 1. No hay nivel mínimo:
+      // a diferencia de Paladin/Ranger, el Artificer ya prepara hechizos desde nivel 1.
+      return (abilityModifier('INT') + (level / 2).floor()).clamp(1, 99);
     }
 
     // 3. Subclases (Eldritch Knight / Arcane Trickster)

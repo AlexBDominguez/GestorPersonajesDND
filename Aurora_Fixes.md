@@ -68,7 +68,7 @@ Casos detectados (no exhaustivo, ver puntos 8 y 8.1 para la auditoría completa)
 
 ---
 
-### 4. Escalado incorrecto de hechizos al subir el nivel de lanzamiento
+### 4. Escalado incorrecto de hechizos al subir el nivel de lanzamiento ✅HECHO.
 **Prioridad: Media**
 
 Revisar si, al seleccionar un nivel de lanzamiento superior para un hechizo, los dados de daño se actualizan conforme a la escala definida por el hechizo.
@@ -77,11 +77,13 @@ Revisar si, al seleccionar un nivel de lanzamiento superior para un hechizo, los
 
 **Dónde mirar probablemente:** `tab_spells.dart` (frontend) y la lógica de cálculo de daño de hechizos en el ViewModel del character sheet.
 
+**Confirmado (2026-06-19):** `CharacterSpell.damageAtLevel(castLevel)` (`character_spell.dart:47-48`) busca en `damageAtSlotLevel` por nivel de lanzamiento, con fallback a `damageBase`; usado en `_DamageCell` de `tab_spells.dart`. Solo cubre PHB (ver #10, hechizos de Aurora sin estos datos).
+
 ---
 
 ## 🎨 UX / Interfaz
 
-### 5. Comportamiento de los desplegables en el paso de Razas
+### 5. Comportamiento de los desplegables en el paso de Razas ✅HECHO.
 **Prioridad: Media**
 
 Problemas en `step_race.dart`:
@@ -94,25 +96,31 @@ Problemas en `step_race.dart`:
 - El foco visual debe mantenerse sobre la raza seleccionada, sin auto-scroll al final.
 - El icono de Artificiero debe renderizarse correctamente.
 
+**Confirmado (2026-06-19):** toggle en `step_race.dart:382`; `Scrollable.ensureVisible(alignment: 0.0)` en `_onRaceTap()` mantiene el foco sin saltar al final; iconos de Artificiero (ERLW/TCE) mapeados en `class_icons.dart:17,52-53`.
+
 ---
 
-### 6. Ordenación de Backgrounds
+### 6. Ordenación de Backgrounds ✅HECHO.
 **Prioridad: Baja**
 
 En `step_background.dart`, los backgrounds se muestran ordenados según el orden de las sources cargadas en vez de alfabéticamente.
 
 **Comportamiento esperado:** mostrar siempre los backgrounds en orden alfabético, independientemente de su source de origen.
 
+**Confirmado (2026-06-19):** `backgrounds.sort((a, b) => a.name.compareTo(b.name))` en `CharacterCreatorViewModel:868`, justo tras cargar desde la API.
+
 ---
 
 ## ⚙️ Reglas de D&D / mecánicas
 
-### 7. Sneak Attack se clasifica como Action
+### 7. Sneak Attack se clasifica como Action ✅HECHO.
 **Prioridad: Media**
 
 Sneak Attack aparece en la ficha como una acción independiente (pestaña Combat / Features), cuando es una característica pasiva/condicional que se aplica como parte de un ataque, no una acción en sí misma.
 
 **Comportamiento esperado:** debe mostrarse como característica pasiva/condicional y excluirse de la categoría "Action" en `config/combat_features.dart` y donde se clasifique el tipo de feature.
+
+**Confirmado (2026-06-19):** `sneak-attack` no aparece en ningún set de `combat_features.dart` (`kCombatActionFeatures`/`kCombatBonusFeatures`/`kCombatReactionFeatures`), así que cae por defecto en `FeatureCategory.passive` — correctamente excluida de "Action".
 
 ---
 
@@ -160,6 +168,7 @@ Detectado a raíz de revisar Psi-Warrior (Fighter): la feature "Psionic Power" d
 
 **Nota sobre alcance:** esta lista cubre las subclases confirmadas en `seed_subclasses.sql` (28, todas PHB) más los casos ya detectados fuera de ese fichero (Psi-Warrior vía Aurora). Las subclases que llegan dinámicamente desde Aurora (`AuroraSyncService.java`) no están en el repo como datos estáticos, así que cualquier subclase de esa fuente (probablemente la mayoría del contenido "expandido" tipo Tasha's) necesita pasar por esta misma auditoría una vez se pueda inspeccionar en una base de datos real — no se puede confirmar desde el código solo.
 
+### 8.2 Construir capa de mecánicas como infraestructura reutilizable
 **Idea para cuando se aborde esto (a futuro, no parte de este punto):** en vez de seguir resolviendo cada gap a mano feature por feature, tendría sentido construir una capa de "mecánicas" como infraestructura reutilizable: un esquema/API interna donde cada feature se describe de forma declarativa según el tipo de efecto que produce — por ejemplo `RESOURCE_POOL` (fórmula de usos + tipo de descanso para reponerlos), `NUMERIC_BONUS` (campo al que suma, condición de aplicación), `GRANT_SPELL` / `GRANT_PROFICIENCY` (nivel al que se desbloquea) — y que tanto backend como frontend lean esa descripción para activar el comportamiento automáticamente, sin necesitar una rama de código nueva por feature. Esto conectaría directamente con la creación manual de contenido para administradores (punto #9): al definir una clase, subclase o feat nueva desde el panel, el admin podría marcar qué "tipo de mecánica" tiene cada feature y la app la aplicaría sola. Y de cara a mantenerse sincronizado con fuentes externas, si una fuente expone sus datos con suficiente estructura (como ya hace la API pública de D&D 5e con `damage_at_slot_level`, `dc_type`, etc.), esta misma capa permitiría mapear esos campos directamente a una mecánica conocida sin escribir un caso especial por fuente. Para Aurora esto no sustituye al parseador de descripción que hace falta de todos modos (punto #10) — su contenido es texto libre, así que primero habría que extraer la estructura y después sí podría alimentar esta capa de mecánicas como cualquier otra fuente.
 
 **Dónde mirar probablemente:** `entities/ClassResource.java`, `entities/CharacterClassResource.java`, `frontend/lib/viewmodels/characters/character_sheet_viewmodel.dart` (`_kConsumableFeatures`), `services/PlayerCharacterService.java` (bonificadores y grants ad-hoc), `services/RacialTraitService.java`, `services/SubclassSpellService.java`, `scripts/seed_subclasses.sql` / `seed_subclass_spells.sql`, `sync/AuroraSyncService.java`.
@@ -237,10 +246,12 @@ Tareas pendientes para pasar a producción real:
 
 ## 📝 Limpieza de textos y contenido
 
-### 14. Texto duplicado "2nd class feature" en las especializaciones de Artificiero
+### 14. Texto duplicado "2nd class feature" en las especializaciones de Artificiero ✅HECHO (según el usuario).
 **Prioridad: Baja**
 
 Las dos especializaciones del Artificiero muestran la frase "2nd class feature" u otras dependiendo del nivel de forma redundante en su descripción. Revisar el origen del texto (datos sync/manual del Artificiero) y el formateo de descripciones generadas para subclases.
+
+**Nota (2026-06-19):** el usuario confirma que ya no se reproduce, aunque sigue habiendo descripciones de Artificiero con formato raro en algunos casos — pendiente de revisar caso a caso si vuelve a aparecer.
 
 ---
 
@@ -307,5 +318,10 @@ Hoy el modelo es estrictamente mono-clase: `PlayerCharacter` tiene un único `in
   - **Great Weapon Fighting / Protection**: no son representables como número (uno reroll de dados que la app no simula, el otro una reacción sobre aliados) — se muestran como badge descriptivo en Combat en vez de aplicar un efecto inexistente.
   - UX: para evitar que el jugador piense que tiene que sumar el bonus a mano, el badge descriptivo en Combat solo aparece para los estilos SIN efecto numérico automático (GWF, Protection, los de Tasha's); para los que sí tienen efecto (Archery/Defense/Dueling/Two-Weapon Fighting) se confirma la elección en `tab_features.dart` en su lugar, sin repetir el número.
 - **`PendingTasksScreen` reactivada (2026-06-19).** Estaba deshabilitada (`character_sheet_screen.dart`, navegación comentada). Reactivada la carga (`_loadPendingTasks()` en `CharacterSheetViewModel.loadCharacter()`) y el botón de acceso. De paso se corrigió un bug igual al de ASI/Feat del wizard (#1): el resolver de ASI dentro de esta pantalla también enviaba el nombre completo de la habilidad ("Strength") en vez de la abreviatura ("STR") que espera el backend. Las elecciones de **seguimiento** generadas después de la creación (p. ej. las 3 skills de "Skilled", que solo se crean al resolver el ASI_OR_FEAT) ya deberían poder resolverse desde aquí — sin verificar todavía caso por caso.
-- Creo que el botón de "Crear Personaje" en el step de inventory no debería poder ser pulsado hasta que haya cargado bien el inventory, porque me he dado cuenta que da error 500 si pulsas el botón de Crear Personaje antes de que cargue inventory.
-- Las battle maneuver del battle master, cuando tienes que escoger varias, cuando escoges una, en las siguiente "battle maneuver" deberían deshabilitarse las ya escogidas.
+- Creo que el botón de "Crear Personaje" en el step de inventory no debería poder ser pulsado hasta que haya cargado bien el inventory, porque me he dado cuenta que da error 500 si pulsas el botón de Crear Personaje antes de que cargue inventory. — **(2026-06-19) No se ha vuelto a reproducir** tras los cambios de esta sesión; pudo ser puntual. Dejar abierto por si reaparece.
+- Las battle maneuver del battle master, cuando tienes que escoger varias, cuando escoges una, en las siguiente "battle maneuver" deberían deshabilitarse las ya escogidas. — **(2026-06-19) Confirmado, sigue siendo un bug.** Pendiente de arreglar.
+- **Artificiero no activa el step de Spells: ✅ HECHO (2026-06-19).** Causa raíz: `spellcasting_ability = NULL` en la BD para ambas variantes (ERLW/TCE) — `isSpellcaster` depende de ese campo. Al investigar se encontraron dos huecos más detrás del mismo síntoma, los tres necesarios para que el Artificiero funcione de verdad en el wizard:
+  - `spellcasting_ability` NULL en BD → `scripts/patch_artificer_spellcasting.sql` (UPDATE a `'int'`).
+  - `spell_slot_progression` con 0 filas para Artificiero (class_id 13/14) → `scripts/seed_artificer_spell_slots.sql` (tabla oficial TCE/ERLW completa, 20 niveles, tope 4º nivel de hechizo).
+  - `maxSpellsKnown`/`maxSpellLevel`/`maxCantrips` en `CharacterCreatorViewModel` no tenían rama para `'artificer'` (caían a 0) — añadidas las fórmulas oficiales (preparación: mod. INT + mitad de nivel; tope de nivel de hechizo en 1/7/13/18; cantrips por tabla propia).
+  - Scripts SQL ejecutados en el VPS por el usuario.
