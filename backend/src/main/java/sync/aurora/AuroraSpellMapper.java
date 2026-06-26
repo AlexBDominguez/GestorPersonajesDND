@@ -138,10 +138,10 @@ public class AuroraSpellMapper {
     private String buildComponents(AuroraElement el) {
         Map<String, String> s = el.getSetters();
         List<String> parts = new ArrayList<>();
-        if ("true".equalsIgnoreCase(s.getOrDefault("verbal",   "false").trim())) parts.add("V");
-        if ("true".equalsIgnoreCase(s.getOrDefault("somatic",  "false").trim())) parts.add("S");
-        if ("true".equalsIgnoreCase(s.getOrDefault("material", "false").trim())) {
-            String mat = s.getOrDefault("materials", "").trim();
+        if ("true".equalsIgnoreCase(s.getOrDefault("hasVerbalComponent",   "false").trim())) parts.add("V");
+        if ("true".equalsIgnoreCase(s.getOrDefault("hasSomaticComponent",  "false").trim())) parts.add("S");
+        if ("true".equalsIgnoreCase(s.getOrDefault("hasMaterialComponent", "false").trim())) {
+            String mat = s.getOrDefault("materialComponent", "").trim();
             parts.add(mat.isEmpty() ? "M" : "M (" + mat + ")");
         }
         return String.join(", ", parts);
