@@ -4,6 +4,27 @@ Lista de bugs y mejoras pendientes, organizados por área. Cada entrada incluye 
 
 ---
 
+## 📋 Estado para retomar (sesión 2026-06-19)
+
+**Resuelto y confirmado por el usuario en producción:** #1, #2, #4, #5, #6, #7, #14, #16, y dentro de #18: Fighting Style, reactivación de `PendingTasksScreen`, Artificiero no activaba Spells, background se perdía al editar, error 500 al guardar cambios, step de Spells sin tick al editar, hechizos de expansión sin clase vinculada (+ components vacíos de Aurora). Todos con commits ya hechos en `dev` (sin pushear a remoto salvo que el usuario lo haya hecho aparte — confirmar con `git log`/`git status` antes de seguir).
+
+**Sin empezar / pendiente, por tamaño/prioridad:**
+- **#3 / #8 / #8.1** — la auditoría grande de features de clase/subclase sin efecto mecánico (Channel Divinity, Ki points, Infusions del Artificiero, etc.). El trabajo más grueso que queda; #8.1 ya tiene un inventario clase-por-clase detallado para empezar a picar.
+- **#8.2** — idea de capa de "mecánicas" reutilizable, solo diseño, no implementado.
+- **#9** — panel de admin (nueva funcionalidad), mejor después de #8.2 si se puede.
+- **#10** — parser de descripción de hechizos de Aurora para Hit/DC/daño (pensado para otro agente).
+- **#11** — Combat tab vs Spells al añadir hechizos: no reproducible la última vez, dejar abierto por si reaparece con un repro más preciso.
+- **#12** — limpieza de `withOpacity` (deprecado, no urgente, no rompe nada hoy).
+- **#13** — dominio/despliegue, no es código, para cuando se acerque release.
+- **#15** — permitir cambiar username (nueva funcionalidad, no compleja).
+- **#17** — multiclase (grande, dejar para el final a propósito).
+- **#18, último ítem sin marcar** — Battle Master: deshabilitar maniobras ya elegidas en el selector del wizard — confirmado que sigue el bug, pendiente de arreglar.
+- **Sugerencia de UX sin implementar (#18):** en modo edición, cada paso debería mostrar "Save Changes" en vez de "Next" en todos los pasos, no solo el último.
+
+**Importante para quien retome:** el backend/BD viven solo en el VPS del usuario (ver sección "Local environment" de `CLAUDE.md`) — nunca intentar levantarlos en local. Para consultas SQL puntuales, pide al usuario que ejecute el comando y pegue el resultado (usar siempre `-p$MYSQL_ROOT_PASSWORD`, ya exportado en su shell). Tras cambios de backend en Java, hace falta `docker compose up -d --build backend` (no solo `restart`/`up -d`, que reutiliza la imagen vieja). El registro de Aurora es en memoria — tras reiniciar el backend hay que volver a llamar a `/api/sync/aurora/fetch` antes de cualquier `/persist/*`.
+
+---
+
 ## 🐛 Creación y edición de personajes
 
 ### 1. La edición de un personaje reinicia datos ya configurados ✅HECHO.
@@ -340,6 +361,7 @@ Hoy el modelo es estrictamente mono-clase: `PlayerCharacter` tiene un único `in
   - **Efecto colateral encontrado al probar**: con más hechizos de expansión visibles en el wizard, salió un overflow de layout en `step_spells.dart` — la fila de tags (nivel/escuela/tiempo de lanzamiento) no manejaba `castingTime` largo (algunas reacciones de Aurora describen su condición en una frase completa, ej. "1 reaction, which you take when..."). Corregido: `Row` → `Wrap` (para que los tags salten de línea en vez de desbordar) + límite de ancho con elipsis en `_Tag`. `tab_spells.dart` (la ficha) ya truncaba esto correctamente (`_shortTime()`), solo el wizard tenía el bug.
   - **Otro bug encontrado al probar: `components` salía vacío para todos los hechizos de Aurora.** `AuroraSpellMapper.buildComponents()` buscaba las claves `"verbal"`/`"somatic"`/`"material"`/`"materials"` en los setters, pero Aurora las llama `"hasVerbalComponent"`/`"hasSomaticComponent"`/`"hasMaterialComponent"`/`"materialComponent"` — nunca coincidían. Corregido.
   - **Aclaración (no es un bug nuevo):** estos hechizos de expansión siguen sin Hit/DC/daño/escalado por nivel (`attack_type`/`dc_type`/`damage_type`/`damage_base` NULL) — es exactamente el hueco ya documentado en el punto #10 (parseador de descripción de Aurora), no algo que este fix debiera cubrir.
+  - **Aclaración: "Green-Flame Blade" aparece dos veces — no es un bug.** Son dos versiones de sourcebook distintas (`source='SCAG'` y `source='TCE'`, id 455 y 394): el hechizo se publicó originalmente en *Sword Coast Adventurer's Guide* y se reimprimió en *Tasha's Cauldron of Everything* con texto actualizado. Mismo patrón que el Artificiero ERLW/TCE. Si aparecen más "duplicados" así, comprobar primero `source` antes de asumir que es un fallo del sync.
 
   - Revisar si visualmente se ven bien los hechizos ahora (se veían mal) y además si se adaptan a las necesidades de la app (mecánicamente hablando)
   
