@@ -69,6 +69,21 @@ public class AuroraSpellMapper {
                 spell.setDuration(buildDuration(el));
                 spell.setComponents(buildComponents(el));
 
+                AuroraSpellCombatParser.Result combat =
+                    AuroraSpellCombatParser.parse(spell.getDescription(), spell.getLevel());
+                spell.setAttackType(combat.attackType);
+                spell.setDcType(combat.dcType);
+                spell.setDamageType(combat.damageType);
+                spell.setDamageBase(combat.damageBase);
+                if (spell.getDamageAtSlotLevel() == null) {
+                    spell.setDamageAtSlotLevel(new LinkedHashMap<>(combat.damageAtSlotLevel));
+                } else {
+                    spell.getDamageAtSlotLevel().clear();
+                    spell.getDamageAtSlotLevel().putAll(combat.damageAtSlotLevel);
+                }
+                spell.setExtendedDataSynced(!combat.damageAtSlotLevel.isEmpty() || combat.attackType != null
+                    || combat.dcType != null);
+
                 spellRepo.save(spell);
                 if (isNew) created++; else updated++;
 
