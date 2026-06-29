@@ -341,6 +341,9 @@ class _NavButtons extends StatelessWidget {
     final isLast     = vm.isLastStep;
     final canProceed = vm.canProceedCurrentStep && !vm.isSaving;
     final bottom     = MediaQuery.of(context).padding.bottom;
+    // Plain edit mode (not level-up: that still has to walk new-level choices in order)
+    // can save from any step — the step dots above already allow jumping freely.
+    final canSaveEarly = vm.isEditMode && !vm.isLevelUpMode;
 
     final sharedShape   = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
     const sharedPadding = EdgeInsets.symmetric(vertical: 12);
@@ -370,34 +373,36 @@ class _NavButtons extends StatelessWidget {
           const SizedBox(width: 12),
         ],
 
-        // Next / Create Character
+        // Next / Save Changes / Create Character
         Expanded(
           flex: 2,
           child: Tooltip(
             message: canProceed ? '' : 'Some steps are incomplete',
             child: ElevatedButton.icon(
               onPressed: canProceed
-                  ? () => isLast ? vm.submit() : vm.nextStep()
+                  ? () => (isLast || canSaveEarly) ? vm.submit() : vm.nextStep()
                   : null,
               icon: vm.isSaving
                   ? const SizedBox(
                       width: 16, height: 16,
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: AppTheme.background))
-                  : Icon(isLast ? Icons.check : Icons.arrow_forward, size: 16),
+                  : Icon((isLast || canSaveEarly) ? Icons.check : Icons.arrow_forward, size: 16),
               label: Text(vm.isSaving
                   ? (vm.isLevelUpMode
                     ? 'Leveling Up…'
                     : vm.isEditMode
                       ? 'Saving...'
                       : 'Creating…')
-                  : isLast
-                    ? (vm.isLevelUpMode
-                      ? 'Level Up'
-                      : vm.isEditMode
-                        ? 'Save Changes'
-                        : 'Create Character')
-                    : 'Next'),
+                  : canSaveEarly
+                    ? 'Save Changes'
+                    : isLast
+                      ? (vm.isLevelUpMode
+                        ? 'Level Up'
+                        : vm.isEditMode
+                          ? 'Save Changes'
+                          : 'Create Character')
+                      : 'Next'),
               style: ElevatedButton.styleFrom(
                 shape: sharedShape,
                 padding: sharedPadding,
