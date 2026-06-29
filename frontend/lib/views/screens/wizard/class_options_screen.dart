@@ -344,7 +344,15 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                             currentChoice: widget.vm.featureChoices[c.key],
                             alreadyTaken: c.type == 'LORE_BONUS_PROF'
                                 ? widget.vm.classSkillKSkillsNames
-                                : const {},
+                                : <String>{
+                                    // Slotted choices (Battle Master Maneuvers, Four Elements
+                                    // Disciplines, Trick Shots…) share the same options list
+                                    // across slots — exclude what's already picked in the others.
+                                    for (final c2 in widget.vm.subclassFeatureChoices)
+                                      if (identical(c2.options, c.options) && c2.key != c.key)
+                                        if (widget.vm.featureChoices[c2.key] != null)
+                                          widget.vm.featureChoices[c2.key]!,
+                                  },
                             onChoiceSelected: (v) => widget.vm.setFeatureChoice(c.key, v),
                             vm: widget.vm,
                           );

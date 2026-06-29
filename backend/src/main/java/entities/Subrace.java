@@ -49,7 +49,12 @@ public class Subrace {
     @MapKeyColumn(name = "ability")
     @Column(name = "bonus")
     private Map<String, Integer> abilityBonuses;
-    
+
+    // True for variant lineages (p.ej. Tiefling MToF/SCAG) cuyo paquete de bonos de
+    // característica SUSTITUYE por completo al de la raza base en vez de sumarse a él.
+    @Column(name = "replaces_race_ability_bonus", nullable = false)
+    private boolean replacesRaceAbilityBonus = false;
+
 
     //Traits de texto (ej: Darkvision 60ft, "Advantages on saves vs poison", etc)
     @ManyToMany(cascade = CascadeType.PERSIST)
@@ -120,4 +125,9 @@ public class Subrace {
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }
+
+    public boolean isReplacesRaceAbilityBonus() { return replacesRaceAbilityBonus; }
+    public void setReplacesRaceAbilityBonus(boolean replacesRaceAbilityBonus) {
+        this.replacesRaceAbilityBonus = replacesRaceAbilityBonus;
+    }
 }

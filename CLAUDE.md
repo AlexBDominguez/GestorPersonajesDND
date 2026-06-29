@@ -10,7 +10,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Git
 
-Never include `Co-Authored-By:` lines in commit messages.
+Never include `Co-Authored-By: Claude` lines in commit messages.
+
+**Commit automatically when finishing a task that leaves changes in the working tree** — do not ask for confirmation first. Stage only the files relevant to the task and write a normal descriptive commit message. (This overrides the default "never commit without being asked" behavior for this repo.)
+
+**Do not bump the version in `frontend/pubspec.yaml` on every commit.** The `version: X.Y.Z+N` build number should only be bumped right before a deploy/release (its own dedicated commit, e.g. `chore: update version to 1.0.0+14 in pubspec.yaml`), matching the existing history. When the user asks to deploy or build a release, bump the build number (`+N`) first if it hasn't already been bumped for this release.
 
 ---
 

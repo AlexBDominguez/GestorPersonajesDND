@@ -256,26 +256,21 @@ public class PlayerCharacterService {
             throw new RuntimeException("User ID is required to create a character");
         }
 
-        //Aplicar bonos raciales a los ability scores
-        if(race.getAbilityBonuses() != null && !race.getAbilityBonuses().isEmpty()){
-            Map<String, Integer> scores = new HashMap<>(playerCharacter.getAbilityScores());
-            race.getAbilityBonuses().forEach((ability, bonus) -> {
-                //Los bonos de raza también están en minúsculas en la BD
-                scores.merge(ability, bonus, Integer::sum);
-            });
-            playerCharacter.setAbilityScores(scores);
+        //Aplicar bonos raciales y de subraza a los ability scores.
+        //Las subrazas normales (p.ej. High Elf) SUMAN su bono al de la raza base, pero algunos
+        //linajes variantes (Tiefling MToF/SCAG) sustituyen por completo el bono de la raza base
+        //en vez de sumarse a él (replacesRaceAbilityBonus) — si no, se contaría dos veces el CHA.
+        Subrace subrace = playerCharacter.getSubrace();
+        boolean subraceReplacesRaceBonus = subrace != null && subrace.isReplacesRaceAbilityBonus();
+        Map<String, Integer> scores = new HashMap<>(playerCharacter.getAbilityScores());
+        if (!subraceReplacesRaceBonus && race.getAbilityBonuses() != null) {
+            //Los bonos de raza también están en minúsculas en la BD
+            race.getAbilityBonuses().forEach((ability, bonus) -> scores.merge(ability, bonus, Integer::sum));
         }
-
-        //Aplicar bonos de subraza a los ability scores (adicionales a los de la raza base)
-        if (playerCharacter.getSubrace() != null) {
-            Subrace subrace = playerCharacter.getSubrace();
-            if (subrace.getAbilityBonuses() != null && !subrace.getAbilityBonuses().isEmpty()) {
-                Map<String, Integer> scores = new HashMap<>(playerCharacter.getAbilityScores());
-                subrace.getAbilityBonuses().forEach((ability, bonus) ->
-                    scores.merge(ability, bonus, Integer::sum));
-                playerCharacter.setAbilityScores(scores);
-            }
+        if (subrace != null && subrace.getAbilityBonuses() != null) {
+            subrace.getAbilityBonuses().forEach((ability, bonus) -> scores.merge(ability, bonus, Integer::sum));
         }
+        playerCharacter.setAbilityScores(scores);
 
         PlayerCharacter saved = characterRepository.save(playerCharacter);
 
