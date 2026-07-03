@@ -704,6 +704,7 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
       late TabController _tabCtrl;
       final _searchCtrl = TextEditingController();
       String _query = '';
+      Timer? _searchDebounce;
 
       @override
       void initState() {
@@ -736,6 +737,7 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
       widget.vm.removeListener(_onVmChanged);
       _tabCtrl.dispose();
       _searchCtrl.dispose();
+      _searchDebounce?.cancel();
       super.dispose();
     }
 
@@ -775,7 +777,12 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
           padding: const EdgeInsets.all(12),
           child: TextField(
             controller: _searchCtrl,
-            onChanged: (v) => setState(() => _query = v),
+            onChanged: (v) {
+              _searchDebounce?.cancel();
+              _searchDebounce = Timer(const Duration(milliseconds: 280), () {
+                if (mounted) setState(() => _query = v);
+              });
+            },
             decoration: InputDecoration(
               hintText: 'Search by name or school…',
               hintStyle: GoogleFonts.lato(color: AppTheme.textSecondary),
@@ -785,6 +792,7 @@ class _ManageSpellsScreenState extends State<ManageSpellsScreen>
                   ? IconButton(
                       icon: const Icon(Icons.clear, size: 18),
                       onPressed: () {
+                        _searchDebounce?.cancel();
                         _searchCtrl.clear();
                         setState(() => _query = '');
                       })
@@ -1097,41 +1105,47 @@ class _LearnNewTabState extends State<_LearnNewTab> {
       );
     }
 
+    // Aplana nivel+hechizos en una única lista para que ListView.builder
+    // virtualice cada hechizo por separado — antes, dentro de cada nivel los
+    // hechizos se expandían con Column + .map(), construyendo los N hechizos
+    // de golpe aunque no fueran visibles (un full-caster puede traer 100-200+
+    // hechizos tras enlazar el contenido de Aurora, ver punto #18).
+    final List<Object> flatItems = [];
+    for (final level in sortedLevels) {
+      flatItems.add(level);
+      flatItems.addAll(byLevel[level]!);
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-      itemCount: sortedLevels.length,
+      itemCount: flatItems.length,
       itemBuilder: (_, i) {
-        final level     = sortedLevels[i];
-        final spells    = byLevel[level]!;
-        final _ord      = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'];
-        final levelName = level == 0
-            ? 'Cantrips'
-            : (level - 1 < _ord.length ? '${_ord[level - 1]} Level' : 'Level $level');
-
-        return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Cabecera de nivel
-              Padding(
-                padding: const EdgeInsets.only(top: 12, bottom: 6),
-                child: Row(children: [
-                  Text(levelName,
-                      style: GoogleFonts.libreBaskerville(
-                          color: AppTheme.primary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                      child: Divider(color: AppTheme.surfaceVariant)),
-                ]),
-              ),
-              // Tiles de spells
-              ...spells.map((spell) => _LearnSpellTile(
-                    spell: spell,
-                    isKnown: vm.knownSpellIds.contains(spell.id),
-                    onLearn: () => _confirmLearn(context, spell, vm),
-                  )),
-            ]);
+        final item = flatItems[i];
+        if (item is int) {
+          final level = item;
+          const ord = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th'];
+          final levelName = level == 0
+              ? 'Cantrips'
+              : (level - 1 < ord.length ? '${ord[level - 1]} Level' : 'Level $level');
+          return Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 6),
+            child: Row(children: [
+              Text(levelName,
+                  style: GoogleFonts.libreBaskerville(
+                      color: AppTheme.primary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold)),
+              const SizedBox(width: 8),
+              const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
+            ]),
+          );
+        }
+        final spell = item as SpellOption;
+        return _LearnSpellTile(
+          spell: spell,
+          isKnown: vm.knownSpellIds.contains(spell.id),
+          onLearn: () => _confirmLearn(context, spell, vm),
+        );
       },
     );
   }

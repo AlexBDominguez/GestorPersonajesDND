@@ -6,7 +6,7 @@ Lista de bugs y mejoras pendientes, organizados por área. Cada entrada incluye 
 
 ## 📋 Estado para retomar (sesión 2026-06-19)
 
-**Resuelto y confirmado por el usuario en producción:** #1, #2, #4, #5, #6, #7, #10, #14, #16, y dentro de #18: Fighting Style, reactivación de `PendingTasksScreen`, Artificiero no activaba Spells, background se perdía al editar, error 500 al guardar cambios, step de Spells sin tick al editar, hechizos de expansión sin clase vinculada (+ components vacíos de Aurora), Battle Master maneuvers ya elegidas sin deshabilitar en el selector, bonificadores de subraza de Tiefling duplicados, `subraceId` nunca enviado en creación (bug mucho más grave encontrado de paso — ninguna subraza se aplicaba nunca al crear personaje), "Save Changes" en cada paso del wizard en modo edición. Todos con commits ya hechos en `dev` (sin pushear a remoto salvo que el usuario lo haya hecho aparte — confirmar con `git log`/`git status` antes de seguir).
+**Resuelto y confirmado por el usuario en producción:** #1, #2, #4, #5, #6, #7, #10, #14, #16, #19, y dentro de #18: Fighting Style, reactivación de `PendingTasksScreen`, Artificiero no activaba Spells, background se perdía al editar, error 500 al guardar cambios, step de Spells sin tick al editar, hechizos de expansión sin clase vinculada (+ components vacíos de Aurora), Battle Master maneuvers ya elegidas sin deshabilitar en el selector, bonificadores de subraza de Tiefling duplicados, `subraceId` nunca enviado en creación (bug mucho más grave encontrado de paso — ninguna subraza se aplicaba nunca al crear personaje), "Save Changes" en cada paso del wizard en modo edición. Todos con commits ya hechos en `dev` (sin pushear a remoto salvo que el usuario lo haya hecho aparte — confirmar con `git log`/`git status` antes de seguir).
 
 **Sin empezar / pendiente, por tamaño/prioridad:**
 - **#3 / #8 / #8.1** — la auditoría grande de features de clase/subclase sin efecto mecánico (Channel Divinity, Ki points, Infusions del Artificiero, etc.). El trabajo más grueso que queda; #8.1 ya tiene un inventario clase-por-clase detallado para empezar a picar.
@@ -289,7 +289,7 @@ Las dos especializaciones del Artificiero muestran la frase "2nd class feature" 
 
 ## ⚡ Rendimiento
 
-### 19. "Manage Spells" ralentiza la app al abrirse (pestaña "Learn New")
+### 19. "Manage Spells" ralentiza la app al abrirse (pestaña "Learn New") ✅HECHO.
 **Prioridad: Media**
 
 Al entrar en "Manage Spells" desde la pestaña Spells de la ficha, la app se ralentiza notablemente. Causa más probable: la pestaña "Learn New" (`ManageSpellsScreen` → `_LearnNewTab`, `frontend/lib/views/screens/sheet/tabs/tab_spells.dart:1007-1056`) carga **todos** los hechizos disponibles para la clase del personaje de golpe vía `CharacterSheetViewModel.loadAvailableSpells()` (`character_sheet_viewmodel.dart:392-407`, llama a `GET /api/spells/available?classId=&maxLevel=`). El filtro por `classId`/`maxLevel` ya es server-side, pero desde que se enlazaron los 160 hechizos de Aurora a sus clases (punto #18, "Hechizos de expansión que faltan"), una clase full-caster (Wizard, Sorcerer, Warlock...) puede traer fácilmente 100-200+ hechizos en una sola respuesta.
@@ -305,6 +305,16 @@ Una vez en memoria, el problema se agrava en el render:
 - Evaluar mover el filtrado de texto al backend (`/api/spells/available?search=...`) si la lista por clase sigue siendo grande, o cachear `availableSpells` en el ViewModel mientras la ficha esté abierta para no repetir la llamada de red en cada apertura de "Manage Spells".
 
 **Dónde mirar probablemente:** `frontend/lib/views/screens/sheet/tabs/tab_spells.dart` (`_LearnNewTab`, líneas ~1007-1056 y el `build()` con el `.map()` por nivel), `frontend/lib/viewmodels/characters/character_sheet_viewmodel.dart` (`loadAvailableSpells()`), `frontend/lib/services/spells/spell_service.dart` (`getAvailableSpells()`), backend `SpellController`/`SpellService` para el endpoint `/api/spells/available`.
+
+**✅ HECHO (2026-07-03).** En `_LearnNewTab._buildContent()` (`tab_spells.dart`): los niveles y hechizos ya no se anidan como `Column` + `...spells.map(...)` dentro de un `ListView.builder` por nivel — se aplanan en una sola lista (`flatItems`, mezclando marcador de nivel `int` y `SpellOption`) que alimenta un único `ListView.builder` plano, así que cada hechizo se construye solo cuando entra en viewport, sin importar cuántos tenga el nivel.
+
+Añadido debounce de 280ms al buscador (`_ManageSpellsScreenState`, `Timer _searchDebounce`): el `TextField.onChanged` ya no llama `setState` en cada tecla, espera a que el usuario deje de teclear antes de recalcular el filtro sobre `_MySpellsTab`/`_LearnNewTab`.
+
+**Caché entre aperturas:** revisado — `CharacterSheetViewModel._availableSpells` nunca se resetea a `[]` en ningún punto salvo su inicialización, y `ManageSpellsScreen` recibe el mismo `vm` (por referencia) que ya vive en la ficha, no uno nuevo. `_LearnNewTabState.initState()` ya comprobaba `if (vm.availableSpells.isEmpty) loadAvailableSpells()`, así que la caché entre aperturas dentro de la misma sesión de ficha ya funcionaba correctamente — no hacía falta ningún cambio ahí, la sospecha del punto original no aplicaba.
+
+**No hecho a propósito (fuera de alcance de esta pasada):** mover el filtrado de texto al backend — con la virtualización + debounce ya no hace falta para el volumen actual (100-200 hechizos); revisar si vuelve a ser necesario si el catálogo crece mucho más.
+
+Confirmado por el usuario probándolo manualmente en su sesión habitual (2026-07-03).
 
 ---
 
