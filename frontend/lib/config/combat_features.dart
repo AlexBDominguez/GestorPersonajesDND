@@ -62,8 +62,9 @@ const kCombatBonusFeatures = <String>{
 const kCombatReactionFeatures = <String>{
   // Rogue
   'uncanny-dodge', 'misdirection', 'stroke-of-luck', 'spell-thief',
-  // Bard
-  'cutting-words',
+  // Bard — el indexName real es 'lore-cutting-words' (seed_sc_features_p1.sql),
+  // no 'cutting-words' a secas; con la clave vieja nunca coincidía.
+  'lore-cutting-words',
   // Monk
   'deflect-missiles', 'slow-fall',
   // Fighter/Paladin

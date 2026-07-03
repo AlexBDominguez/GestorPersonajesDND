@@ -36,19 +36,25 @@ const _kConsumableFeatures = <String, int>{
   'action-surge-1-use':      1,
   'action-surge-2-uses':     2,
   'second-wind':             1,
+  'indomitable-1-use':       1,
+  'indomitable-2-uses':      2,
+  'indomitable-3-uses':      3,
   // Monk — el recurso principal se llama 'ki' en la DB (no 'ki-points')
   'ki':                      -3,
   // Paladin
   'channel-divinity':        1,
   'lay-on-hands':            -2,
   'divine-sense':            -5,   // 1 + CHA mod
-  // Sorcerer
-  'sorcery-points':          -3,   // = level (igual que ki)
+  // Sorcerer — el indexName real de la API pública es 'font-of-magic', no
+  // 'sorcery-points' (ese key nunca coincidía con ninguna ClassFeature real,
+  // así que el recurso no funcionaba en absoluto, ni siquiera duplicado).
+  'font-of-magic':           -3,   // = level (igual que ki)
   // Wizard
   'arcane-recovery':         1,
-  // Fighter (Battle Master subclass)
-  'combat-superiority':      -6,   // superiority dice table
-  'superiority-dice':        -6,
+  // Fighter (Battle Master subclass) — el indexName real es
+  // 'battlemaster-combat-superiority' (seed_sc_features_p1.sql), no
+  // 'combat-superiority'/'superiority-dice' — mismo problema que sorcery-points.
+  'battlemaster-combat-superiority': -6,   // superiority dice table
 };
 
 // Prefijos que se resuelven por coincidencia parcial (indexName.startsWith(prefix + '-'))
@@ -68,6 +74,12 @@ const _kTieredFeatureFamilies = <List<String>>[
   ['channel-divinity-1-rest', 'channel-divinity-2-rest', 'channel-divinity-3-rest'],
   ['action-surge-1-use', 'action-surge-2-uses'],
   ['indomitable-1-use', 'indomitable-2-uses', 'indomitable-3-uses'],
+  ['bardic-inspiration-d6', 'bardic-inspiration-d8', 'bardic-inspiration-d10', 'bardic-inspiration-d12'],
+  [
+    'wild-shape-cr-1-4-or-below-no-flying-or-swim-speed', // nivel 2
+    'wild-shape-cr-1-2-or-below-no-flying-speed',         // nivel 4
+    'wild-shape-cr-1-or-below',                           // nivel 8
+  ],
 ];
 
 List<ClassFeature> _dedupeTieredFeatures(List<ClassFeature> features) {
@@ -107,6 +119,14 @@ const _kKiConsumingFeatures = <String>{
   'flurry-of-blows',
   'patient-defense',
   'step-of-the-wind',
+};
+
+// Bard — features de subclase que gastan un dado de Bardic Inspiration ya
+// otorgado en vez de llevar su propio contador (Cutting Words de College of
+// Lore, Combat Inspiration de College of Valor).
+const _kBardicInspirationConsumingFeatures = <String>{
+  'lore-cutting-words',
+  'valor-combat-inspiration',
 };
 
 class CharacterSheetViewModel extends ChangeNotifier {
@@ -631,6 +651,14 @@ class CharacterSheetViewModel extends ChangeNotifier {
   String? _sharedResourcePoolKey(String indexNameLower) {
     if (_kKiConsumingFeatures.contains(indexNameLower)) return 'ki';
 
+    if (_kBardicInspirationConsumingFeatures.contains(indexNameLower)) {
+      final lvl = character?.level ?? 1;
+      if (lvl >= 15) return 'bardic-inspiration-d12';
+      if (lvl >= 10) return 'bardic-inspiration-d10';
+      if (lvl >= 5)  return 'bardic-inspiration-d8';
+      return 'bardic-inspiration-d6';
+    }
+
     if (!indexNameLower.startsWith('channel-divinity-') ||
         _kChannelDivinityBaseKeys.contains(indexNameLower)) {
       return null;
@@ -709,14 +737,13 @@ class CharacterSheetViewModel extends ChangeNotifier {
            key == 'ki'                     ||
            key == 'lay-on-hands'           ||
            key == 'divine-sense'           ||
-           key == 'sorcery-points'         ||
+           key == 'font-of-magic'          ||
            key == 'arcane-recovery'        ||
            key == 'channel-divinity'       ||
            key == 'channel-divinity-1-rest'||
            key == 'channel-divinity-2-rest'||
            key == 'channel-divinity-3-rest'||
-           key == 'combat-superiority'     ||
-           key == 'superiority-dice'       ||
+           key == 'battlemaster-combat-superiority' ||
            key.startsWith('bardic-inspiration');
   }
 
