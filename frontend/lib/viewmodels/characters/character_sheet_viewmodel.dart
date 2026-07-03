@@ -96,6 +96,19 @@ const _kChannelDivinityBaseKeys = <String>{
   'channel-divinity', // Paladin
 };
 
+// Monk — features base que cuestan 1 punto de ki cada una. Igual que las
+// opciones de Channel Divinity, no llevan contador propio: gastan del mismo
+// fondo que la feature base "ki". No cubre Way of Shadow (Shadow Arts) ni
+// Way of the Four Elements (Disciple of the Elements): esas son listas de
+// varias disciplinas/hechizos con coste de ki variable por opción elegida,
+// no un simple "gastar 1 ki" — necesitarían su propio selector, no solo esta
+// redirección de contador (gap conocido, ver Aurora_Fixes.md #8.1 Monje).
+const _kKiConsumingFeatures = <String>{
+  'flurry-of-blows',
+  'patient-defense',
+  'step-of-the-wind',
+};
+
 class CharacterSheetViewModel extends ChangeNotifier {
   // Varios métodos de carga (_loadSubclassFeaturesIfNeeded, _loadClassFeaturesIfNeeded, etc.)
   // se disparan sin esperar (`fire-and-forget`) desde loadCharacter() y pueden resolver después
@@ -610,12 +623,14 @@ class CharacterSheetViewModel extends ChangeNotifier {
   // ── Consumable feature tracking
   final Map<String, int> _featureUsesRemaining = {};
 
-  /// Si esta feature es una opción de Channel Divinity (Preserve Life, Turn
-  /// Undead, Sacred Weapon...), devuelve el indexName del fondo compartido de
-  /// usos que le corresponde según la clase/nivel del personaje. Null si la
-  /// feature no es una opción de Channel Divinity (incluye las propias claves
-  /// base, que no se redirigen a sí mismas).
+  /// Si esta feature gasta de un fondo de usos compartido en vez de llevar
+  /// contador propio (opciones de Channel Divinity, features de Monje que
+  /// cuestan 1 ki), devuelve el indexName de ese fondo. Null si la feature no
+  /// redirige a ningún otro recurso (incluye las propias claves base, que no
+  /// se redirigen a sí mismas).
   String? _sharedResourcePoolKey(String indexNameLower) {
+    if (_kKiConsumingFeatures.contains(indexNameLower)) return 'ki';
+
     if (!indexNameLower.startsWith('channel-divinity-') ||
         _kChannelDivinityBaseKeys.contains(indexNameLower)) {
       return null;
@@ -689,7 +704,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
   /// en lugar de círculos individuales.
   bool isPoolResource(ClassFeature f) {
     final key = f.indexName.toLowerCase();
-    if (_sharedResourcePoolKey(key) != null) return true; // opción de Channel Divinity
+    if (_sharedResourcePoolKey(key) != null) return true; // redirige a otro fondo (Channel Divinity / ki)
     return key == 'rage'                   ||
            key == 'ki'                     ||
            key == 'lay-on-hands'           ||
