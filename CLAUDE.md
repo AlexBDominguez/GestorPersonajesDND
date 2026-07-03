@@ -22,6 +22,8 @@ Never include `Co-Authored-By: Claude` lines in commit messages.
 
 **The real backend + MySQL database run on the user's VPS, not locally.** There is no local Docker MySQL/backend with production-equivalent data — do not attempt to start `docker compose up -d mysql-db` / `backend` to "test" or "verify" a change or to inspect data; any local container is empty/stale and not representative. To check live data or behavior, ask the user to run the query/check on the VPS, or reason from the source code instead.
 
+**Manual UI/UX testing of Flutter changes is done by the user, not by Claude driving a local browser.** Do not launch `flutter run -d chrome` (or similar) to log in and click through the app to verify a change, since that requires real VPS-backed credentials and burns tokens the user would rather spend elsewhere — the user tests these themselves in their own session and reports back. It's fine to run `flutter analyze`/build checks for static verification. Only drive the app yourself if the user explicitly asks you to for that task.
+
 ---
 
 ## Commands
