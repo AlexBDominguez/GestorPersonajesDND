@@ -6,7 +6,7 @@ Lista de bugs y mejoras pendientes, organizados por área. Cada entrada incluye 
 
 ## 📋 Estado para retomar (sesión 2026-06-19)
 
-**Resuelto y confirmado por el usuario en producción:** #1, #2, #4, #5, #6, #7, #14, #16, y dentro de #18: Fighting Style, reactivación de `PendingTasksScreen`, Artificiero no activaba Spells, background se perdía al editar, error 500 al guardar cambios, step de Spells sin tick al editar, hechizos de expansión sin clase vinculada (+ components vacíos de Aurora), Battle Master maneuvers ya elegidas sin deshabilitar en el selector, bonificadores de subraza de Tiefling duplicados, `subraceId` nunca enviado en creación (bug mucho más grave encontrado de paso — ninguna subraza se aplicaba nunca al crear personaje), "Save Changes" en cada paso del wizard en modo edición. Todos con commits ya hechos en `dev` (sin pushear a remoto salvo que el usuario lo haya hecho aparte — confirmar con `git log`/`git status` antes de seguir).
+**Resuelto y confirmado por el usuario en producción:** #1, #2, #4, #5, #6, #7, #10, #14, #16, y dentro de #18: Fighting Style, reactivación de `PendingTasksScreen`, Artificiero no activaba Spells, background se perdía al editar, error 500 al guardar cambios, step de Spells sin tick al editar, hechizos de expansión sin clase vinculada (+ components vacíos de Aurora), Battle Master maneuvers ya elegidas sin deshabilitar en el selector, bonificadores de subraza de Tiefling duplicados, `subraceId` nunca enviado en creación (bug mucho más grave encontrado de paso — ninguna subraza se aplicaba nunca al crear personaje), "Save Changes" en cada paso del wizard en modo edición. Todos con commits ya hechos en `dev` (sin pushear a remoto salvo que el usuario lo haya hecho aparte — confirmar con `git log`/`git status` antes de seguir).
 
 **Sin empezar / pendiente, por tamaño/prioridad:**
 - **#3 / #8 / #8.1** — la auditoría grande de features de clase/subclase sin efecto mecánico (Channel Divinity, Ki points, Infusions del Artificiero, etc.). El trabajo más grueso que queda; #8.1 ya tiene un inventario clase-por-clase detallado para empezar a picar.
@@ -215,7 +215,7 @@ Permitir que los administradores creen contenido personalizado directamente desd
 
 ---
 
-### 10. Hechizos de Aurora sin datos de combate (Hit/DC, daño, escalado) — necesita parseador de descripción
+### 10. Hechizos de Aurora sin datos de combate (Hit/DC, daño, escalado) — necesita parseador de descripción ✅HECHO.
 **Prioridad: Media-Alta** — Para asignar a otro agente
 
 Confirmado (2026-06-18): los hechizos sincronizados desde Aurora (no-PHB) llegan a la base de datos sin `attackType`, `dcType`, `damageType`, `damageBase` ni la tabla de escalado por nivel (`damageAtSlotLevel`, ver punto #4 ya resuelto para PHB). Está documentado como limitación conocida en `AuroraSpellMapper.java` ("Combat fields are left null — they require per-spell analysis").
@@ -226,6 +226,14 @@ Confirmado (2026-06-18): los hechizos sincronizados desde Aurora (no-PHB) llegan
 - Si es de ataque (ranged/melee) o de tirada de salvación (y de qué habilidad).
 - Tipo y dados de daño base.
 - Cómo escala el daño con el nivel de lanzamiento (cuando aplica — algunos hechizos escalan con más dados, otros con más "proyectiles/efectos" como Magic Missile/Scorching Ray, que ni siquiera la API pública resuelve bien, ver hallazgo de hoy).
+
+**✅ HECHO (2026-06-29/2026-07-03).** Implementado `AuroraSpellCombatParser.java` (commit `36bbf10`), integrado en `AuroraSpellMapper.sync()`: parsea por regex sobre la descripción libre de cada hechizo —
+- Ataque melee/ranged (`"melee spell attack"` / `"ranged spell attack"`) o tirada de salvación (`"<ability> saving throw"` → abreviatura STR-CHA).
+- Daño base (`"XdY <tipo> damage"`, validando el tipo contra la lista oficial de tipos de daño).
+- Escalado: tres patrones — lineal por nivel de slot ("damage increases by 1d6 ... for each slot level above 2nd"), cantrip a niveles 5/11/17, y umbrales explícitos ("...spell slot of 7th level or higher, the damage increases to 5d8").
+- Deliberadamente best-effort: casos irregulares que ni la API pública resuelve bien (Magic Missile/Scorching Ray, escalado por proyectiles en vez de dados) se dejan sin parsear — mismo criterio de "gracioso degradado a null" que ya existía antes del parser.
+
+Sincronizado y probado por el usuario contra los hechizos reales de Aurora en el VPS (`/api/sync/aurora/persist/spells`) — confirmado funcionando en producción.
 
 **Por qué es más que un fix puntual:** el usuario quiere en el futuro un panel de admin para crear contenido nuevo (clases, razas, hechizos...) directamente desde la app (ver #9). Este parseador no debería ser un script suelto solo para Aurora, sino parte de una infraestructura común de extracción/normalización de datos de reglas, reutilizable tanto para el sync de Aurora como para lo que un admin meta a mano. Vale la pena diseñarlo pensando en ambos casos a la vez, no solo en tapar el agujero de Aurora.
 
@@ -276,6 +284,27 @@ Tareas pendientes para pasar a producción real:
 Las dos especializaciones del Artificiero muestran la frase "2nd class feature" u otras dependiendo del nivel de forma redundante en su descripción. Revisar el origen del texto (datos sync/manual del Artificiero) y el formateo de descripciones generadas para subclases.
 
 **Nota (2026-06-19):** el usuario confirma que ya no se reproduce, aunque sigue habiendo descripciones de Artificiero con formato raro en algunos casos — pendiente de revisar caso a caso si vuelve a aparecer.
+
+---
+
+## ⚡ Rendimiento
+
+### 19. "Manage Spells" ralentiza la app al abrirse (pestaña "Learn New")
+**Prioridad: Media**
+
+Al entrar en "Manage Spells" desde la pestaña Spells de la ficha, la app se ralentiza notablemente. Causa más probable: la pestaña "Learn New" (`ManageSpellsScreen` → `_LearnNewTab`, `frontend/lib/views/screens/sheet/tabs/tab_spells.dart:1007-1056`) carga **todos** los hechizos disponibles para la clase del personaje de golpe vía `CharacterSheetViewModel.loadAvailableSpells()` (`character_sheet_viewmodel.dart:392-407`, llama a `GET /api/spells/available?classId=&maxLevel=`). El filtro por `classId`/`maxLevel` ya es server-side, pero desde que se enlazaron los 160 hechizos de Aurora a sus clases (punto #18, "Hechizos de expansión que faltan"), una clase full-caster (Wizard, Sorcerer, Warlock...) puede traer fácilmente 100-200+ hechizos en una sola respuesta.
+
+Una vez en memoria, el problema se agrava en el render:
+- Cada nivel de hechizo se pinta con `ListView.builder` (virtualizado), pero **dentro de cada nivel** los hechizos se expanden con `...spells.map(...)` en vez de otro `ListView.builder` anidado — es decir, si el nivel 1 tiene 40 hechizos, los 40 widgets se construyen de golpe en vez de solo los visibles.
+- El buscador (`_query`) filtra en memoria sobre la lista completa en cada pulsación de tecla (`.where(...)` en el `build()`), sin debounce ni filtrado en servidor.
+- La lista se recarga desde la red cada vez que se entra en la pantalla si `availableSpells` está vacío al salir (no hay caché entre aperturas dentro de la misma sesión de la ficha).
+
+**Sugerencia de mejora:**
+- Virtualizar también los hechizos dentro de cada nivel (p. ej. un único `ListView.builder` plano con cabeceras de nivel como "sticky headers", o `SliverList` por secciones, en vez de `Column` + `.map()` anidado).
+- Añadir debounce (~250-300ms) al buscador antes de re-filtrar, para no recalcular en cada tecla.
+- Evaluar mover el filtrado de texto al backend (`/api/spells/available?search=...`) si la lista por clase sigue siendo grande, o cachear `availableSpells` en el ViewModel mientras la ficha esté abierta para no repetir la llamada de red en cada apertura de "Manage Spells".
+
+**Dónde mirar probablemente:** `frontend/lib/views/screens/sheet/tabs/tab_spells.dart` (`_LearnNewTab`, líneas ~1007-1056 y el `build()` con el `.map()` por nivel), `frontend/lib/viewmodels/characters/character_sheet_viewmodel.dart` (`loadAvailableSpells()`), `frontend/lib/services/spells/spell_service.dart` (`getAvailableSpells()`), backend `SpellController`/`SpellService` para el endpoint `/api/spells/available`.
 
 ---
 
