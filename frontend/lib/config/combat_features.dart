@@ -15,14 +15,13 @@ const kCombatActionFeatures = <String>{
   'perfect-self', 'diamond-soul',
   // Druid
   'wild-shape', 'archdruid', 'nature-ward',
-  // Cleric
-  'channel-divinity', 'divine-intervention', 'turn-undead', 
-  'channel-divinity-preserve-life', 'channel-divinity-radiance-of-the-dawn',
-  'channel-divinity-invoke-duplicity', 'channel-divinity-guided-strike',
-  'channel-divinity-war-gods-blessing',
-  // Paladin
-  'divine-smite', 'lay-on-hands', 'cleansing-touch', 'channel-divinity-sacred-weapon', 
-  'channel-divinity-turn-the-unholy', 'channel-divinity-abjure-enemy', 'channel-divinity-vow-of-enmity',
+  // Cleric — 'channel-divinity' también cubre por prefijo cualquier opción
+  // de Dominio (channel-divinity-preserve-life, -turn-undead, -knowledge-of-
+  // the-ages, etc.), así que no hace falta listarlas una a una.
+  'channel-divinity', 'divine-intervention',
+  // Paladin — igual que arriba, cubre las opciones de Juramento por prefijo
+  // (channel-divinity-sacred-weapon, -abjure-enemy, -natures-wrath...).
+  'divine-smite', 'lay-on-hands', 'cleansing-touch',
   // Ranger
   'multiattack', 'whirlwind-attack', 'volley', 'hide-in-plain-sight', 'conjure-barrage',
   // Bard

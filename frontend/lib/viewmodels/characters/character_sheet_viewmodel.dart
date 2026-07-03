@@ -57,6 +57,45 @@ const _kConsumableFeaturePrefixes = <String>{
   'wild-shape',         // cubre todas las variantes de CR
 };
 
+// Familias de features "escalonadas": la API pública de D&D 5e representa cada
+// mejora de nivel como un indexName propio (channel-divinity-1-rest, -2-rest,
+// -3-rest...) en vez de una sola feature que escala. Sin filtrar, un Clérigo
+// nivel 6+ acumula TODAS las variantes ya desbloqueadas a la vez como tarjetas
+// separadas, cada una con su propio contador — duplicando (o triplicando)
+// los usos reales disponibles. Cada lista va de nivel más bajo a más alto;
+// nos quedamos solo con la variante más alta que el personaje ya desbloqueó.
+const _kTieredFeatureFamilies = <List<String>>[
+  ['channel-divinity-1-rest', 'channel-divinity-2-rest', 'channel-divinity-3-rest'],
+  ['action-surge-1-use', 'action-surge-2-uses'],
+  ['indomitable-1-use', 'indomitable-2-uses', 'indomitable-3-uses'],
+];
+
+List<ClassFeature> _dedupeTieredFeatures(List<ClassFeature> features) {
+  final present = features.map((f) => f.indexName.toLowerCase()).toSet();
+  final toRemove = <String>{};
+  for (final family in _kTieredFeatureFamilies) {
+    final highest = family.lastWhere(present.contains, orElse: () => '');
+    if (highest.isEmpty) continue;
+    toRemove.addAll(family.where((k) => k != highest));
+  }
+  if (toRemove.isEmpty) return features;
+  return features.where((f) => !toRemove.contains(f.indexName.toLowerCase())).toList();
+}
+
+// Channel Divinity: cada Dominio/Juramento añade una opción propia
+// (Preserve Life, Turn Undead, Sacred Weapon...) que gasta del MISMO fondo
+// de usos que la feature base "Channel Divinity" — no es un recurso aparte.
+// Resuelve a qué indexName de fondo apunta cada opción según clase/nivel del
+// personaje, para que todas compartan el mismo contador en vez de que cada
+// opción lleve su propio contador independiente (lo que permitiría "usar"
+// Preserve Life y Turn Undead cada uno por separado sin límite compartido).
+const _kChannelDivinityBaseKeys = <String>{
+  'channel-divinity-1-rest',
+  'channel-divinity-2-rest',
+  'channel-divinity-3-rest',
+  'channel-divinity', // Paladin
+};
+
 class CharacterSheetViewModel extends ChangeNotifier {
   // Varios métodos de carga (_loadSubclassFeaturesIfNeeded, _loadClassFeaturesIfNeeded, etc.)
   // se disparan sin esperar (`fire-and-forget`) desde loadCharacter() y pueden resolver después
@@ -483,7 +522,8 @@ class CharacterSheetViewModel extends ChangeNotifier {
     try {
       final all = await _refService.getClassFeatures(id);
       final charLevel = character?.level ?? 1;
-      _classFeatures = all.where((f) => f.level <= charLevel).toList()
+      _classFeatures = _dedupeTieredFeatures(
+          all.where((f) => f.level <= charLevel).toList())
         ..sort((a, b) => a.level.compareTo(b.level));
     } catch (_) {
       // silencioso
@@ -511,7 +551,8 @@ class CharacterSheetViewModel extends ChangeNotifier {
     try {
       final all = await _refService.getSubclassFeatures(id);
       final charLevel = character?.level ?? 1;
-      _subclassFeatures = all.where((f) => f.level <= charLevel).toList()
+      _subclassFeatures = _dedupeTieredFeatures(
+          all.where((f) => f.level <= charLevel).toList())
         ..sort((a, b) => a.level.compareTo(b.level));
     } catch (_) {
       // silencioso
@@ -566,11 +607,40 @@ class CharacterSheetViewModel extends ChangeNotifier {
     } catch (_) {}
   }
 
-  // ── Consumable feature tracking 
+  // ── Consumable feature tracking
   final Map<String, int> _featureUsesRemaining = {};
 
-  int featureMaxUses(ClassFeature f) {
+  /// Si esta feature es una opción de Channel Divinity (Preserve Life, Turn
+  /// Undead, Sacred Weapon...), devuelve el indexName del fondo compartido de
+  /// usos que le corresponde según la clase/nivel del personaje. Null si la
+  /// feature no es una opción de Channel Divinity (incluye las propias claves
+  /// base, que no se redirigen a sí mismas).
+  String? _sharedResourcePoolKey(String indexNameLower) {
+    if (!indexNameLower.startsWith('channel-divinity-') ||
+        _kChannelDivinityBaseKeys.contains(indexNameLower)) {
+      return null;
+    }
+    final className = character?.dndClassName?.toLowerCase() ?? '';
+    final lvl = character?.level ?? 1;
+    if (className.startsWith('paladin')) {
+      return lvl >= 3 ? 'channel-divinity' : null;
+    }
+    // Por defecto asumimos Clérigo (cubre también subclases con el mismo prefijo).
+    if (lvl >= 18) return 'channel-divinity-3-rest';
+    if (lvl >= 6)  return 'channel-divinity-2-rest';
+    if (lvl >= 2)  return 'channel-divinity-1-rest';
+    return null;
+  }
+
+  /// Clave real a usar para lookup/almacenamiento de usos: el propio indexName,
+  /// o el fondo compartido si esta feature redirige a uno (ver arriba).
+  String _resourceKey(ClassFeature f) {
     final key = f.indexName.toLowerCase();
+    return _sharedResourcePoolKey(key) ?? key;
+  }
+
+  int featureMaxUses(ClassFeature f) {
+    final key = _resourceKey(f);
     // 1. Coincidencia exacta
     int? raw = _kConsumableFeatures[key];
     // 2. Coincidencia por prefijo para variantes (bardic-inspiration-d6, wild-shape-cr-*, …)
@@ -610,7 +680,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
   int featureUsesRemaining(ClassFeature f) {
     final max = featureMaxUses(f);
     if (max <= 0) return 0;
-    return _featureUsesRemaining[f.indexName] ?? max;
+    return _featureUsesRemaining[_resourceKey(f)] ?? max;
   }
 
   bool isConsumableFeature(ClassFeature f) => featureMaxUses(f) > 0;
@@ -619,6 +689,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
   /// en lugar de círculos individuales.
   bool isPoolResource(ClassFeature f) {
     final key = f.indexName.toLowerCase();
+    if (_sharedResourcePoolKey(key) != null) return true; // opción de Channel Divinity
     return key == 'rage'                   ||
            key == 'ki'                     ||
            key == 'lay-on-hands'           ||
@@ -639,7 +710,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
     if (max <= 0) return;
     final current = featureUsesRemaining(f);
     if (current <= 0) return;
-    _featureUsesRemaining[f.indexName] = current - 1;
+    _featureUsesRemaining[_resourceKey(f)] = current - 1;
     notifyListeners();
   }
 
@@ -648,7 +719,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
     if (max <= 0) return;
     final current = featureUsesRemaining(f);
     if (current >= max) return;
-    _featureUsesRemaining[f.indexName] = current + 1;
+    _featureUsesRemaining[_resourceKey(f)] = current + 1;
     notifyListeners();
   }
 
@@ -656,14 +727,14 @@ class CharacterSheetViewModel extends ChangeNotifier {
     final max = featureMaxUses(f);
     if (max <= 0 || n <= 0) return;
     final current = featureUsesRemaining(f);
-    _featureUsesRemaining[f.indexName] = (current - n).clamp(0, max);
+    _featureUsesRemaining[_resourceKey(f)] = (current - n).clamp(0, max);
     notifyListeners();
   }
 
   void restoreFeatureToFull(ClassFeature f) {
     final max = featureMaxUses(f);
     if (max <= 0) return;
-    _featureUsesRemaining[f.indexName] = max;
+    _featureUsesRemaining[_resourceKey(f)] = max;
     notifyListeners();
   }
 
