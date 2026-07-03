@@ -4,23 +4,21 @@ Lista de bugs y mejoras pendientes, organizados por área. Cada entrada incluye 
 
 ---
 
-## 📋 Estado para retomar (sesión 2026-06-19)
+## 📋 Estado para retomar (última actualización 2026-07-03)
 
 **Resuelto y confirmado por el usuario en producción:** #1, #2, #4, #5, #6, #7, #10, #14, #16, #19, y dentro de #18: Fighting Style, reactivación de `PendingTasksScreen`, Artificiero no activaba Spells, background se perdía al editar, error 500 al guardar cambios, step de Spells sin tick al editar, hechizos de expansión sin clase vinculada (+ components vacíos de Aurora), Battle Master maneuvers ya elegidas sin deshabilitar en el selector, bonificadores de subraza de Tiefling duplicados, `subraceId` nunca enviado en creación (bug mucho más grave encontrado de paso — ninguna subraza se aplicaba nunca al crear personaje), "Save Changes" en cada paso del wizard en modo edición. Todos con commits ya hechos en `dev` (sin pushear a remoto salvo que el usuario lo haya hecho aparte — confirmar con `git log`/`git status` antes de seguir).
 
+**Resuelto, pendiente de que el usuario lo pruebe en producción:** #3 (Drakewarden/Thaumaturgy y attunement de Artificiero resultaron ya estar arreglados desde antes; solo faltaba anotarlo) y, dentro de #8.1, el apartado de Channel Divinity de Clérigo/Paladín (duplicación de usos al subir de nivel + opciones de Dominio/Juramento sin conectar al fondo compartido).
+
 **Sin empezar / pendiente, por tamaño/prioridad:**
-- **#3 / #8 / #8.1** — la auditoría grande de features de clase/subclase sin efecto mecánico (Channel Divinity, Ki points, Infusions del Artificiero, etc.). El trabajo más grueso que queda; #8.1 ya tiene un inventario clase-por-clase detallado para empezar a picar.
+- **#8 / #8.1** — la auditoría grande de features de clase/subclase sin efecto mecánico. Channel Divinity (Clérigo/Paladín) ya está hecho (ver arriba); queda el resto del inventario clase-por-clase: Ki points (Monje), Sorcery Points (Hechicero), Infusions del Artificiero, persistencia de Mutagen Formula (Blood Hunter, ver #3), y el resto de clases listadas en #8.1. El trabajo más grueso que queda.
 - **#8.2** — idea de capa de "mecánicas" reutilizable, solo diseño, no implementado.
 - **#9** — panel de admin (nueva funcionalidad), mejor después de #8.2 si se puede.
-- **#10** — parser de descripción de hechizos de Aurora para Hit/DC/daño (pensado para otro agente).
 - **#11** — Combat tab vs Spells al añadir hechizos: no reproducible la última vez, dejar abierto por si reaparece con un repro más preciso.
 - **#12** — limpieza de `withOpacity` (deprecado, no urgente, no rompe nada hoy).
 - **#13** — dominio/despliegue, no es código, para cuando se acerque release.
 - **#15** — permitir cambiar username (nueva funcionalidad, no compleja).
 - **#17** — multiclase (grande, dejar para el final a propósito).
-- **#18, último ítem ✅ HECHO (2026-06-29):** Battle Master: deshabilitar maniobras ya elegidas en el selector del wizard.
-- **Sugerencia de UX ✅ HECHA (2026-06-29):** en modo edición (no level-up), cada paso muestra "Save Changes" y guarda directamente, no solo el último.
-- **Duda de Tiefling (#18) ✅ RESUELTA (2026-06-29):** ver detalle más abajo, en #18 — dos bugs encontrados y corregidos (uno de datos/lógica de bonificadores, otro mucho más grave de `subraceId` nunca enviado en creación).
 
 **Importante para quien retome:** el backend/BD viven solo en el VPS del usuario (ver sección "Local environment" de `CLAUDE.md`) — nunca intentar levantarlos en local. Para consultas SQL puntuales, pide al usuario que ejecute el comando y pegue el resultado (usar siempre `-p$MYSQL_ROOT_PASSWORD`, ya exportado en su shell). Tras cambios de backend en Java, hace falta `docker compose up -d --build backend` (no solo `restart`/`up -d`, que reutiliza la imagen vieja). El registro de Aurora es en memoria — tras reiniciar el backend hay que volver a llamar a `/api/sync/aurora/fetch` antes de cualquier `/persist/*`.
 
