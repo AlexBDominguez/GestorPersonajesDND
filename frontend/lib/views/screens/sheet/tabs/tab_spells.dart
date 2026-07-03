@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
@@ -12,6 +13,22 @@ const double _kDmgW    = 80.0;
 const double _kColGap  =  8.0;
 const double _kCastPad = 10.0;
 const double _kCastW   = 54.0;
+
+/// Abbreviates a long casting-time string (e.g. "1 reaction, which you take
+/// when a creature you can see hits you with an attack") down to a short
+/// label so it never overflows a row laid out next to other tags.
+String shortCastingTime(String? ct) {
+  if (ct == null) return '';
+  final l = ct.toLowerCase();
+  if (l.contains('bonus')) return 'Bonus';
+  if (l.contains('reaction')) return 'Reaction';
+  if (l.contains('1 action') || l == 'action') return 'Action';
+  if (l.contains('minute')) {
+    final m = RegExp(r'(\d+)').firstMatch(l)?.group(1) ?? '1';
+    return '$m min';
+  }
+  return ct;
+}
 
 class TabSpells extends StatelessWidget{
   final PlayerCharacter character;
@@ -303,18 +320,7 @@ class _SpellRow extends StatelessWidget {
     required this.level,
   });
 
-  String _shortTime(String? ct) {
-    if (ct == null) return '';
-    final l = ct.toLowerCase();
-    if (l.contains('bonus')) return 'Bonus';
-    if (l.contains('reaction')) return 'Reaction';
-    if (l.contains('1 action') || l == 'action') return 'Action';
-    if (l.contains('minute')) {
-      final m = RegExp(r'(\d+)').firstMatch(l)?.group(1) ?? '1';
-      return '${m} min';
-    }
-    return ct;
-  }
+  String _shortTime(String? ct) => shortCastingTime(ct);
 
   String _shortRange(String? r) {
     if (r == null) return '';
@@ -1273,7 +1279,7 @@ class _LearnSpellTile extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
-                Row(children: [
+                Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
                   if (spell.school != null)
                     Text(spell.school!,
                         style: GoogleFonts.lato(
@@ -1283,7 +1289,7 @@ class _LearnSpellTile extends StatelessWidget {
                       const Text(' · ',
                           style: TextStyle(
                               color: AppTheme.textSecondary, fontSize: 14)),
-                    Text(spell.castingTime!,
+                    Text(shortCastingTime(spell.castingTime),
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary, fontSize: 14)),
                   ],
