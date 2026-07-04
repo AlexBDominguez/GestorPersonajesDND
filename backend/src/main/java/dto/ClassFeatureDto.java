@@ -8,6 +8,7 @@ public class ClassFeatureDto {
     private int level;
     private String description;
     private String apiUrl;
+    private String consumesResourceIndexName;
 
     public Long getId() {
         return id;
@@ -45,5 +46,11 @@ public class ClassFeatureDto {
     public void setApiUrl(String apiUrl) {
         this.apiUrl = apiUrl;
     }
-    
+    public String getConsumesResourceIndexName() {
+        return consumesResourceIndexName;
+    }
+    public void setConsumesResourceIndexName(String consumesResourceIndexName) {
+        this.consumesResourceIndexName = consumesResourceIndexName;
+    }
+
 }

@@ -185,9 +185,41 @@ public class CharacterClassResourceService {
             case "wisdom_modifier_min1":
                 return Math.max(1, character.calculateAbilityModifier("wis"));
 
+            case "intelligence_modifier_min1":
+                return Math.max(1, character.calculateAbilityModifier("int"));
+
+            case "twice_proficiency_bonus":
+                return character.getProficiencyBonus() * 2;
+
+            case "level_times_5":
+                return character.getLevel() * 5;
+
+            case "one_plus_charisma_modifier":
+                return 1 + character.calculateAbilityModifier("cha");
+
             // Tabla de usos de Furia del Bárbaro (no sigue proficiency bonus)
             case "barbarian_rage_table":
                 return barbarianRageUses(character.getLevel());
+
+            // Canalizar Divinidad del Clérigo: 1 uso a nivel 2, 2 a nivel 6, 3 a nivel 18
+            case "channel_divinity_cleric_table":
+                return levelThresholdTable(character.getLevel(),
+                        new int[][]{{18, 3}, {6, 2}, {2, 1}});
+
+            // Oleada de Acción del Guerrero: 1 uso a nivel 2, 2 a nivel 17
+            case "action_surge_table":
+                return levelThresholdTable(character.getLevel(),
+                        new int[][]{{17, 2}, {2, 1}});
+
+            // Indomable del Guerrero: 1 uso a nivel 9, 2 a nivel 13, 3 a nivel 17
+            case "indomitable_table":
+                return levelThresholdTable(character.getLevel(),
+                        new int[][]{{17, 3}, {13, 2}, {9, 1}});
+
+            // Dados de Superioridad del Battle Master: 4 a nivel 3, 5 a nivel 7, 6 a nivel 15
+            case "battlemaster_superiority_dice_table":
+                return levelThresholdTable(character.getLevel(),
+                        new int[][]{{15, 6}, {7, 5}, {3, 4}});
 
             default:
                 try {
@@ -206,6 +238,15 @@ public class CharacterClassResourceService {
         if (level >= 6)  return 4;
         if (level >= 3)  return 3;
         return 2;
+    }
+
+    // thresholds: filas {nivelMinimo, valor} ordenadas de mayor a menor nivelMinimo.
+    // Devuelve el valor de la primera fila cuyo nivelMinimo <= level, o 0 si ninguna aplica.
+    private int levelThresholdTable(int level, int[][] thresholdsDesc) {
+        for (int[] row : thresholdsDesc) {
+            if (level >= row[0]) return row[1];
+        }
+        return 0;
     }
 
     @Transactional

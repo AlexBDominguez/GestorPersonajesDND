@@ -95,6 +95,7 @@ public class DndClassService {
         dto.setLevel(feature.getLevel());
         dto.setDescription(feature.getDescription());
         dto.setApiUrl(feature.getApiUrl());
+        dto.setConsumesResourceIndexName(feature.getConsumesResourceIndexName());
         return dto;
     }
 

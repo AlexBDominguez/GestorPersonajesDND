@@ -33,6 +33,10 @@ public class ClassFeature {
     //URL de la API para obtener detalles adicionales
     private String apiUrl;
 
+    // Si no es null, esta feature no es un recurso en sí misma: gasta usos del ClassResource
+    // cuyo indexName coincide con este valor (p.ej. "flurry-of-blows" -> "ki").
+    private String consumesResourceIndexName;
+
     public ClassFeature(){
 
     }
@@ -92,6 +96,13 @@ public class ClassFeature {
     public void setApiUrl(String apiUrl) {
         this.apiUrl = apiUrl;
     }
- 
-    
+
+    public String getConsumesResourceIndexName() {
+        return consumesResourceIndexName;
+    }
+
+    public void setConsumesResourceIndexName(String consumesResourceIndexName) {
+        this.consumesResourceIndexName = consumesResourceIndexName;
+    }
+
 }

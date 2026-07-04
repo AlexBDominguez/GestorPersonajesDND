@@ -33,6 +33,10 @@ public class SubclassFeature {
     //URL de la API para detalles adicionales
     private String apiUrl;
 
+    // Si no es null, esta feature no es un recurso en sí misma: gasta usos del ClassResource
+    // cuyo indexName coincide con este valor (p.ej. "lore-cutting-words" -> "bardic-inspiration").
+    private String consumesResourceIndexName;
+
 
     public SubclassFeature(){}
 
@@ -107,10 +111,13 @@ public class SubclassFeature {
     }
 
 
-    
-    
+    public String getConsumesResourceIndexName() {
+        return consumesResourceIndexName;
+    }
 
 
-
+    public void setConsumesResourceIndexName(String consumesResourceIndexName) {
+        this.consumesResourceIndexName = consumesResourceIndexName;
+    }
 
 }

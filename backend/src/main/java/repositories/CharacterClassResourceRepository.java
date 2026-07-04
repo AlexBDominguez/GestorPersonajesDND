@@ -20,11 +20,14 @@ public interface CharacterClassResourceRepository extends JpaRepository<Characte
 
     Optional<CharacterClassResource> findByCharacterAndClassResource(PlayerCharacter character, ClassResource classResource);
 
+    // Los recursos con recoveryType = SHORT_OR_LONG_REST se recuperan tanto en descanso corto
+    // como largo, así que siempre coinciden además de la coincidencia exacta pedida.
     @Query("SELECT ccr FROM CharacterClassResource ccr " +
            "WHERE ccr.character.id = :characterId " +
-           "AND ccr.classResource.recoveryType = :recoveryType")
+           "AND (ccr.classResource.recoveryType = :recoveryType " +
+           "     OR ccr.classResource.recoveryType = 'SHORT_OR_LONG_REST')")
     List<CharacterClassResource> findByCharacterIdAndRecoveryType(
-            @Param("characterId") Long characterId, 
+            @Param("characterId") Long characterId,
             @Param("recoveryType") String recoveryType);
     
 
