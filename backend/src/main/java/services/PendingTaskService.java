@@ -419,9 +419,10 @@ public class PendingTaskService {
                 case "ELEMENTAL_ADEPT_TYPE":
                         break;
 
-                // Blood Hunter — curses/shots stored in metadata for display
+                // Blood Hunter — curses/shots/mutagen formulas stored in metadata for display
                 case "BLOOD_CURSE_CHOICE":
                 case "TRICK_SHOT_CHOICE":
+                case "MUTAGEN_CHOICE":
                         break;
 
                 default:

@@ -250,6 +250,10 @@ class _TaskResolver extends StatelessWidget {
       case 'TRICK_SHOT_CHOICE':
         return _OptionListResolver(task: task, vm: vm, options: kTrickShots);
 
+      // Blood Hunter Order of the Mutant — pick N Mutagenic Formulas (count = INT mod, in metadata)
+      case 'MUTAGEN_CHOICE':
+        return _MultiPickOptionResolver(task: task, vm: vm, options: kMutagens);
+
       default:
         // Fallback: campo de texto libre para tipos no mapeados todavía
         return _FreeTextResolver(task: task, vm: vm);

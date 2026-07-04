@@ -1635,6 +1635,16 @@ public class PlayerCharacterService {
                     createSubclassTask(character, level, "TRICK_SHOT_CHOICE",
                             "Choose an additional Trick Shot (Gunslinger)", "{\"count\":1}");
                 break;
+
+            case "order-of-the-mutant":
+                if (level == 3) {
+                    // Number of formulas known scales with INT modifier (minimum 1), same rule the wizard uses.
+                    int formulaCount = Math.max(1, character.calculateAbilityModifier("int"));
+                    createSubclassTask(character, level, "MUTAGEN_CHOICE",
+                            "Choose " + formulaCount + " Mutagenic Formula" + (formulaCount == 1 ? "" : "s"),
+                            "{\"count\":" + formulaCount + "}");
+                }
+                break;
         }
     }
 
