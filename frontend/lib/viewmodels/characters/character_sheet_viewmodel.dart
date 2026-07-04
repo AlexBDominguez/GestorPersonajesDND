@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
 import 'package:gestor_personajes_dnd/services/storage/local_cache_service.dart';
 import 'package:gestor_personajes_dnd/models/character/pending_task.dart';
+import 'package:gestor_personajes_dnd/models/character/character_class_resource.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/character/racial_trait.dart';
@@ -11,6 +12,7 @@ import 'package:gestor_personajes_dnd/models/wizard/class_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/feat_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
+import 'package:gestor_personajes_dnd/services/characters/character_class_resource_service.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
 import 'package:gestor_personajes_dnd/services/characters/pending_task_service.dart';
 import 'package:gestor_personajes_dnd/services/feats/feat_service.dart';
@@ -155,6 +157,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
   final PendingTaskService _taskService = PendingTaskService();
   final InventoryService _inventoryService;
   final FeatService _featService;
+  final CharacterClassResourceService _resourceService;
   List<PendingTask> _pendingTasks = [];
   /// Solo las tareas incompletas — las completadas se muestran en otra pestaña (Features).
   /// También filtra las tareas gestionadas fuera del flujo de pending tasks:
@@ -180,11 +183,13 @@ class CharacterSheetViewModel extends ChangeNotifier {
     WizardReferenceService? refService,
     InventoryService? inventoryService,
     FeatService? featService,
+    CharacterClassResourceService? resourceService,
   })  : _service = service ?? CharacterService(),
         _spellService = spellService ?? SpellService(),
         _refService = refService ?? WizardReferenceService(),
         _inventoryService = inventoryService ?? InventoryService(),
-        _featService = featService ?? FeatService();
+        _featService = featService ?? FeatService(),
+        _resourceService = resourceService ?? CharacterClassResourceService();
 
   // ── State 
   PlayerCharacter? character;
@@ -310,6 +315,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
       if (character?.subclassId != null && _subclassFeatures.isEmpty) {
         _loadSubclassFeaturesIfNeeded();
       }
+      _loadCharacterResources();
       if (character?.raceId != null && _racialTraits.isEmpty){
         _loadRacialTraits();
       }
@@ -526,6 +532,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
     final updated = await _service.longRest(characterId);
     character = updated;
     _initSpellSlots();
+    await _loadCharacterResources(); // el backend ya recuperó los recursos de LONG_REST/SHORT_OR_LONG_REST
     notifyListeners();
   }
 
@@ -533,6 +540,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
     final updated = await _service.shortRest(characterId,
         hitDiceToSpend: hitDiceToSpend, hitDiceRoll: hitDiceRoll);
     character = updated;
+    await _loadCharacterResources(); // el backend ya recuperó los recursos de SHORT_REST/SHORT_OR_LONG_REST
     notifyListeners();
   }
 
@@ -640,7 +648,32 @@ class CharacterSheetViewModel extends ChangeNotifier {
     } catch (_) {}
   }
 
-  // ── Consumable feature tracking
+  // ── Real backend resource pools (#8.2 resource-pool migration, fase 4) ──────
+  // Progresivamente sustituye a _featureUsesRemaining: si una feature resuelve
+  // a un ClassResource real ya sembrado (por consumesResourceIndexName o por su
+  // propio indexName), sus usos se leen/escriben contra el backend y persisten
+  // entre recargas/descansos. Lo que todavía no esté sembrado sigue cayendo,
+  // sin cambios, al mapa local efímero de más abajo — así ningún recurso
+  // retrocede mientras se completa la migración (ver Aurora_Fixes.md #8.2).
+  List<CharacterClassResource> _characterResources = [];
+
+  Future<void> _loadCharacterResources() async {
+    try {
+      _characterResources = await _resourceService.getResources(characterId);
+      notifyListeners();
+    } catch (_) {
+      // silencioso, igual que el resto de cargas secundarias (_loadClassFeaturesIfNeeded, etc.)
+    }
+  }
+
+  CharacterClassResource? _realResourceFor(ClassFeature f) {
+    final key = (f.consumesResourceIndexName ?? f.indexName).toLowerCase();
+    return _characterResources
+        .where((r) => r.resourceIndexName.toLowerCase() == key)
+        .firstOrNull;
+  }
+
+  // ── Consumable feature tracking (fallback para recursos aún no sembrados)
   final Map<String, int> _featureUsesRemaining = {};
 
   /// Si esta feature gasta de un fondo de usos compartido en vez de llevar
@@ -683,6 +716,8 @@ class CharacterSheetViewModel extends ChangeNotifier {
   }
 
   int featureMaxUses(ClassFeature f) {
+    final real = _realResourceFor(f);
+    if (real != null) return real.maxAmount;
     final key = _resourceKey(f);
     // 1. Coincidencia exacta
     int? raw = _kConsumableFeatures[key];
@@ -721,6 +756,8 @@ class CharacterSheetViewModel extends ChangeNotifier {
   }
 
   int featureUsesRemaining(ClassFeature f) {
+    final real = _realResourceFor(f);
+    if (real != null) return real.currentAmount;
     final max = featureMaxUses(f);
     if (max <= 0) return 0;
     return _featureUsesRemaining[_resourceKey(f)] ?? max;
@@ -747,7 +784,37 @@ class CharacterSheetViewModel extends ChangeNotifier {
            key.startsWith('bardic-inspiration');
   }
 
-  void useFeature(ClassFeature f) {
+  /// Aplica [apply] de forma optimista sobre el recurso real [real], persiste el
+  /// gasto/recuperación contra el backend, y revierte si la llamada falla.
+  Future<void> _mutateRealResource(
+    CharacterClassResource real,
+    CharacterClassResource Function(CharacterClassResource) apply,
+    Future<CharacterClassResource> Function(String resourceIndexName) call,
+  ) async {
+    final idx = _characterResources.indexOf(real);
+    if (idx < 0) return;
+    _characterResources[idx] = apply(real);
+    notifyListeners();
+    try {
+      _characterResources[idx] = await call(real.resourceIndexName);
+      notifyListeners();
+    } catch (_) {
+      _characterResources[idx] = real; // revertir al estado previo a la mutación optimista
+      notifyListeners();
+    }
+  }
+
+  Future<void> useFeature(ClassFeature f) async {
+    final real = _realResourceFor(f);
+    if (real != null) {
+      if (real.currentAmount <= 0) return;
+      await _mutateRealResource(
+        real,
+        (r) => r.copyWith(currentAmount: r.currentAmount - 1),
+        (key) => _resourceService.spend(characterId, key, 1),
+      );
+      return;
+    }
     final max = featureMaxUses(f);
     if (max <= 0) return;
     final current = featureUsesRemaining(f);
@@ -756,7 +823,17 @@ class CharacterSheetViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void restoreFeature(ClassFeature f) {
+  Future<void> restoreFeature(ClassFeature f) async {
+    final real = _realResourceFor(f);
+    if (real != null) {
+      if (real.currentAmount >= real.maxAmount) return;
+      await _mutateRealResource(
+        real,
+        (r) => r.copyWith(currentAmount: r.currentAmount + 1),
+        (key) => _resourceService.recover(characterId, key, 1),
+      );
+      return;
+    }
     final max = featureMaxUses(f);
     if (max <= 0) return;
     final current = featureUsesRemaining(f);
@@ -765,15 +842,38 @@ class CharacterSheetViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void useFeatureN(ClassFeature f, int n) {
+  Future<void> useFeatureN(ClassFeature f, int n) async {
+    if (n <= 0) return;
+    final real = _realResourceFor(f);
+    if (real != null) {
+      final spend = n.clamp(0, real.currentAmount);
+      if (spend <= 0) return;
+      await _mutateRealResource(
+        real,
+        (r) => r.copyWith(currentAmount: r.currentAmount - spend),
+        (key) => _resourceService.spend(characterId, key, spend),
+      );
+      return;
+    }
     final max = featureMaxUses(f);
-    if (max <= 0 || n <= 0) return;
+    if (max <= 0) return;
     final current = featureUsesRemaining(f);
     _featureUsesRemaining[_resourceKey(f)] = (current - n).clamp(0, max);
     notifyListeners();
   }
 
-  void restoreFeatureToFull(ClassFeature f) {
+  Future<void> restoreFeatureToFull(ClassFeature f) async {
+    final real = _realResourceFor(f);
+    if (real != null) {
+      final delta = real.maxAmount - real.currentAmount;
+      if (delta <= 0) return;
+      await _mutateRealResource(
+        real,
+        (r) => r.copyWith(currentAmount: r.maxAmount),
+        (key) => _resourceService.recover(characterId, key, delta),
+      );
+      return;
+    }
     final max = featureMaxUses(f);
     if (max <= 0) return;
     _featureUsesRemaining[_resourceKey(f)] = max;

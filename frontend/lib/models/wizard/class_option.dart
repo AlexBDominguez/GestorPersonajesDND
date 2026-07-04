@@ -4,13 +4,17 @@ class ClassFeature{
   final String name;
   final int level;
   final String description;
+  // Si no es null, esta feature no es un recurso en sí misma: gasta usos del
+  // ClassResource (backend) cuyo indexName coincide con este valor.
+  final String? consumesResourceIndexName;
 
   const ClassFeature({
     required this.id,
     required this.indexName,
     required this.name,
     required this.level,
-    required this.description
+    required this.description,
+    this.consumesResourceIndexName,
   });
 
   factory ClassFeature.fromJson(Map<String, dynamic> j) => ClassFeature(
@@ -19,6 +23,7 @@ class ClassFeature{
     name:         j['name'] as String,
     level:        j['level'] as int,
     description:  j['description'] as String? ?? '',
+    consumesResourceIndexName: j['consumesResourceIndexName'] as String?,
   );
 }
 

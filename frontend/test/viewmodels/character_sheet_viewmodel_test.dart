@@ -465,15 +465,15 @@ void main() {
     group('superiority-dice (Battle Master) — tabla PHB', () {
       test('nivel 3 → 4 dados', () {
         vm.character = makeCharacter(level: 3);
-        expect(vm.featureMaxUses(makeFeature('superiority-dice')), 4);
+        expect(vm.featureMaxUses(makeFeature('battlemaster-combat-superiority')), 4);
       });
       test('nivel 7 → 5 dados', () {
         vm.character = makeCharacter(level: 7);
-        expect(vm.featureMaxUses(makeFeature('superiority-dice')), 5);
+        expect(vm.featureMaxUses(makeFeature('battlemaster-combat-superiority')), 5);
       });
       test('nivel 15 → 6 dados', () {
         vm.character = makeCharacter(level: 15);
-        expect(vm.featureMaxUses(makeFeature('superiority-dice')), 6);
+        expect(vm.featureMaxUses(makeFeature('battlemaster-combat-superiority')), 6);
       });
     });
   });
