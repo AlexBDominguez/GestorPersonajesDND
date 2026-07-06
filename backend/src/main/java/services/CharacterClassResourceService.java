@@ -188,6 +188,12 @@ public class CharacterClassResourceService {
             case "intelligence_modifier_min1":
                 return Math.max(1, character.calculateAbilityModifier("int"));
 
+            case "constitution_modifier_min1":
+                return Math.max(1, character.calculateAbilityModifier("con"));
+
+            case "strength_modifier_min1":
+                return Math.max(1, character.calculateAbilityModifier("str"));
+
             case "twice_proficiency_bonus":
                 return character.getProficiencyBonus() * 2;
 
@@ -196,6 +202,9 @@ public class CharacterClassResourceService {
 
             case "one_plus_charisma_modifier":
                 return 1 + character.calculateAbilityModifier("cha");
+
+            case "one_plus_level":
+                return 1 + character.getLevel();
 
             // Tabla de usos de Furia del Bárbaro (no sigue proficiency bonus)
             case "barbarian_rage_table":
