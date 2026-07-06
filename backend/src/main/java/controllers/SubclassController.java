@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import dto.ClassFeatureDto;
 import dto.SubclassDto;
-import entities.SubclassFeature;
 import services.SubclassFeatureService;
 import services.SubclassService;
 
@@ -46,12 +46,12 @@ public class SubclassController {
     }
 
     @GetMapping("/{id}/features")
-    public ResponseEntity<List<SubclassFeature>> getFeatures(@PathVariable Long id) {
+    public ResponseEntity<List<ClassFeatureDto>> getFeatures(@PathVariable Long id) {
         return ResponseEntity.ok(subclassFeatureService.getFeaturesBySubclass(id));
     }
 
     @GetMapping("/{id}/features/level/{level}")
-    public ResponseEntity<List<SubclassFeature>> getFeaturesUpToLevel(
+    public ResponseEntity<List<ClassFeatureDto>> getFeaturesUpToLevel(
             @PathVariable Long id,
             @PathVariable int level) {
         return ResponseEntity.ok(subclassFeatureService.getFeaturesUpToLevel(id, level));

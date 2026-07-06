@@ -1,5 +1,6 @@
 package controllers;
 
+import dto.SpellDto;
 import entities.Spell;
 import org.springframework.web.bind.annotation.*;
 import services.SpellService;
@@ -39,7 +40,7 @@ public class SpellController {
     //Endpoint para obtener hechizos por clase y nivel
     //Usar en wizard para mostrar qué hechizos puede aprender el personaje
     @GetMapping("/available")
-    public List<Spell> getAvailableSpells(
+    public List<SpellDto> getAvailableSpells(
         @RequestParam(required = false) Long classId,
         @RequestParam(required = false) Long subclassId,
         @RequestParam(required = false) Integer maxLevel,

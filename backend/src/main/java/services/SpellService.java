@@ -1,6 +1,7 @@
 package services;
 
 
+import dto.SpellDto;
 import entities.DndClass;
 import entities.Spell;
 import entities.Subclass;
@@ -10,6 +11,7 @@ import repositories.SpellRepository;
 import repositories.SubclassRepository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SpellService {
@@ -43,12 +45,18 @@ public class SpellService {
             spellRepository.findByCastingTimeContainingIgnoreCase(castingTime);
     }
 
-    public List<Spell> getAvailableSpells(Long classId, Long subclassId, Integer maxLevel, List<String> sources) {
+    public List<SpellDto> getAvailableSpells(Long classId, Long subclassId, Integer maxLevel, List<String> sources) {
+        return getAvailableSpellEntities(classId, subclassId, maxLevel, sources).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    private List<Spell> getAvailableSpellEntities(Long classId, Long subclassId, Integer maxLevel, List<String> sources) {
         boolean hasSourceFilter = sources != null && !sources.isEmpty();
 
         // Comprobar si esta clase tiene spells vinculados (los lanzadores full/half los tienen; Fighter/Rogue no)
         boolean classHasSpells = classId != null &&
-                !spellRepository.findByDndClassesId(classId).isEmpty();
+                spellRepository.existsByDndClassesId(classId);
 
         // Si la clase no tiene spells pero se ha indicado una subclase que sí tiene
         // lanzamiento de spells (p.ej. Eldritch Knight / Arcane Trickster), usar la lista del Wizard
@@ -81,5 +89,19 @@ public class SpellService {
             return spellRepository.findByLevelLessThanEqual(maxLevel);
         }
         return hasSourceFilter ? spellRepository.findBySourceIn(sources) : spellRepository.findAll();
+    }
+
+    private SpellDto toDto(Spell spell) {
+        SpellDto dto = new SpellDto();
+        dto.setId(spell.getId());
+        dto.setName(spell.getName());
+        dto.setLevel(spell.getLevel());
+        dto.setSchool(spell.getSchool());
+        dto.setCastingTime(spell.getCastingTime());
+        dto.setRange(spell.getRange());
+        dto.setDuration(spell.getDuration());
+        dto.setComponents(spell.getComponents());
+        dto.setDescription(spell.getDescription());
+        return dto;
     }
 }

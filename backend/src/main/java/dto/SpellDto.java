@@ -6,6 +6,10 @@ public class SpellDto {
     private String name;
     private int level;
     private String school;
+    private String castingTime;
+    private String range;
+    private String duration;
+    private String components;
     private String description;
 
     public SpellDto() {}
@@ -59,5 +63,37 @@ public class SpellDto {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getCastingTime() {
+        return castingTime;
+    }
+
+    public void setCastingTime(String castingTime) {
+        this.castingTime = castingTime;
+    }
+
+    public String getRange() {
+        return range;
+    }
+
+    public void setRange(String range) {
+        this.range = range;
+    }
+
+    public String getDuration() {
+        return duration;
+    }
+
+    public void setDuration(String duration) {
+        this.duration = duration;
+    }
+
+    public String getComponents() {
+        return components;
+    }
+
+    public void setComponents(String components) {
+        this.components = components;
     }
 }

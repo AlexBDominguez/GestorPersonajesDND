@@ -20,6 +20,8 @@ public interface SpellRepository extends JpaRepository<Spell, Long> {
     // Filtered by class (via ManyToMany in DndClass)
     List<Spell> findByDndClassesId(Long classId);
 
+    boolean existsByDndClassesId(Long classId);
+
     List<Spell> findByDndClassesIdAndLevelLessThanEqual(Long classId, int maxLevel);
 
     List<Spell> findBySourceIn(List<String> sources);
