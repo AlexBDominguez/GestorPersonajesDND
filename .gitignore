@@ -51,6 +51,10 @@ dnd_backup*.sql
 *.sql.gz
 backups/dnd_backup*
 
+# Volcados de consultas de auditoría (mysql -t > .txt) — regenerables ejecutando el
+# .sql correspondiente en backend/scripts/ contra el VPS, no hace falta versionarlos
+*_audit_output.txt
+
 seed_subraces_v2.sql
 backend/SEED_EXECUTION_STEPS.md
 
