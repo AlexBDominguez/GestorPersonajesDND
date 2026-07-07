@@ -609,6 +609,8 @@ public class PlayerCharacterService {
             spellDto.setDamageType(s.getDamageType());
             spellDto.setDamageBase(s.getDamageBase());
             spellDto.setDamageAtSlotLevel(s.getDamageAtSlotLevel());
+            // Bonificador de daño declarativo (p.ej. Elemental Affinity) -- ver #8.2 NUMERIC_BONUS.
+            spellDto.setBonusDamage(numericBonusService.spellDamageBonusFor(playerCharacter, s.getDamageType()));
             spellDtos.add(spellDto);
         }
         dto.setCharacterSpells(spellDtos);

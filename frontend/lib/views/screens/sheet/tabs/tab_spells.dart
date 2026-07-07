@@ -14,6 +14,14 @@ const double _kColGap  =  8.0;
 const double _kCastPad = 10.0;
 const double _kCastW   = 54.0;
 
+/// Añade el bonificador de daño de features (#8.2 NUMERIC_BONUS, p.ej. Elemental Affinity)
+/// al dado base, p.ej. "1d10" + 2 -> "1d10+2". Sin bonus (0), devuelve el dado tal cual.
+/// Misma lógica que tab_combat.dart's _formatSpellDamage — duplicada a propósito (ver ahí).
+String _formatSpellDamage(String base, int bonusDamage) {
+  if (bonusDamage == 0) return base;
+  return bonusDamage > 0 ? '$base+$bonusDamage' : '$base$bonusDamage';
+}
+
 /// Abbreviates a long casting-time string (e.g. "1 reaction, which you take
 /// when a creature you can see hits you with an attack") down to a short
 /// label so it never overflows a row laid out next to other tags.
@@ -648,11 +656,12 @@ class _DamageCell extends StatelessWidget {
     if (base == null || base.isEmpty) {
       return Text('—', textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600));
     }
+    final display = _formatSpellDamage(base, spell.bonusDamage);
     if (type == null || type.isEmpty) {
-      return Text(base, textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600));
+      return Text(display, textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600));
     }
     return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.center, children: [
-      Text(base, textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600)),
+      Text(display, textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600)),
       Text(type.toUpperCase(), textAlign: TextAlign.center, style: GoogleFonts.lato(color: _kColor, fontSize: 14, fontWeight: FontWeight.w600)),
     ]);
   }

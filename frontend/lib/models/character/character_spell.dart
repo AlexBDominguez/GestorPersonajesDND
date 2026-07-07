@@ -17,6 +17,7 @@ class CharacterSpell {
   final String? damageType;  // "Fire", "Cold", etc.
   final String? damageBase;  // "8d6", "1d10", etc.
   final Map<int, String> damageAtSlotLevel; // nivel de slot -> daño (para upcast)
+  final int bonusDamage; // bonificador plano de features (p.ej. Elemental Affinity), ya calculado por el backend
 
 
   const CharacterSpell({
@@ -38,6 +39,7 @@ class CharacterSpell {
     this.damageType,
     this.damageBase,
     this.damageAtSlotLevel = const {},
+    this.bonusDamage = 0,
   });
 
   bool get isCantrip => level == 0;
@@ -54,7 +56,7 @@ class CharacterSpell {
     prepared: prepared ?? this.prepared, learned: learned,
     spellSource: spellSource, attackType: attackType, dcType: dcType,
     damageType: damageType, damageBase: damageBase,
-    damageAtSlotLevel: damageAtSlotLevel,
+    damageAtSlotLevel: damageAtSlotLevel, bonusDamage: bonusDamage,
   );
 
   String get levelLabel => isCantrip ? 'Cantrip' : 'Level $level';
@@ -90,5 +92,6 @@ class CharacterSpell {
           (k, v) => MapEntry(int.parse(k), v as String),
         ) ??
         const {},
+    bonusDamage: (j['bonusDamage'] as num?)?.toInt() ?? 0,
   );
 }

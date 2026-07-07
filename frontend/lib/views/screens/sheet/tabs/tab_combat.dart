@@ -19,6 +19,13 @@ const double _kColGap =  8.0;
 /// que el jugador piense que tiene que sumarlo a mano (ver hallazgo #15 del backlog).
 const _kFightingStylesWithAutoEffect = {'archery', 'defense', 'dueling', 'two-weapon fighting'};
 
+/// Añade el bonificador de daño de features (#8.2 NUMERIC_BONUS, p.ej. Elemental Affinity)
+/// al dado base, p.ej. "1d10" + 2 -> "1d10+2". Sin bonus (0), devuelve el dado tal cual.
+String _formatSpellDamage(String base, int bonusDamage) {
+  if (bonusDamage == 0) return base;
+  return bonusDamage > 0 ? '$base+$bonusDamage' : '$base$bonusDamage';
+}
+
 // ── Tab Combat ────────────────────────────────────────────────────────────────
 
 class TabCombat extends StatefulWidget {
@@ -1216,8 +1223,9 @@ class _SpellRow extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.w600));
     }
+    final display = _formatSpellDamage(b, spell.bonusDamage);
     if (t == null || t.isEmpty) {
-      return Text(b,
+      return Text(display,
           textAlign: TextAlign.center,
           style: GoogleFonts.lato(
               color: const Color(0xFFCB7A48),
@@ -1228,7 +1236,7 @@ class _SpellRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(b,
+        Text(display,
             textAlign: TextAlign.center,
             style: GoogleFonts.lato(
                 color: const Color(0xFFCB7A48),
@@ -1481,7 +1489,7 @@ class _SpellDetailSheetState extends State<_SpellDetailSheet> {
             _DetailRow('Components', spell.components!),
           if (spell.damageAtLevel(level) != null)
             _DetailRow('Damage',
-                '${spell.damageAtLevel(level)}${spell.damageType != null ? ' ${spell.damageType}' : ''}'),
+                '${_formatSpellDamage(spell.damageAtLevel(level)!, spell.bonusDamage)}${spell.damageType != null ? ' ${spell.damageType}' : ''}'),
           if (!isCantrip)
             _DetailRow('Status', spell.prepared ? 'Prepared ✓' : 'Learned'),
           if (spell.description != null && spell.description!.isNotEmpty) ...[

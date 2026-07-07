@@ -22,6 +22,10 @@ public class CharacterSpellSummaryDto {
     // Daño por nivel de lanzamiento; el frontend la usa para mostrar el hechizo repetido
     // en cada nivel de slot disponible (upcast) con el daño correcto en cada uno.
     private Map<Integer, String> damageAtSlotLevel;
+    // Bonificador plano adicional al daño de este hechizo concreto por features del personaje
+    // (p.ej. Elemental Affinity si damageType coincide con el tipo elegido). 0 si no aplica
+    // ninguno. Ver #8.2 NUMERIC_BONUS -- NumericBonusService.spellDamageBonusFor().
+    private int bonusDamage;
 
     public CharacterSpellSummaryDto() {}
 
@@ -135,4 +139,7 @@ public class CharacterSpellSummaryDto {
 
     public Map<Integer, String> getDamageAtSlotLevel() { return damageAtSlotLevel; }
     public void setDamageAtSlotLevel(Map<Integer, String> damageAtSlotLevel) { this.damageAtSlotLevel = damageAtSlotLevel; }
+
+    public int getBonusDamage() { return bonusDamage; }
+    public void setBonusDamage(int bonusDamage) { this.bonusDamage = bonusDamage; }
 }

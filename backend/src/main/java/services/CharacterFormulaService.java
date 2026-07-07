@@ -33,6 +33,12 @@ public class CharacterFormulaService {
             case "charisma_modifier":
                 return Math.max(1, character.calculateAbilityModifier("cha"));
 
+            // Sin ningún suelo -- a diferencia de "charisma_modifier" (pensada para tamaños de
+            // pool de recursos, donde un mínimo de 1 tiene sentido), un bonificador de daño plano
+            // como Elemental Affinity no debe forzar a +1 un modificador negativo o nulo.
+            case "charisma_modifier_raw":
+                return character.calculateAbilityModifier("cha");
+
             case "level_half":
                 return Math.max(1, character.getLevel() / 2);
 
