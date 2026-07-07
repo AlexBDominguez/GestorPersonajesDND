@@ -55,6 +55,10 @@ Required `.env` variables (copy from `.env.example`): `MYSQL_ROOT_PASSWORD`, `MY
 
 **On the VPS, `$MYSQL_ROOT_PASSWORD` is already exported in the shell** — any `docker exec ... mysql` command given to the user should use `-p$MYSQL_ROOT_PASSWORD` (or the relevant `$VAR`), never a literal password, so it can be copy-pasted directly.
 
+**`docker-compose.yml` lives in `backend/`, not the repo root.** `docker compose up -d --build backend` fails with "no configuration file provided" if run from the repo root — either `cd backend` first or pass `-f backend/docker-compose.yml` and run everything from the repo root instead (simpler when the same command sequence also touches `backend/scripts/*.sql`, since that path only resolves from the root).
+
+**`docker compose up -d --build backend` returns as soon as the container starts, not when Spring Boot/Hibernate finishes booting.** If a command sequence rebuilds the backend (e.g. because a migration adds/changes a JPA entity, so `ddl-auto=update` needs to create a table before a `.sql` script can insert into it) and then immediately pipes a SQL script into `docker exec ... mysql`, the script can race ahead of Hibernate and fail with `Table '...' doesn't exist`. Whenever giving the user a command sequence that rebuilds the backend and then runs SQL against a table/column that rebuild is expected to create, insert a wait/confirmation step between them — e.g. `docker logs dnd-backend --tail 50 | grep -i "started\|error"` and have the user confirm the `Started ... in X seconds` line appears with no errors above it, or use `ScheduleWakeup`/a short sleep loop, before handing over the SQL command.
+
 ### Frontend (from `frontend/`)
 
 ```bash
