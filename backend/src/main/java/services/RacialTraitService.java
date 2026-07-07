@@ -5,9 +5,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import repositories.CharacterProficiencyRepository;
 import repositories.CharacterSpellRepository;
-import repositories.ProficiencyRepository;
+import repositories.RacialTraitProficiencyRepository;
 import repositories.RacialTraitSpellRepository;
-import repositories.SpellRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,27 +15,29 @@ import java.util.List;
 public class RacialTraitService {
 
     private final CharacterProficiencyRepository characterProficiencyRepository;
-    private final ProficiencyRepository proficiencyRepository;
     private final CharacterSpellRepository characterSpellRepository;
-    private final SpellRepository spellRepository;
     private final RacialTraitSpellRepository racialTraitSpellRepository;
+    private final RacialTraitProficiencyRepository racialTraitProficiencyRepository;
 
     public RacialTraitService(CharacterProficiencyRepository characterProficiencyRepository,
-                              ProficiencyRepository proficiencyRepository,
                               CharacterSpellRepository characterSpellRepository,
-                              SpellRepository spellRepository,
-                              RacialTraitSpellRepository racialTraitSpellRepository) {
+                              RacialTraitSpellRepository racialTraitSpellRepository,
+                              RacialTraitProficiencyRepository racialTraitProficiencyRepository) {
         this.characterProficiencyRepository = characterProficiencyRepository;
-        this.proficiencyRepository = proficiencyRepository;
         this.characterSpellRepository = characterSpellRepository;
-        this.spellRepository = spellRepository;
         this.racialTraitSpellRepository = racialTraitSpellRepository;
+        this.racialTraitProficiencyRepository = racialTraitProficiencyRepository;
     }
 
     /**
-     * Applies automatic (non-choice) racial trait effects to a character.
-     * Safe to call multiple times — all grants are idempotent.
-     * Also handles level-gated racial spells (e.g. Drow Magic).
+     * Applies automatic (non-choice) racial trait effects to a character: spells and
+     * proficiencies granted by a racial trait, both fully data-driven (racial_trait_spells /
+     * racial_trait_proficiencies — see GRANT_SPELL/GRANT_PROFICIENCY in Aurora_Fixes.md #8.2).
+     * No per-trait hardcoding here anymore: PHB traits that used to be a switch/case
+     * (natural-illusionist, dwarven-armor-training, drow-weapon-training, drow-magic) are now
+     * seeded rows, same table Aurora-sourced traits already used via AuroraRaceMapper.
+     * Safe to call multiple times — all grants are idempotent. Respects each spell's required
+     * level (e.g. Drow Magic: Dancing Lights at 1st, Faerie Fire at 3rd, Darkness at 5th).
      */
     @Transactional
     public void applyAutomaticRacialTraits(PlayerCharacter character) {
@@ -47,20 +48,12 @@ public class RacialTraitService {
         if (character.getSubrace() != null && character.getSubrace().getTraits() != null) {
             allTraits.addAll(character.getSubrace().getTraits());
         }
-        for (RacialTrait trait : allTraits) {
-            applyTrait(character, trait.getIndexName());
-        }
-        applyGenericGrantedSpells(character, allTraits);
+        if (allTraits.isEmpty()) return;
+        applyGrantedSpells(character, allTraits);
+        applyGrantedProficiencies(character, allTraits);
     }
 
-    /**
-     * Fallback for traits without a dedicated case in applyTrait (mainly Aurora-sourced
-     * races, which were silently ignored before — see AuroraRaceMapper.grantTraitSpells).
-     * Respects each spell's required level (e.g. Drow Magic: Dancing Lights at 1st,
-     * Faerie Fire at 3rd, Darkness at 5th).
-     */
-    private void applyGenericGrantedSpells(PlayerCharacter character, List<RacialTrait> traits) {
-        if (traits.isEmpty()) return;
+    private void applyGrantedSpells(PlayerCharacter character, List<RacialTrait> traits) {
         for (RacialTraitSpell entry : racialTraitSpellRepository
                 .findByRacialTraitInAndRequiredLevelLessThanEqual(traits, character.getLevel())) {
             boolean alreadyHas = characterSpellRepository
@@ -72,54 +65,12 @@ public class RacialTraitService {
         }
     }
 
-    private void applyTrait(PlayerCharacter character, String indexName) {
-        if (indexName == null) return;
-        switch (indexName) {
-            case "natural-illusionist":
-                // Forest Gnome: learns Minor Illusion automatically
-                grantSpell(character, "minor-illusion");
-                break;
-
-            case "dwarven-armor-training":
-                // Mountain Dwarf: proficiency with heavy armor
-                grantProficiency(character, "armor-heavy");
-                break;
-
-            case "drow-weapon-training":
-                // Drow: proficiency with rapier, shortsword, hand crossbow
-                grantProficiency(character, "rapier");
-                grantProficiency(character, "shortswords");
-                grantProficiency(character, "hand-crossbow");
-                break;
-
-            case "drow-magic":
-                // Drow: Dancing Lights at level 1, Faerie Fire at 3, Darkness at 5
-                grantSpell(character, "dancing-lights");
-                if (character.getLevel() >= 3) grantSpell(character, "faerie-fire");
-                if (character.getLevel() >= 5) grantSpell(character, "darkness");
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    private void grantSpell(PlayerCharacter character, String indexApi) {
-        spellRepository.findByIndexApi(indexApi).ifPresent(spell -> {
-            boolean alreadyHas = characterSpellRepository
-                    .findByCharacterIdAndSpellId(character.getId(), spell.getId())
-                    .isPresent();
-            if (!alreadyHas) {
-                characterSpellRepository.save(new CharacterSpell(character, spell, "RACE"));
-            }
-        });
-    }
-
-    private void grantProficiency(PlayerCharacter character, String indexName) {
-        proficiencyRepository.findByIndexName(indexName).ifPresent(prof -> {
+    private void applyGrantedProficiencies(PlayerCharacter character, List<RacialTrait> traits) {
+        for (RacialTraitProficiency entry : racialTraitProficiencyRepository.findByRacialTraitIn(traits)) {
+            Proficiency prof = entry.getProficiency();
             if (!characterProficiencyRepository.existsByCharacterAndProficiency(character, prof)) {
                 characterProficiencyRepository.save(new CharacterProficiency(character, prof, "RACE"));
             }
-        });
+        }
     }
 }

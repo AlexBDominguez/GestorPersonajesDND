@@ -3,26 +3,26 @@ package services;
 import entities.CharacterProficiency;
 import entities.PendingTask;
 import entities.PlayerCharacter;
-import entities.Proficiency;
 import entities.Subclass;
+import entities.SubclassProficiencyGrant;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import repositories.CharacterProficiencyRepository;
 import repositories.PendingTaskRepository;
-import repositories.ProficiencyRepository;
+import repositories.SubclassProficiencyGrantRepository;
 
 @Service
 public class SubclassProficiencyService {
 
     private final CharacterProficiencyRepository characterProficiencyRepository;
-    private final ProficiencyRepository proficiencyRepository;
+    private final SubclassProficiencyGrantRepository subclassProficiencyGrantRepository;
     private final PendingTaskRepository pendingTaskRepository;
 
     public SubclassProficiencyService(CharacterProficiencyRepository characterProficiencyRepository,
-                                      ProficiencyRepository proficiencyRepository,
+                                      SubclassProficiencyGrantRepository subclassProficiencyGrantRepository,
                                       PendingTaskRepository pendingTaskRepository) {
         this.characterProficiencyRepository = characterProficiencyRepository;
-        this.proficiencyRepository = proficiencyRepository;
+        this.subclassProficiencyGrantRepository = subclassProficiencyGrantRepository;
         this.pendingTaskRepository = pendingTaskRepository;
     }
 
@@ -30,6 +30,21 @@ public class SubclassProficiencyService {
     public void applySubclassProficiencies(PlayerCharacter character, Subclass subclass) {
         if (subclass == null || subclass.getIndexName() == null) return;
 
+        // Automatic (non-choice) grants: fully data-driven now (subclass_proficiency_grants —
+        // see GRANT_PROFICIENCY in Aurora_Fixes.md #8.2). Used to be a per-subclass if/grant()
+        // chain here; migrated to seeded rows so a new subclass with a flat proficiency grant
+        // (heavy armor, a tool, martial weapons...) needs a seed row, not a Java change.
+        for (SubclassProficiencyGrant entry : subclassProficiencyGrantRepository.findBySubclass(subclass)) {
+            if (!characterProficiencyRepository.existsByCharacterAndProficiency(character, entry.getProficiency())) {
+                characterProficiencyRepository.save(
+                        new CharacterProficiency(character, entry.getProficiency(), "SUBCLASS"));
+            }
+        }
+
+        // Choices (the player picks skills/tools/a cantrip/etc.): stays as PendingTask, a
+        // different mechanic from an automatic grant — not something #8.2's GRANT_PROFICIENCY
+        // piece covers, the choice-resolution system already handles this generically.
+        //
         // PHB subclasses have clean slugs as indexName (synced from dnd5eapi.co), but
         // Aurora-sourced subclasses (Artificer, Blood Hunter, ...) store the raw Aurora
         // element ID instead (e.g. "ID_WOTC_TCOE_ARCHETYPE_ARTIFICER_ALCHEMIST"), so an
@@ -37,11 +52,6 @@ public class SubclassProficiencyService {
         // indexName instead — same convention already used in the frontend wizard
         // (character_creator_viewmodel.dart's subclass feature-choice detection).
         String idx = subclass.getIndexName().toLowerCase();
-
-        if (idx.contains("tempest") || idx.equals("war") || idx.contains("oath-of-the-war")) {
-            grant(character, "armor-heavy");
-            grant(character, "weapons-martial");
-        }
 
         if (idx.contains("knowledge")) {
             createTask(character, "KNOWLEDGE_DOMAIN_SKILLS",
@@ -53,15 +63,8 @@ public class SubclassProficiencyService {
         }
 
         if (idx.contains("nature")) {
-            grant(character, "armor-heavy");
             createTask(character, "NATURE_DOMAIN_CANTRIP",
                     "Choose a cantrip from the Nature Domain list (Animal Friendship, Poison Spray, Shillelagh, or Thorn Whip)");
-        }
-
-        if (idx.contains("valor")) {
-            grant(character, "armor-medium");
-            grant(character, "armor-shields");
-            grant(character, "weapons-martial");
         }
 
         // "lore" alone would also match unrelated subclasses like "...ranger_explorer"
@@ -77,23 +80,6 @@ public class SubclassProficiencyService {
                     "Choose one artisan's tool or language proficiency (Battle Master)");
         }
 
-        if (idx.contains("armorer")) {
-            grant(character, "armor-heavy");
-        }
-
-        if (idx.contains("battle_smith") || idx.contains("battle-smith") || idx.contains("battlesmith")) {
-            grant(character, "weapons-martial");
-            grant(character, "smiths-tools");
-        }
-
-        if (idx.contains("alchemist")) {
-            grant(character, "alchemists-supplies");
-        }
-
-        if (idx.contains("artillerist")) {
-            grant(character, "woodcarvers-tools");
-        }
-
         if (idx.contains("lycan")) {
             createTask(character, "LYCAN_TYPE",
                     "Choose your Lycanthrope type");
@@ -103,14 +89,6 @@ public class SubclassProficiencyService {
             createTask(character, "PROFANE_SOUL_PATRON",
                     "Choose your Otherworldly Patron");
         }
-    }
-
-    private void grant(PlayerCharacter character, String indexName) {
-        proficiencyRepository.findByIndexName(indexName).ifPresent(prof -> {
-            if (!characterProficiencyRepository.existsByCharacterAndProficiency(character, prof)) {
-                characterProficiencyRepository.save(new CharacterProficiency(character, prof, "SUBCLASS"));
-            }
-        });
     }
 
     /** Creates a task, deduplicating by type+description. */
