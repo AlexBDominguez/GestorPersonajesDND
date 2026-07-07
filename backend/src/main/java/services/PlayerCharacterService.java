@@ -49,6 +49,7 @@ public class PlayerCharacterService {
     private final SubclassProficiencyService subclassProficiencyService;
     private final RacialTraitService racialTraitService;
     private final ClassSpellService classSpellService;
+    private final NumericBonusService numericBonusService;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -75,7 +76,8 @@ public class PlayerCharacterService {
             SubclassSpellService subclassSpellService,
             SubclassProficiencyService subclassProficiencyService,
             RacialTraitService racialTraitService,
-            ClassSpellService classSpellService
+            ClassSpellService classSpellService,
+            NumericBonusService numericBonusService
 
         ) {
         this.characterRepository = characterRepository;
@@ -88,6 +90,7 @@ public class PlayerCharacterService {
         this.subclassProficiencyService = subclassProficiencyService;
         this.racialTraitService = racialTraitService;
         this.classSpellService = classSpellService;
+        this.numericBonusService = numericBonusService;
         this.spellRepository = spellRepository;
         this.spellSlotProgressionRepository = spellSlotProgressionRepository;
         this.slotRepository = slotRepository;
@@ -561,12 +564,11 @@ public class PlayerCharacterService {
         List<CharacterSavingThrow> savingThrows =
                 characterSkillService.getCharacterSavingThrows(playerCharacter);
 
-        // Paladin Aura of Protection (nivel 6+): +CHA modifier a todas las saving throws propias
-        boolean hasPaladinAura = playerCharacter.getDndClass() != null
-                && "paladin".equals(playerCharacter.getDndClass().getIndexName())
-                && playerCharacter.getLevel() >= 6;
-        int paladinAuraBonus = hasPaladinAura
-                ? Math.max(0, playerCharacter.calculateAbilityModifier("cha")) : 0;
+        // Bonificadores declarativos a salvaciones (p.ej. Aura of Protection del Paladín) —
+        // ver #8.2 NUMERIC_BONUS. Ya no hay ningún if/else por clase aquí: cualquier
+        // ClassFeature/SubclassFeature con grantsBonusKey apuntando a un NumericBonus de
+        // targetField "SAVING_THROW_ALL" se suma sola.
+        int featureBonusSavingThrows = numericBonusService.bonusFor(playerCharacter, "SAVING_THROW_ALL");
 
         List<CharacterSavingThrowDto> savingThrowDtos = new ArrayList<>();
         for (CharacterSavingThrow st: savingThrows){
@@ -576,7 +578,7 @@ public class PlayerCharacterService {
             stDto.setProficient(st.isProficient());
             int abilityMod = playerCharacter.calculateAbilityModifier(st.getAbilityScore());
             int profBonus = st.isProficient() ? playerCharacter.getProficiencyBonus() : 0;
-            stDto.setBonus(abilityMod + profBonus + itemBonusSavingThrows + paladinAuraBonus);
+            stDto.setBonus(abilityMod + profBonus + itemBonusSavingThrows + featureBonusSavingThrows);
             savingThrowDtos.add(stDto);
         }
         dto.setSavingThrows(savingThrowDtos);

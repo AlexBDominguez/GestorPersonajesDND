@@ -37,6 +37,10 @@ public class SubclassFeature {
     // cuyo indexName coincide con este valor (p.ej. "lore-cutting-words" -> "bardic-inspiration").
     private String consumesResourceIndexName;
 
+    // Si no es null, tener esta feature (a partir de su nivel) otorga automáticamente el
+    // NumericBonus cuyo bonusKey coincide con este valor. Ver #8.2 NUMERIC_BONUS.
+    private String grantsBonusKey;
+
 
     public SubclassFeature(){}
 
@@ -118,6 +122,14 @@ public class SubclassFeature {
 
     public void setConsumesResourceIndexName(String consumesResourceIndexName) {
         this.consumesResourceIndexName = consumesResourceIndexName;
+    }
+
+    public String getGrantsBonusKey() {
+        return grantsBonusKey;
+    }
+
+    public void setGrantsBonusKey(String grantsBonusKey) {
+        this.grantsBonusKey = grantsBonusKey;
     }
 
 }

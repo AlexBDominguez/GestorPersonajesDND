@@ -37,6 +37,11 @@ public class ClassFeature {
     // cuyo indexName coincide con este valor (p.ej. "flurry-of-blows" -> "ki").
     private String consumesResourceIndexName;
 
+    // Si no es null, tener esta feature (a partir de su nivel) otorga automáticamente el
+    // NumericBonus cuyo bonusKey coincide con este valor (p.ej. "aura-of-protection" ->
+    // bonificador de Carisma a todas las salvaciones). Ver #8.2 NUMERIC_BONUS.
+    private String grantsBonusKey;
+
     public ClassFeature(){
 
     }
@@ -103,6 +108,14 @@ public class ClassFeature {
 
     public void setConsumesResourceIndexName(String consumesResourceIndexName) {
         this.consumesResourceIndexName = consumesResourceIndexName;
+    }
+
+    public String getGrantsBonusKey() {
+        return grantsBonusKey;
+    }
+
+    public void setGrantsBonusKey(String grantsBonusKey) {
+        this.grantsBonusKey = grantsBonusKey;
     }
 
 }
