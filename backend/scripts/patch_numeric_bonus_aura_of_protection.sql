@@ -6,7 +6,7 @@
 -- Idempotente: usa INSERT ... WHERE NOT EXISTS para no duplicar.
 SET NAMES utf8mb4;
 
-INSERT INTO numeric_bonuses (name, bonus_key, target_field, formula, condition)
+INSERT INTO numeric_bonuses (name, bonus_key, target_field, formula, bonus_condition)
 SELECT 'Aura of Protection', 'aura-of-protection', 'SAVING_THROW_ALL', 'charisma_modifier_min0', NULL
 WHERE NOT EXISTS (SELECT 1 FROM numeric_bonuses WHERE bonus_key = 'aura-of-protection');
 

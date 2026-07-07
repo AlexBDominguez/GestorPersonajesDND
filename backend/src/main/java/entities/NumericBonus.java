@@ -38,6 +38,9 @@ public class NumericBonus {
     // incondicional mientras el personaje tenga la feature que lo otorga. Sin uso todavía
     // (ningún bonus migrado hasta ahora lo necesita) -- reservado para cuando se migre algo
     // como Fighting Style: Defense ("+1 AC mientras lleves armadura").
+    // Columna "bonus_condition", no "condition": CONDITION es palabra reservada en MySQL
+    // (usada en el manejo de condiciones de procedimientos/triggers) y rompe el SQL sin backticks.
+    @Column(name = "bonus_condition")
     private String condition;
 
     public NumericBonus() {}
