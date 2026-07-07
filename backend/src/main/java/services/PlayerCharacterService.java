@@ -555,7 +555,9 @@ public class PlayerCharacterService {
             skillDto.setAbilityScore(cs.getSkill().getAbilityScore());
             skillDto.setProficient(cs.isProficient());
             skillDto.setExpertise(cs.isExpertise());
-            skillDto.setBonus(cs.getBonus());
+            // + bonificadores declarativos condicionados a la skill (p.ej. Remarkable Athlete:
+            // mitad de competencia en STR/DEX/CON sin ser competente) -- ver #8.2 NUMERIC_BONUS.
+            skillDto.setBonus(cs.getBonus() + numericBonusService.conditionalSkillBonus(playerCharacter, cs));
             skillDtos.add(skillDto);
         }
         dto.setSkills(skillDtos);

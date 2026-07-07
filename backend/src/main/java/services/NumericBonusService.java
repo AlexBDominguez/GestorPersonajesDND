@@ -1,5 +1,6 @@
 package services;
 
+import entities.CharacterSkill;
 import entities.ClassFeature;
 import entities.NumericBonus;
 import entities.PlayerCharacter;
@@ -11,6 +12,7 @@ import repositories.SubclassFeatureRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * #8.2 NUMERIC_BONUS: sums the active NumericBonus rows for a given target field (e.g.
@@ -43,6 +45,28 @@ public class NumericBonusService {
         for (String bonusKey : activeBonusKeys(character)) {
             NumericBonus bonus = numericBonusRepository.findByBonusKey(bonusKey).orElse(null);
             if (bonus != null && targetField.equals(bonus.getTargetField())) {
+                total += formulaService.evaluate(character, bonus.getFormula());
+            }
+        }
+        return total;
+    }
+
+    // Física = Fuerza/Destreza/Constitución. La única condición hoy soportada más allá de "el
+    // personaje tiene la feature": Remarkable Athlete (Fighter Champion) solo aplica a pruebas de
+    // característica física en las que el personaje NO es competente (si ya es competente, el
+    // bono de competencia completo ya es mejor que la mitad). No es una condición genérica
+    // evaluable desde datos -- es un caso con nombre propio, igual que las tablas de nivel del
+    // DSL de RESOURCE_POOL (barbarian_rage_table, etc.) no son fórmulas puramente declarativas.
+    private static final Set<String> PHYSICAL_ABILITIES = Set.of("str", "dex", "con");
+
+    public int conditionalSkillBonus(PlayerCharacter character, CharacterSkill skill) {
+        if (skill.isProficient()) return 0;
+        if (!PHYSICAL_ABILITIES.contains(skill.getSkill().getAbilityScore().toLowerCase())) return 0;
+
+        int total = 0;
+        for (String bonusKey : activeBonusKeys(character)) {
+            NumericBonus bonus = numericBonusRepository.findByBonusKey(bonusKey).orElse(null);
+            if (bonus != null && "ABILITY_CHECK_PHYSICAL_UNPROFICIENT".equals(bonus.getTargetField())) {
                 total += formulaService.evaluate(character, bonus.getFormula());
             }
         }

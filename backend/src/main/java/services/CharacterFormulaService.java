@@ -69,6 +69,11 @@ public class CharacterFormulaService {
             case "one_plus_level":
                 return 1 + character.getLevel();
 
+            // Remarkable Athlete (Fighter Champion): mitad del bono de competencia, redondeado
+            // hacia arriba (p.ej. +2 -> +1, +3 -> +2).
+            case "half_proficiency_bonus_round_up":
+                return (character.getProficiencyBonus() + 1) / 2;
+
             // Tabla de usos de Furia del Bárbaro (no sigue proficiency bonus)
             case "barbarian_rage_table":
                 return barbarianRageUses(character.getLevel());
