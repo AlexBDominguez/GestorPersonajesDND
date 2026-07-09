@@ -35,9 +35,13 @@ public class CharacterFormulaService {
 
             // Sin ningún suelo -- a diferencia de "charisma_modifier" (pensada para tamaños de
             // pool de recursos, donde un mínimo de 1 tiene sentido), un bonificador de daño plano
-            // como Elemental Affinity no debe forzar a +1 un modificador negativo o nulo.
+            // como Elemental Affinity/Agonizing Blast no debe forzar a +1 un modificador negativo o nulo.
             case "charisma_modifier_raw":
                 return character.calculateAbilityModifier("cha");
+
+            // Igual que charisma_modifier_raw, sin suelo -- para Empowered Evocation.
+            case "intelligence_modifier_raw":
+                return character.calculateAbilityModifier("int");
 
             case "level_half":
                 return Math.max(1, character.getLevel() / 2);

@@ -138,6 +138,71 @@ public class NumericBonusService {
         return (end > start) ? metadata.substring(start, end) : null;
     }
 
+    // Bonificador de daño de hechizo que solo aplica si school coincide con una escuela fija
+    // (p.ej. Empowered Evocation del Mago de Escuela de Evocación: cualquier hechizo de escuela
+    // "evocation"). A diferencia de Elemental Affinity, la escuela no depende de ninguna elección
+    // del jugador -- es fija por el propio feature -- así que bonus_condition es directamente el
+    // nombre de la escuela en minúsculas, sin prefijo ni resolución de PendingTask.
+    public int spellDamageBonusForSchool(PlayerCharacter character, String school) {
+        if (school == null || school.isEmpty()) return 0;
+
+        int total = 0;
+        for (String bonusKey : activeBonusKeys(character)) {
+            NumericBonus bonus = numericBonusRepository.findByBonusKey(bonusKey).orElse(null);
+            if (bonus == null || !"SPELL_DAMAGE_MATCHING_SCHOOL".equals(bonus.getTargetField())) continue;
+            if (school.equalsIgnoreCase(bonus.getCondition())) {
+                total += formulaService.evaluate(character, bonus.getFormula());
+            }
+        }
+        return total;
+    }
+
+    // Bonificador de daño restringido a UN hechizo concreto por nombre (hoy solo Agonizing Blast
+    // -> Eldritch Blast), condicionado a que el valor exacto aparezca entre las elecciones
+    // resueltas de una tarea multi-selección (p.ej. Eldritch Invocations, guardadas como
+    // "Agonizing Blast,Devil's Sight,..." en el mismo formato comma-separated que Battle Master
+    // Maneuvers -- ver PendingTaskService.resolveTask()).
+    //
+    // A diferencia de bonusFor/conditionalSkillBonus/spellDamageBonusFor*, este NO pasa por
+    // activeBonusKeys(): Agonizing Blast no está atado a ninguna fila de ClassFeature/
+    // SubclassFeature (Eldritch Invocations es una lista de opciones, no features individuales
+    // sincronizadas), así que se busca el NumericBonus directamente por su bonusKey. Es el mismo
+    // problema que Fighting Style (#8.2 "sin tocar"), resuelto aquí con este patrón alternativo
+    // -- una feature elegida entre varias, no una feature que el personaje simplemente "tiene".
+    private static final Map<String, String> SPECIFIC_SPELL_BONUS_KEYS = Map.of(
+            "eldritch blast", "agonizing-blast"
+    );
+
+    public int spellDamageBonusForNamedSpell(PlayerCharacter character, String spellName) {
+        if (spellName == null) return 0;
+        String bonusKey = SPECIFIC_SPELL_BONUS_KEYS.get(spellName.toLowerCase());
+        if (bonusKey == null) return 0;
+
+        NumericBonus bonus = numericBonusRepository.findByBonusKey(bonusKey).orElse(null);
+        if (bonus == null || !"SPELL_DAMAGE_IF_MULTI_CHOICE_CONTAINS".equals(bonus.getTargetField())) return 0;
+        if (!hasMultiChoiceValue(character, bonus.getCondition())) return 0;
+
+        return formulaService.evaluate(character, bonus.getFormula());
+    }
+
+    /** condition con formato "HAS_MULTI_CHOICE:<taskType>:<valor requerido>" -- comprueba si
+     *  alguna tarea completada de ese taskType tiene ese valor exacto entre sus elecciones
+     *  separadas por comas. */
+    private boolean hasMultiChoiceValue(PlayerCharacter character, String condition) {
+        if (condition == null || !condition.startsWith("HAS_MULTI_CHOICE:")) return false;
+        String[] parts = condition.substring("HAS_MULTI_CHOICE:".length()).split(":", 2);
+        if (parts.length != 2) return false;
+        String taskType = parts[0];
+        String requiredValue = parts[1];
+
+        return pendingTaskRepository.findByCharacterAndCompleted(character, true).stream()
+                .filter(t -> taskType.equals(t.getTaskType()) && t.getMetadata() != null)
+                .map(t -> extractChoiceFromMetadata(t.getMetadata()))
+                .filter(choice -> choice != null)
+                .anyMatch(choice -> java.util.Arrays.stream(choice.split(","))
+                        .anyMatch(v -> v.trim().equalsIgnoreCase(requiredValue)));
+    }
+
     private List<String> activeBonusKeys(PlayerCharacter character) {
         List<String> keys = new ArrayList<>();
 
