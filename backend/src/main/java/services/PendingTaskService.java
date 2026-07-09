@@ -51,6 +51,7 @@ public class PendingTaskService {
     private final SubclassSpellService subclassSpellService;
     private final SubclassProficiencyService subclassProficiencyService;
     private final FeatMechanicalEffectService featMechanicalEffectService;
+    private final NumericBonusService numericBonusService;
 
     public PendingTaskService(PendingTaskRepository taskRepository,
                               PlayerCharacterRepository characterRepository,
@@ -66,7 +67,8 @@ public class PendingTaskService {
                               SubclassRepository subclassRepository,
                               SubclassSpellService subclassSpellService,
                               SubclassProficiencyService subclassProficiencyService,
-                              FeatMechanicalEffectService featMechanicalEffectService) {
+                              FeatMechanicalEffectService featMechanicalEffectService,
+                              NumericBonusService numericBonusService) {
         this.taskRepository = taskRepository;
         this.characterRepository = characterRepository;
         this.characterSkillService = characterSkillService;
@@ -82,6 +84,7 @@ public class PendingTaskService {
         this.subclassSpellService = subclassSpellService;
         this.subclassProficiencyService = subclassProficiencyService;
         this.featMechanicalEffectService = featMechanicalEffectService;
+        this.numericBonusService = numericBonusService;
     }
 
     /** Todas las tareas pendientes (sin completar) de un personaje */
@@ -266,6 +269,7 @@ public class PendingTaskService {
                                         subclassSpellService.applySubclassSpells(character, sc, character.getLevel());
                                         subclassProficiencyService.applySubclassProficiencies(character, sc);
                                         applySubclassStatEffects(character, sc);
+                                        applyRetroactiveMaxHpBonus(character);
                                     });
                         }
                         break;
@@ -624,6 +628,20 @@ public class PendingTaskService {
                         default:
                                 break;
                 }
+        }
+
+        // Bonificador de PG máximo declarativo (p.ej. Draconic Resilience: +1 por nivel) -- ver
+        // #8.2 NUMERIC_BONUS. Se aplica una sola vez, justo al asignar la subclase (aquí: elección
+        // tardía de subclase vía CHOOSE_SUBCLASS -- el caso normal, elegida en la creación, se
+        // resuelve en PlayerCharacterService.create()), retroactivo a todos los niveles ya
+        // alcanzados. Cualquier subida de nivel posterior ya suma su parte en
+        // PlayerCharacterService.addHitPoints().
+        private void applyRetroactiveMaxHpBonus(PlayerCharacter character) {
+                int perLevel = numericBonusService.bonusFor(character, "MAX_HP_PER_LEVEL");
+                if (perLevel <= 0) return;
+                int bonus = perLevel * character.getLevel();
+                character.setMaxHP(character.getMaxHP() + bonus);
+                character.setCurrentHP(character.getMaxHP());
         }
 
         private String escapeJson(String s) {

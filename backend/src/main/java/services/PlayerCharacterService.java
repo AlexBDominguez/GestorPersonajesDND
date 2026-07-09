@@ -346,6 +346,15 @@ public class PlayerCharacterService {
         // Aplicar efectos de stat de subclase (Natural Armor, etc.)
         applySubclassStatEffects(saved, saved.getSubclass());
 
+        // Bonificador de PG máximo declarativo (p.ej. Draconic Resilience: +1 por nivel) -- ver
+        // #8.2 NUMERIC_BONUS. Retroactivo a todos los niveles ya alcanzados en la creación; las
+        // subidas de nivel posteriores ya suman su parte en addHitPoints().
+        int maxHpPerLevelBonus = numericBonusService.bonusFor(saved, "MAX_HP_PER_LEVEL");
+        if (maxHpPerLevelBonus > 0) {
+            saved.setMaxHP(saved.getMaxHP() + maxHpPerLevelBonus * saved.getLevel());
+            saved.setCurrentHP(saved.getMaxHP());
+        }
+
         // Aplicar efectos automáticos de traits raciales (proficiencias y hechizos sin elección)
         racialTraitService.applyAutomaticRacialTraits(saved);
 
@@ -494,7 +503,8 @@ public class PlayerCharacterService {
         // Aplicar effective scores al personaje antes de calcular stats derivados
         playerCharacter.applyEffectiveAbilityScores(effectiveScores);
 
-        // Fighting Style bonuses (Archery → +2 ranged; Defense → +1 AC while armored)
+        // Fighting Style bonuses (Archery → +2 ranged; Defense → +1 AC while armored) --
+        // declarativos vía #8.2 NUMERIC_BONUS, ver NumericBonusService.fightingStyleBonusFor().
         String fightingStyle = pendingTaskRepository
                 .findByCharacterAndCompleted(playerCharacter, true)
                 .stream()
@@ -503,13 +513,9 @@ public class PlayerCharacterService {
                 .filter(c -> c != null)
                 .findFirst()
                 .orElse(null);
-        int fightingStyleAcBonus = 0;
-        int fightingStyleRangedBonus = 0;
-        if ("Defense".equalsIgnoreCase(fightingStyle) && equipment != null && equipment.getArmor() != null) {
-            fightingStyleAcBonus = 1;
-        } else if ("Archery".equalsIgnoreCase(fightingStyle)) {
-            fightingStyleRangedBonus = 2;
-        }
+        boolean wearingArmor = equipment != null && equipment.getArmor() != null;
+        int fightingStyleAcBonus = numericBonusService.fightingStyleBonusFor(playerCharacter, "AC", wearingArmor);
+        int fightingStyleRangedBonus = numericBonusService.fightingStyleBonusFor(playerCharacter, "RANGED_ATTACK", wearingArmor);
         // Expuesto al frontend para Dueling (+2 daño cma con una sola arma) y para
         // corregir la detección de Two-Weapon Fighting (antes comprobaba una ClassFeature
         // que nunca existe, ya que el Fighting Style es una elección, no una feature de clase).
@@ -1719,6 +1725,11 @@ public class PlayerCharacterService {
         if (hpGain < 1) {
             hpGain = 1;
         }
+
+        // Bonificador de PG por nivel declarativo (p.ej. Draconic Resilience: +1) -- ver #8.2
+        // NUMERIC_BONUS. La parte retroactiva a niveles ya alcanzados se aplica en create()/
+        // PendingTaskService.applyRetroactiveMaxHpBonus(), esto solo cubre la subida actual.
+        hpGain += numericBonusService.bonusFor(character, "MAX_HP_PER_LEVEL");
 
         int oldMaxHP = character.getMaxHP();
         character.setMaxHP(oldMaxHP + hpGain);
