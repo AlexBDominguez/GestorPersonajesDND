@@ -338,6 +338,19 @@ const kEldritchInvocations = <DndChoiceOption>[
   DndChoiceOption('Witch Sight',              'See true forms of shapechangers within 30 ft. (Req: lv 15)'),
 ];
 
+// ── Fighter (Rune Knight) Runes ───────────────────────────────────────────────
+// Each rune known is tracked as its own resource (1 use, 2 from level 15 via Master of
+// Runes — see #8.2 RESOURCE_POOL) rather than a shared pool.
+
+const kRuneOptions = <DndChoiceOption>[
+  DndChoiceOption('Cloud Rune',  'Advantage on Sleight of Hand/Deception checks. Invoke as a reaction to redirect an attack made within 30 ft of you to another creature.'),
+  DndChoiceOption('Fire Rune',   'Double proficiency on tool checks. Invoke on a weapon hit for +2d6 fire damage and restrain the target (STR save) for 1 min.'),
+  DndChoiceOption('Frost Rune',  'Advantage on Animal Handling/Intimidation checks. Invoke (bonus action) for +2 to STR/CON checks and saves for 10 min.'),
+  DndChoiceOption('Hill Rune',   'Advantage on saves vs. poison, resistance to poison damage. Invoke for resistance to bludgeoning/piercing/slashing for 1 min.'),
+  DndChoiceOption('Stone Rune',  'Advantage on Insight checks, darkvision 120 ft. Invoke to force a WIS save on a creature within 30 ft or it\'s charmed, speed 0, incapacitated for 1 min.'),
+  DndChoiceOption('Storm Rune',  'Advantage on Arcana checks, can\'t be surprised. Invoke to enter a 1-min prophetic state: once, force a roll within 60 ft to be made with advantage or disadvantage.'),
+];
+
 const kKnowledgeDomainSkills = [
   DndChoiceOption('Arcana',   'Knowledge of magic, spells, and mystical lore.'),
   DndChoiceOption('History',  'Knowledge of historical events, legends, and lore.'),

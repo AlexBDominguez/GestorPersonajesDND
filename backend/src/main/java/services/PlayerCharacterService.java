@@ -1661,6 +1661,20 @@ public class PlayerCharacterService {
                             "{\"count\":" + formulaCount + "}");
                 }
                 break;
+
+            // Rune Knight (Aurora/TCE): index_name real es el ID crudo de Aurora, no un slug
+            // limpio como el resto de casos de este switch (ver #8.2 fase 5 -- las subclases
+            // que llegan por Aurora no siempre tienen slug bonito). 2 runas a nivel 3, +1 a
+            // nivel 7/10/15 (5 en total, igual que Rune Carver). Cada runa elegida es su propio
+            // ClassResource (ver CharacterClassResourceService/patch_resource_pool_rune_knight.sql).
+            case "ID_WOTC_TCOE_ARCHETYPE_FIGHTER_RUNE_KNIGHT":
+                if (level == 3)
+                    createSubclassTask(character, level, "RUNE_CHOICE",
+                            "Choose 2 Runes Known", "{\"count\":2}");
+                else if (level == 7 || level == 10 || level == 15)
+                    createSubclassTask(character, level, "RUNE_CHOICE",
+                            "Choose an additional Rune Known", "{\"count\":1}");
+                break;
         }
     }
 

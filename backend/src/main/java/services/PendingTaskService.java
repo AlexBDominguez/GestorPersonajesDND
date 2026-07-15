@@ -52,6 +52,7 @@ public class PendingTaskService {
     private final SubclassProficiencyService subclassProficiencyService;
     private final FeatMechanicalEffectService featMechanicalEffectService;
     private final NumericBonusService numericBonusService;
+    private final CharacterClassResourceService characterClassResourceService;
 
     public PendingTaskService(PendingTaskRepository taskRepository,
                               PlayerCharacterRepository characterRepository,
@@ -68,7 +69,8 @@ public class PendingTaskService {
                               SubclassSpellService subclassSpellService,
                               SubclassProficiencyService subclassProficiencyService,
                               FeatMechanicalEffectService featMechanicalEffectService,
-                              NumericBonusService numericBonusService) {
+                              NumericBonusService numericBonusService,
+                              CharacterClassResourceService characterClassResourceService) {
         this.taskRepository = taskRepository;
         this.characterRepository = characterRepository;
         this.characterSkillService = characterSkillService;
@@ -85,6 +87,7 @@ public class PendingTaskService {
         this.subclassProficiencyService = subclassProficiencyService;
         this.featMechanicalEffectService = featMechanicalEffectService;
         this.numericBonusService = numericBonusService;
+        this.characterClassResourceService = characterClassResourceService;
     }
 
     /** Todas las tareas pendientes (sin completar) de un personaje */
@@ -283,6 +286,17 @@ public class PendingTaskService {
 
                 // Battle Master — maneuvers stored as comma-separated names in metadata
                 case "MANEUVER_CHOICE":
+                        break;
+
+                // Rune Knight — runes known stored as comma-separated names in metadata, same
+                // format as Battle Master Maneuvers/Eldritch Invocations. Cada runa elegida es
+                // un ClassResource con su propio contador (requiresMultiChoice), así que hay que
+                // re-inicializar recursos aquí: initializeClassResourcesForCharacter() ya corrió
+                // en la creación ANTES de que esta tarea existiera/se resolviera, así que las
+                // runas elegidas no se habían podido inicializar todavía. Idempotente -- solo
+                // crea lo que falte. Ver #8.2 RESOURCE_POOL.
+                case "RUNE_CHOICE":
+                        characterClassResourceService.initializeClassResourcesForCharacter(character.getId());
                         break;
 
                 // Totem Warrior — choice stored in metadata

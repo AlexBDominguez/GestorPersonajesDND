@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
+import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
 import 'package:gestor_personajes_dnd/services/storage/local_cache_service.dart';
 import 'package:gestor_personajes_dnd/models/character/pending_task.dart';
 import 'package:gestor_personajes_dnd/models/character/character_class_resource.dart';
@@ -583,6 +584,44 @@ class CharacterSheetViewModel extends ChangeNotifier {
   List<ClassFeature> get combatSubclassFeatures => _subclassFeatures
       .where((f) => isCombatRelevant(f.indexName))
       .toList();
+
+  // ── Rune Knight: runas conocidas ──────────────────────────────────────────
+  // A diferencia del resto de subclase-features, las runas no son filas de
+  // SubclassFeature sincronizadas (Aurora nunca las trajo estructuradas, ver #8.2
+  // RESOURCE_POOL) — son opciones fijas del wizard (kRuneOptions) elegidas vía hasta 4
+  // PendingTask "RUNE_CHOICE" (niveles 3/7/10/15, igual que Battle Master Maneuvers).
+  // Se construyen ClassFeature sintéticos (sin fila real en BD, id negativo) para poder
+  // reutilizar sin cambios la tarjeta de feature+recurso que ya existe: como el indexName
+  // de cada rune coincide con el index_name sembrado en class_resources
+  // (patch_resource_pool_rune_knight.sql), _realResourceFor()/featureMaxUses()/useFeature()
+  // los resuelven igual que cualquier otro recurso real, sin caso especial.
+  List<ClassFeature> get knownRuneFeatures {
+    final names = <String>{};
+    for (final level in [3, 7, 10, 15]) {
+      final resolved = resolvedChoiceFor('RUNE_CHOICE', level);
+      if (resolved == null) continue;
+      for (final n in resolved.split(',')) {
+        final trimmed = n.trim();
+        if (trimmed.isNotEmpty) names.add(trimmed);
+      }
+    }
+    if (names.isEmpty) return [];
+
+    final result = <ClassFeature>[];
+    var syntheticId = -1000;
+    for (final name in names) {
+      final option = kRuneOptions.where((o) => o.name == name).firstOrNull;
+      if (option == null) continue; // opción desconocida, no debería pasar
+      result.add(ClassFeature(
+        id: syntheticId--,
+        indexName: name.toLowerCase().replaceAll(' ', '-'),
+        name: name,
+        level: 3,
+        description: option.description,
+      ));
+    }
+    return result;
+  }
 
   Future<void> _loadSubclassFeaturesIfNeeded() async {
     final id = character?.subclassId;

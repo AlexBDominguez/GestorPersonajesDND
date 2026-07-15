@@ -156,6 +156,12 @@ class _TaskResolver extends StatelessWidget {
         return _MultiPickOptionResolver(
             task: task, vm: vm, options: kBattleMasterManeuvers);
 
+      // Rune Knight — multi-selección con límite (count en metadata), una tarea por hito de
+      // nivel (3/7/10/15) igual que Battle Master Maneuvers. Ver #8.2 RESOURCE_POOL.
+      case 'RUNE_CHOICE':
+        return _MultiPickOptionResolver(
+            task: task, vm: vm, options: kRuneOptions);
+
       // Totem Warrior — una opción por tarea
       case 'TOTEM_SPIRIT':
         return _OptionListResolver(task: task, vm: vm, options: kTotemSpirit);

@@ -1558,6 +1558,20 @@ void toggleItem(int itemId) {
       if (level >= 15) choices.add(WizardChoiceConfig(type: 'BATTLEMASTER_MANEUVER_7', level: 15, label: 'Maneuver 7', options: kBattleMasterManeuvers));
     }
 
+    // Rune Knight Fighter — 2 runas a nivel 3, +1 a nivel 7/10/15 (5 en total). Slots
+    // numerados igual que Battle Master Maneuvers/Four Elements Disciplines: el backend crea
+    // una PendingTask "RUNE_CHOICE" *distinta* en cada uno de esos 4 niveles (ver
+    // PlayerCharacterService.createSubclassLevelTasks), así que cada slot debe llevar el
+    // `level` del hito en el que se desbloquea, no todos nivel 3 — _resolveSlottedChoice()
+    // agrupa los slots por ese nivel para formar el "choice" de cada tarea por separado.
+    if (subcIdx.contains('rune_knight') || subcIdx.contains('rune-knight') || subcIdx.contains('rune knight')) {
+      if (level >= 3)  choices.add(WizardChoiceConfig(type: 'RUNE_SLOT_1', level: 3,  label: 'Rune 1', options: kRuneOptions));
+      if (level >= 3)  choices.add(WizardChoiceConfig(type: 'RUNE_SLOT_2', level: 3,  label: 'Rune 2', options: kRuneOptions));
+      if (level >= 7)  choices.add(WizardChoiceConfig(type: 'RUNE_SLOT_3', level: 7,  label: 'Rune 3', options: kRuneOptions));
+      if (level >= 10) choices.add(WizardChoiceConfig(type: 'RUNE_SLOT_4', level: 10, label: 'Rune 4', options: kRuneOptions));
+      if (level >= 15) choices.add(WizardChoiceConfig(type: 'RUNE_SLOT_5', level: 15, label: 'Rune 5', options: kRuneOptions));
+    }
+
     // Way of the Four Elements Monk (choose disciplines at lv3/6/11/17)
     if (subcIdx.contains('four-elements') || subcIdx.contains('four elements')) {
       if (level >= 3)  choices.add(WizardChoiceConfig(type: 'FOUR_ELEM_DISC_1', level: 3,  label: 'Discipline 1', options: kFourElementsDisciplines));
@@ -2087,6 +2101,7 @@ void toggleItem(int itemId) {
     'MANEUVER_CHOICE': 'BATTLEMASTER_MANEUVER',
     'ELEMENTAL_DISCIPLINE': 'FOUR_ELEM_DISC',
     'TRICK_SHOT_CHOICE': 'TRICK_SHOT_CHOICE',
+    'RUNE_CHOICE': 'RUNE_SLOT',
   };
 
   /// Recoge los valores de todos los slots `${prefix}_N_$level` (N = 1, 2, 3...)

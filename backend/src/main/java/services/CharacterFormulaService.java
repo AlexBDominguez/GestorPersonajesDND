@@ -108,6 +108,12 @@ public class CharacterFormulaService {
                 return levelThresholdTable(character.getLevel(),
                         new int[][]{{15, 6}, {7, 5}, {3, 4}});
 
+            // Runas del Rune Knight: 1 invocación por runa conocida (desde nivel 3), 2 a partir
+            // de nivel 15 (Master of Runes duplica los usos de cada runa).
+            case "rune_knight_charges_table":
+                return levelThresholdTable(character.getLevel(),
+                        new int[][]{{15, 2}, {3, 1}});
+
             default:
                 try {
                     return Integer.parseInt(formula);

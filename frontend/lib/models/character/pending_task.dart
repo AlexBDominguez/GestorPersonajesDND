@@ -57,6 +57,7 @@ class PendingTask{
       case 'METAMAGIC':         return '🌀';
       case 'INVOCATION':        return '👁️';
       case 'MANEUVER_CHOICE':   return '⚔️';
+      case 'RUNE_CHOICE':       return '🪨';
       case 'TOTEM_SPIRIT':      return '🐻';
       case 'TOTEM_ASPECT':      return '🦅';
       case 'TOTEM_ATTUNEMENT':  return '🐺';
@@ -95,6 +96,7 @@ class PendingTask{
       case 'METAMAGIC':         return 'Metamagic';
       case 'INVOCATION':        return 'Eldritch Invocation';
       case 'MANEUVER_CHOICE':   return 'Battle Master Maneuvers';
+      case 'RUNE_CHOICE':       return 'Rune Knight Runes';
       case 'TOTEM_SPIRIT':      return 'Totem Spirit';
       case 'TOTEM_ASPECT':      return 'Aspect of the Beast';
       case 'TOTEM_ATTUNEMENT':  return 'Totemic Attunement';

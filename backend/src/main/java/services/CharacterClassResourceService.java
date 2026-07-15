@@ -20,16 +20,19 @@ public class CharacterClassResourceService {
     private final PlayerCharacterRepository characterRepository;
     private final ClassResourceRepository classResourceRepository;
     private final CharacterFormulaService formulaService;
+    private final PendingChoiceService pendingChoiceService;
 
     public CharacterClassResourceService(
             CharacterClassResourceRepository characterClassResourceRepository,
             PlayerCharacterRepository characterRepository,
             ClassResourceRepository classResourceRepository,
-            CharacterFormulaService formulaService) {
+            CharacterFormulaService formulaService,
+            PendingChoiceService pendingChoiceService) {
         this.characterClassResourceRepository = characterClassResourceRepository;
         this.characterRepository = characterRepository;
         this.classResourceRepository = classResourceRepository;
         this.formulaService = formulaService;
+        this.pendingChoiceService = pendingChoiceService;
     }
 
     public List<CharacterClassResource> getCharacterResources(Long characterId) {
@@ -108,6 +111,14 @@ public class CharacterClassResourceService {
                 .stream()
                 .filter(r -> r.getSubclassRestriction() == null
                         || r.getSubclassRestriction().equals(subclassIndex))
+                // Recursos condicionados a una elección múltiple (p.ej. Rune Knight: solo la
+                // runa concreta que el jugador eligió) -- ver #8.2 RESOURCE_POOL. Si la tarea de
+                // elección aún no se ha resuelto cuando esto corre (p.ej. en creación, antes de
+                // que el wizard resuelva las tareas generadas), el recurso simplemente no se
+                // inicializa todavía -- ver la llamada de re-inicialización en
+                // PendingTaskService al resolver la tarea correspondiente.
+                .filter(r -> r.getRequiresMultiChoice() == null
+                        || pendingChoiceService.matchesMultiChoiceCondition(character, r.getRequiresMultiChoice()))
                 .collect(java.util.stream.Collectors.toList());
 
         for (ClassResource resource : classResources) {

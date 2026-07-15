@@ -41,6 +41,15 @@ public class ClassResource {
     // Si no es null, el recurso solo se concede a personajes con esta subclase
     private String subclassRestriction;
 
+    // Si no es null, el recurso solo se concede si el personaje tiene este valor entre sus
+    // elecciones resueltas de una tarea multi-selección (p.ej. Rune Knight: solo se inicializa
+    // "Cloud Rune" si el jugador la eligió entre sus runas conocidas). Formato
+    // "HAS_MULTI_CHOICE:<taskType>:<valor>" -- mismo formato que NumericBonus.condition, resuelto
+    // por el mismo PendingChoiceService. A diferencia de subclassRestriction (fijo por subclase),
+    // esto depende de una elección del jugador dentro de esa subclase. Ver #8.2 RESOURCE_POOL.
+    @Column(name = "requires_multi_choice")
+    private String requiresMultiChoice;
+
     public ClassResource() {
     }
 
@@ -114,5 +123,13 @@ public class ClassResource {
 
     public void setSubclassRestriction(String subclassRestriction) {
         this.subclassRestriction = subclassRestriction;
+    }
+
+    public String getRequiresMultiChoice() {
+        return requiresMultiChoice;
+    }
+
+    public void setRequiresMultiChoice(String requiresMultiChoice) {
+        this.requiresMultiChoice = requiresMultiChoice;
     }
 }

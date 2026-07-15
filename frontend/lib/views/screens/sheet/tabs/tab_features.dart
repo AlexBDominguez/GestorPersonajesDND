@@ -78,6 +78,31 @@ class TabFeatures extends StatelessWidget {
           }(),
         ],
 
+        // Rune Knight: runas conocidas — no son SubclassFeature reales (ver #8.2
+        // RESOURCE_POOL, knownRuneFeatures en el ViewModel), así que se muestran en su
+        // propio bloque en vez de mezclarse con vm.subclassFeatures. Reutiliza _FeatureTile
+        // sin cambios: cada runa sintética resuelve a su ClassResource real porque su
+        // indexName coincide con el sembrado en class_resources.
+        if (vm.knownRuneFeatures.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 2, bottom: 6, top: 4),
+            child: Row(children: [
+              const Icon(Icons.arrow_right,
+                color: AppTheme.textSecondary, size: 16),
+              Text(
+                'Runes Known',
+                style: GoogleFonts.lato(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  fontStyle: FontStyle.italic),
+              ),
+            ]),
+          ),
+          ...vm.knownRuneFeatures.map((f) => _FeatureTile(feature: f, vm: vm)),
+        ],
+
         // Confirmación simple de qué Fighting Style se eligió — siempre visible aquí,
         // sin repetir el número ya aplicado en tab_combat (ver hallazgo #15 del backlog).
         if (character.fightingStyle != null) ...[
