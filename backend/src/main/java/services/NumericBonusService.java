@@ -173,14 +173,20 @@ public class NumericBonusService {
     // no una fila por estilo) -- se escanean todos los NumericBonus de un targetField y se
     // resuelve la elección directamente (misma tarea "FIGHTING_STYLE" que ya usa
     // PlayerCharacterService para exponer dto.setFightingStyle()). wearingArmor solo lo usa
-    // Defense (condition con sufijo ";REQUIRES_ARMOR") -- ignorado por el resto.
-    public int fightingStyleBonusFor(PlayerCharacter character, String targetField, boolean wearingArmor) {
+    // Defense (condition con sufijo ";REQUIRES_ARMOR"); singleOneHandedMeleeWeaponEquipped solo
+    // lo usa Dueling (";REQUIRES_SINGLE_ONE_HANDED_MELEE_WEAPON") -- cada flag es ignorado por
+    // los estilos que no llevan su sufijo.
+    public int fightingStyleBonusFor(PlayerCharacter character, String targetField, boolean wearingArmor,
+                                      boolean singleOneHandedMeleeWeaponEquipped) {
         int total = 0;
         for (NumericBonus bonus : numericBonusRepository.findByTargetField(targetField)) {
             String condition = bonus.getCondition();
             boolean requiresArmor = condition != null && condition.contains(";REQUIRES_ARMOR");
+            boolean requiresSingleWeapon = condition != null
+                    && condition.contains(";REQUIRES_SINGLE_ONE_HANDED_MELEE_WEAPON");
             if (pendingChoiceService.matchesSingleChoiceCondition(character, condition)
-                    && (!requiresArmor || wearingArmor)) {
+                    && (!requiresArmor || wearingArmor)
+                    && (!requiresSingleWeapon || singleOneHandedMeleeWeaponEquipped)) {
                 total += formulaService.evaluate(character, bonus.getFormula());
             }
         }

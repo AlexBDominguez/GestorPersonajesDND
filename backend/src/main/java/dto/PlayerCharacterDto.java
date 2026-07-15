@@ -60,6 +60,7 @@ public class PlayerCharacterDto {
     private int meleeAttackBonus;
     private int rangedAttackBonus;
     private int finesseAttackBonus;
+    private int meleeDamageBonus;
     private int experienceToNextLevel;
     private int experienceNeeded;
     private boolean isDying;
@@ -534,6 +535,14 @@ public class PlayerCharacterDto {
 
     public void setFinesseAttackBonus(int finesseAttackBonus) {
         this.finesseAttackBonus = finesseAttackBonus;
+    }
+
+    public int getMeleeDamageBonus() {
+        return meleeDamageBonus;
+    }
+
+    public void setMeleeDamageBonus(int meleeDamageBonus) {
+        this.meleeDamageBonus = meleeDamageBonus;
     }
 
     public int getExperienceToNextLevel() {

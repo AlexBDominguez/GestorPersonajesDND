@@ -65,6 +65,7 @@ PlayerCharacter makeCharacter({
     meleeAttackBonus: 3,
     rangedAttackBonus: 3,
     finesseAttackBonus: 3,
+    meleeDamageBonus: 0,
     spellSaveDC: 14,
     spellAttackBonus: 6,
     maxPreparedSpells: maxPreparedSpells,

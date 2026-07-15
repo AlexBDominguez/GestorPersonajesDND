@@ -98,7 +98,6 @@ class _TabCombatState extends State<TabCombat> {
                 .where((w) => w.id != vm.offhandWeapon?.id)
                 .toList(),
             character: c,
-            vm: vm,
           ),
           const SizedBox(height: 8),
         ],
@@ -929,8 +928,7 @@ class _FightingStyleBadge extends StatelessWidget {
 class _WeaponAttackTable extends StatelessWidget {
   final List<InventoryItem> weapons;
   final PlayerCharacter character;
-  final CharacterSheetViewModel vm;
-  const _WeaponAttackTable({required this.weapons, required this.character, required this.vm});
+  const _WeaponAttackTable({required this.weapons, required this.character});
 
   @override
   Widget build(BuildContext context) {
@@ -980,7 +978,7 @@ class _WeaponAttackTable extends StatelessWidget {
             ),
           ]),
         ),
-        ...weapons.map((w) => _WeaponRow(weapon: w, character: character, vm: vm)),
+        ...weapons.map((w) => _WeaponRow(weapon: w, character: character)),
       ]),
     );
   }
@@ -989,21 +987,13 @@ class _WeaponAttackTable extends StatelessWidget {
 class _WeaponRow extends StatelessWidget {
   final InventoryItem weapon;
   final PlayerCharacter character;
-  final CharacterSheetViewModel vm;
-  const _WeaponRow({required this.weapon, required this.character, required this.vm});
+  const _WeaponRow({required this.weapon, required this.character});
 
   bool get _isRanged =>
       weapon.weaponRange?.toLowerCase() == 'ranged';
 
   bool get _isFinesse =>
       weapon.weaponProperties.any((p) => p.toLowerCase().contains('finesse'));
-
-  bool get _isTwoHanded =>
-      weapon.weaponProperties.any((p) => p.toLowerCase().contains('two-handed'));
-
-  /// Dueling: +2 al daño cma cuando empuña un arma a una mano y ninguna otra arma.
-  bool get _duelingApplies =>
-      vm.hasDueling && !_isRanged && !_isTwoHanded && vm.equippedWeapons.length == 1;
 
   int get _abilityMod {
     final str = character.modifier('STR');
@@ -1023,7 +1013,9 @@ class _WeaponRow extends StatelessWidget {
   String get _damageText {
     final dice = weapon.damageDice ?? '';
     if (dice.isEmpty) return '—';
-    final mod = _abilityMod + (_duelingApplies ? 2 : 0);
+    // Dueling (#8.2 NUMERIC_BONUS, target_field MELEE_DAMAGE) ya viene gateado en el backend por
+    // "arma cma a una mano, sin otra arma equipada" -- ver PlayerCharacterService.
+    final mod = _abilityMod + character.meleeDamageBonus;
     if (mod > 0) return '$dice+$mod';
     if (mod < 0) return '$dice$mod';
     return dice;

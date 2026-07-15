@@ -45,6 +45,7 @@ class PlayerCharacter{
   final int meleeAttackBonus;
   final int rangedAttackBonus;
   final int finesseAttackBonus;
+  final int meleeDamageBonus;
   final int spellSaveDC;
   final int spellAttackBonus;
   final int maxPreparedSpells;
@@ -117,6 +118,7 @@ class PlayerCharacter{
     required this.meleeAttackBonus,
     required this.rangedAttackBonus,
     required this.finesseAttackBonus,
+    required this.meleeDamageBonus,
     required this.spellSaveDC,
     required this.spellAttackBonus,
     required this.maxPreparedSpells,
@@ -198,6 +200,7 @@ class PlayerCharacter{
       meleeAttackBonus:    (j['meleeAttackBonus'] as num?)?.toInt() ?? 0,
       rangedAttackBonus:   (j['rangedAttackBonus'] as num?)?.toInt() ?? 0,
       finesseAttackBonus:  (j['finesseAttackBonus'] as num?)?.toInt() ?? 0,
+      meleeDamageBonus:    (j['meleeDamageBonus'] as num?)?.toInt() ?? 0,
       spellSaveDC:         (j['spellSaveDC'] as num?)?.toInt() ?? 8,
       spellAttackBonus:    (j['spellAttackBonus'] as num?)?.toInt() ?? 0,
       maxPreparedSpells:   (j['maxPreparedSpells'] as num?)?.toInt() ?? 0,

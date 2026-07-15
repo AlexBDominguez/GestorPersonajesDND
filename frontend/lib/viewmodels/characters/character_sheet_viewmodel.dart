@@ -217,11 +217,6 @@ class CharacterSheetViewModel extends ChangeNotifier {
   bool get hasTwoWeaponFighting =>
       character?.fightingStyle?.toLowerCase() == 'two-weapon fighting';
 
-  /// True si el personaje eligió el fighting style "Dueling" (+2 al daño cuerpo a
-  /// cuerpo cuando empuña un arma a una mano y ninguna otra arma).
-  bool get hasDueling =>
-      character?.fightingStyle?.toLowerCase() == 'dueling';
-
   /// True si el personaje tiene el feat "Dual Wielder".
   bool get hasDualWielderFeat => _characterFeats
       .any((f) => f.name.toLowerCase().contains('dual wielder'));

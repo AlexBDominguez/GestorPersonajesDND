@@ -514,11 +514,31 @@ public class PlayerCharacterService {
                 .findFirst()
                 .orElse(null);
         boolean wearingArmor = equipment != null && equipment.getArmor() != null;
-        int fightingStyleAcBonus = numericBonusService.fightingStyleBonusFor(playerCharacter, "AC", wearingArmor);
-        int fightingStyleRangedBonus = numericBonusService.fightingStyleBonusFor(playerCharacter, "RANGED_ATTACK", wearingArmor);
-        // Expuesto al frontend para Dueling (+2 daño cma con una sola arma) y para
-        // corregir la detección de Two-Weapon Fighting (antes comprobaba una ClassFeature
-        // que nunca existe, ya que el Fighting Style es una elección, no una feature de clase).
+        // Dueling exige un arma cma a una mano equipada y ninguna otra arma -- mismo criterio que
+        // antes vivía hardcodeado en tab_combat.dart (vm.equippedWeapons.length == 1 && !ranged
+        // && !two-handed), ahora migrado a NUMERIC_BONUS (condition
+        // ";REQUIRES_SINGLE_ONE_HANDED_MELEE_WEAPON") para que un futuro fighting-style-like
+        // grantable desde el panel admin (#9) con esta misma forma funcione sin tocar Dart.
+        List<CharacterInventory> equippedWeapons = inventory.stream()
+                .filter(ci -> ci.isEquipped() && ci.getItem().getDamageDice() != null
+                        && !ci.getItem().getDamageDice().isEmpty())
+                .collect(Collectors.toList());
+        boolean singleOneHandedMeleeWeaponEquipped = equippedWeapons.size() == 1
+                && !"ranged".equalsIgnoreCase(equippedWeapons.get(0).getItem().getWeaponRange())
+                && (equippedWeapons.get(0).getItem().getWeaponProperties() == null
+                        || equippedWeapons.get(0).getItem().getWeaponProperties().stream()
+                                .noneMatch(p -> p.toLowerCase().contains("two-handed")));
+        int fightingStyleAcBonus = numericBonusService.fightingStyleBonusFor(playerCharacter, "AC", wearingArmor, false);
+        int fightingStyleRangedBonus = numericBonusService.fightingStyleBonusFor(playerCharacter, "RANGED_ATTACK", wearingArmor, false);
+        int fightingStyleMeleeDamageBonus = numericBonusService.fightingStyleBonusFor(
+                playerCharacter, "MELEE_DAMAGE", false, singleOneHandedMeleeWeaponEquipped);
+        dto.setMeleeDamageBonus(fightingStyleMeleeDamageBonus);
+        // Expuesto al frontend también en crudo para Two-Weapon Fighting (sumar el mod. de
+        // característica al daño del offhand no es un bono aditivo, es una regla que se activa/
+        // desactiva -- no encaja en la forma de NUMERIC_BONUS, así que sigue leyéndose el campo
+        // directamente en character_sheet_viewmodel.dart, antes corrigiendo un bug real: comprobaba
+        // una ClassFeature que nunca existe, ya que el Fighting Style es una elección, no una
+        // feature de clase).
         dto.setFightingStyle(fightingStyle);
 
         // Ability scores efectivos (con overrides de items ya aplicados al personaje)
