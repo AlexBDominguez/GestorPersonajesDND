@@ -351,6 +351,46 @@ const kRuneOptions = <DndChoiceOption>[
   DndChoiceOption('Storm Rune',  'Advantage on Arcana checks, can\'t be surprised. Invoke to enter a 1-min prophetic state: once, force a roll within 60 ft to be made with advantage or disadvantage.'),
 ];
 
+// Artificer Infusions (Infuse Item, #8) -- 16 infusions total. Effects paraphrased from TCE,
+// not reproduced verbatim (same convention as kRuneOptions/kFourElementsDisciplines). Homunculus
+// Servant (companion) and Replicate Magic Item (its own item-selection sub-list) are
+// deliberately not modeled mechanically here -- descriptive only, same treatment as any other
+// "not representable as a number" effect in this app (see Aurora_Fixes.md #8.2).
+const kArtificerInfusions = <DndChoiceOption>[
+  DndChoiceOption('Enhanced Arcane Focus', 'While attuned and holding this rod/staff/wand, +1 to spell attack rolls (+2 from 10th level) and you ignore half cover when targeting with a spell.'),
+  DndChoiceOption('Enhanced Defense', '+1 AC while wearing this armor or wielding this shield (+2 from 10th level).'),
+  DndChoiceOption('Enhanced Weapon', '+1 to attack and damage rolls with this simple or martial weapon (+2 from 10th level).'),
+  DndChoiceOption('Repeating Shot', 'While attuned, this ranged weapon ignores the loading property and creates its own ammunition. +1 to attack and damage rolls with it.'),
+  DndChoiceOption('Returning Weapon', 'This thrown weapon flies back to your hand immediately after a ranged attack. +1 to attack and damage rolls with it.'),
+  DndChoiceOption('Armor of Magical Strength', 'While wearing this armor, 6 charges (regain 1d6 at dawn) to add your Intelligence modifier to a Strength check/save, or avoid being knocked prone.'),
+  DndChoiceOption('Mind Sharpener', 'While wearing this armor/robes, 4 charges (regain 1d4 at dawn) to auto-succeed a failed Constitution save to maintain concentration.'),
+  DndChoiceOption('Homunculus Servant', 'Turns a gem/crystal (100+ gp) into a Tiny construct companion loyal to you. Not tracked as a companion in this app.'),
+  DndChoiceOption('Replicate Magic Item', 'Learn the formula for a specific existing magic item instead of a fixed effect (item pool depends on your level; can be learned more than once). Not tracked mechanically here — if the item already exists in this app\'s catalog, add it to inventory directly.'),
+  DndChoiceOption('Radiant Weapon', '(Lv 6+) +1 to attack/damage with this weapon. It sheds light (30 ft bright/30 ft dim). 4 charges (regain 1d4 at dawn) to blind an attacker you hit or force a Constitution save.'),
+  DndChoiceOption('Repulsion Shield', '(Lv 6+) +1 AC while wielding this shield. Reaction: spend 1 of 4 charges (regain 1d4 at dawn) to push an attacker within 5 ft back 15 feet.'),
+  DndChoiceOption('Resistant Armor', '(Lv 6+) Choose a damage type when applied; resistance to that damage type while wearing this armor.'),
+  DndChoiceOption('Boots of the Winding Path', '(Lv 6+) Bonus action: teleport to an unoccupied space you occupied earlier this turn.'),
+  DndChoiceOption('Spell-Refueling Ring', '(Lv 6+) 1 charge (regains at dawn): spend it as an action to regain one expended spell slot of 3rd level or lower.'),
+  DndChoiceOption('Helm of Awareness', '(Lv 10+) Advantage on initiative rolls; can\'t be surprised while conscious.'),
+  DndChoiceOption('Arcane Propulsion Armor', '(Lv 14+) +5 ft speed; integrated force gauntlets (1d8 force damage, can be thrown 20/60 ft and return). Can\'t be removed against your will.'),
+];
+
+// Nivel mínimo de Artificiero para poder elegir cada infusión -- 0/ausente = disponible desde
+// que se desbloquea Infuse Item (nivel 2). Mismos umbrales que Infusion.minLevel en el backend.
+const Map<String, int> kArtificerInfusionMinLevel = {
+  'Radiant Weapon': 6,
+  'Repulsion Shield': 6,
+  'Resistant Armor': 6,
+  'Boots of the Winding Path': 6,
+  'Spell-Refueling Ring': 6,
+  'Helm of Awareness': 10,
+  'Arcane Propulsion Armor': 14,
+};
+
+List<DndChoiceOption> kArtificerInfusionsUpToLevel(int level) => kArtificerInfusions
+    .where((o) => (kArtificerInfusionMinLevel[o.name] ?? 0) <= level)
+    .toList();
+
 const kKnowledgeDomainSkills = [
   DndChoiceOption('Arcana',   'Knowledge of magic, spells, and mystical lore.'),
   DndChoiceOption('History',  'Knowledge of historical events, legends, and lore.'),

@@ -114,6 +114,23 @@ public class CharacterFormulaService {
                 return levelThresholdTable(character.getLevel(),
                         new int[][]{{15, 2}, {3, 1}});
 
+            // Infusiones conocidas del Artificiero (Infuse Item): 4 a nivel 2, +2 en 6/10/14/18.
+            case "artificer_infusions_known_table":
+                return levelThresholdTable(character.getLevel(),
+                        new int[][]{{18, 12}, {14, 10}, {10, 8}, {6, 6}, {2, 4}});
+
+            // Objetos infusionados simultáneamente (Infuse Item): siempre la mitad de las
+            // infusiones conocidas -- 2 a nivel 2, 3 a nivel 6, 4 a nivel 10, 5 a nivel 14, 6 a
+            // nivel 18.
+            case "artificer_infusions_active_table":
+                return levelThresholdTable(character.getLevel(),
+                        new int[][]{{18, 6}, {14, 5}, {10, 4}, {6, 3}, {2, 2}});
+
+            // Enhanced Weapon/Enhanced Defense/Enhanced Arcane Focus: +1, +2 desde nivel 10.
+            case "infusion_enhancement_bonus_table":
+                return levelThresholdTable(character.getLevel(),
+                        new int[][]{{10, 2}, {0, 1}});
+
             default:
                 try {
                     return Integer.parseInt(formula);

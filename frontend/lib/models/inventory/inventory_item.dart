@@ -22,6 +22,10 @@ class InventoryItem {
   final int bonusAc;
   final int bonusToHit;
   final int bonusSavingThrows;
+  final String? infusionName;
+  final String? infusionDescription;
+  final String? infusionBonusTarget;
+  final int infusionBonusValue;
 
   const InventoryItem({
     required this.id,
@@ -43,6 +47,10 @@ class InventoryItem {
     this.bonusAc = 0,
     this.bonusToHit = 0,
     this.bonusSavingThrows = 0,
+    this.infusionName,
+    this.infusionDescription,
+    this.infusionBonusTarget,
+    this.infusionBonusValue = 0,
   });
 
   factory InventoryItem.fromJson(Map<String, dynamic> j) => InventoryItem(
@@ -65,6 +73,10 @@ class InventoryItem {
         bonusAc:            (j['bonusAc'] as num?)?.toInt() ?? 0,
         bonusToHit:         (j['bonusToHit'] as num?)?.toInt() ?? 0,
         bonusSavingThrows:  (j['bonusSavingThrows'] as num?)?.toInt() ?? 0,
+        infusionName:        j['infusionName'] as String?,
+        infusionDescription: j['infusionDescription'] as String?,
+        infusionBonusTarget: j['infusionBonusTarget'] as String?,
+        infusionBonusValue: (j['infusionBonusValue'] as num?)?.toInt() ?? 0,
       );
 
   // Icono por tipo
@@ -105,6 +117,10 @@ class InventoryItem {
     int? bonusAc,
     int? bonusToHit,
     int? bonusSavingThrows,
+    String? infusionName,
+    String? infusionDescription,
+    String? infusionBonusTarget,
+    int? infusionBonusValue,
   }) => InventoryItem(
         id: id ?? this.id,
         itemId: itemId ?? this.itemId,
@@ -125,6 +141,10 @@ class InventoryItem {
         bonusAc: bonusAc ?? this.bonusAc,
         bonusToHit: bonusToHit ?? this.bonusToHit,
         bonusSavingThrows: bonusSavingThrows ?? this.bonusSavingThrows,
+        infusionName: infusionName ?? this.infusionName,
+        infusionDescription: infusionDescription ?? this.infusionDescription,
+        infusionBonusTarget: infusionBonusTarget ?? this.infusionBonusTarget,
+        infusionBonusValue: infusionBonusValue ?? this.infusionBonusValue,
       );
 
   String get costDisplay {

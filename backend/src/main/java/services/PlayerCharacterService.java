@@ -50,6 +50,8 @@ public class PlayerCharacterService {
     private final RacialTraitService racialTraitService;
     private final ClassSpellService classSpellService;
     private final NumericBonusService numericBonusService;
+    private final InfusionRepository infusionRepository;
+    private final CharacterFormulaService formulaService;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -77,7 +79,9 @@ public class PlayerCharacterService {
             SubclassProficiencyService subclassProficiencyService,
             RacialTraitService racialTraitService,
             ClassSpellService classSpellService,
-            NumericBonusService numericBonusService
+            NumericBonusService numericBonusService,
+            InfusionRepository infusionRepository,
+            CharacterFormulaService formulaService
 
         ) {
         this.characterRepository = characterRepository;
@@ -106,6 +110,8 @@ public class PlayerCharacterService {
         this.equipmentRepository = equipmentRepository;
         this.characterActiveEffectRepository = characterActiveEffectRepository;
         this.characterInventoryRepository = characterInventoryRepository;
+        this.infusionRepository = infusionRepository;
+        this.formulaService = formulaService;
     }
 
     // ========== CRUD BÁSICO ==========
@@ -473,6 +479,15 @@ public class PlayerCharacterService {
         // Bonuses de objetos equipados / sintonizados
         List<CharacterInventory> inventory = characterInventoryRepository.findByCharacterId(playerCharacter.getId());
         int itemBonusAc = 0, itemBonusToHit = 0, itemBonusSavingThrows = 0;
+        // Infusiones (Infuse Item, Artificiero, #8): a diferencia de los bonos de Item (que son
+        // fijos por catálogo), el bono de una infusión depende del nivel del personaje (p.ej.
+        // Enhanced Weapon pasa de +1 a +2 en nivel 10) y solo aplica al objeto concreto que la
+        // lleva, no a todo lo demás -- ver Infusion.bonusTarget/bonusFormula. WEAPON_ATTACK_DAMAGE
+        // se suma a itemBonusToHit (mismo mecanismo que ya usa cualquier arma +1 real) y por
+        // separado a meleeDamageBonus (no existe un "itemBonusDamage" genérico porque ningún Item
+        // normal necesitaba uno hasta ahora).
+        int infusionWeaponDamageBonus = 0;
+        int infusionSpellAttackBonus = 0;
 
         // Effective ability scores: copia de los scores base con overrides de items activos
         Map<String, Integer> effectiveScores = new HashMap<>();
@@ -482,9 +497,14 @@ public class PlayerCharacterService {
 
         for (CharacterInventory ci : inventory) {
             Item item = ci.getItem();
-            // Objetos que requieren sintonización: el bonus aplica solo si están sintonizados
-            // Objetos sin sintonización: aplica si están equipados
-            boolean active = item.isRequiresAttunement() ? ci.isAttuned() : ci.isEquipped();
+            Infusion infusion = ci.getInfusionIndexName() != null
+                    ? infusionRepository.findByIndexName(ci.getInfusionIndexName()).orElse(null)
+                    : null;
+            // Objetos que requieren sintonización (por el propio item o por la infusión que
+            // llevan): el bonus aplica solo si están sintonizados. El resto, si están equipados.
+            boolean requiresAttunementEffective = item.isRequiresAttunement()
+                    || (infusion != null && infusion.isRequiresAttunement());
+            boolean active = requiresAttunementEffective ? ci.isAttuned() : ci.isEquipped();
             if (active) {
                 itemBonusAc            += item.getBonusAc();
                 itemBonusToHit         += item.getBonusToHit();
@@ -497,6 +517,19 @@ public class PlayerCharacterService {
                 applyAbilityOverride(effectiveScores, "int", item.getSetIntTo());
                 applyAbilityOverride(effectiveScores, "wis", item.getSetWisTo());
                 applyAbilityOverride(effectiveScores, "cha", item.getSetChaTo());
+
+                if (infusion != null && infusion.getBonusTarget() != null) {
+                    int bonus = formulaService.evaluate(playerCharacter, infusion.getBonusFormula());
+                    switch (infusion.getBonusTarget()) {
+                        case "AC" -> itemBonusAc += bonus;
+                        case "WEAPON_ATTACK_DAMAGE" -> {
+                            itemBonusToHit += bonus;
+                            infusionWeaponDamageBonus += bonus;
+                        }
+                        case "SPELL_ATTACK" -> infusionSpellAttackBonus += bonus;
+                        default -> { }
+                    }
+                }
             }
         }
 
@@ -532,7 +565,7 @@ public class PlayerCharacterService {
         int fightingStyleRangedBonus = numericBonusService.fightingStyleBonusFor(playerCharacter, "RANGED_ATTACK", wearingArmor, false);
         int fightingStyleMeleeDamageBonus = numericBonusService.fightingStyleBonusFor(
                 playerCharacter, "MELEE_DAMAGE", false, singleOneHandedMeleeWeaponEquipped);
-        dto.setMeleeDamageBonus(fightingStyleMeleeDamageBonus);
+        dto.setMeleeDamageBonus(fightingStyleMeleeDamageBonus + infusionWeaponDamageBonus);
         // Expuesto al frontend también en crudo para Two-Weapon Fighting (sumar el mod. de
         // característica al daño del offhand no es un bono aditivo, es una regla que se activa/
         // desactiva -- no encaja en la forma de NUMERIC_BONUS, así que sigue leyéndose el campo
@@ -547,7 +580,7 @@ public class PlayerCharacterService {
         dto.setArmorClass(playerCharacter.getArmorClass(equipment, activeEffects) + itemBonusAc + fightingStyleAcBonus);
         dto.setMaxAttunementSlots(playerCharacter.getMaxAttunementSlots());
         dto.setSpellSaveDC(playerCharacter.getSpellSaveDC());
-        dto.setSpellAttackBonus(playerCharacter.getSpellAttackBonus());
+        dto.setSpellAttackBonus(playerCharacter.getSpellAttackBonus() + infusionSpellAttackBonus);
         dto.setInitiativeModifier(playerCharacter.getInitiativeModifier());
         dto.setCurrentSpeed(playerCharacter.getCurrentSpeed(activeEffects));
         dto.setMaxPreparedSpells(playerCharacter.getMaxPreparedSpells());
@@ -1422,6 +1455,12 @@ public class PlayerCharacterService {
             case INVOCATION:
                 task.setTaskType("INVOCATION");
                 task.setDescription("Choose Eldritch Invocation(s)");
+                task.setMetadata(feature.getMetadata());
+                break;
+
+            case INFUSION_CHOICE:
+                task.setTaskType("INFUSION_CHOICE");
+                task.setDescription("Choose artificer infusion(s) known (Infuse Item)");
                 task.setMetadata(feature.getMetadata());
                 break;
 

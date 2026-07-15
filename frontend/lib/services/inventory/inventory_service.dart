@@ -102,6 +102,31 @@ class InventoryService {
       throw Exception('Failed to toggle equipped (${res.statusCode})');
     }
 
+    // Infuse Item (Artificiero, #8) — aplica/quita una infusión conocida a/de un objeto.
+    Future<InventoryItem> applyInfusion(
+        int characterId, int inventoryId, String infusionName) async {
+      final res = await _api.post(
+        '/api/characters/$characterId/inventory/$inventoryId/infuse',
+        body: {'infusionName': infusionName},
+      );
+      if (res.statusCode == 200) {
+        return InventoryItem.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      }
+      if (res.statusCode == 409) throw Exception('Cannot apply this infusion here');
+      if (res.statusCode == 404) throw Exception('Unknown infusion');
+      throw Exception('Failed to apply infusion (${res.statusCode})');
+    }
+
+    Future<InventoryItem> removeInfusion(int characterId, int inventoryId) async {
+      final res = await _api.post(
+        '/api/characters/$characterId/inventory/$inventoryId/remove-infusion',
+      );
+      if (res.statusCode == 200) {
+        return InventoryItem.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      }
+      throw Exception('Failed to remove infusion (${res.statusCode})');
+    }
+
     // ── Money ──────────────────────────────────────────────────
     /// Returns updated money map: {'platinum':0,'gold':0,'electrum':0,'silver':0,'copper':0}
     Future<Map<String, int>> getMoney(int characterId) async {

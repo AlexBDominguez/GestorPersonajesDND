@@ -42,6 +42,21 @@ public class PendingChoiceService {
                 .orElse(null);
     }
 
+    /** Valor resuelto de la tarea de este tipo en un nivel concreto, o null. A diferencia de
+     *  resolvedSingleChoice (primer resultado de cualquier nivel), esto es para elecciones que
+     *  se repiten en varios hitos de nivel (p.ej. INFUSION_CHOICE en 2/6/10/14/18) donde hay que
+     *  combinar el resultado de cada hito por separado -- mismo patrón que
+     *  CharacterSheetViewModel.knownRuneFeatures usa en el frontend vía resolvedChoiceFor. */
+    public String resolvedChoiceAtLevel(PlayerCharacter character, String taskType, int level) {
+        return pendingTaskRepository.findByCharacterAndCompleted(character, true).stream()
+                .filter(t -> taskType.equals(t.getTaskType()) && t.getRelatedLevel() == level
+                        && t.getMetadata() != null)
+                .map(t -> extractChoiceFromMetadata(t.getMetadata()))
+                .filter(choice -> choice != null)
+                .findFirst()
+                .orElse(null);
+    }
+
     /** true si alguna tarea completada de ese tipo tiene requiredValue exacto entre sus
      *  elecciones separadas por comas (p.ej. Eldritch Invocations, Runes Known -- mismo formato
      *  comma-separated que usan Battle Master Maneuvers). */

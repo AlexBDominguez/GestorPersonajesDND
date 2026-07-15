@@ -3,6 +3,7 @@ package services;
 import dto.CharacterInventoryDto;
 import entities.CharacterEquipment;
 import entities.CharacterInventory;
+import entities.Infusion;
 import entities.PlayerCharacter;
 import entities.Item;
 import jakarta.transaction.Transactional;
@@ -12,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import repositories.CharacterEquipmentRepository;
 import repositories.CharacterInventoryRepository;
+import repositories.InfusionRepository;
 import repositories.PlayerCharacterRepository;
 import repositories.ItemRepository;
 
@@ -25,15 +27,35 @@ public class CharacterInventoryService {
     private final PlayerCharacterRepository characterRepository;
     private final ItemRepository itemRepository;
     private final CharacterEquipmentRepository equipmentRepository;
+    private final InfusionRepository infusionRepository;
+    private final InfusionService infusionService;
+    private final CharacterFormulaService formulaService;
 
     public CharacterInventoryService(CharacterInventoryRepository inventoryRepository,
                                      PlayerCharacterRepository characterRepository,
                                      ItemRepository itemRepository,
-                                     CharacterEquipmentRepository equipmentRepository) {
+                                     CharacterEquipmentRepository equipmentRepository,
+                                     InfusionRepository infusionRepository,
+                                     InfusionService infusionService,
+                                     CharacterFormulaService formulaService) {
         this.inventoryRepository = inventoryRepository;
         this.characterRepository = characterRepository;
         this.itemRepository = itemRepository;
         this.equipmentRepository = equipmentRepository;
+        this.infusionRepository = infusionRepository;
+        this.infusionService = infusionService;
+        this.formulaService = formulaService;
+    }
+
+    // El objeto requiere sintonización para equiparse si el objeto base ya la requería
+    // (magic item normal) O si la infusión aplicada la requiere (p.ej. Enhanced Arcane Focus) --
+    // un objeto mundano infusionado con algo que exige sintonización pasa a exigirla también.
+    private boolean effectiveRequiresAttunement(CharacterInventory inventory) {
+        if (inventory.getItem().isRequiresAttunement()) return true;
+        if (inventory.getInfusionIndexName() == null) return false;
+        return infusionRepository.findByIndexName(inventory.getInfusionIndexName())
+                .map(Infusion::isRequiresAttunement)
+                .orElse(false);
     }
 
     public List<CharacterInventoryDto> getCharacterInventory(Long characterId) {
@@ -138,7 +160,7 @@ public class CharacterInventoryService {
         // Los items que requieren attunement solo pueden equiparse si ya están
         // attuned — el frontend ya lo impide vía drag-and-drop, esto es defensa en
         // profundidad para que la regla se cumpla sin depender solo de la UI (#16).
-        if (willBeEquipped && inventory.getItem().isRequiresAttunement() && !inventory.isAttuned()) {
+        if (willBeEquipped && effectiveRequiresAttunement(inventory) && !inventory.isAttuned()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "This item requires attunement before it can be equipped");
         }
@@ -201,6 +223,51 @@ public class CharacterInventoryService {
         return toDto(inventory);
     }
 
+    // Infuse Item (Artificiero, #8) — aplica una infusión conocida a un objeto mundano. A
+    // diferencia de attune/equip (booleanos), esto es "cuál" de las infusiones conocidas del
+    // personaje lleva este objeto -- un solo campo nullable en CharacterInventory, ver su
+    // comentario. No cuenta contra el límite de objetos infusionados si el objeto YA estaba
+    // infusionado (cambiar de infusión no es "infusionar uno nuevo").
+    @Transactional
+    public CharacterInventoryDto applyInfusion(Long inventoryId, String infusionName) {
+        CharacterInventory inventory = inventoryRepository.findById(inventoryId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inventory item not found"));
+        PlayerCharacter character = inventory.getCharacter();
+
+        Infusion infusion = infusionService.requireKnownInfusion(character, infusionName);
+
+        Item item = inventory.getItem();
+        boolean alreadyMagical = item.isRequiresAttunement() || item.getBonusAc() != 0
+                || item.getBonusToHit() != 0 || item.getBonusSavingThrows() != 0;
+        if (alreadyMagical) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Infusions can only be applied to nonmagical objects");
+        }
+
+        if (inventory.getInfusionIndexName() == null) {
+            int maxInfused = infusionService.maxInfusedItems(character);
+            long currentlyInfused = inventoryRepository.findByCharacterId(character.getId()).stream()
+                    .filter(ci -> ci.getInfusionIndexName() != null)
+                    .count();
+            if (currentlyInfused >= maxInfused) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Character already has " + maxInfused + " infused items (maximum)");
+            }
+        }
+
+        inventory.setInfusionIndexName(infusion.getIndexName());
+        inventoryRepository.save(inventory);
+        return toDto(inventory);
+    }
+
+    @Transactional
+    public CharacterInventoryDto removeInfusion(Long inventoryId) {
+        CharacterInventory inventory = inventoryRepository.findById(inventoryId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inventory item not found"));
+        inventory.setInfusionIndexName(null);
+        inventoryRepository.save(inventory);
+        return toDto(inventory);
+    }
 
     private CharacterInventoryDto toDto(CharacterInventory inventory) {
         CharacterInventoryDto dto = new CharacterInventoryDto();
@@ -216,7 +283,7 @@ public class CharacterInventoryService {
         dto.setAttuned(inventory.isAttuned());
         dto.setEquipped(inventory.isEquipped());
         dto.setNotes(inventory.getNotes());
-        dto.setRequiresAttunement(inventory.getItem().isRequiresAttunement());
+        dto.setRequiresAttunement(effectiveRequiresAttunement(inventory));
         dto.setDescription(inventory.getItem().getDescription());
         dto.setDamageDice(inventory.getItem().getDamageDice());
         dto.setDamageType(inventory.getItem().getDamageType());
@@ -225,6 +292,17 @@ public class CharacterInventoryService {
         dto.setBonusAc(inventory.getItem().getBonusAc());
         dto.setBonusToHit(inventory.getItem().getBonusToHit());
         dto.setBonusSavingThrows(inventory.getItem().getBonusSavingThrows());
+
+        if (inventory.getInfusionIndexName() != null) {
+            infusionRepository.findByIndexName(inventory.getInfusionIndexName()).ifPresent(infusion -> {
+                dto.setInfusionName(infusion.getName());
+                dto.setInfusionDescription(infusion.getDescription());
+                dto.setInfusionBonusTarget(infusion.getBonusTarget());
+                if (infusion.getBonusTarget() != null) {
+                    dto.setInfusionBonusValue(formulaService.evaluate(inventory.getCharacter(), infusion.getBonusFormula()));
+                }
+            });
+        }
         return dto;
     }
 }

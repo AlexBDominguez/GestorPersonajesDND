@@ -260,6 +260,15 @@ class _TaskResolver extends StatelessWidget {
       case 'MUTAGEN_CHOICE':
         return _MultiPickOptionResolver(task: task, vm: vm, options: kMutagens);
 
+      // Artificer Infusions (Infuse Item) — multi-selección con límite (count en metadata),
+      // una tarea por hito de nivel (2/6/10/14/18). Filtrado por nivel mínimo de cada infusión
+      // (Radiant Weapon/Repulsion Shield/etc. requieren nivel 6+ y no deberían ofrecerse en el
+      // hito de nivel 2). Ver #8.
+      case 'INFUSION_CHOICE':
+        return _MultiPickOptionResolver(
+            task: task, vm: vm,
+            options: kArtificerInfusionsUpToLevel(task.relatedLevel));
+
       default:
         // Fallback: campo de texto libre para tipos no mapeados todavía
         return _FreeTextResolver(task: task, vm: vm);

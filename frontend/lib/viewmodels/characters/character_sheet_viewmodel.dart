@@ -618,6 +618,39 @@ class CharacterSheetViewModel extends ChangeNotifier {
     return result;
   }
 
+  /// Infusiones conocidas (Infuse Item, Artificiero, #8) -- mismo patrón que knownRuneFeatures:
+  /// combina las hasta 5 tareas INFUSION_CHOICE (una por hito de nivel) y construye ClassFeature
+  /// sintéticos solo para mostrarlas en la ficha. A diferencia de las runas, no hay un
+  /// ClassResource por infusión conocida -- "conocer" una infusión no consume nada; lo que se
+  /// gasta son los "objetos infusionados" (ver InventoryItem.infusionName en la tab Inventory).
+  List<ClassFeature> get knownInfusionFeatures {
+    final names = <String>{};
+    for (final level in [2, 6, 10, 14, 18]) {
+      final resolved = resolvedChoiceFor('INFUSION_CHOICE', level);
+      if (resolved == null) continue;
+      for (final n in resolved.split(',')) {
+        final trimmed = n.trim();
+        if (trimmed.isNotEmpty) names.add(trimmed);
+      }
+    }
+    if (names.isEmpty) return [];
+
+    final result = <ClassFeature>[];
+    var syntheticId = -2000;
+    for (final name in names) {
+      final option = kArtificerInfusions.where((o) => o.name == name).firstOrNull;
+      if (option == null) continue;
+      result.add(ClassFeature(
+        id: syntheticId--,
+        indexName: name.toLowerCase().replaceAll(' ', '-'),
+        name: name,
+        level: 2,
+        description: option.description,
+      ));
+    }
+    return result;
+  }
+
   Future<void> _loadSubclassFeaturesIfNeeded() async {
     final id = character?.subclassId;
     if (id == null) return;

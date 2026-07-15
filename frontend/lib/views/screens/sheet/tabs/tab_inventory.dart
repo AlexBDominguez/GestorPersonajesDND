@@ -103,6 +103,99 @@ class _TabInventoryState extends State<TabInventory> {
     }
   }
 
+  // Infuse Item (Artificiero, #8) — solo se ofrece desde el Backpack (ver _DraggableItemTile);
+  // aplicar/quitar una infusión no requiere que el objeto esté equipado o sintonizado.
+  bool get _isArtificer =>
+      (widget.character.dndClassName ?? '').toLowerCase().contains('artificer');
+
+  Future<void> _applyInfusion(InventoryItem item, String infusionName) async {
+    final idx = _items.indexWhere((i) => i.id == item.id);
+    if (idx != -1) {
+      setState(() => _items[idx] = item.copyWith(infusionName: infusionName));
+    }
+    try {
+      final updated =
+          await _service.applyInfusion(widget.character.id, item.id, infusionName);
+      if (mounted) {
+        final i = _items.indexWhere((it) => it.id == item.id);
+        if (i != -1) setState(() => _items[i] = updated);
+      }
+      unawaited(widget.vm.silentRefresh());
+    } catch (e) {
+      if (idx != -1 && mounted) setState(() => _items[idx] = item);
+      if (mounted) _showError(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _removeInfusion(InventoryItem item) async {
+    final idx = _items.indexWhere((i) => i.id == item.id);
+    if (idx != -1) setState(() => _items[idx] = item.copyWith(infusionName: null));
+    try {
+      final updated = await _service.removeInfusion(widget.character.id, item.id);
+      if (mounted) {
+        final i = _items.indexWhere((it) => it.id == item.id);
+        if (i != -1) setState(() => _items[i] = updated);
+      }
+      unawaited(widget.vm.silentRefresh());
+    } catch (e) {
+      if (idx != -1 && mounted) setState(() => _items[idx] = item);
+      if (mounted) _showError(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _showInfusionPicker(InventoryItem item) async {
+    final known = widget.vm.knownInfusionFeatures.map((f) => f.name).toList()..sort();
+    if (known.isEmpty) {
+      _showError('This character has no known infusions yet.');
+      return;
+    }
+    final chosen = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text('Infuse "${item.name}" with…',
+                style: GoogleFonts.libreBaskerville(
+                    color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold)),
+          ),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              children: known
+                  .map((name) => ListTile(
+                        title: Text(name,
+                            style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+                        onTap: () => Navigator.pop(context, name),
+                      ))
+                  .toList(),
+            ),
+          ),
+          if (item.infusionName != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: TextButton.icon(
+                onPressed: () => Navigator.pop(context, ''),
+                icon: const Icon(Icons.close, color: AppTheme.accent, size: 16),
+                label: Text('Remove current infusion',
+                    style: GoogleFonts.lato(color: AppTheme.accent)),
+              ),
+            ),
+        ]),
+      ),
+    );
+    if (chosen == null) return;
+    if (chosen.isEmpty) {
+      await _removeInfusion(item);
+    } else {
+      await _applyInfusion(item, chosen);
+    }
+  }
+
   Future<void> _removeItem(InventoryItem item) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -352,6 +445,7 @@ class _TabInventoryState extends State<TabInventory> {
                   },
                   onDragEnded: () => setState(() => _isDragging = false),
                   onQuantityChanged: (delta) => _changeQuantity(item, delta),
+                  onInfuse: _isArtificer ? () => _showInfusionPicker(item) : null,
                 )),
           const SizedBox(height: 16),
         ]),
@@ -600,6 +694,7 @@ class _DraggableItemTile extends StatelessWidget {
   final VoidCallback onDragStarted;
   final VoidCallback onDragEnded;
   final void Function(int delta)? onQuantityChanged;
+  final VoidCallback? onInfuse;
 
   const _DraggableItemTile({
     required this.item,
@@ -608,6 +703,7 @@ class _DraggableItemTile extends StatelessWidget {
     required this.onDragStarted,
     required this.onDragEnded,
     this.onQuantityChanged,
+    this.onInfuse,
   });
 
   @override
@@ -626,8 +722,15 @@ class _DraggableItemTile extends StatelessWidget {
         color: AppTheme.surface,
         onSelected: (v) {
           if (v == 'remove') onRemove();
+          if (v == 'infuse') onInfuse?.call();
         },
         itemBuilder: (_) => [
+          if (onInfuse != null)
+            PopupMenuItem(
+              value: 'infuse',
+              child: Text(item.infusionName != null ? 'Change infusion' : 'Infuse…',
+                  style: GoogleFonts.lato(color: AppTheme.primary)),
+            ),
           PopupMenuItem(
             value: 'remove',
             child:
@@ -967,6 +1070,18 @@ class _ItemTileContent extends StatelessWidget {
                 Text('Off-Hand',
                     style: GoogleFonts.lato(
                         color: const Color(0xFF48A999),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold)),
+              ],
+              // Infuse Item (Artificiero, #8) — igual que Attuned, un badge simple con el
+              // nombre de la infusión aplicada.
+              if (item.infusionName != null) ...[
+                const Text('  ·  ',
+                    style:
+                        TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                Text('Infused: ${item.infusionName}',
+                    style: GoogleFonts.lato(
+                        color: const Color(0xFFC8A45A),
                         fontSize: 12,
                         fontWeight: FontWeight.bold)),
               ],

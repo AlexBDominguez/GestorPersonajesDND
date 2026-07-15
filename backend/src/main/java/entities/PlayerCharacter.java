@@ -555,11 +555,14 @@ public class PlayerCharacter {
 
     @Transient
     public int getMaxAttunementSlots(){
-        // Magic Item Adept (Artificer, nivel 10): sube el máximo de objetos sintonizados de 3 a 4.
+        // Magic Item Adept (nivel 10, 3->4), Savant (nivel 14, ->5) y Master (nivel 18, ->6):
+        // features de clase base del Artificiero, fijas por nivel (no SubclassFeature), igual
+        // que Magic Item Adept ya se trataba -- ver Aurora_Fixes.md #3.
         if (dndClass != null && dndClass.getName() != null
-                && dndClass.getName().toLowerCase().startsWith("artificer")
-                && getLevel() >= 10) {
-            return 4;
+                && dndClass.getName().toLowerCase().startsWith("artificer")) {
+            if (getLevel() >= 18) return 6;
+            if (getLevel() >= 14) return 5;
+            if (getLevel() >= 10) return 4;
         }
         return 3;
     }

@@ -74,6 +74,7 @@ class PendingTask{
       case 'BATTLE_MASTER_TOOL':       return '🔨';
       case 'LYCAN_TYPE':               return '🐺';
       case 'PROFANE_SOUL_PATRON':      return '👁️';
+      case 'INFUSION_CHOICE':          return '🔧';
       default:                         return '📋';
     }
   }
@@ -113,6 +114,7 @@ class PendingTask{
       case 'BATTLE_MASTER_TOOL':       return 'Battle Master Proficiency';
       case 'LYCAN_TYPE':               return 'Lycanthrope Type';
       case 'PROFANE_SOUL_PATRON':      return 'Otherworldly Patron';
+      case 'INFUSION_CHOICE':          return 'Artificer Infusions';
       default:                         return taskType;
     }
   }

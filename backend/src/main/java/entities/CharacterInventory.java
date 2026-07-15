@@ -32,6 +32,12 @@ public class CharacterInventory {
 
     private boolean attuned;
 
+    // index_name de la Infusion aplicada a este objeto (Infuse Item, Artificiero), o null si no
+    // está infusionado. Un objeto solo puede llevar una infusión a la vez -- este único campo
+    // nullable ya lo garantiza sin necesitar una tabla de enlace aparte. Ver InfusionService.
+    @Column(name = "infusion_index_name")
+    private String infusionIndexName;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
@@ -101,6 +107,14 @@ public class CharacterInventory {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getInfusionIndexName() {
+        return infusionIndexName;
+    }
+
+    public void setInfusionIndexName(String infusionIndexName) {
+        this.infusionIndexName = infusionIndexName;
     }
 
 

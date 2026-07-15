@@ -16,5 +16,6 @@ public enum FeatureType {
     DRACONIC_ANCESTRY, // Elegir una ascendencia dracónica (Dragonborn)
     EXPERTISE, // Elegir habilidades para la competencia experta (Bard)
     BLOOD_CURSE_CHOICE, // Elegir una Blood Curse (Blood Hunter)
-    TRICK_SHOT_CHOICE  // Elegir un Trick Shot (Gunslinger)
+    TRICK_SHOT_CHOICE, // Elegir un Trick Shot (Gunslinger)
+    INFUSION_CHOICE // Elegir infusión(es) conocida(s) (Infuse Item, Artificer)
 }

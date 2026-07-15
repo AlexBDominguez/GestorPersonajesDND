@@ -1424,6 +1424,25 @@ void toggleItem(int itemId) {
         required: false,
       ));
     }
+    // ── Artificer Infusions (Infuse Item) ─────────────────────────────────────
+    // 4 conocidas a nivel 2, +2 en 6/10/14/18. A diferencia de Eldritch Invocations (una sola
+    // PendingTask acumulativa), el backend crea una tarea INFUSION_CHOICE nueva por cada hito
+    // (mismo class_level_feature por nivel que Expertise), así que cada hito es su propio
+    // WizardChoiceConfig con su propio pickCount incremental, no uno acumulativo.
+    if (className.contains('artificer')) {
+      const milestones = {2: 4, 6: 2, 10: 2, 14: 2, 18: 2};
+      for (final entry in milestones.entries) {
+        if (level >= entry.key) {
+          choices.add(WizardChoiceConfig(
+            type: 'INFUSION_CHOICE', level: entry.key,
+            label: 'Artificer Infusions (lv ${entry.key})',
+            options: kArtificerInfusionsUpToLevel(entry.key),
+            pickCount: entry.value,
+            required: false,
+          ));
+        }
+      }
+    }
     return choices;
   }
 

@@ -107,4 +107,25 @@ public class CharacterInventoryController {
         verifyOwnership(characterId);
         return ResponseEntity.ok(inventoryService.toggleEquipped(inventoryId));
     }
+
+    @PostMapping("/{inventoryId}/infuse")
+    public ResponseEntity<CharacterInventoryDto> applyInfusion(
+            @PathVariable Long characterId,
+            @PathVariable Long inventoryId,
+            @RequestBody Map<String, String> body) {
+        verifyOwnership(characterId);
+        String infusionName = body.get("infusionName");
+        if (infusionName == null || infusionName.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "infusionName is required");
+        }
+        return ResponseEntity.ok(inventoryService.applyInfusion(inventoryId, infusionName));
+    }
+
+    @PostMapping("/{inventoryId}/remove-infusion")
+    public ResponseEntity<CharacterInventoryDto> removeInfusion(
+            @PathVariable Long characterId,
+            @PathVariable Long inventoryId) {
+        verifyOwnership(characterId);
+        return ResponseEntity.ok(inventoryService.removeInfusion(inventoryId));
+    }
 }

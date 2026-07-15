@@ -103,6 +103,31 @@ class TabFeatures extends StatelessWidget {
           ...vm.knownRuneFeatures.map((f) => _FeatureTile(feature: f, vm: vm)),
         ],
 
+        // Artificer Infusions: igual que las runas, no son SubclassFeature reales, y aquí
+        // ni siquiera tienen ClassResource propio (conocer una infusión no consume nada; lo
+        // que se gasta son los objetos infusionados, ver tab_inventory.dart). _FeatureTile se
+        // reutiliza tal cual: sin resource que coincida, se renderiza como tarjeta puramente
+        // descriptiva, igual que cualquier feature sin contador.
+        if (vm.knownInfusionFeatures.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 2, bottom: 6, top: 4),
+            child: Row(children: [
+              const Icon(Icons.arrow_right,
+                color: AppTheme.textSecondary, size: 16),
+              Text(
+                'Infusions Known',
+                style: GoogleFonts.lato(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  fontStyle: FontStyle.italic),
+              ),
+            ]),
+          ),
+          ...vm.knownInfusionFeatures.map((f) => _FeatureTile(feature: f, vm: vm)),
+        ],
+
         // Confirmación simple de qué Fighting Style se eligió — siempre visible aquí,
         // sin repetir el número ya aplicado en tab_combat (ver hallazgo #15 del backlog).
         if (character.fightingStyle != null) ...[

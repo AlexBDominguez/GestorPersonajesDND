@@ -22,6 +22,10 @@ public class CharacterInventoryDto {
     private int bonusAc;
     private int bonusToHit;
     private int bonusSavingThrows;
+    private String infusionName;
+    private String infusionDescription;
+    private String infusionBonusTarget;
+    private int infusionBonusValue;
 
     // Getters y Setters
 
@@ -192,5 +196,37 @@ public class CharacterInventoryDto {
 
     public void setBonusSavingThrows(int bonusSavingThrows) {
         this.bonusSavingThrows = bonusSavingThrows;
+    }
+
+    public String getInfusionName() {
+        return infusionName;
+    }
+
+    public void setInfusionName(String infusionName) {
+        this.infusionName = infusionName;
+    }
+
+    public String getInfusionDescription() {
+        return infusionDescription;
+    }
+
+    public void setInfusionDescription(String infusionDescription) {
+        this.infusionDescription = infusionDescription;
+    }
+
+    public String getInfusionBonusTarget() {
+        return infusionBonusTarget;
+    }
+
+    public void setInfusionBonusTarget(String infusionBonusTarget) {
+        this.infusionBonusTarget = infusionBonusTarget;
+    }
+
+    public int getInfusionBonusValue() {
+        return infusionBonusValue;
+    }
+
+    public void setInfusionBonusValue(int infusionBonusValue) {
+        this.infusionBonusValue = infusionBonusValue;
     }
 }
