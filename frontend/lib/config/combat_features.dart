@@ -38,8 +38,10 @@ const kCombatActionFeatures = <String>{
 const kCombatBonusFeatures = <String>{
   // Barbarian
   'rage', 
-  // Rogue
-  'cunning-action', 'master-of-tactics', 'fast-hands',
+  // Rogue — indexName real es 'thief-fast-hands' (seed_sc_features_p1.sql), no
+  // 'fast-hands' a secas; con la clave vieja nunca coincidía (mismo bug que
+  // Cutting Words/Turn Undead más abajo).
+  'cunning-action', 'master-of-tactics', 'thief-fast-hands',
   // Bard
   'bardic-inspiration',
   // Monk
