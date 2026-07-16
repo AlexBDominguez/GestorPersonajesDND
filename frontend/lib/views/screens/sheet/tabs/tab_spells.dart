@@ -1032,6 +1032,11 @@ class _LearnNewTab extends StatefulWidget {
 }
 
 class _LearnNewTabState extends State<_LearnNewTab> {
+  // "All classes" solo hace falta para elecciones puntuales tipo Additional Magical
+  // Secrets (College of Lore, nivel 6: 2 hechizos de cualquier lista) — el resto del
+  // tiempo el filtro por clase propia es lo correcto, así que empieza desactivado.
+  bool _anyClass = false;
+
   // Carga al entrar en la tab por primera vez
   @override
   void initState() {
@@ -1045,7 +1050,32 @@ class _LearnNewTabState extends State<_LearnNewTab> {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: widget.vm,
-      builder: (context, _) => _buildContent(context),
+      builder: (context, _) => Column(children: [
+        _buildAnyClassToggle(),
+        Expanded(child: _buildContent(context)),
+      ]),
+    );
+  }
+
+  Widget _buildAnyClassToggle() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: Row(children: [
+        Switch(
+          value: _anyClass,
+          activeColor: AppTheme.primary,
+          onChanged: (value) {
+            setState(() => _anyClass = value);
+            widget.vm.loadAvailableSpells(anyClass: value);
+          },
+        ),
+        Expanded(
+          child: Text(
+            'Show spells from all classes (e.g. Additional Magical Secrets)',
+            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 12),
+          ),
+        ),
+      ]),
     );
   }
 
@@ -1092,7 +1122,7 @@ class _LearnNewTabState extends State<_LearnNewTab> {
                 textAlign: TextAlign.center),
             const SizedBox(height: 16),
             OutlinedButton.icon(
-              onPressed: vm.loadAvailableSpells,
+              onPressed: () => vm.loadAvailableSpells(anyClass: _anyClass),
               icon: const Icon(Icons.refresh, size: 16),
               label: const Text('Retry'),
               style: OutlinedButton.styleFrom(

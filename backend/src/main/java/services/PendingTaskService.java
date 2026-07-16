@@ -305,6 +305,12 @@ public class PendingTaskService {
                 case "TOTEM_ATTUNEMENT":
                         break;
 
+                // College of Lore — Additional Magical Secrets: the 2 chosen spells are added
+                // for real via the normal learn-spell endpoint (Spells tab, "any class" filter),
+                // this task is just the reminder/note, same as Mutagen/Totem above.
+                case "ADDITIONAL_MAGICAL_SECRETS":
+                        break;
+
                 // Hunter Ranger — choices stored in metadata
                 case "HUNTERS_PREY":
                 case "DEFENSIVE_TACTICS":

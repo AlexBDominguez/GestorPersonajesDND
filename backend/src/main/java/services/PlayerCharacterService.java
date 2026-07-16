@@ -1702,6 +1702,12 @@ public class PlayerCharacterService {
                             "Choose your Land type (Arctic, Coast, Desert, Forest, Grassland, Mountain, Swamp, or Underdark)", null);
                 break;
 
+            case "lore":
+                if (level == 6)
+                    createSubclassTask(character, level, "ADDITIONAL_MAGICAL_SECRETS",
+                            "Learn 2 spells of your choice from any class (they count as bard spells)", null);
+                break;
+
             case "gunslinger":
                 if (level == 3)
                     createSubclassTask(character, level, "TRICK_SHOT_CHOICE",

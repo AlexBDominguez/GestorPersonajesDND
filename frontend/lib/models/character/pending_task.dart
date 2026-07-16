@@ -75,6 +75,7 @@ class PendingTask{
       case 'LYCAN_TYPE':               return '🐺';
       case 'PROFANE_SOUL_PATRON':      return '👁️';
       case 'INFUSION_CHOICE':          return '🔧';
+      case 'ADDITIONAL_MAGICAL_SECRETS': return '📖';
       default:                         return '📋';
     }
   }
@@ -115,6 +116,7 @@ class PendingTask{
       case 'LYCAN_TYPE':               return 'Lycanthrope Type';
       case 'PROFANE_SOUL_PATRON':      return 'Otherworldly Patron';
       case 'INFUSION_CHOICE':          return 'Artificer Infusions';
+      case 'ADDITIONAL_MAGICAL_SECRETS': return 'Additional Magical Secrets';
       default:                         return taskType;
     }
   }

@@ -463,13 +463,15 @@ class CharacterSheetViewModel extends ChangeNotifier {
   Set<int> get knownSpellIds =>
       character?.characterSpells.map((s) => s.spellId).toSet() ?? {};
 
-  Future<void> loadAvailableSpells() async {
+  // anyClass: true omite el filtro por clase (necesario para College of Lore's
+  // Additional Magical Secrets, que elige 2 hechizos de CUALQUIER lista de clase).
+  Future<void> loadAvailableSpells({bool anyClass = false}) async {
     _isLoadingSpells = true;
     _spellsError = null;
     notifyListeners();
     try {
       _availableSpells = await _spellService.getAvailableSpells(
-        classId: character?.dndClassId,
+        classId: anyClass ? null : character?.dndClassId,
         maxLevel: _maxLearnableSpellLevel,
       );
     } catch (e) {
