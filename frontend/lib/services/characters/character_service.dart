@@ -238,6 +238,34 @@ class CharacterService {
       throw Exception('Failed to restore spell slot (${res.statusCode})');
     }
 
+    // Hechicero: Flexible Casting — crear un slot de nivel N gastando puntos de hechicería.
+    Future<void> createSpellSlotFromSorceryPoints({
+      required int characterId,
+      required int level,
+    }) async {
+      final res = await _api.post(
+        '${ApiConfig.charactersPath}/$characterId/spell-slots/$level/create-from-sorcery-points',
+      );
+      if (res.statusCode == 204) return;
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      throw Exception('Failed to create spell slot (${res.statusCode})');
+    }
+
+    // Hechicero: Flexible Casting — convertir un slot de nivel N sin usar en puntos de hechicería.
+    Future<void> convertSpellSlotToSorceryPoints({
+      required int characterId,
+      required int level,
+    }) async {
+      final res = await _api.post(
+        '${ApiConfig.charactersPath}/$characterId/spell-slots/$level/convert-to-sorcery-points',
+      );
+      if (res.statusCode == 204) return;
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      throw Exception('Failed to convert spell slot (${res.statusCode})');
+    }
+
     // POST death save (success or failure)
     Future<PlayerCharacter> recordDeathSave(int id, {required bool success}) async {
       final res = await _api.post(

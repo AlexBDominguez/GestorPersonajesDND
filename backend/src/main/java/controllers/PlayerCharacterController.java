@@ -141,6 +141,26 @@ public class PlayerCharacterController {
             return ResponseEntity.noContent().build();
         }
 
+    // Hechicero: Flexible Casting — crear un slot de nivel N gastando puntos de hechicería,
+    // o convertir un slot de nivel N sin usar en puntos de hechicería.
+    @PostMapping("/{characterId}/spell-slots/{level}/create-from-sorcery-points")
+    public ResponseEntity<Void> createSpellSlotFromSorceryPoints(
+        @PathVariable Long characterId,
+        @PathVariable int level) {
+            verifyCharacterOwnership(characterId);
+            playerCharacterService.createSpellSlotFromSorceryPoints(characterId, level);
+            return ResponseEntity.noContent().build();
+        }
+
+    @PostMapping("/{characterId}/spell-slots/{level}/convert-to-sorcery-points")
+    public ResponseEntity<Void> convertSpellSlotToSorceryPoints(
+        @PathVariable Long characterId,
+        @PathVariable int level) {
+            verifyCharacterOwnership(characterId);
+            playerCharacterService.convertSpellSlotToSorceryPoints(characterId, level);
+            return ResponseEntity.noContent().build();
+        }
+
     @PostMapping("/{id}/level-up")
     public ResponseEntity<String> levelUp(
             @PathVariable Long id,

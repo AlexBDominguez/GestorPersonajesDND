@@ -734,9 +734,13 @@ public class PlayerCharacterService {
         // Spell slots
         List<CharacterSpellSlot> slots = slotRepository.findByCharacterId(playerCharacter.getId());
         List<SpellSlotDto> slotDtos = slots.stream()
-                .filter(s -> s.getMaxSlots() > 0)
+                .filter(s -> s.getMaxSlots() + s.getBonusMax() > 0)
                 .sorted((a, b) -> Integer.compare(a.getSpellLevel(), b.getSpellLevel()))
-                .map(s -> new SpellSlotDto(s.getSpellLevel(), s.getMaxSlots(), s.getUsedSlots()))
+                // bonusMax (Hechicero: Flexible Casting, slots creados con puntos de hechicería
+                // que no cuentan como progresión normal de clase) se pliega en maxSlots aquí para
+                // que el resto de la app (frontend, useSpellSlot/restoreSpellSlot) no necesite
+                // saber que existe -- ver createSpellSlotFromSorceryPoints más abajo.
+                .map(s -> new SpellSlotDto(s.getSpellLevel(), s.getMaxSlots() + s.getBonusMax(), s.getUsedSlots()))
                 .collect(Collectors.toList());
         dto.setSpellSlots(slotDtos);
 
@@ -858,7 +862,7 @@ public class PlayerCharacterService {
                     HttpStatus.NOT_FOUND, "No spell slots for level " + level
                 ));
 
-                if (slot.getUsedSlots() >= slot.getMaxSlots()) {
+                if (slot.getUsedSlots() >= slot.getMaxSlots() + slot.getBonusMax()) {
                     throw new ResponseStatusException(
                         HttpStatus.CONFLICT, "No spell slots available for level " + level);
                 }
@@ -880,6 +884,59 @@ public class PlayerCharacterService {
         slotRepository.save(slot);
     }
 
+    // Hechicero: Flexible Casting (Font of Magic). Coste en puntos de hechicería por nivel de
+    // slot creado, tabla real de 5e (PHB pág. 101). "Character does not have this resource",
+    // lanzado por CharacterClassResourceService.spendResource si el personaje no tiene
+    // font-of-magic, ya sirve como guarda natural -- no hace falta comprobar aparte que sea
+    // Hechicero (#8.2 NUMERIC_BONUS/RESOURCE_POOL usan el mismo criterio: la condición es "tiene
+    // el recurso", no "es de tal clase").
+    private static final Map<Integer, Integer> FLEXIBLE_CASTING_SLOT_COST =
+            Map.of(1, 2, 2, 3, 3, 5, 4, 6, 5, 7);
+
+    @Transactional
+    public void createSpellSlotFromSorceryPoints(Long characterId, int spellLevel) {
+        Integer cost = FLEXIBLE_CASTING_SLOT_COST.get(spellLevel);
+        if (cost == null) {
+            throw new RuntimeException("Flexible Casting can only create a spell slot of level 1-5");
+        }
+
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
+
+        characterClassResourceService.spendResource(characterId, "font-of-magic", cost);
+
+        CharacterSpellSlot slot = slotRepository.findByCharacterAndSpellLevel(character, spellLevel)
+                .orElseGet(() -> {
+                    CharacterSpellSlot s = new CharacterSpellSlot();
+                    s.setCharacter(character);
+                    s.setSpellLevel(spellLevel);
+                    s.setMaxSlots(0);
+                    s.setUsedSlots(0);
+                    return s;
+                });
+        slot.setBonusMax(slot.getBonusMax() + 1);
+        slotRepository.save(slot);
+    }
+
+    @Transactional
+    public void convertSpellSlotToSorceryPoints(Long characterId, int spellLevel) {
+        if (spellLevel < 1 || spellLevel > 5) {
+            throw new RuntimeException("Flexible Casting can only convert a spell slot of level 1-5");
+        }
+
+        CharacterSpellSlot slot = slotRepository.findByCharacterIdAndSpellLevel(characterId, spellLevel)
+                .orElseThrow(() -> new RuntimeException("Character has no spell slots of level " + spellLevel));
+
+        if (slot.getUsedSlots() >= slot.getMaxSlots() + slot.getBonusMax()) {
+            throw new RuntimeException("No unused level " + spellLevel + " spell slot to convert");
+        }
+
+        slot.setUsedSlots(slot.getUsedSlots() + 1);
+        slotRepository.save(slot);
+
+        characterClassResourceService.recoverResourceDto(characterId, "font-of-magic", spellLevel);
+    }
+
     @Transactional
     public void castSpell(Long characterId, Long spellId) {
         CharacterSpell characterSpell = characterSpellRepository
@@ -897,7 +954,7 @@ public class PlayerCharacterService {
                 .findByCharacterIdAndSpellLevel(characterId, spellLevel)
                 .orElseThrow(() -> new RuntimeException("No spell slots available for this spell level"));
 
-        if (slot.getUsedSlots() >= slot.getMaxSlots()) {
+        if (slot.getUsedSlots() >= slot.getMaxSlots() + slot.getBonusMax()) {
             throw new RuntimeException("No spell slots available");
         }
 
@@ -1238,10 +1295,13 @@ public class PlayerCharacterService {
     character.setDeathSaveSuccesses(0);
     character.setDeathSaveFailures(0);
     
-    // 5. Restaurar TODOS los spell slots
+    // 5. Restaurar TODOS los spell slots. bonusMax (Flexible Casting) también se resetea a 0
+    // aquí: cualquier slot creado con puntos de hechicería desaparece al final del descanso
+    // largo, a diferencia de usedSlots que también se restaura en descanso corto para Warlock.
     List<CharacterSpellSlot> spellSlots = slotRepository.findByCharacter(character);
     for (CharacterSpellSlot slot : spellSlots) {
         slot.setUsedSlots(0);
+        slot.setBonusMax(0);
         slotRepository.save(slot);
     }
     

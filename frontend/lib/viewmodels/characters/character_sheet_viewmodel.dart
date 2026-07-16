@@ -404,6 +404,33 @@ class CharacterSheetViewModel extends ChangeNotifier {
     return true;
   }
 
+  // Hechicero: Flexible Casting. A diferencia de castSpell/restoreSpellSlot, aquí maxSlots
+  // también cambia (bonusMax se pliega en maxSlots en el DTO del backend), así que hace falta
+  // refrescar el personaje entero en vez de solo tocar el contador local de usedSlots.
+  Future<bool> createSpellSlotFromSorceryPoints(int level) async {
+    try {
+      await _service.createSpellSlotFromSorceryPoints(characterId: characterId, level: level);
+      await silentRefresh();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception', '');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> convertSpellSlotToSorceryPoints(int level) async {
+    try {
+      await _service.convertSpellSlotToSorceryPoints(characterId: characterId, level: level);
+      await silentRefresh();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception', '');
+      notifyListeners();
+      return false;
+    }
+  }
+
   void restoreAllSlots() {
     for (final slot in character?.spellSlots ?? []) {
       _usedSlots[slot.spellLevel] = 0;
@@ -734,6 +761,12 @@ class CharacterSheetViewModel extends ChangeNotifier {
       // silencioso, igual que el resto de cargas secundarias (_loadClassFeaturesIfNeeded, etc.)
     }
   }
+
+  // Hechicero: Flexible Casting necesita leer los puntos de hechicería directamente (no hay
+  // ninguna ClassFeature de por medio a la que engancharse, a diferencia de _realResourceFor).
+  CharacterClassResource? get sorceryPoints => _characterResources
+      .where((r) => r.resourceIndexName.toLowerCase() == 'font-of-magic')
+      .firstOrNull;
 
   CharacterClassResource? _realResourceFor(ClassFeature f) {
     final key = (f.consumesResourceIndexName ?? f.indexName).toLowerCase();

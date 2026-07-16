@@ -227,6 +227,10 @@ class _SpellLevelSection extends StatelessWidget {
           const SizedBox(width: 8),
           _SlotTracker(used: usedSl, max: maxSl, level: level, vm: vm),
         ],
+        if (!isCantrip && level >= 1 && level <= 5 && vm.sorceryPoints != null) ...[
+          const SizedBox(width: 8),
+          _FlexibleCastingButton(level: level, vm: vm),
+        ],
         const SizedBox(width: 8),
         const Expanded(child: Divider(color: AppTheme.surfaceVariant)),
       ]),
@@ -316,6 +320,45 @@ class _SlotTracker extends StatelessWidget {
   );
 }
 
+
+// Hechicero: Flexible Casting — mismo coste de la tabla real de 5e (PHB pág. 101), duplicado
+// a propósito respecto a PlayerCharacterService.FLEXIBLE_CASTING_SLOT_COST (backend valida de
+// verdad; esto solo es para mostrar/habilitar el botón sin ida y vuelta al servidor).
+const Map<int, int> _kFlexibleCastingSlotCost = {1: 2, 2: 3, 3: 5, 4: 6, 5: 7};
+
+class _FlexibleCastingButton extends StatelessWidget {
+  final int level;
+  final CharacterSheetViewModel vm;
+  const _FlexibleCastingButton({required this.level, required this.vm});
+
+  @override
+  Widget build(BuildContext context) {
+    final points = vm.sorceryPoints!;
+    final cost = _kFlexibleCastingSlotCost[level] ?? 0;
+    final canCreate = points.currentAmount >= cost;
+    final canConvert = vm.availableSlots(level) > 0;
+
+    return PopupMenuButton<VoidCallback>(
+      tooltip: 'Flexible Casting',
+      icon: const Icon(Icons.auto_fix_high, color: AppTheme.primary, size: 16),
+      onSelected: (action) => action(),
+      itemBuilder: (context) => [
+        PopupMenuItem<VoidCallback>(
+          enabled: canCreate,
+          value: () => vm.createSpellSlotFromSorceryPoints(level),
+          child: Text('Create slot ($cost sorcery points)',
+              style: GoogleFonts.lato(fontSize: 12)),
+        ),
+        PopupMenuItem<VoidCallback>(
+          enabled: canConvert,
+          value: () => vm.convertSpellSlotToSorceryPoints(level),
+          child: Text('Convert slot to $level sorcery point${level == 1 ? '' : 's'}',
+              style: GoogleFonts.lato(fontSize: 12)),
+        ),
+      ],
+    );
+  }
+}
 
 // - Spell Row
 class _SpellRow extends StatelessWidget {

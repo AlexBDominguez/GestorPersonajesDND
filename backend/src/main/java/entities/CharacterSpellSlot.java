@@ -24,6 +24,13 @@ public class CharacterSpellSlot {
     private int maxSlots;
     private int usedSlots;
 
+    // Hechicero: Flexible Casting — slots creados gastando puntos de hechicería, aparte de la
+    // progresión normal de clase. Se pliegan en maxSlots al mapear a DTO (ver
+    // PlayerCharacterService.toDto) para que el resto de la app no necesite distinguirlos; solo
+    // existen como campo propio porque desaparecen al final de un descanso largo (se resetean a
+    // 0 junto a usedSlots), a diferencia de maxSlots que sale de SpellSlotProgression.
+    private int bonusMax;
+
 
     // Getters and Setters
     public Long getId() {
@@ -55,6 +62,12 @@ public class CharacterSpellSlot {
     }
     public void setUsedSlots(int usedSlots) {
         this.usedSlots = usedSlots;
+    }
+    public int getBonusMax() {
+        return bonusMax;
+    }
+    public void setBonusMax(int bonusMax) {
+        this.bonusMax = bonusMax;
     }
 
     
