@@ -13,9 +13,16 @@ import java.util.stream.Collectors;
  *
  * PHB items are skipped (already in DB from dnd5eapi.co).
  *
- * Mechanical bonus fields (bonusAc, bonusToHit, set*To) are left at their
- * defaults (0 / null) — they require per-item analysis and are populated
- * incrementally as bugs are found.
+ * Mechanical bonus fields bonusAc/bonusToHit/set*To are populated from the
+ * structured data Aurora already provides for the two clean, unambiguous
+ * cases (see #21 in Aurora_Fixes.md): a flat weapon/armor enhancement bonus
+ * (setters "enhancement") and an ability score override
+ * (`<stat name="<ability>:score:set">`, e.g. Belts of Giant Strength).
+ * bonusSavingThrows is left untouched — no structured Aurora rule for it was
+ * found. Cases that need a formula (e.g. AC += Charisma modifier, seen on
+ * the Dragon Masks) or a flat ability-score bonus with no matching Item
+ * field (e.g. Belt of Dwarvenkind's +2 Constitution) are deliberately left
+ * untouched too — out of scope for this pass, see Aurora_Fixes.md #21.
  */
 @Service
 public class AuroraItemMapper {
@@ -64,6 +71,7 @@ public class AuroraItemMapper {
                         case "Armor"     -> applyArmorData(el, item);
                         case "Magic Item"-> applyMagicItemData(el, item);
                     }
+                    applyMechanicalBonuses(el, item);
 
                     itemRepo.save(item);
                     if (isNew) created++; else updated++;
@@ -119,6 +127,54 @@ public class AuroraItemMapper {
         String att = s.getOrDefault("attunement", "false");
         item.setRequiresAttunement("true".equalsIgnoreCase(att.trim()));
         item.setAttunementRequierement(s.getOrDefault("attunement-specific", ""));
+    }
+
+    private static final Map<String, String> ABILITY_SET_SUFFIX = Map.of(
+        "strength", "str", "dexterity", "dex", "constitution", "con",
+        "intelligence", "int", "wisdom", "wis", "charisma", "cha"
+    );
+
+    /**
+     * Structured mechanical bonuses Aurora already encodes outside free text:
+     * - setters "enhancement" (flat +N weapon/armor bonus) → bonusToHit (weapon)
+     *   or bonusAc (armor/shield), based on the setters "type" sub-category.
+     * - `<stat name="<ability>:score:set" value="N"/>` (e.g. Belts of Giant
+     *   Strength) → the matching setXTo field.
+     */
+    private void applyMechanicalBonuses(AuroraElement el, Item item) {
+        Map<String, String> s = el.getSetters();
+        Integer enhancement = parseIntOrNull(s.get("enhancement"));
+        if (enhancement != null) {
+            String subType = s.getOrDefault("type", "");
+            if ("Weapon".equals(subType)) {
+                item.setBonusToHit(enhancement);
+            } else if ("Armor".equals(subType)) {
+                item.setBonusAc(enhancement);
+            }
+        }
+
+        for (AuroraRule rule : el.getRules()) {
+            if (rule.getRuleType() != AuroraRule.RuleType.STAT || rule.getName() == null) continue;
+            String name = rule.getName().toLowerCase();
+            if (!name.endsWith(":score:set")) continue;
+            String ability = name.substring(0, name.length() - ":score:set".length());
+            String suffix = ABILITY_SET_SUFFIX.get(ability);
+            Integer value = parseIntOrNull(rule.getValue());
+            if (suffix == null || value == null) continue;
+            switch (suffix) {
+                case "str" -> item.setSetStrTo(value);
+                case "dex" -> item.setSetDexTo(value);
+                case "con" -> item.setSetConTo(value);
+                case "int" -> item.setSetIntTo(value);
+                case "wis" -> item.setSetWisTo(value);
+                case "cha" -> item.setSetChaTo(value);
+            }
+        }
+    }
+
+    private Integer parseIntOrNull(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { return Integer.parseInt(s.trim()); } catch (NumberFormatException e) { return null; }
     }
 
     // ── Utilities ──────────────────────────────────────────────────────────────
