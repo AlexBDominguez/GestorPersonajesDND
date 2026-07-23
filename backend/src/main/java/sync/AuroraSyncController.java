@@ -161,13 +161,17 @@ public class AuroraSyncController {
     /**
      * Returns all currently indexed elements of a given Aurora type.
      * Useful for inspecting the parsed data before committing to mappers.
+     * Optional "name" filters to elements whose name contains it (case-insensitive).
      *
      * GET /api/sync/aurora/elements?type=Race
+     * GET /api/sync/aurora/elements?type=Magic Item&name=blade
      */
     @GetMapping("/elements")
-    public ResponseEntity<List<Map<String, Object>>> elements(@RequestParam String type) {
+    public ResponseEntity<List<Map<String, Object>>> elements(@RequestParam String type,
+                                                               @RequestParam(required = false) String name) {
         AuroraRegistry registry = auroraSync.getRegistry();
         List<Map<String, Object>> result = registry.getByType(type).stream()
+            .filter(el -> name == null || (el.getName() != null && el.getName().toLowerCase().contains(name.toLowerCase())))
             .map(el -> {
                 Map<String, Object> m = new java.util.LinkedHashMap<>();
                 m.put("id", el.getId());
@@ -176,8 +180,8 @@ public class AuroraSyncController {
                 m.put("source", el.getSource());
                 m.put("supports", el.getSupports());
                 m.put("requirements", el.getRequirements());
-                m.put("ruleCount", el.getRules().size());
                 m.put("setters", el.getSetters());
+                m.put("rules", el.getRules());
                 return m;
             })
             .collect(Collectors.toList());
