@@ -37,6 +37,13 @@ class _DashboardBody extends StatelessWidget {
         title: const Text('DungeonScroll'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.person_outline, color: AppTheme.textSecondary),
+            tooltip: 'Change Username',
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const ChangeUsernameScreen()),
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.lock_reset, color: AppTheme.textSecondary),
             tooltip: 'Change Password',
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(

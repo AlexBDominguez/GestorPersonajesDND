@@ -4,7 +4,7 @@ Lista de bugs y mejoras pendientes, organizados por área. Cada entrada incluye 
 
 ---
 
-## 📋 Estado para retomar (última actualización 2026-07-23)
+## 📋 Estado para retomar (última actualización 2026-07-24)
 
 **Resuelto y confirmado por el usuario en producción:** #1, #2, #4, #5, #6, #7, #10, #14, #16, #19, y dentro de #18: Fighting Style, reactivación de `PendingTasksScreen`, Artificiero no activaba Spells, background se perdía al editar, error 500 al guardar cambios, step de Spells sin tick al editar, hechizos de expansión sin clase vinculada (+ components vacíos de Aurora), Battle Master maneuvers ya elegidas sin deshabilitar en el selector, bonificadores de subraza de Tiefling duplicados, `subraceId` nunca enviado en creación (bug mucho más grave encontrado de paso — ninguna subraza se aplicaba nunca al crear personaje), "Save Changes" en cada paso del wizard en modo edición. Todos con commits ya hechos en `dev` (confirmado con `git log`/`git status`: sincronizados con `origin/dev`, no solo locales).
 
@@ -25,12 +25,13 @@ Detalle completo de cada uno en el punto #8.1 más abajo. Backend reconstruido y
 
 **#21 — ✅ HECHO Y DESPLEGADO (2026-07-24), casos estructurados + Fases 1 y 2 del follow-up.** Casos estructurados (enhancement de arma/armadura, override de característica) cubiertos y verificados en el VPS con datos reales. Formula-based (Dragon Masks) y bono plano de característica (Belt of Dwarvenkind) quedan fuera de alcance a propósito. Al probarlo en producción el usuario encontró dos bugs reales más grandes de lo esperado: **ninguna de las 181 armas mágicas de Aurora aparecía nunca en Combat** (mal clasificadas como `"Magic Item"` en vez de `"Weapon"`, nunca reciben `damageDice`) y **`Item.bonusToHit` nunca se sumaba al daño**, solo al ataque. Fase 1 (✅ HECHO): copiar datos de arma base para las que tienen nombre de arma literal (la mayoría) + nuevo `Item.bonusDamage`. Fase 2 (✅ HECHO): para las plantillas de categoría genérica ("cualquier espada"), nueva acción "Set base weapon…" en Inventario (Backpack/Equipped/Attuned) para que el jugador elija a qué arma real corresponde su instancia concreta. **Confirmado por el usuario en producción con Acheron Blade real.** Todo #21 (código + despliegue + verificación) cerrado.
 
+**#15 — ✅ HECHO (2026-07-24).** Cambiar username. Ya existía un endpoint a medio hacer de una sesión anterior (sin validación de formato, sin UI) que además tenía un bug real: renombrar invalidaba la sesión activa (JWT + refresh tokens llevan el username viejo) y desconectaba al usuario sin aviso. Arreglado: validación de formato compartida con la creación de usuario (antes solo existía en el diálogo Flutter del admin, nunca en el backend), reemisión de tokens al renombrar, y nueva `ChangeUsernameScreen` en el frontend. Ver detalle completo en el punto #15 más abajo. **Pendiente de que el usuario reconstruya/redespliegue y pruebe** que cambiar el propio username funciona sin desconectar la sesión.
+
 **Sin empezar / pendiente, por tamaño/prioridad:**
 - **#9** — panel de admin. Con requisito explícito anotado: los formularios deben adaptarse al "tipo de mecánica" elegido (la precondición — el esquema común de #8.2 — ya está lista). Sigue sin empezar.
 - **#11** — Combat tab vs Spells al añadir hechizos: no reproducible la última vez, dejar abierto por si reaparece con un repro más preciso.
 - **#12** — limpieza de `withOpacity` (deprecado, no urgente, no rompe nada hoy).
 - **#13** — dominio/despliegue, no es código, para cuando se acerque release.
-- **#15** — permitir cambiar username (nueva funcionalidad, no compleja).
 - **#17** — multiclase (grande, dejar para el final a propósito).
 
 **Importante para quien retome:** el backend/BD viven solo en el VPS del usuario (ver sección "Local environment" de `CLAUDE.md`) — nunca intentar levantarlos en local. Para consultas SQL puntuales, pide al usuario que ejecute el comando y pegue el resultado (usar siempre `-p$MYSQL_ROOT_PASSWORD`, ya exportado en su shell). Tras cambios de backend en Java, hace falta `docker compose up -d --build backend` (no solo `restart`/`up -d`, que reutiliza la imagen vieja). El registro de Aurora es en memoria — tras reiniciar el backend hay que volver a llamar a `/api/sync/aurora/fetch` antes de cualquier `/persist/*`.
@@ -572,21 +573,23 @@ Confirmado por el usuario probándolo manualmente en su sesión habitual (2026-0
 
 ## 👤 Gestión de cuenta
 
-### 15. Permitir cambiar el nombre de usuario
+### 15. Permitir cambiar el nombre de usuario ✅ HECHO (2026-07-24)
 **Prioridad: Media** — Nueva funcionalidad
 
-Actualmente los usuarios pueden cambiar su contraseña pero no su nombre de usuario.
+**Descubrimiento al empezar:** ya existía un endpoint `PATCH /api/users/me/username` (`UserController`/`UserService.changeOwnUsername`) parcialmente hecho de una sesión anterior no documentada — comprobaba unicidad pero **sin ninguna validación de formato** (ni siquiera las restricciones que sí tiene el diálogo "Create User" del panel de admin: 3-20 caracteres, `^[a-zA-Z0-9_]+$`), y **sin ninguna UI que lo llamara** en todo el frontend.
 
-**Comportamiento esperado:**
-- Añadir opción para modificar el username desde la configuración del perfil.
-- Validar que el nuevo nombre no esté ya en uso.
-- Mantener las mismas restricciones de formato que en el registro.
-- Propagar el cambio en toda la app (estado de sesión, referencias en UI).
+**Bug real encontrado al revisarlo (el motivo de que quedara sin terminar, probablemente):** el JWT lleva el username como *subject*, y `RefreshToken.username` lo guarda como string plano (no por id de usuario) — así que un simple rename dejaba la sesión activa (access token + refresh tokens ya emitidos) apuntando a un username que ya no existe en la tabla `users`. La siguiente petición autenticada habría fallado con "user not found", desconectando al usuario sin aviso justo después de cambiarse el nombre.
 
-**Consideraciones adicionales a decidir antes de implementar:**
-- ¿El username debe seguir siendo único globalmente?
-- ¿Debe limitarse la frecuencia de cambio (p. ej. una vez cada X días)?
-- ¿El username aparece en URLs públicas o identificadores visibles que se romperían al cambiarlo?
+**Arreglado:**
+- `UserService`: nueva validación de formato compartida (`USERNAME_PATTERN`, 3-20 caracteres alfanuméricos+guion bajo) usada tanto en `createUser` (alta de usuario por el admin — antes sin ninguna validación server-side, solo en el diálogo Flutter) como en `changeOwnUsername`.
+- `changeOwnUsername` ahora revoca los refresh tokens viejos del username anterior (`RefreshTokenService.revokeAllForUser`, nuevo) y reemite un access token + refresh token nuevos, devolviendo un `AuthResponse` completo (igual forma que login/refresh) en vez de un `UserDto` — así el cliente sustituye la sesión de inmediato sin desconexión.
+- `UserController.changeUsername` pasa el header `User-Agent` (como ya hace `AuthController`) y devuelve 409 si el nombre ya está en uso.
+- Frontend: nueva `ChangeUsernameScreen` (mismo patrón que `ChangePasswordScreen`, mismas restricciones de formato que el diálogo de admin), accesible desde un icono nuevo en el AppBar del Dashboard junto al de "Change Password". `AuthViewModel.applyUsernameChange()` (reemplaza el `updateUsername()` anterior, que no persistía nada y no tenía ningún caller) persiste los tokens nuevos en `TokenStorage` exactamente igual que `login()`, no solo actualiza el estado en memoria.
+- Únicidad global del username: sí, sigue siendo único (comportamiento ya existente, sin cambios). Sin límite de frecuencia de cambio (no se pidió, ni hay señales de abuso esperable en una app de un solo grupo de juego). El username no aparece en URLs ni identificadores públicos (`PlayerCharacter` referencia a `User` por `@ManyToOne`, no por username) — cambiarlo no rompe nada más.
+
+**Verificado:** `mvn -o compile`/`mvn -o test` (exit 0), `flutter analyze` (0 errores, mismo baseline de infos preexistentes), `flutter test` (59/59 verdes). **Pendiente de que el usuario reconstruya/redespliegue y pruebe** cambiando su propio username, confirmando que la sesión sigue activa después (no se desconecta) y que el nuevo nombre se ve reflejado en la app.
+
+**Dónde mirar:** `services/UserService.java` (`validateUsernameFormat`, `changeOwnUsername`), `services/RefreshTokenService.java` (`revokeAllForUser`), `controllers/UserController.java` (`changeUsername`), `frontend/lib/views/screens/admin/admin_panel_screen.dart` (`ChangeUsernameScreen`), `frontend/lib/viewmodels/auth/auth_viewmodel.dart` (`applyUsernameChange`), `frontend/lib/models/admin/admin_service.dart` (`changeOwnUsername`), `frontend/lib/views/screens/dashboard_screen.dart` (icono del AppBar).
 
 
 ## Items mágicos

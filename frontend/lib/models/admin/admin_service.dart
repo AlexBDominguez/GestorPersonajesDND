@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:gestor_personajes_dnd/models/admin/user_dto.dart';
+import 'package:gestor_personajes_dnd/models/auth/auth_response.dart';
 import 'package:gestor_personajes_dnd/services/http/api_client.dart';
 
 class AdminService {
@@ -82,5 +83,27 @@ class AdminService {
       final msg = res.body;
       throw Exception(msg.isNotEmpty ? msg : 'Failed to change password');
     }
+  }
+
+  // #15 — cambiar el propio username. Devuelve un AuthResponse (token/refreshToken nuevos)
+  // porque renombrar invalida la sesión firmada con el username viejo -- ver el comentario
+  // en UserService.changeOwnUsername (backend) para el porqué.
+  Future<AuthResponse> changeOwnUsername({required String newUsername}) async {
+    final res = await _api.patch(
+      '/api/users/me/username',
+      body: {'newUsername': newUsername},
+    );
+    if (res.statusCode == 200) {
+      return AuthResponse.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+    }
+    if (res.statusCode == 409) {
+      throw Exception('That username is already taken. Please choose a different one.');
+    }
+    final body = res.body;
+    String msg = 'Failed to change username (${res.statusCode})';
+    if (body.isNotEmpty) {
+      try { final decoded = jsonDecode(body); msg = decoded is String ? decoded : msg; } catch (_) { msg = body; }
+    }
+    throw Exception(msg);
   }
 }

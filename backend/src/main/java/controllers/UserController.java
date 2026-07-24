@@ -1,5 +1,6 @@
 package controllers;
 
+import dto.AuthResponse;
 import dto.CreateUserRequest;
 import dto.UserDto;
 import enumeration.Role;
@@ -122,19 +123,25 @@ public class UserController {
         }    
     }
 
-    // Patch /api/users/me/username -> cambiar propio username
+    // Patch /api/users/me/username -> cambiar propio username. Devuelve un AuthResponse
+    // (token + refreshToken nuevos) en vez de un UserDto -- ver el comentario en
+    // UserService.changeOwnUsername sobre por qué hace falta reemitir la sesión.
     @PatchMapping("/api/users/me/username")
     public ResponseEntity<?> changeUsername(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body,
+            @RequestHeader(value = "User-Agent", defaultValue = "Unknown") String userAgent) {
         String newUsername = body.get("newUsername");
         if(newUsername == null || newUsername.isBlank())
             return ResponseEntity.badRequest().body("newUsername is required");
         try {
-            UserDto updated = userService.changeOwnUsername(userDetails.getUsername(),
-                newUsername);
+            AuthResponse updated = userService.changeOwnUsername(userDetails.getUsername(),
+                newUsername, userAgent);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("already taken")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+            }
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }

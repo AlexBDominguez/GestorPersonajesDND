@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:gestor_personajes_dnd/models/auth/auth_response.dart';
 import 'package:gestor_personajes_dnd/models/auth/login_request.dart';
 import 'package:gestor_personajes_dnd/services/auth/auth_service.dart';
 import 'package:gestor_personajes_dnd/services/storage/local_cache_service.dart';
@@ -119,12 +120,27 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Change username (#15) ────────────────────────────────────────────────
+  // Renombrarse invalida el access token y los refresh tokens ya emitidos (llevan el
+  // username viejo, ver el comentario en UserService.changeOwnUsername del backend) --
+  // por eso el endpoint devuelve un AuthResponse completo con tokens nuevos, y aquí hay
+  // que persistirlos exactamente igual que en login(), no solo actualizar el nombre en
+  // memoria (a diferencia del updateUsername() anterior, que no sobrevivía a un reinicio).
+  Future<void> applyUsernameChange(AuthResponse auth) async {
+    await _tokenStorage.saveSession(
+      accessToken: auth.token,
+      username:    auth.username,
+      role:        auth.role,
+    );
+    // Reutiliza la decisión de persistencia anterior (rememberMe), igual que la rotación.
+    await _tokenStorage.saveRefreshToken(auth.refreshToken, persist: null);
 
-  void updateUsername(String newUsername) {
-    _username = newUsername;
+    _username = auth.username;
+    _isAdmin  = auth.role == 'ADMIN';
     notifyListeners();
   }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   void _setLoading(bool v) { _isLoading = v; notifyListeners(); }
   void _setError(String? v) { _errorMessage = v; notifyListeners(); }

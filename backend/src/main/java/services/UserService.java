@@ -1,5 +1,6 @@
 package services;
 
+import dto.AuthResponse;
 import dto.CreateUserRequest;
 import dto.UserDto;
 import entities.User;
@@ -9,8 +10,10 @@ import repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import security.JwtUtil;
 
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,7 +28,25 @@ public class UserService {
     @Autowired
     private PlayerCharacterRepository characterRepository;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
     public static final int MAX_CHARACTERS_PER_USER = 10;
+
+    // Mismas restricciones de formato para alta de usuario (admin) y cambio de username
+    // (propio) — 3-20 caracteres, solo letras/números/guion bajo. Antes solo se validaba
+    // en el diálogo "Create User" del panel de admin (Flutter), nunca en el backend.
+    private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-zA-Z0-9_]{3,20}$");
+
+    private void validateUsernameFormat(String username) {
+        if (username == null || !USERNAME_PATTERN.matcher(username).matches()) {
+            throw new RuntimeException(
+                    "Username must be 3-20 characters and contain only letters, numbers and underscores.");
+        }
+    }
 
     // Listar todos los usuarios (excluye admins)
     public List<UserDto> getAllUsers() {
@@ -50,6 +71,7 @@ public class UserService {
 
     // Crear un usuario nuevo (solo el admin puede hacerlo)
     public UserDto createUser(CreateUserRequest request) {
+        validateUsernameFormat(request.getUsername());
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("El nombre de usuario ya existe: " + request.getUsername());
         }
@@ -99,16 +121,28 @@ public class UserService {
         userRepository.save(user);
     }
 
-    //El propio usuario cambia su username.
-    public UserDto changeOwnUsername(String currentUsername, String newUsername) {
+    // El propio usuario cambia su username. El JWT lleva el username como subject y los
+    // refresh tokens también lo guardan como string plano (ver RefreshToken.username) — así
+    // que un simple rename dejaría la sesión activa (access token + refresh tokens) apuntando
+    // a un username que ya no existe, y la siguiente petición autenticada fallaría con "user
+    // not found" (el usuario se desconectaría sin previo aviso). Por eso esto revoca los
+    // refresh tokens viejos y devuelve un AuthResponse con tokens nuevos, igual que
+    // login/refresh, para que el cliente los sustituya de inmediato.
+    public AuthResponse changeOwnUsername(String currentUsername, String newUsername, String deviceInfo) {
+        validateUsernameFormat(newUsername);
         if (userRepository.existsByUsername(newUsername))
             throw new RuntimeException("Username already taken: " + newUsername);
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setUsername(newUsername);
-        return toDto(userRepository.save(user));
+        userRepository.save(user);
+
+        refreshTokenService.revokeAllForUser(currentUsername);
+        String accessToken = jwtUtil.generateToken(newUsername);
+        String refreshToken = refreshTokenService.generate(newUsername, deviceInfo);
+        return new AuthResponse(accessToken, refreshToken, newUsername, user.getRole().name());
     }
-    
+
 
     // Eliminar un usuario (no se puede eliminar un admin)
     public void deleteUser(Long id) {

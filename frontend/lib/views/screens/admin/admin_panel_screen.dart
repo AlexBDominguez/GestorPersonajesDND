@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/admin/admin_service.dart';
 import 'package:gestor_personajes_dnd/models/admin/user_dto.dart';
+import 'package:gestor_personajes_dnd/viewmodels/auth/auth_viewmodel.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   const AdminPanelScreen({super.key});
@@ -613,6 +615,118 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Password changed successfully'),
+          backgroundColor: AppTheme.primary,
+        ));
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      setState(() {
+        _error  = e.toString().replaceFirst('Exception: ', '');
+        _saving = false;
+      });
+    }
+  }
+}
+
+// -- Change Username Screen (para cualquier usuario, #15)
+
+class ChangeUsernameScreen extends StatefulWidget {
+  const ChangeUsernameScreen({super.key});
+
+  @override
+  State<ChangeUsernameScreen> createState() => _ChangeUsernameScreenState();
+}
+
+class _ChangeUsernameScreenState extends State<ChangeUsernameScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _userCtrl = TextEditingController();
+  final _service = AdminService();
+  bool _saving = false;
+  String? _error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        backgroundColor: AppTheme.background,
+        leading: const BackButton(color: AppTheme.textPrimary),
+        title: Text('Change Username',
+          style: GoogleFonts.libreBaskerville(
+            color: AppTheme.primary, fontWeight: FontWeight.bold)),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).padding.bottom + 24),
+        child: Form(
+          key: _formKey,
+          child: Column(children: [
+            const SizedBox(height: 16),
+            _Field(
+              ctrl: _userCtrl,
+              label: 'New username',
+              icon: Icons.person_outline,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Required';
+                if (v.trim().length < 3) return 'Min. 3 characters';
+                if (v.trim().length > 20) return 'Max. 20 characters';
+                if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(v.trim())) {
+                  return 'Only letters, numbers and underscores';
+                }
+                return null;
+              },
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.accent.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(_error!,
+                    style: GoogleFonts.lato(
+                        color: AppTheme.accent, fontSize: 14)),
+              ),
+            ],
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _saving ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: AppTheme.background,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+                child: _saving
+                    ? const SizedBox(
+                        width: 20, height: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                    : Text('Update Username',
+                        style: GoogleFonts.libreBaskerville(
+                            fontSize: 14, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() { _saving = true; _error = null; });
+    try {
+      final auth = await _service.changeOwnUsername(newUsername: _userCtrl.text.trim());
+      if (!mounted) return;
+      await context.read<AuthViewModel>().applyUsernameChange(auth);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Username changed successfully'),
           backgroundColor: AppTheme.primary,
         ));
         Navigator.pop(context);

@@ -93,6 +93,16 @@ public class RefreshTokenService {
         });
     }
 
+    /**
+     * Revoca todos los refresh tokens de {@code username} — usado al cambiar el propio
+     * username (#15): los tokens ya emitidos llevan el username VIEJO, así que quedarían
+     * huérfanos (ya no resuelven a ningún usuario real) si no se revocan explícitamente.
+     */
+    @Transactional
+    public void revokeAllForUser(String username) {
+        repo.revokeAllByUsername(username);
+    }
+
     /** Limpieza nocturna a las 03:00 — elimina filas caducadas y revocadas. */
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
