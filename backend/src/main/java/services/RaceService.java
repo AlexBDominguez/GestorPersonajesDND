@@ -92,6 +92,8 @@ public class RaceService {
         dto.setName(t.getName());
         dto.setDescription(t.getDescription());
         dto.setTraitType(t.getTraitType());
+        dto.setConsumesResourceIndexName(t.getConsumesResourceIndexName());
+        dto.setGrantsBonusKey(t.getGrantsBonusKey());
         return dto;
     }
 }

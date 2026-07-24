@@ -6,6 +6,8 @@ public class RacialTraitDto {
     private String name;
     private String description;
     private String traitType;
+    private String consumesResourceIndexName;
+    private String grantsBonusKey;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -17,4 +19,8 @@ public class RacialTraitDto {
     public void setDescription(String description) { this.description = description; }
     public String getTraitType() { return traitType; }
     public void setTraitType(String traitType) { this.traitType = traitType; }
+    public String getConsumesResourceIndexName() { return consumesResourceIndexName; }
+    public void setConsumesResourceIndexName(String consumesResourceIndexName) { this.consumesResourceIndexName = consumesResourceIndexName; }
+    public String getGrantsBonusKey() { return grantsBonusKey; }
+    public void setGrantsBonusKey(String grantsBonusKey) { this.grantsBonusKey = grantsBonusKey; }
 }

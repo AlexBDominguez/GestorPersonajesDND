@@ -22,6 +22,14 @@ public class RacialTrait {
     // PASSIVE para el resto (visión oscura, resistencias, etc.)
     private String traitType; // "COMBAT" | "PASSIVE" | "CHOICE_REQUIRED"
 
+    // Mismo propósito que ClassFeature/SubclassFeature.consumesResourceIndexName/
+    // grantsBonusKey (#8.2), generalizado a rasgos raciales (#9) -- si no es null, este trait
+    // gasta usos del RaceResource / otorga el NumericBonus cuyo indexName/bonusKey coincide.
+    // GRANT_SPELL y GRANT_PROFICIENCY para rasgos raciales no necesitan un campo de enlace
+    // aquí: van directos a Race.grantedSpells / RacialTraitProficiency, igual que en subclases.
+    private String consumesResourceIndexName;
+    private String grantsBonusKey;
+
     public RacialTrait() {}
 
     public Long getId() { return id; }
@@ -38,4 +46,10 @@ public class RacialTrait {
 
     public String getTraitType() { return traitType; }
     public void setTraitType(String traitType) { this.traitType = traitType; }
+
+    public String getConsumesResourceIndexName() { return consumesResourceIndexName; }
+    public void setConsumesResourceIndexName(String consumesResourceIndexName) { this.consumesResourceIndexName = consumesResourceIndexName; }
+
+    public String getGrantsBonusKey() { return grantsBonusKey; }
+    public void setGrantsBonusKey(String grantsBonusKey) { this.grantsBonusKey = grantsBonusKey; }
 }

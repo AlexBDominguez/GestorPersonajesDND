@@ -4,6 +4,7 @@ import entities.CharacterSkill;
 import entities.ClassFeature;
 import entities.NumericBonus;
 import entities.PlayerCharacter;
+import entities.RacialTrait;
 import entities.SubclassFeature;
 import org.springframework.stereotype.Service;
 import repositories.ClassFeatureRepository;
@@ -207,6 +208,20 @@ public class NumericBonusService {
             for (SubclassFeature f : subclassFeatureRepository
                     .findBySubclassAndLevelLessThanEqual(character.getSubclass(), character.getLevel())) {
                 if (f.getGrantsBonusKey() != null) keys.add(f.getGrantsBonusKey());
+            }
+        }
+
+        // #9: rasgos raciales homebrew con NUMERIC_BONUS -- sin gating por nivel, a diferencia
+        // de ClassFeature/SubclassFeature (race_traits/subrace_traits no tienen columna de
+        // nivel, ver RacialTrait.java).
+        if (character.getRace() != null) {
+            for (RacialTrait t : character.getRace().getTraits()) {
+                if (t.getGrantsBonusKey() != null) keys.add(t.getGrantsBonusKey());
+            }
+        }
+        if (character.getSubrace() != null) {
+            for (RacialTrait t : character.getSubrace().getTraits()) {
+                if (t.getGrantsBonusKey() != null) keys.add(t.getGrantsBonusKey());
             }
         }
 

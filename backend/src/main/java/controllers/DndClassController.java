@@ -1,11 +1,15 @@
 package controllers;
 
+import dto.ClassFeatureAdminRequest;
 import dto.ClassFeatureDto;
 import dto.DndClassDto;
 import dto.SubclassDto;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import services.AdminClassFeatureService;
 import services.DndClassService;
 
 import java.util.List;
@@ -17,9 +21,11 @@ import java.util.List;
 public class DndClassController {
 
     private final DndClassService service;
+    private final AdminClassFeatureService adminClassFeatureService;
 
-    public DndClassController(DndClassService service){
+    public DndClassController(DndClassService service, AdminClassFeatureService adminClassFeatureService){
         this.service = service;
+        this.adminClassFeatureService = adminClassFeatureService;
     }
 
     @GetMapping
@@ -49,6 +55,20 @@ public class DndClassController {
             @PathVariable Long id,
             @RequestParam(required = false) List<String> sources) {
         return service.getSubclassesByClassId(id, sources);
+    }
+
+    // #9: crea una ClassFeature (clase base) con su mecánica de #8.2 -- ver AdminClassFeatureService.
+    @PostMapping("/{id}/features")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createFeature(@PathVariable Long id, @RequestBody ClassFeatureAdminRequest req) {
+        try {
+            return ResponseEntity.ok(adminClassFeatureService.create(id, req));
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
 }

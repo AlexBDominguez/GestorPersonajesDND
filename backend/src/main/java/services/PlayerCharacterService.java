@@ -40,6 +40,7 @@ public class PlayerCharacterService {
     private final SubclassRepository subclassRepository;
     private final SubraceRepository subraceRepository;
     private final CharacterClassResourceService characterClassResourceService;
+    private final CharacterRaceResourceService characterRaceResourceService;
     private final CharacterEquipmentRepository equipmentRepository;
     private final CharacterActiveEffectRepository characterActiveEffectRepository;
     private final CharacterInventoryRepository characterInventoryRepository;
@@ -70,6 +71,7 @@ public class PlayerCharacterService {
             SubclassRepository subclassRepository,
             SubraceRepository subraceRepository,
             CharacterClassResourceService characterClassResourceService,
+            CharacterRaceResourceService characterRaceResourceService,
             CharacterEquipmentRepository equipmentRepository,
             CharacterActiveEffectRepository characterActiveEffectRepository,
             CharacterInventoryRepository characterInventoryRepository,
@@ -107,6 +109,7 @@ public class PlayerCharacterService {
         this.subclassRepository = subclassRepository;
         this.subraceRepository = subraceRepository;
         this.characterClassResourceService = characterClassResourceService;
+        this.characterRaceResourceService = characterRaceResourceService;
         this.equipmentRepository = equipmentRepository;
         this.characterActiveEffectRepository = characterActiveEffectRepository;
         this.characterInventoryRepository = characterInventoryRepository;
@@ -330,6 +333,8 @@ public class PlayerCharacterService {
 
         // Inicializar recursos de clase (cargas de Rabia, Ki Points, Bardic Inspiration, etc.)
         characterClassResourceService.initializeClassResourcesForCharacter(saved.getId());
+        // Inicializar recursos de raza homebrew (#9, ej. aliento de un dracónido custom)
+        characterRaceResourceService.initializeRaceResourcesForCharacter(saved.getId());
 
         // Generar tareas pendientes para todas las features que requieren elección del nivel 1 al nivel seleccionado
         generateChoiceTasksForCreation(saved);
@@ -1111,6 +1116,9 @@ public class PlayerCharacterService {
         //    y actualizar los máximos de los recursos existentes (escalan con el nivel)
         characterClassResourceService.initializeClassResourcesForCharacter(character.getId());
         characterClassResourceService.updateResourceMaximums(character.getId());
+        // Recursos de raza homebrew (#9): el máximo puede escalar con el nivel de personaje
+        // aunque la propia raza no tenga "niveles" -- ver CharacterRaceResourceService.
+        characterRaceResourceService.updateResourceMaximums(character.getId());
 
         // 5. Aplicar traits raciales con hechizos desbloqueados por nivel (p.ej. Drow Magic)
         racialTraitService.applyAutomaticRacialTraits(character);
@@ -1305,8 +1313,9 @@ public class PlayerCharacterService {
         slotRepository.save(slot);
     }
     
-    // 6. Restaurar recursos de clase que se recuperan en LONG_REST
+    // 6. Restaurar recursos de clase y de raza que se recuperan en LONG_REST
     characterClassResourceService.recoverResources(characterId, "LONG_REST");
+    characterRaceResourceService.recoverResources(characterId, "LONG_REST");
     
     // 7. Remover condiciones temporales que duren menos de 8 horas
     // Esto lo manejamos con el CharacterConditionService si es necesario
@@ -1369,8 +1378,9 @@ public class PlayerCharacterService {
             System.out.println("Warlock spell slots restored (Pact Magic)");
         }
         
-        // 3. Restaurar recursos de clase que se recuperan en SHORT_REST
+        // 3. Restaurar recursos de clase y de raza que se recuperan en SHORT_REST
         characterClassResourceService.recoverResources(characterId, "SHORT_REST");
+        characterRaceResourceService.recoverResources(characterId, "SHORT_REST");
         
         characterRepository.save(character);
         

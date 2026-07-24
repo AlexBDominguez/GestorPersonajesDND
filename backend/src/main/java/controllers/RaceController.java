@@ -2,6 +2,7 @@ package controllers;
 
 
 import dto.RaceDto;
+import dto.RacialTraitAdminRequest;
 import dto.RacialTraitDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import services.AdminRacialTraitService;
 import services.RaceService;
 
 import java.util.List;
@@ -22,9 +24,11 @@ import java.util.List;
 public class RaceController {
 
     private final RaceService raceService;
+    private final AdminRacialTraitService adminRacialTraitService;
 
-    public RaceController(RaceService raceService){
+    public RaceController(RaceService raceService, AdminRacialTraitService adminRacialTraitService){
         this.raceService = raceService;
+        this.adminRacialTraitService = adminRacialTraitService;
     }
 
     @GetMapping
@@ -55,6 +59,21 @@ public class RaceController {
         try {
             return ResponseEntity.ok(raceService.create(dto));
         } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    // #9: crea un RacialTrait con su mecánica (#8.2 generalizado a razas), atado a una Race
+    // o Subrace según req.targetType/targetId -- ver AdminRacialTraitService.
+    @PostMapping("/traits")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createTrait(@RequestBody RacialTraitAdminRequest req) {
+        try {
+            return ResponseEntity.ok(adminRacialTraitService.create(req));
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+            }
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
