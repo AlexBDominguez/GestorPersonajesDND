@@ -414,6 +414,15 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
           const SizedBox(height: 16),
           _text(_descCtrl, 'Description', icon: Icons.description_outlined, maxLines: 4, validator: _required),
           _sectionTitle('Weapon (leave blank if not a weapon)'),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ActionChip(
+              avatar: const Icon(Icons.content_copy, size: 16),
+              label: const Text('Copy from existing weapon'),
+              onPressed: _pickBaseWeapon,
+            ),
+          ),
+          const SizedBox(height: 12),
           _text(_damageDiceCtrl, 'Damage dice (e.g. 1d8)'),
           const SizedBox(height: 16),
           _text(_damageTypeCtrl, 'Damage type (e.g. slashing)'),
@@ -543,6 +552,21 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
       default:
         return const [];
     }
+  }
+
+  Future<void> _pickBaseWeapon() async {
+    final chosen = await _showSearchPicker<ItemSearchOption>(
+      title: 'Search weapons',
+      search: _service.searchWeapons,
+      labelOf: (w) => w.label,
+    );
+    if (chosen == null) return;
+    setState(() {
+      _damageDiceCtrl.text = chosen.damageDice ?? '';
+      _damageTypeCtrl.text = chosen.damageType ?? '';
+      if (chosen.weaponRange != null) _weaponRange = chosen.weaponRange!;
+      _weaponPropertiesCtrl.text = chosen.weaponProperties.join(', ');
+    });
   }
 
   Future<void> _pickGrantedSpell() async {

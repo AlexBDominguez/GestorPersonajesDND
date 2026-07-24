@@ -78,6 +78,39 @@ class RaceAdminOption {
       );
 }
 
+/// Arma existente en el catálogo, para "Copy from existing weapon" en el formulario de Item
+/// (#9) -- copia damageDice/damageType/weaponRange/weaponProperties al item nuevo en vez de
+/// tener que escribirlos a mano. Mismo dato que ya usa "Set base weapon" en Inventario (#21
+/// Fase 2), pero aquí se copia a un item de catálogo nuevo en vez de a una instancia concreta.
+class ItemSearchOption {
+  final int id;
+  final String name;
+  final String? damageDice;
+  final String? damageType;
+  final String? weaponRange;
+  final List<String> weaponProperties;
+
+  const ItemSearchOption({
+    required this.id,
+    required this.name,
+    this.damageDice,
+    this.damageType,
+    this.weaponRange,
+    this.weaponProperties = const [],
+  });
+
+  factory ItemSearchOption.fromJson(Map<String, dynamic> j) => ItemSearchOption(
+        id:               (j['id'] as num).toInt(),
+        name:             j['name'] as String? ?? '',
+        damageDice:       j['damageDice'] as String?,
+        damageType:       j['damageType'] as String?,
+        weaponRange:      j['weaponRange'] as String?,
+        weaponProperties: List<String>.from(j['weaponProperties'] ?? []),
+      );
+
+  String get label => '$name ($damageDice ${damageType ?? ''})'.trim();
+}
+
 /// Subraza, para el desplegable en cascada Race -> Subrace del formulario de features (#9).
 class SubraceAdminOption {
   final int id;
@@ -146,6 +179,19 @@ class ContentAdminService {
           .toList();
     }
     throw Exception('Failed to search spells (${res.statusCode})');
+  }
+
+  // Solo armas con daño real, mismo criterio que "Set base weapon" en Inventario (#21 Fase 2).
+  Future<List<ItemSearchOption>> searchWeapons(String name) async {
+    if (name.trim().isEmpty) return [];
+    final res = await _api.get('/api/items?name=${Uri.encodeQueryComponent(name)}');
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List)
+          .map((e) => ItemSearchOption.fromJson(e as Map<String, dynamic>))
+          .where((i) => i.damageDice != null && i.damageDice!.isNotEmpty)
+          .toList();
+    }
+    throw Exception('Failed to search weapons (${res.statusCode})');
   }
 
   Future<List<ProficiencySearchOption>> searchProficiencies(String name) async {
