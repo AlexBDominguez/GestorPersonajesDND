@@ -52,6 +52,46 @@ class ProficiencySearchOption {
   String get label => type == null ? name : '$name ($type)';
 }
 
+/// Clase base, para el desplegable del formulario "Create Subclass" (#9).
+class ClassAdminOption {
+  final int id;
+  final String name;
+
+  const ClassAdminOption({required this.id, required this.name});
+
+  factory ClassAdminOption.fromJson(Map<String, dynamic> j) => ClassAdminOption(
+        id:   (j['id'] as num).toInt(),
+        name: j['name'] as String? ?? '',
+      );
+}
+
+/// Raza base, para el desplegable del formulario "Create Subrace" (#9).
+class RaceAdminOption {
+  final int id;
+  final String name;
+
+  const RaceAdminOption({required this.id, required this.name});
+
+  factory RaceAdminOption.fromJson(Map<String, dynamic> j) => RaceAdminOption(
+        id:   (j['id'] as num).toInt(),
+        name: j['name'] as String? ?? '',
+      );
+}
+
+/// Resultado genérico de crear cualquier tipo de contenido (#9) -- solo lo que la pantalla
+/// necesita confirmar (nombre, para el snackbar de éxito).
+class ContentCreateResult {
+  final int id;
+  final String name;
+
+  const ContentCreateResult({required this.id, required this.name});
+
+  factory ContentCreateResult.fromJson(Map<String, dynamic> j) => ContentCreateResult(
+        id:   (j['id'] as num).toInt(),
+        name: j['name'] as String? ?? '',
+      );
+}
+
 /// Resultado de crear una SubclassFeature (#9) -- solo lo que la pantalla necesita confirmar.
 class SubclassFeatureResult {
   final int id;
@@ -151,4 +191,164 @@ class ContentAdminService {
     }
     throw Exception(msg);
   }
+
+  // ── Listas para desplegables ────────────────────────────────────────────
+
+  Future<List<ClassAdminOption>> getAllClasses() async {
+    final res = await _api.get('/api/classes');
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List)
+          .map((e) => ClassAdminOption.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    throw Exception('Failed to load classes (${res.statusCode})');
+  }
+
+  Future<List<RaceAdminOption>> getAllRacesForAdmin() async {
+    final res = await _api.get('/api/races');
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List)
+          .map((e) => RaceAdminOption.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    throw Exception('Failed to load races (${res.statusCode})');
+  }
+
+  // ── Creación de contenido ────────────────────────────────────────────────
+
+  Future<ContentCreateResult> _post(String path, Map<String, dynamic> body) async {
+    final res = await _api.post(path, body: body);
+    if (res.statusCode == 200) {
+      return ContentCreateResult.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+    }
+    if (res.statusCode == 409) {
+      throw Exception('That indexName is already in use. Please choose a different one.');
+    }
+    final resBody = res.body;
+    String msg = 'Failed to create (${res.statusCode})';
+    if (resBody.isNotEmpty) {
+      try { final decoded = jsonDecode(resBody); msg = decoded is String ? decoded : msg; } catch (_) { msg = resBody; }
+    }
+    throw Exception(msg);
+  }
+
+  Future<ContentCreateResult> createClass({
+    required String indexName,
+    required String name,
+    required int hitDie,
+    required List<String> proficiencies,
+    required String description,
+  }) =>
+      _post('/api/classes', {
+        'indexName': indexName,
+        'name': name,
+        'hitDie': hitDie,
+        'proficiencies': proficiencies,
+        'description': description,
+      });
+
+  Future<ContentCreateResult> createSubclass({
+    required int classId,
+    required String indexName,
+    required String name,
+    required String subclassFlavor,
+    required String description,
+    String? spellcastingAbility,
+  }) =>
+      _post('/api/subclasses', {
+        'classId': classId,
+        'indexName': indexName,
+        'name': name,
+        'subclassFlavor': subclassFlavor,
+        'description': description,
+        if (spellcastingAbility != null && spellcastingAbility.isNotEmpty)
+          'spellcastingAbility': spellcastingAbility,
+      });
+
+  Future<ContentCreateResult> createRace({
+    required String indexName,
+    required String name,
+    required String size,
+    required int speed,
+    required Map<String, int> abilityBonuses,
+    required String description,
+  }) =>
+      _post('/api/races', {
+        'indexName': indexName,
+        'name': name,
+        'size': size,
+        'speed': speed,
+        'abilityBonuses': abilityBonuses,
+        'description': description,
+      });
+
+  Future<ContentCreateResult> createSubrace({
+    required int raceId,
+    required String indexName,
+    required String name,
+    required Map<String, int> abilityBonuses,
+    required String description,
+  }) =>
+      _post('/api/subraces', {
+        'raceId': raceId,
+        'indexName': indexName,
+        'name': name,
+        'abilityBonuses': abilityBonuses,
+        'description': description,
+      });
+
+  Future<ContentCreateResult> createItem({
+    required String indexName,
+    required String name,
+    required String itemType,
+    required String category,
+    required double weight,
+    required int costInCopper,
+    required String description,
+    String? damageDice,
+    String? damageType,
+    String? weaponRange,
+    List<String>? weaponProperties,
+    int? armorClass,
+    String? armorType,
+    String? rarity,
+    bool requiresAttunement = false,
+    int bonusAc = 0,
+    int bonusToHit = 0,
+    int bonusDamage = 0,
+    int bonusSavingThrows = 0,
+    int? setStrTo,
+    int? setDexTo,
+    int? setConTo,
+    int? setIntTo,
+    int? setWisTo,
+    int? setChaTo,
+  }) =>
+      _post('/api/items', {
+        'indexName': indexName,
+        'name': name,
+        'itemType': itemType,
+        'category': category,
+        'weight': weight,
+        'costInCopper': costInCopper,
+        'description': description,
+        if (damageDice != null) 'damageDice': damageDice,
+        if (damageType != null) 'damageType': damageType,
+        if (weaponRange != null) 'weaponRange': weaponRange,
+        if (weaponProperties != null) 'weaponProperties': weaponProperties,
+        if (armorClass != null) 'armorClass': armorClass,
+        if (armorType != null) 'armorType': armorType,
+        if (rarity != null) 'rarity': rarity,
+        'requiresAttunement': requiresAttunement,
+        'bonusAc': bonusAc,
+        'bonusToHit': bonusToHit,
+        'bonusDamage': bonusDamage,
+        'bonusSavingThrows': bonusSavingThrows,
+        if (setStrTo != null) 'setStrTo': setStrTo,
+        if (setDexTo != null) 'setDexTo': setDexTo,
+        if (setConTo != null) 'setConTo': setConTo,
+        if (setIntTo != null) 'setIntTo': setIntTo,
+        if (setWisTo != null) 'setWisTo': setWisTo,
+        if (setChaTo != null) 'setChaTo': setChaTo,
+      });
 }

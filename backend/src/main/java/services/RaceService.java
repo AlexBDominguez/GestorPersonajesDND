@@ -57,6 +57,21 @@ public class RaceService {
         return raceRepository.save(race);
     }
 
+    // #9: creación manual desde el panel de admin. Igual que SubraceService.create(), los
+    // traits/hechizos otorgados se gestionan vía sync, no desde este DTO -- una raza nueva
+    // creada aquí empieza sin traits, se añaden después si hace falta.
+    public RaceDto create(RaceDto dto) {
+        Race race = new Race();
+        race.setIndexName(dto.getIndexName());
+        race.setName(dto.getName());
+        race.setSize(dto.getSize());
+        race.setSpeed(dto.getSpeed());
+        race.setAbilityBonuses(dto.getAbilityBonuses());
+        race.setDescription(dto.getDescription());
+        race.setSource(dto.getSource() != null && !dto.getSource().isBlank() ? dto.getSource() : "Homebrew");
+        return toDto(raceRepository.save(race));
+    }
+
     private RaceDto toDto(Race race) {
         RaceDto dto = new RaceDto();
         dto.setId(race.getId());

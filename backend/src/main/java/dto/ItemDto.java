@@ -26,6 +26,20 @@ public class ItemDto {
     private String rarity;
     private boolean requiresAttunement;
 
+    // Bonos mecánicos (#21) -- ausentes de este DTO hasta ahora, aunque ya existen en Item
+    // desde que #21 les dio efecto real. Necesarios para que un item creado a mano en el
+    // panel de admin (#9) pueda tener un bono de verdad, no solo texto descriptivo.
+    private int bonusAc;
+    private int bonusToHit;
+    private int bonusDamage;
+    private int bonusSavingThrows;
+    private Integer setStrTo;
+    private Integer setDexTo;
+    private Integer setConTo;
+    private Integer setIntTo;
+    private Integer setWisTo;
+    private Integer setChaTo;
+
 
      //Getters & setters
     public Long getId() {
@@ -125,6 +139,33 @@ public class ItemDto {
         this.requiresAttunement = requiresAttunement;
     }
 
-   
-    
+    public int getBonusAc() { return bonusAc; }
+    public void setBonusAc(int bonusAc) { this.bonusAc = bonusAc; }
+
+    public int getBonusToHit() { return bonusToHit; }
+    public void setBonusToHit(int bonusToHit) { this.bonusToHit = bonusToHit; }
+
+    public int getBonusDamage() { return bonusDamage; }
+    public void setBonusDamage(int bonusDamage) { this.bonusDamage = bonusDamage; }
+
+    public int getBonusSavingThrows() { return bonusSavingThrows; }
+    public void setBonusSavingThrows(int bonusSavingThrows) { this.bonusSavingThrows = bonusSavingThrows; }
+
+    public Integer getSetStrTo() { return setStrTo; }
+    public void setSetStrTo(Integer setStrTo) { this.setStrTo = setStrTo; }
+
+    public Integer getSetDexTo() { return setDexTo; }
+    public void setSetDexTo(Integer setDexTo) { this.setDexTo = setDexTo; }
+
+    public Integer getSetConTo() { return setConTo; }
+    public void setSetConTo(Integer setConTo) { this.setConTo = setConTo; }
+
+    public Integer getSetIntTo() { return setIntTo; }
+    public void setSetIntTo(Integer setIntTo) { this.setIntTo = setIntTo; }
+
+    public Integer getSetWisTo() { return setWisTo; }
+    public void setSetWisTo(Integer setWisTo) { this.setWisTo = setWisTo; }
+
+    public Integer getSetChaTo() { return setChaTo; }
+    public void setSetChaTo(Integer setChaTo) { this.setChaTo = setChaTo; }
 }
