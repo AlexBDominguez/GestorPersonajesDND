@@ -32,6 +32,25 @@ public class BackgroundService {
         return toDto(background);
     }
 
+    // #9: creación manual de backgrounds homebrew desde el panel de admin.
+    public BackgroundDto create(BackgroundDto dto) {
+        Background background = new Background();
+        background.setIndexName(dto.getIndexName());
+        background.setName(dto.getName());
+        background.setSkillProficiencies(dto.getSkillProficiencies());
+        background.setToolProficiencies(dto.getToolProficiencies());
+        background.setLanguages(dto.getLanguages());
+        background.setLanguageOptions(dto.getLanguageOptions());
+        background.setFeature(dto.getFeature());
+        background.setFeatureDescription(dto.getFeatureDescription());
+        background.setDescription(dto.getDescription());
+        background.setPersonalityTraits(dto.getPersonalityTraits());
+        background.setIdeals(dto.getIdeals());
+        background.setBonds(dto.getBonds());
+        background.setFlaws(dto.getFlaws());
+        return toDto(backgroundRepository.save(background));
+    }
+
     private BackgroundDto toDto(Background background) {
         BackgroundDto dto = new BackgroundDto();
         dto.setId(background.getId());
