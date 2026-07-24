@@ -62,6 +62,7 @@ public class Item {
     // Bonuses que aplica el objeto cuando está equipado/sintonizado
     private int bonusAc = 0;
     private int bonusToHit = 0;
+    private int bonusDamage = 0;
     private int bonusSavingThrows = 0;
 
     // Overrides de ability scores (ej: Gauntlets of Ogre Power → STR = 19)
@@ -249,6 +250,14 @@ public class Item {
 
     public void setBonusToHit(int bonusToHit) {
         this.bonusToHit = bonusToHit;
+    }
+
+    public int getBonusDamage() {
+        return bonusDamage;
+    }
+
+    public void setBonusDamage(int bonusDamage) {
+        this.bonusDamage = bonusDamage;
     }
 
     public int getBonusSavingThrows() {

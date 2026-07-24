@@ -478,14 +478,13 @@ public class PlayerCharacterService {
 
         // Bonuses de objetos equipados / sintonizados
         List<CharacterInventory> inventory = characterInventoryRepository.findByCharacterId(playerCharacter.getId());
-        int itemBonusAc = 0, itemBonusToHit = 0, itemBonusSavingThrows = 0;
+        int itemBonusAc = 0, itemBonusToHit = 0, itemBonusDamage = 0, itemBonusSavingThrows = 0;
         // Infusiones (Infuse Item, Artificiero, #8): a diferencia de los bonos de Item (que son
         // fijos por catálogo), el bono de una infusión depende del nivel del personaje (p.ej.
         // Enhanced Weapon pasa de +1 a +2 en nivel 10) y solo aplica al objeto concreto que la
         // lleva, no a todo lo demás -- ver Infusion.bonusTarget/bonusFormula. WEAPON_ATTACK_DAMAGE
         // se suma a itemBonusToHit (mismo mecanismo que ya usa cualquier arma +1 real) y por
-        // separado a meleeDamageBonus (no existe un "itemBonusDamage" genérico porque ningún Item
-        // normal necesitaba uno hasta ahora).
+        // separado a itemBonusDamage/meleeDamageBonus.
         int infusionWeaponDamageBonus = 0;
         int infusionSpellAttackBonus = 0;
 
@@ -508,6 +507,7 @@ public class PlayerCharacterService {
             if (active) {
                 itemBonusAc            += item.getBonusAc();
                 itemBonusToHit         += item.getBonusToHit();
+                itemBonusDamage        += item.getBonusDamage();
                 itemBonusSavingThrows  += item.getBonusSavingThrows();
 
                 // Ability score overrides: solo aplica si la puntuación del item supera la actual
@@ -565,7 +565,7 @@ public class PlayerCharacterService {
         int fightingStyleRangedBonus = numericBonusService.fightingStyleBonusFor(playerCharacter, "RANGED_ATTACK", wearingArmor, false);
         int fightingStyleMeleeDamageBonus = numericBonusService.fightingStyleBonusFor(
                 playerCharacter, "MELEE_DAMAGE", false, singleOneHandedMeleeWeaponEquipped);
-        dto.setMeleeDamageBonus(fightingStyleMeleeDamageBonus + infusionWeaponDamageBonus);
+        dto.setMeleeDamageBonus(fightingStyleMeleeDamageBonus + infusionWeaponDamageBonus + itemBonusDamage);
         // Expuesto al frontend también en crudo para Two-Weapon Fighting (sumar el mod. de
         // característica al daño del offhand no es un bono aditivo, es una regla que se activa/
         // desactiva -- no encaja en la forma de NUMERIC_BONUS, así que sigue leyéndose el campo

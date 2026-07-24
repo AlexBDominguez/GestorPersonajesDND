@@ -13,16 +13,29 @@ import java.util.stream.Collectors;
  *
  * PHB items are skipped (already in DB from dnd5eapi.co).
  *
- * Mechanical bonus fields bonusAc/bonusToHit/set*To are populated from the
- * structured data Aurora already provides for the two clean, unambiguous
- * cases (see #21 in Aurora_Fixes.md): a flat weapon/armor enhancement bonus
- * (setters "enhancement") and an ability score override
- * (`<stat name="<ability>:score:set">`, e.g. Belts of Giant Strength).
- * bonusSavingThrows is left untouched — no structured Aurora rule for it was
- * found. Cases that need a formula (e.g. AC += Charisma modifier, seen on
- * the Dragon Masks) or a flat ability-score bonus with no matching Item
- * field (e.g. Belt of Dwarvenkind's +2 Constitution) are deliberately left
- * untouched too — out of scope for this pass, see Aurora_Fixes.md #21.
+ * Mechanical bonus fields bonusAc/bonusToHit/bonusDamage/set*To are populated
+ * from the structured data Aurora already provides for the two clean,
+ * unambiguous cases (see #21 in Aurora_Fixes.md): a flat weapon/armor
+ * enhancement bonus (setters "enhancement", applied to both bonusToHit and
+ * bonusDamage since a "+N weapon" gives +N to attack AND damage rolls) and
+ * an ability score override (`<stat name="<ability>:score:set">`, e.g. Belts
+ * of Giant Strength). bonusSavingThrows is left untouched — no structured
+ * Aurora rule for it was found. Cases that need a formula (e.g. AC +=
+ * Charisma modifier, seen on the Dragon Masks) or a flat ability-score bonus
+ * with no matching Item field (e.g. Belt of Dwarvenkind's +2 Constitution)
+ * are deliberately left untouched too — out of scope for this pass, see
+ * Aurora_Fixes.md #21.
+ *
+ * Aurora classifies every magic weapon (Acheron Blade, Wave, Sunforger...)
+ * under "Magic Item", not "Weapon" — so applyWeaponData() (damageDice/
+ * damageType/weaponRange) never runs for them, and they never show up in the
+ * Combat tab (`equippedWeapons` filters on a non-empty damageDice). When the
+ * setters "weapon" value is a literal weapon name (e.g. "Trident", not a
+ * category reference like "ID_INTERNAL_WEAPON_GROUP_SWORDS" or a "None" for
+ * ammunition), applyBaseWeaponData() copies that data from the matching PHB
+ * Item. Category-reference templates ("any sword", "any weapon") need the
+ * player to pick a concrete base weapon and are deliberately left
+ * unresolved — see Aurora_Fixes.md #21 follow-up.
  */
 @Service
 public class AuroraItemMapper {
@@ -143,14 +156,18 @@ public class AuroraItemMapper {
      */
     private void applyMechanicalBonuses(AuroraElement el, Item item) {
         Map<String, String> s = el.getSetters();
+        String subType = s.getOrDefault("type", "");
         Integer enhancement = parseIntOrNull(s.get("enhancement"));
-        if (enhancement != null) {
-            String subType = s.getOrDefault("type", "");
-            if ("Weapon".equals(subType)) {
+        if ("Weapon".equals(subType)) {
+            // Populate damage data for any magic weapon with a literal base weapon name
+            // (e.g. Trident of Fish Command), not just the ones with a flat enhancement.
+            applyBaseWeaponData(s.get("weapon"), item);
+            if (enhancement != null) {
                 item.setBonusToHit(enhancement);
-            } else if ("Armor".equals(subType)) {
-                item.setBonusAc(enhancement);
+                item.setBonusDamage(enhancement);
             }
+        } else if (enhancement != null && "Armor".equals(subType)) {
+            item.setBonusAc(enhancement);
         }
 
         for (AuroraRule rule : el.getRules()) {
@@ -170,6 +187,32 @@ public class AuroraItemMapper {
                 case "cha" -> item.setSetChaTo(value);
             }
         }
+    }
+
+    /**
+     * Copies damageDice/damageType/weaponRange/weaponProperties from the matching PHB
+     * Item when the "weapon" setter is a literal weapon name (e.g. "Trident"; "Lance||Pike"
+     * takes the first option). Category references (e.g. "ID_INTERNAL_WEAPON_GROUP_SWORDS",
+     * meaning "any sword") and ammunition (no "weapon" setter at all) are left unresolved on
+     * purpose — there's no single base weapon to copy from without asking the player which
+     * one they mean, see Aurora_Fixes.md #21 follow-up.
+     */
+    private void applyBaseWeaponData(String weaponRef, Item item) {
+        if (weaponRef == null || weaponRef.isBlank()) return;
+        String candidate = weaponRef.split("\\|\\|")[0].split(",")[0].trim();
+        if (candidate.isEmpty() || candidate.startsWith("(")
+                || candidate.contains("ID_INTERNAL") || candidate.contains("ID_WOTC")) {
+            return;
+        }
+        itemRepo.findByNameIgnoreCase(candidate).stream()
+            .filter(base -> base.getDamageDice() != null && !base.getDamageDice().isBlank())
+            .findFirst()
+            .ifPresent(base -> {
+                item.setDamageDice(base.getDamageDice());
+                item.setDamageType(base.getDamageType());
+                item.setWeaponRange(base.getWeaponRange());
+                item.setWeaponProperties(base.getWeaponProperties());
+            });
     }
 
     private Integer parseIntOrNull(String s) {
