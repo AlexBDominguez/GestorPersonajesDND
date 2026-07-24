@@ -4,6 +4,7 @@ import dto.ClassFeatureDto;
 import dto.DndClassDto;
 import dto.SubclassDto;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import services.DndClassService;
 
@@ -33,6 +34,7 @@ public class DndClassController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public DndClassDto create(@RequestBody DndClassDto dto){
         return service.create(dto);
     }
