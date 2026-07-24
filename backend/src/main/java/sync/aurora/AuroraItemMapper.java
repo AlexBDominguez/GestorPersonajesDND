@@ -211,7 +211,10 @@ public class AuroraItemMapper {
                 item.setDamageDice(base.getDamageDice());
                 item.setDamageType(base.getDamageType());
                 item.setWeaponRange(base.getWeaponRange());
-                item.setWeaponProperties(base.getWeaponProperties());
+                // Copy into a new list -- assigning another entity's @ElementCollection
+                // list directly throws "Found shared references to a collection" at save.
+                item.setWeaponProperties(base.getWeaponProperties() == null
+                        ? null : new ArrayList<>(base.getWeaponProperties()));
             });
     }
 
