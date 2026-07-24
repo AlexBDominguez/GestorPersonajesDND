@@ -9,6 +9,7 @@ public class ClassFeatureDto {
     private String description;
     private String apiUrl;
     private String consumesResourceIndexName;
+    private String grantsBonusKey;
 
     public Long getId() {
         return id;
@@ -51,6 +52,12 @@ public class ClassFeatureDto {
     }
     public void setConsumesResourceIndexName(String consumesResourceIndexName) {
         this.consumesResourceIndexName = consumesResourceIndexName;
+    }
+    public String getGrantsBonusKey() {
+        return grantsBonusKey;
+    }
+    public void setGrantsBonusKey(String grantsBonusKey) {
+        this.grantsBonusKey = grantsBonusKey;
     }
 
 }

@@ -55,6 +55,7 @@ public class SubclassFeatureService {
         dto.setDescription(feature.getDescription());
         dto.setApiUrl(feature.getApiUrl());
         dto.setConsumesResourceIndexName(feature.getConsumesResourceIndexName());
+        dto.setGrantsBonusKey(feature.getGrantsBonusKey());
         return dto;
     }
 }

@@ -3,6 +3,7 @@ import 'package:gestor_personajes_dnd/config/app_theme.dart';
 import 'package:gestor_personajes_dnd/models/admin/admin_service.dart';
 import 'package:gestor_personajes_dnd/models/admin/user_dto.dart';
 import 'package:gestor_personajes_dnd/viewmodels/auth/auth_viewmodel.dart';
+import 'package:gestor_personajes_dnd/views/screens/admin/create_subclass_feature_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -48,6 +49,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             color: AppTheme.primary, fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.auto_fix_high, color: AppTheme.textSecondary),
+            tooltip: 'Add Subclass Feature',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CreateSubclassFeatureScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh, color: AppTheme.textSecondary),
             onPressed: _load,

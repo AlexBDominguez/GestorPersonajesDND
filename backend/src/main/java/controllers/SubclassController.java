@@ -2,6 +2,7 @@ package controllers;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import dto.ClassFeatureDto;
 import dto.SubclassDto;
+import dto.SubclassFeatureAdminRequest;
+import services.AdminSubclassFeatureService;
 import services.SubclassFeatureService;
 import services.SubclassService;
 
@@ -22,11 +25,14 @@ public class SubclassController {
 
     private final SubclassService subclassService;
     private final SubclassFeatureService subclassFeatureService;
+    private final AdminSubclassFeatureService adminSubclassFeatureService;
 
     public SubclassController(SubclassService subclassService,
-                              SubclassFeatureService subclassFeatureService) {
+                              SubclassFeatureService subclassFeatureService,
+                              AdminSubclassFeatureService adminSubclassFeatureService) {
         this.subclassService = subclassService;
         this.subclassFeatureService = subclassFeatureService;
+        this.adminSubclassFeatureService = adminSubclassFeatureService;
     }
 
 
@@ -62,6 +68,23 @@ public class SubclassController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SubclassDto> create(@RequestBody SubclassDto dto) {
         return ResponseEntity.ok(subclassService.create(dto));
+    }
+
+    // #9: crea una SubclassFeature junto con su mecánica (#8.2) en una sola llamada -- ver
+    // AdminSubclassFeatureService para qué campos de SubclassFeatureAdminRequest se usan según
+    // el mechanicType elegido.
+    @PostMapping("/{id}/features")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createFeature(@PathVariable Long id,
+                                            @RequestBody SubclassFeatureAdminRequest req) {
+        try {
+            return ResponseEntity.ok(adminSubclassFeatureService.create(id, req));
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("already exists")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
 }
