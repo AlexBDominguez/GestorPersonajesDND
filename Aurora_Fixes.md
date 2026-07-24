@@ -23,9 +23,10 @@ Detalle completo de cada uno en el punto #8.1 más abajo. Backend reconstruido y
 
 **Todo #8/#8.1/#8.2/Infusions: código y despliegue completos.** Lo único que queda de esta rama de trabajo es que el usuario confirme en producción que cada caso se comporta como se espera (checklists de arriba) — no queda ninguna pieza de implementación pendiente.
 
+**#21 — ✅ HECHO Y DESPLEGADO (2026-07-23)**, ver detalle propio más abajo: casos estructurados (enhancement de arma/armadura, override de característica) cubiertos y verificados en el VPS con datos reales. Formula-based (Dragon Masks) y bono plano de característica (Belt of Dwarvenkind) quedan fuera de alcance a propósito.
+
 **Sin empezar / pendiente, por tamaño/prioridad:**
 - **#9** — panel de admin. Con requisito explícito anotado: los formularios deben adaptarse al "tipo de mecánica" elegido (la precondición — el esquema común de #8.2 — ya está lista). Sigue sin empezar.
-- **#21** — items de Aurora sin bonificadores mecánicos (`bonusAc`/`bonusToHit`/`set*To` siempre en 0/null), mismo patrón que #10 pero para items. Identificado, consulta de auditoría ya preparada (`aurora_item_audit.sql`, volcado generado pero no leído a fondo todavía). Sin empezar.
 - **#11** — Combat tab vs Spells al añadir hechizos: no reproducible la última vez, dejar abierto por si reaparece con un repro más preciso.
 - **#12** — limpieza de `withOpacity` (deprecado, no urgente, no rompe nada hoy).
 - **#13** — dominio/despliegue, no es código, para cuando se acerque release.
