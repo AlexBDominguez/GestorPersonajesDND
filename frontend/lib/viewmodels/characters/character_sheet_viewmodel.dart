@@ -204,11 +204,20 @@ class CharacterSheetViewModel extends ChangeNotifier {
   /// El arma equipada actualmente designada como off-hand, o null si no hay ninguna.
   InventoryItem? get offhandWeapon => _inventoryItems
       .where((i) =>
-          i.equipped &&
+          _isActiveItem(i) &&
           i.id == _offhandWeaponId &&
           i.damageDice != null &&
           i.damageDice!.isNotEmpty)
       .firstOrNull;
+
+  /// Un item aplica su efecto si está equipado, salvo que requiera sintonización
+  /// (attunement), en cuyo caso hace falta estar sintonizado en vez de solo equipado
+  /// -- mismo criterio que ya usa el backend (PlayerCharacterService,
+  /// requiresAttunementEffective ? ci.isAttuned() : ci.isEquipped()). Antes esto solo
+  /// miraba `equipped`, así que un arma mágica que requiere attunement (ej. Sunforger)
+  /// nunca aparecía en Combat aunque estuviera sintonizada.
+  bool _isActiveItem(InventoryItem i) =>
+      i.requiresAttunement ? i.attuned : i.equipped;
 
   /// True si el personaje eligió el fighting style "Two-Weapon Fighting".
   /// Antes comprobaba una ClassFeature con indexName 'two-weapon-fighting' que nunca
@@ -264,7 +273,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
   List<RacialTrait> get racialTraits => _racialTraits;
   List<InventoryItem> _inventoryItems = [];
   List<InventoryItem> get equippedWeapons => _inventoryItems
-      .where((i) => i.equipped &&
+      .where((i) => _isActiveItem(i) &&
           i.damageDice != null &&
           i.damageDice!.isNotEmpty)
       .toList();
