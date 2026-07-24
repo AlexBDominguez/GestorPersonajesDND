@@ -474,4 +474,59 @@ class ContentAdminService {
         if (setWisTo != null) 'setWisTo': setWisTo,
         if (setChaTo != null) 'setChaTo': setChaTo,
       });
+
+  Future<ContentCreateResult> createBackground({
+    required String indexName,
+    required String name,
+    required String description,
+    List<String>? skillProficiencies,
+    List<String>? toolProficiencies,
+    List<String>? languages,
+    int languageOptions = 0,
+    String? feature,
+    String? featureDescription,
+    List<String>? personalityTraits,
+    List<String>? ideals,
+    List<String>? bonds,
+    List<String>? flaws,
+  }) =>
+      _post('/api/backgrounds', {
+        'indexName': indexName,
+        'name': name,
+        'description': description,
+        if (skillProficiencies != null) 'skillProficiencies': skillProficiencies,
+        if (toolProficiencies != null) 'toolProficiencies': toolProficiencies,
+        if (languages != null) 'languages': languages,
+        'languageOptions': languageOptions,
+        if (feature != null) 'feature': feature,
+        if (featureDescription != null) 'featureDescription': featureDescription,
+        if (personalityTraits != null) 'personalityTraits': personalityTraits,
+        if (ideals != null) 'ideals': ideals,
+        if (bonds != null) 'bonds': bonds,
+        if (flaws != null) 'flaws': flaws,
+      });
+
+  // #9: creación manual de feats homebrew. effectModifierType/Value son el bono numérico
+  // genérico de fallback que ya lee PendingTaskService.applyFeatEffects (ver Feat.java) --
+  // feats con lógica más compleja seguirán necesitando código dedicado, igual que hoy.
+  Future<ContentCreateResult> createFeat({
+    required String indexName,
+    required String name,
+    required String description,
+    List<String>? prerequisites,
+    String? effectModifierType,
+    String? effectModifierValue,
+    int? choiceProficiencyCount,
+    List<int>? grantedSpellIds,
+  }) =>
+      _post('/api/feats', {
+        'indexName': indexName,
+        'name': name,
+        'description': description,
+        if (prerequisites != null) 'prerequisites': prerequisites,
+        if (effectModifierType != null) 'effectModifierType': effectModifierType,
+        if (effectModifierValue != null) 'effectModifierValue': effectModifierValue,
+        if (choiceProficiencyCount != null) 'choiceProficiencyCount': choiceProficiencyCount,
+        if (grantedSpellIds != null) 'grantedSpellIds': grantedSpellIds,
+      });
 }

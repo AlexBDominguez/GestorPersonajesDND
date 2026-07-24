@@ -27,7 +27,15 @@ const _contentTypes = <String, String>{
   'RACE': 'Race',
   'SUBRACE': 'Subrace',
   'ITEM': 'Item',
+  'BACKGROUND': 'Background',
+  'FEAT': 'Feat',
 };
+
+const _effectModifierTypes = <String>[
+  'AC', 'ATTACK_ROLL', 'DAMAGE', 'SAVING_THROW', 'ABILITY_CHECK', 'SKILL_CHECK',
+  'INITIATIVE', 'SPEED', 'HP_MAX', 'ADVANTAGE', 'DISADVANTAGE', 'RESISTANCE',
+  'VULNERABILITY', 'IMMUNITY',
+];
 
 const _abilityKeys = <String, String>{
   'str': 'Strength',
@@ -91,6 +99,25 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
     for (final k in _abilityKeys.keys) k: TextEditingController(),
   };
 
+  // Background
+  final _skillProficienciesCtrl = TextEditingController();
+  final _toolProficienciesCtrl = TextEditingController();
+  final _languagesCtrl = TextEditingController();
+  final _languageOptionsCtrl = TextEditingController(text: '0');
+  final _featureCtrl = TextEditingController();
+  final _featureDescCtrl = TextEditingController();
+  final _personalityTraitsCtrl = TextEditingController();
+  final _idealsCtrl = TextEditingController();
+  final _bondsCtrl = TextEditingController();
+  final _flawsCtrl = TextEditingController();
+
+  // Feat
+  final _prerequisitesCtrl = TextEditingController();
+  String? _effectModifierType;
+  final _effectModifierValueCtrl = TextEditingController();
+  final _choiceProficiencyCountCtrl = TextEditingController();
+  final List<SpellSearchOption> _grantedSpells = [];
+
   bool _saving = false;
   String? _error;
 
@@ -143,6 +170,16 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
   }
 
   String? _required(String? v) => (v == null || v.trim().isEmpty) ? 'Required' : null;
+
+  List<String>? _splitCommas(TextEditingController c) {
+    final items = c.text.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    return items.isEmpty ? null : items;
+  }
+
+  List<String>? _splitLines(TextEditingController c) {
+    final items = c.text.split('\n').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    return items.isEmpty ? null : items;
+  }
 
   Widget _sectionTitle(String label) => Padding(
         padding: const EdgeInsets.only(top: 8, bottom: 4),
@@ -428,9 +465,161 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
           const SizedBox(height: 8),
           _abilityBonusRow(_setToCtrls, hint: ''),
         ];
+      case 'BACKGROUND':
+        return [
+          _text(_indexNameCtrl, 'Index name (e.g. my-new-background)', icon: Icons.tag, validator: _required),
+          const SizedBox(height: 16),
+          _text(_nameCtrl, 'Name', icon: Icons.badge_outlined, validator: _required),
+          const SizedBox(height: 16),
+          _text(_skillProficienciesCtrl, 'Skill proficiencies (comma-separated)', icon: Icons.checklist),
+          const SizedBox(height: 16),
+          _text(_toolProficienciesCtrl, 'Tool proficiencies (comma-separated)', icon: Icons.build_outlined),
+          const SizedBox(height: 16),
+          _text(_languagesCtrl, 'Languages (comma-separated)', icon: Icons.translate),
+          const SizedBox(height: 16),
+          _text(_languageOptionsCtrl, 'Language options (# player picks)',
+              icon: Icons.tune, keyboardType: TextInputType.number),
+          const SizedBox(height: 16),
+          _text(_featureCtrl, 'Feature name', icon: Icons.star_outline),
+          const SizedBox(height: 16),
+          _text(_featureDescCtrl, 'Feature description', icon: Icons.description_outlined, maxLines: 3),
+          const SizedBox(height: 16),
+          _text(_descCtrl, 'Description', icon: Icons.description_outlined, maxLines: 4, validator: _required),
+          _sectionTitle('Roleplay suggestions (one per line, optional)'),
+          _text(_personalityTraitsCtrl, 'Personality traits', maxLines: 3),
+          const SizedBox(height: 16),
+          _text(_idealsCtrl, 'Ideals', maxLines: 3),
+          const SizedBox(height: 16),
+          _text(_bondsCtrl, 'Bonds', maxLines: 3),
+          const SizedBox(height: 16),
+          _text(_flawsCtrl, 'Flaws', maxLines: 3),
+        ];
+      case 'FEAT':
+        return [
+          _text(_indexNameCtrl, 'Index name (e.g. my-new-feat)', icon: Icons.tag, validator: _required),
+          const SizedBox(height: 16),
+          _text(_nameCtrl, 'Name', icon: Icons.badge_outlined, validator: _required),
+          const SizedBox(height: 16),
+          _text(_descCtrl, 'Description', icon: Icons.description_outlined, maxLines: 4, validator: _required),
+          const SizedBox(height: 16),
+          _text(_prerequisitesCtrl, 'Prerequisites (comma-separated, e.g. Strength 13 or higher)',
+              icon: Icons.rule),
+          _sectionTitle('Fallback numeric bonus (optional)'),
+          DropdownButtonFormField<String?>(
+            initialValue: _effectModifierType,
+            decoration: _decoration('Bonus type', icon: Icons.gps_fixed),
+            dropdownColor: AppTheme.surface,
+            style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
+            isExpanded: true,
+            items: [
+              const DropdownMenuItem<String?>(value: null, child: Text('None')),
+              ..._effectModifierTypes.map((t) => DropdownMenuItem<String?>(value: t, child: Text(t))),
+            ],
+            onChanged: (v) => setState(() => _effectModifierType = v),
+          ),
+          const SizedBox(height: 16),
+          _text(_effectModifierValueCtrl, 'Bonus value (e.g. +1, +10)'),
+          const SizedBox(height: 16),
+          _text(_choiceProficiencyCountCtrl, '"Pick N proficiencies" count (optional, e.g. Skilled = 3)',
+              icon: Icons.checklist, keyboardType: TextInputType.number),
+          _sectionTitle('Granted spells (optional)'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final s in _grantedSpells)
+                Chip(
+                  label: Text(s.label),
+                  onDeleted: () => setState(() => _grantedSpells.remove(s)),
+                ),
+              ActionChip(
+                avatar: const Icon(Icons.add, size: 16),
+                label: const Text('Add spell'),
+                onPressed: _pickGrantedSpell,
+              ),
+            ],
+          ),
+        ];
       default:
         return const [];
     }
+  }
+
+  Future<void> _pickGrantedSpell() async {
+    final chosen = await _showSearchPicker<SpellSearchOption>(
+      title: 'Search spells',
+      search: _service.searchSpells,
+      labelOf: (s) => s.label,
+    );
+    if (chosen != null && !_grantedSpells.any((s) => s.id == chosen.id)) {
+      setState(() => _grantedSpells.add(chosen));
+    }
+  }
+
+  Future<T?> _showSearchPicker<T>({
+    required String title,
+    required Future<List<T>> Function(String) search,
+    required String Function(T) labelOf,
+  }) async {
+    final queryCtrl = TextEditingController();
+    List<T> results = [];
+    bool loading = false;
+
+    return showModalBottomSheet<T>(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(sheetContext).viewInsets.bottom),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: TextField(
+                  controller: queryCtrl,
+                  autofocus: true,
+                  style: GoogleFonts.lato(color: AppTheme.textPrimary),
+                  decoration: InputDecoration(
+                    hintText: title,
+                    hintStyle: GoogleFonts.lato(color: AppTheme.textSecondary),
+                    prefixIcon: const Icon(Icons.search, color: AppTheme.textSecondary),
+                    filled: true,
+                    fillColor: AppTheme.surfaceVariant,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  ),
+                  onSubmitted: (q) async {
+                    setSheetState(() => loading = true);
+                    final r = await search(q);
+                    setSheetState(() { results = r; loading = false; });
+                  },
+                ),
+              ),
+              if (loading)
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(color: AppTheme.primary),
+                ),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: results
+                      .map((r) => ListTile(
+                            title: Text(labelOf(r), style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+                            onTap: () => Navigator.pop(sheetContext, r),
+                          ))
+                      .toList(),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ]),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _submit() async {
@@ -519,6 +708,38 @@ class _CreateContentScreenState extends State<CreateContentScreen> {
             setIntTo: parseOrNull(_setToCtrls['int']!),
             setWisTo: parseOrNull(_setToCtrls['wis']!),
             setChaTo: parseOrNull(_setToCtrls['cha']!),
+          );
+          break;
+        case 'BACKGROUND':
+          await _service.createBackground(
+            indexName: _indexNameCtrl.text.trim(),
+            name: _nameCtrl.text.trim(),
+            description: _descCtrl.text.trim(),
+            skillProficiencies: _splitCommas(_skillProficienciesCtrl),
+            toolProficiencies: _splitCommas(_toolProficienciesCtrl),
+            languages: _splitCommas(_languagesCtrl),
+            languageOptions: int.tryParse(_languageOptionsCtrl.text.trim()) ?? 0,
+            feature: _featureCtrl.text.trim().isEmpty ? null : _featureCtrl.text.trim(),
+            featureDescription:
+                _featureDescCtrl.text.trim().isEmpty ? null : _featureDescCtrl.text.trim(),
+            personalityTraits: _splitLines(_personalityTraitsCtrl),
+            ideals: _splitLines(_idealsCtrl),
+            bonds: _splitLines(_bondsCtrl),
+            flaws: _splitLines(_flawsCtrl),
+          );
+          break;
+        case 'FEAT':
+          await _service.createFeat(
+            indexName: _indexNameCtrl.text.trim(),
+            name: _nameCtrl.text.trim(),
+            description: _descCtrl.text.trim(),
+            prerequisites: _splitCommas(_prerequisitesCtrl),
+            effectModifierType: _effectModifierType,
+            effectModifierValue: _effectModifierValueCtrl.text.trim().isEmpty
+                ? null
+                : _effectModifierValueCtrl.text.trim(),
+            choiceProficiencyCount: int.tryParse(_choiceProficiencyCountCtrl.text.trim()),
+            grantedSpellIds: _grantedSpells.isEmpty ? null : _grantedSpells.map((s) => s.id).toList(),
           );
           break;
       }
