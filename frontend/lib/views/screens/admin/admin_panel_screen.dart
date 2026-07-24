@@ -4,7 +4,7 @@ import 'package:gestor_personajes_dnd/models/admin/admin_service.dart';
 import 'package:gestor_personajes_dnd/models/admin/user_dto.dart';
 import 'package:gestor_personajes_dnd/viewmodels/auth/auth_viewmodel.dart';
 import 'package:gestor_personajes_dnd/views/screens/admin/create_content_screen.dart';
-import 'package:gestor_personajes_dnd/views/screens/admin/create_subclass_feature_screen.dart';
+import 'package:gestor_personajes_dnd/views/screens/admin/create_feature_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -60,10 +60,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.auto_fix_high, color: AppTheme.textSecondary),
-            tooltip: 'Add Subclass Feature',
+            tooltip: 'Add Feature',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const CreateSubclassFeatureScreen()),
+              MaterialPageRoute(builder: (_) => const CreateFeatureScreen()),
             ),
           ),
           IconButton(

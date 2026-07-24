@@ -78,6 +78,19 @@ class RaceAdminOption {
       );
 }
 
+/// Subraza, para el desplegable en cascada Race -> Subrace del formulario de features (#9).
+class SubraceAdminOption {
+  final int id;
+  final String name;
+
+  const SubraceAdminOption({required this.id, required this.name});
+
+  factory SubraceAdminOption.fromJson(Map<String, dynamic> j) => SubraceAdminOption(
+        id:   (j['id'] as num).toInt(),
+        name: j['name'] as String? ?? '',
+      );
+}
+
 /// Resultado genérico de crear cualquier tipo de contenido (#9) -- solo lo que la pantalla
 /// necesita confirmar (nombre, para el snackbar de éxito).
 class ContentCreateResult {
@@ -192,6 +205,106 @@ class ContentAdminService {
     throw Exception(msg);
   }
 
+  // #9: crea una ClassFeature (clase base) -- no admite GRANT_PROFICIENCY (sin tabla de
+  // "class proficiency grant" en el esquema, ver AdminClassFeatureService).
+  Future<SubclassFeatureResult> createClassFeature({
+    required int classId,
+    required String indexName,
+    required String name,
+    required int level,
+    required String description,
+    required String mechanicType,
+    String? resourceMaxFormula,
+    String? resourceRecoveryType,
+    String? bonusTargetField,
+    String? bonusFormula,
+    String? bonusCondition,
+    int? spellId,
+  }) async {
+    final res = await _api.post(
+      '/api/classes/$classId/features',
+      body: {
+        'indexName': indexName,
+        'name': name,
+        'level': level,
+        'description': description,
+        'mechanicType': mechanicType,
+        if (resourceMaxFormula != null) 'resourceMaxFormula': resourceMaxFormula,
+        if (resourceRecoveryType != null) 'resourceRecoveryType': resourceRecoveryType,
+        if (bonusTargetField != null) 'bonusTargetField': bonusTargetField,
+        if (bonusFormula != null) 'bonusFormula': bonusFormula,
+        if (bonusCondition != null) 'bonusCondition': bonusCondition,
+        if (spellId != null) 'spellId': spellId,
+      },
+    );
+    if (res.statusCode == 200) {
+      return SubclassFeatureResult.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+    }
+    if (res.statusCode == 409) {
+      throw Exception('That indexName is already in use. Please choose a different one.');
+    }
+    final body = res.body;
+    String msg = 'Failed to create feature (${res.statusCode})';
+    if (body.isNotEmpty) {
+      try { final decoded = jsonDecode(body); msg = decoded is String ? decoded : msg; } catch (_) { msg = body; }
+    }
+    throw Exception(msg);
+  }
+
+  // #9: crea un RacialTrait con su mecánica (#8.2 generalizado a razas), atado a una Race o
+  // Subrace. GRANT_SPELL usa RacialTraitSpell (con su propio requiredLevel, ver
+  // AdminRacialTraitService) -- funciona igual para Race y Subrace.
+  Future<ContentCreateResult> createRacialTrait({
+    required String targetType, // "RACE" | "SUBRACE"
+    required int targetId,
+    required String indexName,
+    required String name,
+    required String description,
+    required String traitType,
+    required String mechanicType,
+    String? resourceMaxFormula,
+    String? resourceRecoveryType,
+    String? bonusTargetField,
+    String? bonusFormula,
+    String? bonusCondition,
+    int? spellId,
+    int spellRequiredLevel = 1,
+    int? proficiencyId,
+  }) async {
+    final res = await _api.post(
+      '/api/races/traits',
+      body: {
+        'targetType': targetType,
+        'targetId': targetId,
+        'indexName': indexName,
+        'name': name,
+        'description': description,
+        'traitType': traitType,
+        'mechanicType': mechanicType,
+        if (resourceMaxFormula != null) 'resourceMaxFormula': resourceMaxFormula,
+        if (resourceRecoveryType != null) 'resourceRecoveryType': resourceRecoveryType,
+        if (bonusTargetField != null) 'bonusTargetField': bonusTargetField,
+        if (bonusFormula != null) 'bonusFormula': bonusFormula,
+        if (bonusCondition != null) 'bonusCondition': bonusCondition,
+        if (spellId != null) 'spellId': spellId,
+        'spellRequiredLevel': spellRequiredLevel,
+        if (proficiencyId != null) 'proficiencyId': proficiencyId,
+      },
+    );
+    if (res.statusCode == 200) {
+      return ContentCreateResult.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+    }
+    if (res.statusCode == 409) {
+      throw Exception('That indexName is already in use. Please choose a different one.');
+    }
+    final body = res.body;
+    String msg = 'Failed to create trait (${res.statusCode})';
+    if (body.isNotEmpty) {
+      try { final decoded = jsonDecode(body); msg = decoded is String ? decoded : msg; } catch (_) { msg = body; }
+    }
+    throw Exception(msg);
+  }
+
   // ── Listas para desplegables ────────────────────────────────────────────
 
   Future<List<ClassAdminOption>> getAllClasses() async {
@@ -212,6 +325,16 @@ class ContentAdminService {
           .toList();
     }
     throw Exception('Failed to load races (${res.statusCode})');
+  }
+
+  Future<List<SubraceAdminOption>> getSubracesForRace(int raceId) async {
+    final res = await _api.get('/api/subraces/race/$raceId');
+    if (res.statusCode == 200) {
+      return (jsonDecode(res.body) as List)
+          .map((e) => SubraceAdminOption.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    throw Exception('Failed to load subraces (${res.statusCode})');
   }
 
   // ── Creación de contenido ────────────────────────────────────────────────
