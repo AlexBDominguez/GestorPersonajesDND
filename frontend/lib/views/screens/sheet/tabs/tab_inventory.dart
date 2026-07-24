@@ -196,6 +196,77 @@ class _TabInventoryState extends State<TabInventory> {
     }
   }
 
+  // Base weapon para plantillas de arma mágica genérica de Aurora (#21 Fase 2, ej. Acheron
+  // Blade = "cualquier espada"): el catálogo no trae dados de daño propios, así que el jugador
+  // elige a qué arma real concreta corresponde SU instancia -- solo afecta a qué se muestra en
+  // Combat, el bono numérico del item ya se aplica igual sin esto.
+  Future<void> _selectBaseWeapon(InventoryItem item, String weaponIndexName, String weaponName) async {
+    final idx = _items.indexWhere((i) => i.id == item.id);
+    if (idx != -1) {
+      setState(() => _items[idx] = item.copyWith(
+          baseWeaponIndexName: weaponIndexName, baseWeaponName: weaponName));
+    }
+    try {
+      final updated = await _service.selectBaseWeapon(widget.character.id, item.id, weaponIndexName);
+      if (mounted) {
+        final i = _items.indexWhere((it) => it.id == item.id);
+        if (i != -1) setState(() => _items[i] = updated);
+      }
+      unawaited(widget.vm.silentRefresh());
+    } catch (e) {
+      if (idx != -1 && mounted) setState(() => _items[idx] = item);
+      if (mounted) _showError(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _showBaseWeaponPicker(InventoryItem item) async {
+    List<ItemCatalogEntry> catalog;
+    try {
+      catalog = await _service.searchItems();
+    } catch (e) {
+      if (mounted) _showError(e.toString().replaceFirst('Exception: ', ''));
+      return;
+    }
+    final weapons = catalog
+        .where((e) => e.indexName != null && e.damageDice != null && e.damageDice!.isNotEmpty)
+        .toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+    if (!mounted) return;
+    final chosen = await showModalBottomSheet<ItemCatalogEntry>(
+      context: context,
+      backgroundColor: AppTheme.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text('What weapon is "${item.name}"?',
+                style: GoogleFonts.libreBaskerville(
+                    color: AppTheme.primary, fontSize: 16, fontWeight: FontWeight.bold)),
+          ),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              children: weapons
+                  .map((w) => ListTile(
+                        title: Text(w.name,
+                            style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+                        subtitle: Text(w.statSummary,
+                            style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 12)),
+                        onTap: () => Navigator.pop(context, w),
+                      ))
+                  .toList(),
+            ),
+          ),
+        ]),
+      ),
+    );
+    if (chosen == null) return;
+    await _selectBaseWeapon(item, chosen.indexName!, chosen.name);
+  }
+
   Future<void> _removeItem(InventoryItem item) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -367,6 +438,7 @@ class _TabInventoryState extends State<TabInventory> {
             onDropped: (item) => _attuneWithUndo(item),
             onRemoveAttuned: (item) => _toggleAttuned(item),
             onRemove: (item) => _removeItem(item),
+            onSetBaseWeapon: (item) => _showBaseWeaponPicker(item),
           ),
           const SizedBox(height: 24),
 
@@ -379,6 +451,7 @@ class _TabInventoryState extends State<TabInventory> {
             onDropped: (item) => _equipWithUndo(item),
             onUnequip: (item) => _toggleEquipped(item),
             onRemove: (item) => _removeItem(item),
+            onSetBaseWeapon: (item) => _showBaseWeaponPicker(item),
           ),
           const SizedBox(height: 24),
 
@@ -446,6 +519,8 @@ class _TabInventoryState extends State<TabInventory> {
                   onDragEnded: () => setState(() => _isDragging = false),
                   onQuantityChanged: (delta) => _changeQuantity(item, delta),
                   onInfuse: _isArtificer ? () => _showInfusionPicker(item) : null,
+                  onSetBaseWeapon:
+                      item.needsBaseWeaponChoice ? () => _showBaseWeaponPicker(item) : null,
                 )),
           const SizedBox(height: 16),
         ]),
@@ -477,6 +552,7 @@ class _EquippedDropZone extends StatefulWidget {
   final void Function(InventoryItem) onDropped;
   final void Function(InventoryItem) onUnequip;
   final void Function(InventoryItem) onRemove;
+  final void Function(InventoryItem)? onSetBaseWeapon;
 
   const _EquippedDropZone({
     required this.items,
@@ -486,6 +562,7 @@ class _EquippedDropZone extends StatefulWidget {
     required this.onDropped,
     required this.onUnequip,
     required this.onRemove,
+    this.onSetBaseWeapon,
   });
 
   @override
@@ -568,6 +645,9 @@ class _EquippedDropZoneState extends State<_EquippedDropZone> {
                   vm: widget.vm,
                   onUnequip: () => widget.onUnequip(item),
                   onRemove: () => widget.onRemove(item),
+                  onSetBaseWeapon: item.needsBaseWeaponChoice && widget.onSetBaseWeapon != null
+                      ? () => widget.onSetBaseWeapon!(item)
+                      : null,
                 )),
           ]),
         );
@@ -585,6 +665,7 @@ class _AttunedDropZone extends StatefulWidget {
   final void Function(InventoryItem) onDropped;
   final void Function(InventoryItem) onRemoveAttuned;
   final void Function(InventoryItem) onRemove;
+  final void Function(InventoryItem)? onSetBaseWeapon;
 
   const _AttunedDropZone({
     required this.items,
@@ -594,6 +675,7 @@ class _AttunedDropZone extends StatefulWidget {
     required this.onDropped,
     required this.onRemoveAttuned,
     required this.onRemove,
+    this.onSetBaseWeapon,
   });
 
   @override
@@ -678,6 +760,9 @@ class _AttunedDropZoneState extends State<_AttunedDropZone> {
                   showWeight: widget.showWeight,
                   onRemoveAttuned: () => widget.onRemoveAttuned(item),
                   onRemove: () => widget.onRemove(item),
+                  onSetBaseWeapon: item.needsBaseWeaponChoice && widget.onSetBaseWeapon != null
+                      ? () => widget.onSetBaseWeapon!(item)
+                      : null,
                 )),
           ]),
         );
@@ -695,6 +780,7 @@ class _DraggableItemTile extends StatelessWidget {
   final VoidCallback onDragEnded;
   final void Function(int delta)? onQuantityChanged;
   final VoidCallback? onInfuse;
+  final VoidCallback? onSetBaseWeapon;
 
   const _DraggableItemTile({
     required this.item,
@@ -704,6 +790,7 @@ class _DraggableItemTile extends StatelessWidget {
     required this.onDragEnded,
     this.onQuantityChanged,
     this.onInfuse,
+    this.onSetBaseWeapon,
   });
 
   @override
@@ -723,12 +810,20 @@ class _DraggableItemTile extends StatelessWidget {
         onSelected: (v) {
           if (v == 'remove') onRemove();
           if (v == 'infuse') onInfuse?.call();
+          if (v == 'set_base_weapon') onSetBaseWeapon?.call();
         },
         itemBuilder: (_) => [
           if (onInfuse != null)
             PopupMenuItem(
               value: 'infuse',
               child: Text(item.infusionName != null ? 'Change infusion' : 'Infuse…',
+                  style: GoogleFonts.lato(color: AppTheme.primary)),
+            ),
+          if (onSetBaseWeapon != null)
+            PopupMenuItem(
+              value: 'set_base_weapon',
+              child: Text(
+                  item.baseWeaponName != null ? 'Change base weapon' : 'Set base weapon…',
                   style: GoogleFonts.lato(color: AppTheme.primary)),
             ),
           PopupMenuItem(
@@ -800,6 +895,7 @@ class _EquippedItemTile extends StatelessWidget {
   final CharacterSheetViewModel vm;
   final VoidCallback onUnequip;
   final VoidCallback onRemove;
+  final VoidCallback? onSetBaseWeapon;
 
   const _EquippedItemTile({
     required this.item,
@@ -807,6 +903,7 @@ class _EquippedItemTile extends StatelessWidget {
     required this.vm,
     required this.onUnequip,
     required this.onRemove,
+    this.onSetBaseWeapon,
   });
 
   @override
@@ -828,8 +925,16 @@ class _EquippedItemTile extends StatelessWidget {
           if (v == 'remove') onRemove();
           if (v == 'set_offhand') vm.setOffhandWeapon(item.id);
           if (v == 'remove_offhand') vm.setOffhandWeapon(null);
+          if (v == 'set_base_weapon') onSetBaseWeapon?.call();
         },
         itemBuilder: (_) => [
+          if (onSetBaseWeapon != null)
+            PopupMenuItem(
+              value: 'set_base_weapon',
+              child: Text(
+                  item.baseWeaponName != null ? 'Change base weapon' : 'Set base weapon…',
+                  style: GoogleFonts.lato(color: AppTheme.primary)),
+            ),
           if (canBeOffhand && !isOffhand)
             PopupMenuItem(
               value: 'set_offhand',
@@ -879,11 +984,13 @@ class _AttunedItemTile extends StatelessWidget {
   final bool showWeight;
   final VoidCallback onRemoveAttuned;
   final VoidCallback onRemove;
+  final VoidCallback? onSetBaseWeapon;
   const _AttunedItemTile({
     required this.item,
     required this.showWeight,
     required this.onRemoveAttuned,
     required this.onRemove,
+    this.onSetBaseWeapon,
   });
 
   @override
@@ -899,8 +1006,16 @@ class _AttunedItemTile extends StatelessWidget {
         onSelected: (v) {
           if (v == 'unattune') onRemoveAttuned();
           if (v == 'remove') onRemove();
+          if (v == 'set_base_weapon') onSetBaseWeapon?.call();
         },
         itemBuilder: (_) => [
+          if (onSetBaseWeapon != null)
+            PopupMenuItem(
+              value: 'set_base_weapon',
+              child: Text(
+                  item.baseWeaponName != null ? 'Change base weapon' : 'Set base weapon…',
+                  style: GoogleFonts.lato(color: AppTheme.primary)),
+            ),
           PopupMenuItem(
             value: 'unattune',
             child: Text('Remove attunement',
@@ -1084,6 +1199,27 @@ class _ItemTileContent extends StatelessWidget {
                         color: const Color(0xFFC8A45A),
                         fontSize: 12,
                         fontWeight: FontWeight.bold)),
+              ],
+              // Plantilla de arma mágica genérica de Aurora (#21 Fase 2, ej. Acheron Blade =
+              // "cualquier espada") — mismo patrón de badge que Infused, con el arma elegida.
+              if (item.baseWeaponName != null) ...[
+                const Text('  ·  ',
+                    style:
+                        TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                Text('Base weapon: ${item.baseWeaponName}',
+                    style: GoogleFonts.lato(
+                        color: AppTheme.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold)),
+              ] else if (item.needsBaseWeaponChoice) ...[
+                const Text('  ·  ',
+                    style:
+                        TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                Text('Base weapon not set',
+                    style: GoogleFonts.lato(
+                        color: AppTheme.accent,
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic)),
               ],
             ]),
           ]),

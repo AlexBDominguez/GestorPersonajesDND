@@ -26,6 +26,9 @@ public class CharacterInventoryDto {
     private String infusionDescription;
     private String infusionBonusTarget;
     private int infusionBonusValue;
+    private boolean needsBaseWeaponChoice;
+    private String baseWeaponIndexName;
+    private String baseWeaponName;
 
     // Getters y Setters
 
@@ -228,5 +231,29 @@ public class CharacterInventoryDto {
 
     public void setInfusionBonusValue(int infusionBonusValue) {
         this.infusionBonusValue = infusionBonusValue;
+    }
+
+    public boolean isNeedsBaseWeaponChoice() {
+        return needsBaseWeaponChoice;
+    }
+
+    public void setNeedsBaseWeaponChoice(boolean needsBaseWeaponChoice) {
+        this.needsBaseWeaponChoice = needsBaseWeaponChoice;
+    }
+
+    public String getBaseWeaponIndexName() {
+        return baseWeaponIndexName;
+    }
+
+    public void setBaseWeaponIndexName(String baseWeaponIndexName) {
+        this.baseWeaponIndexName = baseWeaponIndexName;
+    }
+
+    public String getBaseWeaponName() {
+        return baseWeaponName;
+    }
+
+    public void setBaseWeaponName(String baseWeaponName) {
+        this.baseWeaponName = baseWeaponName;
     }
 }

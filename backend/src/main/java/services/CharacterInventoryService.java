@@ -269,6 +269,36 @@ public class CharacterInventoryService {
         return toDto(inventory);
     }
 
+    // Base weapon para plantillas de arma mágica genérica de Aurora (#21 Fase 2, ej. Acheron
+    // Blade = "cualquier espada"): el catálogo (Item) se queda sin damageDice/damageType/
+    // weaponRange propios -- el jugador elige a qué arma real corresponde SU instancia
+    // concreta, y toDto() usa esos datos del arma elegida en vez de los (vacíos) del catálogo.
+    @Transactional
+    public CharacterInventoryDto selectBaseWeapon(Long inventoryId, String weaponIndexName) {
+        CharacterInventory inventory = inventoryRepository.findById(inventoryId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inventory item not found"));
+        if (!inventory.getItem().isNeedsBaseWeaponChoice()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This item does not need a base weapon choice");
+        }
+        Item baseWeapon = itemRepository.findByIndexName(weaponIndexName)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Base weapon not found"));
+        if (baseWeapon.getDamageDice() == null || baseWeapon.getDamageDice().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chosen item is not a real weapon");
+        }
+        inventory.setBaseWeaponIndexName(baseWeapon.getIndexName());
+        inventoryRepository.save(inventory);
+        return toDto(inventory);
+    }
+
+    @Transactional
+    public CharacterInventoryDto clearBaseWeapon(Long inventoryId) {
+        CharacterInventory inventory = inventoryRepository.findById(inventoryId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inventory item not found"));
+        inventory.setBaseWeaponIndexName(null);
+        inventoryRepository.save(inventory);
+        return toDto(inventory);
+    }
+
     private CharacterInventoryDto toDto(CharacterInventory inventory) {
         CharacterInventoryDto dto = new CharacterInventoryDto();
         dto.setId(inventory.getId());
@@ -285,10 +315,23 @@ public class CharacterInventoryService {
         dto.setNotes(inventory.getNotes());
         dto.setRequiresAttunement(effectiveRequiresAttunement(inventory));
         dto.setDescription(inventory.getItem().getDescription());
-        dto.setDamageDice(inventory.getItem().getDamageDice());
-        dto.setDamageType(inventory.getItem().getDamageType());
-        dto.setWeaponRange(inventory.getItem().getWeaponRange());
-        dto.setWeaponProperties(inventory.getItem().getWeaponProperties());
+
+        // Plantilla de arma genérica (#21 Fase 2): usar los datos del arma real elegida por el
+        // jugador para ESTA instancia en vez de los del catálogo, que se quedan vacíos a propósito.
+        Item displayWeapon = inventory.getItem();
+        dto.setNeedsBaseWeaponChoice(inventory.getItem().isNeedsBaseWeaponChoice());
+        if (inventory.getBaseWeaponIndexName() != null) {
+            Item resolved = itemRepository.findByIndexName(inventory.getBaseWeaponIndexName()).orElse(null);
+            if (resolved != null) {
+                displayWeapon = resolved;
+                dto.setBaseWeaponIndexName(resolved.getIndexName());
+                dto.setBaseWeaponName(resolved.getName());
+            }
+        }
+        dto.setDamageDice(displayWeapon.getDamageDice());
+        dto.setDamageType(displayWeapon.getDamageType());
+        dto.setWeaponRange(displayWeapon.getWeaponRange());
+        dto.setWeaponProperties(displayWeapon.getWeaponProperties());
         dto.setBonusAc(inventory.getItem().getBonusAc());
         dto.setBonusToHit(inventory.getItem().getBonusToHit());
         dto.setBonusSavingThrows(inventory.getItem().getBonusSavingThrows());

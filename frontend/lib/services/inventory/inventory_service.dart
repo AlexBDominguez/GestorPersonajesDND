@@ -127,6 +127,32 @@ class InventoryService {
       throw Exception('Failed to remove infusion (${res.statusCode})');
     }
 
+    // Base weapon para plantillas de arma mágica genérica de Aurora (#21 Fase 2, ej. Acheron
+    // Blade = "cualquier espada") — elige qué arma real concreta representa esta instancia.
+    Future<InventoryItem> selectBaseWeapon(
+        int characterId, int inventoryId, String weaponIndexName) async {
+      final res = await _api.post(
+        '/api/characters/$characterId/inventory/$inventoryId/select-base-weapon',
+        body: {'weaponIndexName': weaponIndexName},
+      );
+      if (res.statusCode == 200) {
+        return InventoryItem.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      }
+      if (res.statusCode == 409) throw Exception('This item does not need a base weapon choice');
+      if (res.statusCode == 404) throw Exception('Base weapon not found');
+      throw Exception('Failed to select base weapon (${res.statusCode})');
+    }
+
+    Future<InventoryItem> clearBaseWeapon(int characterId, int inventoryId) async {
+      final res = await _api.post(
+        '/api/characters/$characterId/inventory/$inventoryId/clear-base-weapon',
+      );
+      if (res.statusCode == 200) {
+        return InventoryItem.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      }
+      throw Exception('Failed to clear base weapon (${res.statusCode})');
+    }
+
     // ── Money ──────────────────────────────────────────────────
     /// Returns updated money map: {'platinum':0,'gold':0,'electrum':0,'silver':0,'copper':0}
     Future<Map<String, int>> getMoney(int characterId) async {

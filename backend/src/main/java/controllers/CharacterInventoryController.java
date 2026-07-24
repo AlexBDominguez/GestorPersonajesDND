@@ -128,4 +128,25 @@ public class CharacterInventoryController {
         verifyOwnership(characterId);
         return ResponseEntity.ok(inventoryService.removeInfusion(inventoryId));
     }
+
+    @PostMapping("/{inventoryId}/select-base-weapon")
+    public ResponseEntity<CharacterInventoryDto> selectBaseWeapon(
+            @PathVariable Long characterId,
+            @PathVariable Long inventoryId,
+            @RequestBody Map<String, String> body) {
+        verifyOwnership(characterId);
+        String weaponIndexName = body.get("weaponIndexName");
+        if (weaponIndexName == null || weaponIndexName.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "weaponIndexName is required");
+        }
+        return ResponseEntity.ok(inventoryService.selectBaseWeapon(inventoryId, weaponIndexName));
+    }
+
+    @PostMapping("/{inventoryId}/clear-base-weapon")
+    public ResponseEntity<CharacterInventoryDto> clearBaseWeapon(
+            @PathVariable Long characterId,
+            @PathVariable Long inventoryId) {
+        verifyOwnership(characterId);
+        return ResponseEntity.ok(inventoryService.clearBaseWeapon(inventoryId));
+    }
 }

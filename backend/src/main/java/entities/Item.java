@@ -74,6 +74,13 @@ public class Item {
     private Integer setWisTo;
     private Integer setChaTo;
 
+    // true si este item-catálogo es una plantilla de arma mágica de Aurora que aplica a
+    // "cualquier arma de tipo X" (ej. Acheron Blade = cualquier espada) en vez de un arma
+    // concreta -- el jugador debe elegir a qué arma real corresponde en CADA instancia de
+    // inventario (CharacterInventory.baseWeaponIndexName), no aquí. Ver AuroraItemMapper
+    // #applyBaseWeaponData y Aurora_Fixes.md #21 Fase 2.
+    private boolean needsBaseWeaponChoice = false;
+
     public Item(){}
 
     public Long getId() {
@@ -288,4 +295,7 @@ public class Item {
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }
+
+    public boolean isNeedsBaseWeaponChoice() { return needsBaseWeaponChoice; }
+    public void setNeedsBaseWeaponChoice(boolean needsBaseWeaponChoice) { this.needsBaseWeaponChoice = needsBaseWeaponChoice; }
 }

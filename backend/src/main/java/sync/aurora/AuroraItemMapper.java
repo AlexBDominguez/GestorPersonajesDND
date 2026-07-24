@@ -202,6 +202,10 @@ public class AuroraItemMapper {
         String candidate = weaponRef.split("\\|\\|")[0].split(",")[0].trim();
         if (candidate.isEmpty() || candidate.startsWith("(")
                 || candidate.contains("ID_INTERNAL") || candidate.contains("ID_WOTC")) {
+            // Category reference (e.g. "any sword") or a compound requirement expression --
+            // no single base weapon to copy, the player has to pick one (Aurora_Fixes.md #21
+            // Fase 2, CharacterInventory.baseWeaponIndexName).
+            item.setNeedsBaseWeaponChoice(true);
             return;
         }
         itemRepo.findByNameIgnoreCase(candidate).stream()

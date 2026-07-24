@@ -38,6 +38,14 @@ public class CharacterInventory {
     @Column(name = "infusion_index_name")
     private String infusionIndexName;
 
+    // index_name del Item-arma real (ej. "longsword") que representa esta instancia concreta de
+    // un objeto-plantilla (Item.needsBaseWeaponChoice = true, ej. Acheron Blade = "cualquier
+    // espada"). Null si el item no es una plantilla o el jugador aún no ha elegido. Solo afecta a
+    // qué dados de daño/tipo/alcance se muestran (CharacterInventoryService.toDto) -- el bono
+    // numérico del item ya se aplica igual sin esto, ver #21 en Aurora_Fixes.md.
+    @Column(name = "base_weapon_index_name")
+    private String baseWeaponIndexName;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
@@ -115,6 +123,14 @@ public class CharacterInventory {
 
     public void setInfusionIndexName(String infusionIndexName) {
         this.infusionIndexName = infusionIndexName;
+    }
+
+    public String getBaseWeaponIndexName() {
+        return baseWeaponIndexName;
+    }
+
+    public void setBaseWeaponIndexName(String baseWeaponIndexName) {
+        this.baseWeaponIndexName = baseWeaponIndexName;
     }
 
 

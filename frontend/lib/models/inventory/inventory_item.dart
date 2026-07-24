@@ -26,6 +26,9 @@ class InventoryItem {
   final String? infusionDescription;
   final String? infusionBonusTarget;
   final int infusionBonusValue;
+  final bool needsBaseWeaponChoice;
+  final String? baseWeaponIndexName;
+  final String? baseWeaponName;
 
   const InventoryItem({
     required this.id,
@@ -51,6 +54,9 @@ class InventoryItem {
     this.infusionDescription,
     this.infusionBonusTarget,
     this.infusionBonusValue = 0,
+    this.needsBaseWeaponChoice = false,
+    this.baseWeaponIndexName,
+    this.baseWeaponName,
   });
 
   factory InventoryItem.fromJson(Map<String, dynamic> j) => InventoryItem(
@@ -77,6 +83,9 @@ class InventoryItem {
         infusionDescription: j['infusionDescription'] as String?,
         infusionBonusTarget: j['infusionBonusTarget'] as String?,
         infusionBonusValue: (j['infusionBonusValue'] as num?)?.toInt() ?? 0,
+        needsBaseWeaponChoice: j['needsBaseWeaponChoice'] as bool? ?? false,
+        baseWeaponIndexName:   j['baseWeaponIndexName'] as String?,
+        baseWeaponName:        j['baseWeaponName'] as String?,
       );
 
   // Icono por tipo
@@ -121,6 +130,9 @@ class InventoryItem {
     String? infusionDescription,
     String? infusionBonusTarget,
     int? infusionBonusValue,
+    bool? needsBaseWeaponChoice,
+    String? baseWeaponIndexName,
+    String? baseWeaponName,
   }) => InventoryItem(
         id: id ?? this.id,
         itemId: itemId ?? this.itemId,
@@ -145,6 +157,9 @@ class InventoryItem {
         infusionDescription: infusionDescription ?? this.infusionDescription,
         infusionBonusTarget: infusionBonusTarget ?? this.infusionBonusTarget,
         infusionBonusValue: infusionBonusValue ?? this.infusionBonusValue,
+        needsBaseWeaponChoice: needsBaseWeaponChoice ?? this.needsBaseWeaponChoice,
+        baseWeaponIndexName: baseWeaponIndexName ?? this.baseWeaponIndexName,
+        baseWeaponName: baseWeaponName ?? this.baseWeaponName,
       );
 
   String get costDisplay {
@@ -155,6 +170,7 @@ class InventoryItem {
 // Modelo para buscar items en el catálogo (wizard + manage)
 class ItemCatalogEntry {
   final int id;
+  final String? indexName;
   final String name;
   final String? itemType;
   final String? category;
@@ -172,6 +188,7 @@ class ItemCatalogEntry {
 
   const ItemCatalogEntry({
     required this.id,
+    this.indexName,
     required this.name,
     this.itemType,
     this.category,
@@ -190,6 +207,7 @@ class ItemCatalogEntry {
 
   factory ItemCatalogEntry.fromJson(Map<String, dynamic> j) => ItemCatalogEntry(
         id:                 (j['id'] as num).toInt(),
+        indexName:          j['indexName'] as String?,
         name:               j['name'] as String? ?? '',
         itemType:           j['itemType'] as String?,
         category:           j['category'] as String?,
