@@ -147,6 +147,26 @@ class TabFeatures extends StatelessWidget {
         const SizedBox(height: 8),
         _RacialTraitsSection(character: character, vm: vm),
 
+        // #9: rasgos raciales homebrew con RESOURCE_POOL (RaceResource) -- mismo patrón que
+        // Runes Known/Infusions Known más arriba: _FeatureTile reutilizado sin cambios porque
+        // cada trait sintético resuelve a su RaceResource real por indexName.
+        if (vm.knownRacialResourceFeatures.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 2, bottom: 6, top: 4),
+            child: Row(children: [
+              const Icon(Icons.arrow_right, color: AppTheme.textSecondary, size: 16),
+              Text('Racial Resources',
+                  style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      fontStyle: FontStyle.italic)),
+            ]),
+          ),
+          ...vm.knownRacialResourceFeatures.map((f) => _FeatureTile(feature: f, vm: vm)),
+        ],
+
         const SizedBox(height: 24),
 
         //-- Feats
@@ -425,7 +445,9 @@ class _RacialTraitsSection extends StatelessWidget {
         ),
       );
     }
-    final traits = vm.racialTraits;
+    // Los traits con RESOURCE_POOL (#9) se muestran aparte, vía _FeatureTile con contador --
+    // ver el bloque "Racial Resources" en _buildContent (vm.knownRacialResourceFeatures).
+    final traits = vm.racialTraits.where((t) => t.consumesResourceIndexName == null).toList();
 
     if(traits.isEmpty){
       return _EmptyCard(message: 'No racial traits loaded.');

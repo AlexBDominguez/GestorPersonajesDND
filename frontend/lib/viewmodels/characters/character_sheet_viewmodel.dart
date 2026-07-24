@@ -14,6 +14,7 @@ import 'package:gestor_personajes_dnd/models/wizard/feat_option.dart';
 import 'package:gestor_personajes_dnd/models/wizard/spell_option.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_class_resource_service.dart';
+import 'package:gestor_personajes_dnd/services/characters/character_race_resource_service.dart';
 import 'package:gestor_personajes_dnd/services/characters/character_service.dart';
 import 'package:gestor_personajes_dnd/services/characters/pending_task_service.dart';
 import 'package:gestor_personajes_dnd/services/feats/feat_service.dart';
@@ -159,6 +160,7 @@ class CharacterSheetViewModel extends ChangeNotifier {
   final InventoryService _inventoryService;
   final FeatService _featService;
   final CharacterClassResourceService _resourceService;
+  final CharacterRaceResourceService _raceResourceService;
   List<PendingTask> _pendingTasks = [];
   /// Solo las tareas incompletas — las completadas se muestran en otra pestaña (Features).
   /// También filtra las tareas gestionadas fuera del flujo de pending tasks:
@@ -185,12 +187,14 @@ class CharacterSheetViewModel extends ChangeNotifier {
     InventoryService? inventoryService,
     FeatService? featService,
     CharacterClassResourceService? resourceService,
+    CharacterRaceResourceService? raceResourceService,
   })  : _service = service ?? CharacterService(),
         _spellService = spellService ?? SpellService(),
         _refService = refService ?? WizardReferenceService(),
         _inventoryService = inventoryService ?? InventoryService(),
         _featService = featService ?? FeatService(),
-        _resourceService = resourceService ?? CharacterClassResourceService();
+        _resourceService = resourceService ?? CharacterClassResourceService(),
+        _raceResourceService = raceResourceService ?? CharacterRaceResourceService();
 
   // ── State 
   PlayerCharacter? character;
@@ -689,6 +693,28 @@ class CharacterSheetViewModel extends ChangeNotifier {
     return result;
   }
 
+  /// #9: rasgos raciales homebrew con RESOURCE_POOL (RaceResource) -- mismo patrón que
+  /// knownInfusionFeatures/knownRuneFeatures: envuelve el RacialTrait en un ClassFeature
+  /// sintético para reutilizar _FeatureTile (contador + botón Usar) sin duplicar esa UI.
+  /// Los traits sin consumesResourceIndexName (la inmensa mayoría, puramente descriptivos o
+  /// NUMERIC_BONUS que aplica en silencio) no aparecen aquí -- se quedan en _RacialTraitTile.
+  List<ClassFeature> get knownRacialResourceFeatures {
+    final result = <ClassFeature>[];
+    var syntheticId = -3000;
+    for (final t in racialTraits) {
+      if (t.consumesResourceIndexName == null) continue;
+      result.add(ClassFeature(
+        id: syntheticId--,
+        indexName: t.indexName,
+        name: t.name,
+        level: 1,
+        description: t.description,
+        consumesResourceIndexName: t.consumesResourceIndexName,
+      ));
+    }
+    return result;
+  }
+
   Future<void> _loadSubclassFeaturesIfNeeded() async {
     final id = character?.subclassId;
     if (id == null) return;
@@ -764,7 +790,19 @@ class CharacterSheetViewModel extends ChangeNotifier {
 
   Future<void> _loadCharacterResources() async {
     try {
-      _characterResources = await _resourceService.getResources(characterId);
+      final classResources = await _resourceService.getResources(characterId);
+      // #9: recursos de raza homebrew (RaceResource) -- se fusionan en la misma lista que los
+      // de clase, ya que CharacterRaceResourceDto (backend) serializa al mismo formato JSON a
+      // propósito. _realResourceFor() los encuentra igual por resourceIndexName sin cambios;
+      // isRaceResource (ver el modelo) es lo único que decide a qué endpoint llamar al gastar/
+      // recuperar (ver _mutateRealResource).
+      List<CharacterClassResource> raceResources = const [];
+      try {
+        raceResources = await _raceResourceService.getResources(characterId);
+      } catch (_) {
+        // silencioso -- un personaje sin raza (o sin recursos de raza) no tiene ninguno
+      }
+      _characterResources = [...classResources, ...raceResources];
       notifyListeners();
     } catch (_) {
       // silencioso, igual que el resto de cargas secundarias (_loadClassFeaturesIfNeeded, etc.)
@@ -922,7 +960,9 @@ class CharacterSheetViewModel extends ChangeNotifier {
       await _mutateRealResource(
         real,
         (r) => r.copyWith(currentAmount: r.currentAmount - 1),
-        (key) => _resourceService.spend(characterId, key, 1),
+        (key) => real.isRaceResource
+            ? _raceResourceService.spend(characterId, key, 1)
+            : _resourceService.spend(characterId, key, 1),
       );
       return;
     }
@@ -941,7 +981,9 @@ class CharacterSheetViewModel extends ChangeNotifier {
       await _mutateRealResource(
         real,
         (r) => r.copyWith(currentAmount: r.currentAmount + 1),
-        (key) => _resourceService.recover(characterId, key, 1),
+        (key) => real.isRaceResource
+            ? _raceResourceService.recover(characterId, key, 1)
+            : _resourceService.recover(characterId, key, 1),
       );
       return;
     }
@@ -962,7 +1004,9 @@ class CharacterSheetViewModel extends ChangeNotifier {
       await _mutateRealResource(
         real,
         (r) => r.copyWith(currentAmount: r.currentAmount - spend),
-        (key) => _resourceService.spend(characterId, key, spend),
+        (key) => real.isRaceResource
+            ? _raceResourceService.spend(characterId, key, spend)
+            : _resourceService.spend(characterId, key, spend),
       );
       return;
     }
@@ -981,7 +1025,9 @@ class CharacterSheetViewModel extends ChangeNotifier {
       await _mutateRealResource(
         real,
         (r) => r.copyWith(currentAmount: r.maxAmount),
-        (key) => _resourceService.recover(characterId, key, delta),
+        (key) => real.isRaceResource
+            ? _raceResourceService.recover(characterId, key, delta)
+            : _resourceService.recover(characterId, key, delta),
       );
       return;
     }
