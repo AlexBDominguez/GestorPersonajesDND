@@ -2,7 +2,7 @@
 
 Sistema de gestión de personajes para Dungeons & Dragons 5e, desarrollado con Spring Boot, MySQL y Flutter.
 
-> Estado del Proyecto: El backend está completo con todas las funcionalidades implementadas y operativas, incluyendo las mecánicas de subclases, hechizos de subclase y proficiencias de subclase implementadas en las últimas fases. El frontend está completo para esta versión (lista para presentar), con el flujo de creación de personajes (7 pasos), modo de edición, subida de nivel, pantalla de tareas pendientes y la ficha de personaje interactiva. Hay funcionalidades implementadas en el backend (slots de equipamiento por parte del cuerpo, encumbrance, sistema XP, efectos mecánicos de dotes, Unarmored Defense) que están pendientes de integración en el frontend para una versión futura.
+> Estado del Proyecto: El backend está completo con todas las funcionalidades implementadas y operativas, incluyendo las mecánicas de subclases, hechizos de subclase y proficiencias de subclase, bonificadores mecánicos automáticos (recursos de clase/raza, bonificadores numéricos, hechizos y competencias otorgados), y un panel de administración para crear contenido homebrew (clases, subclases, razas, subrazas, items, backgrounds, feats y sus features/rasgos) que se integra con esas mismas mecánicas sin necesitar código nuevo. El contenido oficial se sincroniza tanto desde la D&D 5e API pública como desde Aurora (fuente adicional con contenido de expansiones no cubierto por la API pública). El frontend está completo para esta versión (lista para presentar), con el flujo de creación de personajes (7 pasos), modo de edición, subida de nivel, pantalla de tareas pendientes, panel de administración y la ficha de personaje interactiva. Hay funcionalidades implementadas en el backend (slots de equipamiento por parte del cuerpo, encumbrance, sistema XP) que están pendientes de integración visual en el frontend para una versión futura.
 
 ## Descripción
 
@@ -21,18 +21,22 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Sistema de subida de nivel automatizado
 - Progresión de características por nivel y clase
 - Sistema de inventario, equipamiento y dinero
-- Catálogo de items sincronizado desde la D&D 5e API (armas, armaduras, herramientas, monturas, etc.)
+- Catálogo de items sincronizado desde la D&D 5e API y desde Aurora (armas, armaduras, herramientas, monturas, etc.)
 - Gestión de idiomas y competencias (proficiencies)
 - Sistema de feats (dotes) y recursos de clase
+- Recursos de raza (paralelos a los de clase) para rasgos raciales con usos limitados
 - Hechizos de subclase (Domain/Oath/Circle spells) aplicados automáticamente al asignar subclase
 - Proficiencias de subclase aplicadas automáticamente al asignar subclase
+- Capa de mecánicas reutilizable por tipo de efecto (Resource Pool, Numeric Bonus, Grant Spell, Grant Proficiency) para features de clase, subclase y rasgos raciales
+- Bonificadores mecánicos automáticos de items (CA, bono de ataque, daño, salvaciones, override de característica) al equipar/sintonizar
 - Gestión de condiciones y efectos activos
 - Resistencias y vulnerabilidades a tipos de daño
 - Sistema de descansos (cortos y largos)
-- Sincronización de datos desde la D&D 5e API
+- Sincronización de datos desde la D&D 5e API pública y desde Aurora (contenido de expansiones no cubierto por la API pública)
+- Panel de administración para crear contenido homebrew (clases, subclases, razas, subrazas, items, backgrounds, feats y sus features/rasgos) con mecánica real, no solo texto
 - Rate limiting para peticiones API
 - Sistema de autenticación JWT con Spring Security
-- Gestión de usuarios del sistema
+- Gestión de usuarios del sistema (incluye cambio de nombre de usuario y contraseña propios)
 
 ## Tecnologías
 
@@ -61,16 +65,17 @@ Sistema completo para gestionar personajes de D&D 5e:
 ### Backend
 
 #### Modelo de Datos
-- 41 entidades JPA con relaciones complejas (OneToMany, ManyToOne, OneToOne, ElementCollection)
+- 51 entidades JPA con relaciones complejas (OneToMany, ManyToOne, OneToOne, ElementCollection)
 - Mapeo de atributos como Map y List
 - Métodos transient para cálculos en tiempo de ejecución
 - Cascadas y eliminación en cascada (orphanRemoval)
 - Relaciones bidireccionales con gestión automática
 
 #### Integración Externa
-- Consumo de la **D&D 5e API** (https://www.dnd5eapi.co)
-- Rate Limiting inteligente con pausas entre peticiones
-- Sincronización automática de:
+Dos fuentes de contenido oficial, ambas vía sincronización (no solo scripts manuales):
+
+- **D&D 5e API** (https://www.dnd5eapi.co) — cobertura base del PHB:
+  - Rate Limiting inteligente con pausas entre peticiones
   - 12 clases oficiales con progresión completa y subclases
   - 9 razas base con bonificadores y sus subrazas (subraces)
   - 13 backgrounds con características únicas
@@ -78,17 +83,15 @@ Sistema completo para gestionar personajes de D&D 5e:
   - 300+ hechizos con información completa
   - Slots de hechizos por clase y nivel
   - 237 items de equipo (armas, armaduras, herramientas, monturas y vehículos)
-  - Competencias (proficiencies) de todo tipo
-  - Idiomas disponibles
-  - Condiciones del juego
-  - Tipos de daño
+  - Competencias (proficiencies) de todo tipo, idiomas, condiciones y tipos de daño
+- **Aurora** — segunda fuente con contenido de expansiones (XGtE, TCE, MToF, ERLW, SCAG, VRGtR, FToD, AI y más) no cubierto por la API pública: clases/subclases, razas/subrazas, items (con bonificadores mecánicos ya estructurados), hechizos y feats. Se sincroniza en su propio flujo (`/api/sync/aurora/*`, ver más abajo) y se mapea a las mismas entidades que el resto del contenido.
 
-> **Nota sobre datos hardcodeados:** Parte del contenido no estaba disponible o estaba incompleto en la D&D 5e API pública y fue generado/insertado manualmente mediante scripts SQL:
+> **Nota sobre datos hardcodeados:** Parte del contenido no estaba disponible en ninguna de las dos fuentes anteriores y fue generado/insertado manualmente mediante scripts SQL en `backend/scripts/` (patch/seed scripts, distintos de los dumps de `backend/backups/`):
 > - 42 feats del Player's Handbook (con descripciones completas y prerrequisitos)
-> - 28+ subclases con sus características por nivel (subclass features)
+> - 28+ subclases PHB con sus características por nivel (subclass features)
 > - Subraces con sus bonificadores raciales
-> - Características de subclase
 > - Hechizos de subclase (Domain/Oath/Circle spells) con su relación a cada subclase
+> - Infraestructura de recursos de clase/raza para features con usos limitados que no llegan estructuradas desde ninguna fuente (Rage, Ki, Channel Divinity, runas de Rune Knight, etc.)
 
 #### Lógica de Negocio
 - Inicialización automática de habilidades y salvaciones al crear personaje
@@ -125,9 +128,11 @@ Sistema completo para gestionar personajes de D&D 5e:
 - Tab Skills con tabla completa de las 18 habilidades
 - Tab Combat con secciones de acciones, acciones de bonus y reacciones siempre visibles
 - Tab Spells con filtro por nivel, modificadores, slots interactivos (usar/restaurar) y detalle de hechizo con botón de lanzamiento
-- Tab Features con características de clase y subclase agrupadas, badges de relevancia en combate y cargador de opciones activas
-- Tab Inventory con gestión de ítems, peso total, cantidades y attunement (máximo 3 objetos)
+- Tab Features con características de clase, subclase y rasgos raciales agrupados, recursos con contador de usos (clase y raza) y badges de relevancia en combate
+- Tab Inventory con gestión de ítems, peso total, cantidades, attunement (normalmente 3 objetos, ampliable por feats/clase) y bonificadores mecánicos aplicados automáticamente al equipar
 - Tab Info con información narrativa del personaje (rasgos físicos, personalidad, ideales, vínculos y defectos)
+- Paso "Content Sources" en el wizard de creación/edición: elegir qué sourcebooks están disponibles al elegir raza, clase, background, etc.
+- Panel de administración con gestión de usuarios, creación de contenido homebrew (clase/subclase/raza/subraza/item/background/feat) y creación de features/rasgos adaptada al tipo de mecánica elegido
 
 ## Estructura del Proyecto
 
@@ -143,14 +148,16 @@ backend/
 │   │   ├── PendingTaskController
 │   │   ├── SubraceController
 │   │   ├── UserController
-│   │   └── ... (30 controllers en total)
+│   │   ├── CharacterRaceResourceController
+│   │   └── ... (32 controllers en total)
 │   ├── dto/                 # Data Transfer Objects
 │   ├── entities/            # Entidades JPA
 │   ├── enumeration/         # Enumeraciones del dominio
 │   ├── repositories/        # Repositorios Spring Data
 │   ├── security/            # JWT, filtros y seguridad HTTP
 │   ├── services/            # Lógica de negocio
-│   └── sync/                # Sincronización con D&D 5e API
+│   └── sync/                # Sincronización con la D&D 5e API pública
+│       └── aurora/          # Mappers de sincronización desde Aurora (clases, subclases, razas, items, hechizos, feats)
 ├── src/main/resources/
 │   └── application.properties
 ├── docker-compose.yml
@@ -172,7 +179,9 @@ frontend/lib/
 │   │   ├── login_screen.dart
 │   │   ├── dashboard_screen.dart
 │   │   ├── admin/
-│   │   │   └── admin_panel_screen.dart
+│   │   │   ├── admin_panel_screen.dart       # Gestión de usuarios + accesos a los dos siguientes
+│   │   │   ├── create_content_screen.dart    # Crear clase/subclase/raza/subraza/item/background/feat
+│   │   │   └── create_feature_screen.dart    # Crear feature/rasgo adaptado al tipo de mecánica
 │   │   ├── sheet/
 │   │   │   ├── character_sheet_screen.dart
 │   │   │   ├── pending_tasks_screen.dart
@@ -248,13 +257,16 @@ frontend/lib/
   - Elección de subclase
   - ASI (Ability Score Improvement) o Feat
   - Estilo de combate
-  - Invocaciones
+  - Invocaciones (Eldritch Invocations)
   - Metamagia
   - Características de clase generales
   - Elecciones de Battle Master (maneuvers)
+  - Elecciones de Rune Knight (runes)
   - Elecciones de Totem Warrior (totems)
   - Elecciones de Hunter Ranger
-  - Elecciones de Monk 4 Elements
+  - Elecciones de Monk 4 Elements (disciplines)
+  - Infusiones de Artificer (Infuse Item)
+- Las tareas de "elige N" que se repiten en varios hitos de nivel (maniobras, runas, disciplinas elementales, infusiones, invocaciones, metamagia) comparten un mismo pool de opciones — las ya elegidas en un hito anterior aparecen deshabilitadas para no poder repetirlas
 
 ### Sistema de Hechizos
 - Gestión de hechizos disponibles por clase
@@ -271,7 +283,9 @@ frontend/lib/
 - Sistema de equipamiento (attuned y equipped)
 - Notas personalizadas por objeto
 - Cálculo automático de peso total
-- Límite de 3 objetos con attunement
+- Límite de objetos con attunement (normalmente 3, ampliable por feats o rasgos de clase como Artificer)
+- Bonificadores mecánicos de items (CA, bono de ataque, daño, salvaciones, override de característica) aplicados automáticamente al equipar/sintonizar
+- Para items genéricos sin arma base propia (plantillas mágicas), selector para elegir el arma real de la que hereda daño/alcance/propiedades
 
 ### Sistema de Equipamiento
 - Slots dedicados para cada parte del cuerpo implementados en el **backend**: mano principal, mano secundaria, armadura, casco, guantes, botas, capa, amuleto, dos anillos y cinturón
@@ -297,9 +311,9 @@ frontend/lib/
 
 ### Sistema de Feats (Dotes)
 - Gestión de feats del personaje
-- Catálogo de feats disponibles
-- Sincronización desde D&D 5e API
+- Catálogo de feats disponibles, sincronizado desde la D&D 5e API y desde Aurora
 - Requisitos y prerrequisitos
+- Efectos mecánicos aplicados automáticamente al asignar el feat (bono numérico a característica, hechizos otorgados, elección de N competencias)
 
 ### Sistema de Condiciones
 - Gestión de condiciones activas en el personaje
@@ -319,19 +333,24 @@ frontend/lib/
 - Gestión de inmunidades
 - Catálogo de tipos de daño de D&D 5e
 
-### Sistema de Recursos de Clase
-- Gestión de recursos específicos de clase (Ki, Rage, Sorcery Points, etc.)
+### Sistema de Recursos de Clase y Raza
+- Gestión de recursos específicos de clase (Ki, Rage, Sorcery Points, runas de Rune Knight, etc.) y de raza (rasgos raciales con usos limitados, misma infraestructura)
 - Cantidad actual y máxima por recurso
 - Recuperación en descansos cortos o largos
-- Vinculación con nivel y clase del personaje
+- Vinculación con nivel y clase del personaje, o con raza/subraza en el caso de recursos raciales
 
 ### Sistema de Subclases
-- Catálogo de subclases por clase
+- Catálogo de subclases por clase, sincronizado desde la D&D 5e API y desde Aurora
 - Asignación de subclase al personaje
 - Características específicas de subclase por nivel
 - Hechizos de subclase (Domain/Oath/Circle spells) añadidos automáticamente al personaje al escoger subclase
 - Proficiencias extra de subclase (armaduras, armas) aplicadas automáticamente al escoger subclase
-- Sincronización desde D&D 5e API
+
+### Sistema de Creación de Contenido (Admin)
+- Panel de administración para crear contenido homebrew sin depender de la sync ni de scripts SQL manuales: clases, subclases, razas, subrazas, items, backgrounds y feats
+- Creación de features de clase, subclase y rasgos raciales adaptada al tipo de mecánica elegido (Resource Pool, Numeric Bonus, Grant Spell, Grant Proficiency) — el formulario solo pide los campos que ese tipo necesita, y la app aplica el efecto igual que con contenido oficial
+- Creación de items con bonificadores mecánicos reales (no solo texto), incluyendo copiar los datos de un arma existente del catálogo como base
+- Endpoints de creación protegidos por rol ADMIN
 
 ### Sistema de Descansos
 - Descanso corto (Short Rest):
@@ -535,7 +554,16 @@ Nota: En DBeaver, añade en "Driver properties":
 - `GET /api/admin/users` - Listar todos los usuarios
 - `GET /api/admin/users/{id}` - Obtener usuario por ID
 - `POST /api/admin/users` - Crear nuevo usuario
+- `PATCH /api/admin/users/{id}/activate` - Activar usuario
+- `PATCH /api/admin/users/{id}/deactivate` - Desactivar usuario
+- `PATCH /api/admin/users/{id}/role` - Cambiar rol de usuario
+- `PATCH /api/admin/users/{id}/reset-password` - Resetear contraseña de un usuario
 - `DELETE /api/admin/users/{id}` - Eliminar usuario
+
+### Cuenta Propia
+- `GET /api/users/me` - Obtener el usuario autenticado
+- `PATCH /api/users/me/password` - Cambiar la contraseña propia
+- `PATCH /api/users/me/username` - Cambiar el nombre de usuario propio (revoca los refresh tokens existentes y devuelve un par de tokens nuevo)
 
 ## 🔧 Sincronización de Datos
 
@@ -558,6 +586,26 @@ curl -X POST http://localhost:8081/api/sync/items
 ```
 
 **Nota:** El endpoint `/sync/all` incluye rate limiting automático para evitar sobrecargar la API externa.
+
+### Sincronizar contenido de expansiones desde Aurora
+
+Flujo en dos pasos: primero traer los datos crudos, luego persistir cada tipo de contenido por separado (`/api/sync/aurora/*`):
+
+```bash
+curl -X POST http://localhost:8081/api/sync/aurora/fetch
+curl http://localhost:8081/api/sync/aurora/status
+
+curl -X POST http://localhost:8081/api/sync/aurora/persist/classes
+curl -X POST http://localhost:8081/api/sync/aurora/persist/class-features
+curl -X POST http://localhost:8081/api/sync/aurora/persist/subclasses
+curl -X POST http://localhost:8081/api/sync/aurora/persist/races
+curl -X POST http://localhost:8081/api/sync/aurora/persist/items
+curl -X POST http://localhost:8081/api/sync/aurora/persist/spells
+curl -X POST http://localhost:8081/api/sync/aurora/persist/feats
+curl -X POST http://localhost:8081/api/sync/aurora/persist/backgrounds
+```
+
+`GET /api/sync/aurora/elements` expone los elementos crudos ya traídos (admite `?name=` como filtro), útil para depurar cómo Aurora estructura una regla concreta antes de escribir su mapper.
 
 ## API Endpoints
 
@@ -647,15 +695,29 @@ curl -X POST http://localhost:8081/api/sync/items
 - `POST /api/character-class-resources/character/{characterId}/short-rest` - Restaurar recursos en descanso corto
 - `POST /api/character-class-resources/character/{characterId}/long-rest` - Restaurar recursos en descanso largo
 
+### Recursos de Raza
+- `GET /api/characters/{characterId}/race-resources` - Obtener recursos de raza del personaje
+- `POST /api/characters/{characterId}/race-resources/initialize` - Inicializar recursos según raza/subraza
+- `POST /api/characters/{characterId}/race-resources/spend` - Gastar recurso de raza
+- `POST /api/characters/{characterId}/race-resources/recover` - Restaurar recurso de raza
+- `POST /api/characters/{characterId}/race-resources/update-maximums` - Recalcular máximos (p. ej. tras subir de nivel)
+
 ### Clases
 - `GET /api/classes` - Listar todas las clases
 - `GET /api/classes/{id}` - Obtener una clase con detalles
 - `GET /api/classes/index/{indexName}` - Obtener clase por nombre índice
+- `GET /api/classes/{id}/subclasses` - Obtener subclases de una clase
+- `POST /api/classes` - Crear una clase (admin)
+- `POST /api/classes/{id}/features` - Crear una característica de clase adaptada al tipo de mecánica (admin)
 
 ### Subclases
 - `GET /api/subclasses` - Listar todas las subclases
 - `GET /api/subclasses/{id}` - Obtener una subclase con detalles
 - `GET /api/subclasses/class/{classId}` - Obtener subclases de una clase
+- `GET /api/subclasses/{id}/features` - Obtener características de una subclase
+- `GET /api/subclasses/{id}/features/level/{level}` - Características de subclase por nivel
+- `POST /api/subclasses` - Crear una subclase (admin)
+- `POST /api/subclasses/{id}/features` - Crear una característica de subclase adaptada al tipo de mecánica (admin)
 
 ### Características de Clase
 - `GET /api/class-features` - Listar todas las características de clase
@@ -671,14 +733,25 @@ curl -X POST http://localhost:8081/api/sync/items
 ### Razas
 - `GET /api/races` - Listar todas las razas
 - `GET /api/races/{id}` - Obtener una raza con detalles
+- `GET /api/races/{id}/traits` - Obtener rasgos de una raza
+- `GET /api/races/subraces/{subraceId}/traits` - Obtener rasgos de una subraza
+- `POST /api/races` - Crear una raza (admin)
+- `POST /api/races/traits` - Crear un rasgo racial (de raza o subraza) adaptado al tipo de mecánica, vía `targetType`/`targetId` en el body (admin)
+
+### Subrazas
+- `GET /api/subraces/race/{raceId}` - Obtener subrazas de una raza
+- `GET /api/subraces/{id}` - Obtener una subraza con detalles
+- `POST /api/subraces` - Crear una subraza (admin)
 
 ### Backgrounds
 - `GET /api/backgrounds` - Listar todos los backgrounds
 - `GET /api/backgrounds/{id}` - Obtener un background con detalles
+- `POST /api/backgrounds` - Crear un background (admin)
 
 ### Items (Catálogo)
 - `GET /api/items` - Listar todos los items (soporta `?type=` y `?name=` como parámetros opcionales)
 - `GET /api/items/{id}` - Obtener item por ID
+- `POST /api/items` - Crear un item, incluyendo bonificadores mecánicos (admin)
 
 ### Hechizos (Catálogo)
 - `GET /api/spells` - Listar todos los hechizos
@@ -698,6 +771,8 @@ curl -X POST http://localhost:8081/api/sync/items
 ### Feats (Catálogo)
 - `GET /api/feats` - Listar todos los feats
 - `GET /api/feats/{id}` - Obtener feat por ID
+- `GET /api/feats/search` - Buscar feats por nombre
+- `POST /api/feats` - Crear un feat, incluyendo efecto mecánico y hechizos otorgados (admin)
 
 ### Condiciones (Catálogo)
 - `GET /api/conditions` - Listar todas las condiciones
@@ -809,7 +884,7 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 - Gestión de clases, subclases, razas y backgrounds
 - Sistema de habilidades y salvaciones
 - Sistema de hechizos y slots con gestión de casting
-- Sincronización completa con D&D 5e API
+- Sincronización completa con la D&D 5e API pública y con Aurora (contenido de expansiones)
 - Rate limiting en peticiones API
 - Subida de nivel con características automáticas
 - Cálculo automático de bonificadores y estadísticas
@@ -818,19 +893,23 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 - Sistema de dinero con las 5 monedas
 - Gestión de idiomas del personaje
 - Gestión de competencias (proficiencies)
-- Sistema de feats (dotes)
+- Sistema de feats (dotes), con efectos mecánicos (bono numérico, hechizos, elección de competencias) aplicados automáticamente al asignarlo
 - Sistema de condiciones y efectos activos
 - Resistencias y vulnerabilidades a tipos de daño
-- Recursos de clase (Ki, Rage, Sorcery Points, etc.) con escala de Barbarian Rage corregida
+- Unarmored Defense de Bárbaro y Monje aplicado al cálculo de CA
+- Recursos de clase y de raza (Ki, Rage, Sorcery Points, runas de Rune Knight, rasgos raciales con usos limitados, etc.) con escala de Barbarian Rage corregida
+- Capa de mecánicas reutilizable por tipo de efecto (Resource Pool, Numeric Bonus, Grant Spell, Grant Proficiency) para features de clase, subclase y rasgos raciales
+- Bonificadores mecánicos automáticos de items (CA, ataque, daño, salvaciones, override de característica) al equipar/sintonizar
+- Panel de administración con creación de contenido homebrew (clase, subclase, raza, subraza, item, background, feat) integrada con la capa de mecánicas anterior
 - Sistema de descansos cortos y largos
 - Sistema de death saves y HP temporal
 - Cálculos automáticos de CA, velocidad, iniciativa
 - Percepción pasiva, investigación e intuición
 - Autenticación JWT con Spring Security
-- Gestión de usuarios del sistema (admin)
+- Gestión de usuarios del sistema (admin), incluyendo cambio de nombre de usuario y contraseña propios
 - Hechizos de subclase (Domain/Oath/Circle spells) aplicados automáticamente
 - Proficiencias de subclase aplicadas automáticamente
-- PendingTasks para subclases PHB: Battle Master, Totem Warrior, Hunter Ranger, Monk 4 Elements
+- PendingTasks para subclases PHB y de expansión: Battle Master, Rune Knight, Totem Warrior, Hunter Ranger, Monk 4 Elements, Artificer Infusions
 
 ### Frontend Mobile - Completo para esta versión
 - Sistema de autenticación con login y gestión de tokens JWT
@@ -842,19 +921,21 @@ curl -X POST http://localhost:8081/api/characters/1/level-up \
 - Servicios para personajes, autenticación, inventario, hechizos y feats
 - Almacenamiento persistente de tokens
 - Tema visual personalizado con paleta D&D (dark theme, LibreBaskerville + Lato)
-- Panel de administración de usuarios (AdminPanelScreen)
+- Panel de administración: gestión de usuarios (incluye cambiar el propio nombre de usuario/contraseña), creación de contenido homebrew (clase/subclase/raza/subraza/item/background/feat) y creación de features/rasgos adaptada al tipo de mecánica elegido
+- Paso "Content Sources" en el wizard para elegir qué sourcebooks están disponibles al elegir raza, clase, background, etc.
 - Wizard de creación de personajes en 7 pasos: preferencias, clase, background, raza, puntuaciones, hechizos y equipamiento
 - Wizard en modo edición (EditCharacterScreen) y modo subida de nivel (LevelUpScreen)
 - Selección de habilidades de clase, feats/ASI, elecciones de subclase integradas en el wizard
 - Pasos de equipamiento y hechizos opcionales con banner informativo
 - Ficha de personaje interactiva con 7 tabs: Abilities, Skills, Combat, Spells, Features, Inventory, Info
-- Tab Features con características de clase y subclase con badges de relevancia en combate
+- Tab Features con características de clase, subclase y rasgos raciales, recursos con contador de usos (clase y raza) y badges de relevancia en combate
 - Tab Spells con slot tracker interactivo y detalle de hechizo con botón de lanzamiento
 - Tab Combat con acciones, acciones de bonus y reacciones siempre visibles
+- Tab Inventory con bonificadores mecánicos de items aplicados automáticamente al equipar y selector de "arma base" para plantillas de arma mágica genéricas
 - Gestión de descansos cortos y largos desde la ficha
-- Pantalla de tareas pendientes (PendingTasksScreen) para resolución de elecciones de subida de nivel: ASI/Feat, subclase, hechizos, Fighting Style, Expertise, Invocaciones, Metamagic, Battle Master maneuvers, Totem Warrior, Hunter Ranger, Monk 4 Elements
+- Pantalla de tareas pendientes (PendingTasksScreen) para resolución de elecciones de subida de nivel: ASI/Feat, subclase, hechizos, Fighting Style, Expertise, Invocaciones, Metamagic, Battle Master maneuvers, Rune Knight runes, Totem Warrior, Hunter Ranger, Monk 4 Elements, Artificer Infusions — las tareas de "elige N" que se repiten en varios hitos de nivel excluyen las opciones ya elegidas en un hito anterior
 
-> **Funcionalidades pendientes para versiones futuras:** gestión visual de slots de equipamiento por parte del cuerpo, sistema XP (el backend ya lo soporta, la UI siempre usa Milestone), toggle de Encumbrance, efectos mecánicos de dotes aplicados automáticamente, Unarmored Defense para Bárbaro y Monje, efectos de objetos mágicos sintonizados aplicados a la ficha, soporte multi-idioma.
+> **Funcionalidades pendientes para versiones futuras:** gestión visual de slots de equipamiento por parte del cuerpo, sistema XP (el backend ya lo soporta, la UI siempre usa Milestone), toggle de Encumbrance, soporte multi-idioma, multiclase.
 
 
 
