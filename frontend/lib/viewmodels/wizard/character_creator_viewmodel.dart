@@ -65,8 +65,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   bool get isEditMode => _editMode;
   bool _levelUpMode = false;
   bool get isLevelUpMode => _levelUpMode;
-  /// En modo nivel-up: el nivel mínimo seleccionable (originalLevel + 1).
-  int get levelUpMinLevel => _levelUpMode ? _originalLevel + 1 : 1;
+  /// En modo nivel-up: el nivel mínimo seleccionable. Multiclase (fase 2a): una vez
+  /// elegida la clase objetivo en "classPicker", es nivel-en-esa-clase + 1 (0 para una
+  /// clase nueva), no nivel de personaje + 1 — si no, el slider/dropdown de nivel puede
+  /// quedar con un `value` (p.ej. 1 en una clase nueva) fuera de su propio rango de
+  /// `items` (p.ej. empezando en originalLevel+1), lo que Flutter rechaza con un assert.
+  int get levelUpMinLevel => _levelUpMode
+      ? (_levelUpTargetClassId != null ? _levelUpTargetStartLevel + 1 : _originalLevel + 1)
+      : 1;
   int? _editCharacterId;
   int _originalLevel = 1;
   /// IDs de spells que el personaje ya tenía antes de esta sesión de subida de nivel.
