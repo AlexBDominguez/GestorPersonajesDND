@@ -168,6 +168,22 @@ class _TaskResolver extends StatelessWidget {
             task: task, vm: vm, options: kRuneOptions,
             alreadyKnown: vm.alreadyChosenIn(const ['RUNE_CHOICE'], excludingTaskId: task.id));
 
+      // Sorcerer Metamagic — multi-selección con límite (count en metadata), una tarea por
+      // hito de nivel (3/10/17), 2 elecciones en el primero y 1 en los siguientes.
+      case 'METAMAGIC':
+        return _MultiPickOptionResolver(
+            task: task, vm: vm, options: kMetamagicOptions,
+            alreadyKnown: vm.alreadyChosenIn(const ['METAMAGIC'], excludingTaskId: task.id));
+
+      // Warlock Eldritch Invocations — multi-selección con límite (count en metadata),
+      // una tarea por hito de nivel (2/5/7/9/12/15/18) con el incremento de ese hito
+      // (no el total acumulado). Comparte pool con Agonizing Blast (#8.2 NUMERIC_BONUS,
+      // que lee el choice resuelto de estas tareas vía HAS_MULTI_CHOICE:INVOCATION:...).
+      case 'INVOCATION':
+        return _MultiPickOptionResolver(
+            task: task, vm: vm, options: kEldritchInvocations,
+            alreadyKnown: vm.alreadyChosenIn(const ['INVOCATION'], excludingTaskId: task.id));
+
       // Totem Warrior — una opción por tarea
       case 'TOTEM_SPIRIT':
         return _OptionListResolver(task: task, vm: vm, options: kTotemSpirit);
