@@ -31,10 +31,12 @@ public class MulticlassRulesService {
         this.characterProficiencyRepository = characterProficiencyRepository;
     }
 
-    // Grupos OR: basta con satisfacer TODOS los requisitos de UN grupo interior.
-    // Clases ausentes de este mapa (homebrew/Aurora sin tabla oficial de multiclase, p.ej.
-    // Artificer, Blood Hunter, Gunslinger) no generan ningún aviso -- opción conservadora,
-    // nunca avisa de más sobre una regla que no existe oficialmente para esa clase.
+    // Grupos OR: basta con satisfacer TODOS los requisitos de UN grupo interior (así se
+    // expresa también un AND de un fijo + un OR, p.ej. Blood Hunter = Int 13 Y (Str 13 O Dex
+    // 13): dos grupos {int:13,str:13} / {int:13,dex:13}, cualquiera de los dos vale).
+    // Clases ausentes de este mapa (homebrew/Aurora sin tabla de multiclase conocida, p.ej.
+    // Gunslinger) no generan ningún aviso -- opción conservadora, nunca avisa de más sobre
+    // una regla que no se ha podido confirmar para esa clase.
     private static final Map<String, List<Map<String, Integer>>> ABILITY_PREREQS = Map.ofEntries(
             Map.entry("barbarian", List.of(Map.of("str", 13))),
             Map.entry("bard",      List.of(Map.of("cha", 13))),
@@ -47,13 +49,22 @@ public class MulticlassRulesService {
             Map.entry("rogue",     List.of(Map.of("dex", 13))),
             Map.entry("sorcerer",  List.of(Map.of("cha", 13))),
             Map.entry("warlock",   List.of(Map.of("cha", 13))),
-            Map.entry("wizard",    List.of(Map.of("int", 13)))
+            Map.entry("wizard",    List.of(Map.of("int", 13))),
+            // Artificer (TCE p.10, oficial pero post-PHB, dos variantes de sourcebook en esta
+            // app -- ver DndClass.indexName "artificer-erlw"/"artificer-tce").
+            Map.entry("artificer-erlw", List.of(Map.of("int", 13))),
+            Map.entry("artificer-tce",  List.of(Map.of("int", 13))),
+            // Blood Hunter (Matt Mercer/Critical Role, homebrew con reglas de multiclase
+            // publicadas -- confirmado en dndbeyond.com/classes/357975-blood-hunter y
+            // dnd5e.wikidot.com/blood-hunter, mismo prerrequisito en ambas fuentes).
+            Map.entry("blood-hunter", List.of(Map.of("int", 13, "str", 13), Map.of("int", 13, "dex", 13)))
     );
 
     // Tabla oficial "Multiclass Proficiencies" del PHB (armadura/armas/herramientas -- nunca
     // salvaciones). Deliberadamente NO incluye las elecciones de skill de Bardo/Pícaro/
-    // Explorador (una skill a elegir de la lista de la clase) -- se avisa por texto en vez de
-    // automatizarse, ver grantReducedProficiencies().
+    // Explorador (una skill a elegir de la lista de la clase) ni la de herramienta de
+    // Artificiero -- se avisan por texto en vez de automatizarse, ver EXTRA_CHOICE_NOTES /
+    // grantReducedProficiencies().
     private static final Map<String, List<String>> REDUCED_PROFICIENCIES = Map.ofEntries(
             Map.entry("barbarian", List.of("shields", "simple-weapons", "martial-weapons")),
             Map.entry("bard",      List.of("light-armor")),
@@ -63,12 +74,30 @@ public class MulticlassRulesService {
             Map.entry("paladin",   List.of("light-armor", "medium-armor", "shields", "simple-weapons", "martial-weapons")),
             Map.entry("ranger",    List.of("light-armor", "simple-weapons", "martial-weapons")),
             Map.entry("rogue",     List.of("light-armor", "thieves-tools")),
-            Map.entry("warlock",   List.of("light-armor", "simple-weapons"))
+            Map.entry("warlock",   List.of("light-armor", "simple-weapons")),
             // Monk, Sorcerer y Wizard no otorgan ninguna proficiency al multiclasear (regla real).
+            // Artificer (TCE p.10): armadura ligera + una herramienta de artesano a elegir (la
+            // elección de herramienta no se automatiza, ver EXTRA_CHOICE_NOTES).
+            Map.entry("artificer-erlw", List.of("light-armor")),
+            Map.entry("artificer-tce",  List.of("light-armor")),
+            // Blood Hunter: confirmado SOLO en dndbeyond.com/classes/357975-blood-hunter (no
+            // corroborado en dnd5e.wikidot.com, que no publica una tabla de multiclase
+            // separada) -- es prácticamente idéntico al set completo de nivel 1 de la clase
+            // (le falta la elección de 2 skills). Fiabilidad menor que el resto de esta tabla
+            // (PHB, verificada contra la API real); revisar si aparece una fuente mejor.
+            Map.entry("blood-hunter", List.of("light-armor", "medium-armor", "shields",
+                    "simple-weapons", "martial-weapons", "alchemists-supplies"))
     );
 
-    // Clases con una elección de skill de la tabla de multiclase que este mapa no automatiza.
-    private static final List<String> SKILL_CHOICE_NOTE_CLASSES = List.of("bard", "ranger", "rogue");
+    // Elecciones de la tabla de multiclase que este mapa no automatiza (skill de la lista de
+    // la clase, herramienta de artesano...) -- se comunican como aviso informativo.
+    private static final Map<String, String> EXTRA_CHOICE_NOTES = Map.ofEntries(
+            Map.entry("bard",   "one skill of your choice from its class skill list"),
+            Map.entry("ranger", "one skill of your choice from its class skill list"),
+            Map.entry("rogue",  "one skill of your choice from its class skill list"),
+            Map.entry("artificer-erlw", "one type of artisan's tools of your choice"),
+            Map.entry("artificer-tce",  "one type of artisan's tools of your choice")
+    );
 
     /** Nunca lanza excepción: devuelve avisos informativos, no bloquea el level-up. */
     public List<String> checkAbilityScorePrerequisites(PlayerCharacter character, DndClass targetClass) {
@@ -104,9 +133,10 @@ public class MulticlassRulesService {
             }
         }
 
-        if (SKILL_CHOICE_NOTE_CLASSES.contains(idx)) {
-            messages.add("Note: " + targetClass.getName() + "'s multiclass proficiencies also include one "
-                    + "skill of your choice from its class skill list — not applied automatically, choose it manually.");
+        String extraChoiceNote = EXTRA_CHOICE_NOTES.get(idx);
+        if (extraChoiceNote != null) {
+            messages.add("Note: " + targetClass.getName() + "'s multiclass proficiencies also include "
+                    + extraChoiceNote + " — not applied automatically, choose it manually.");
         }
 
         return messages;
