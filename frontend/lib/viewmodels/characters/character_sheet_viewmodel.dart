@@ -1087,6 +1087,25 @@ class CharacterSheetViewModel extends ChangeNotifier {
     return null;
   }
 
+  /// Nombres ya elegidos en tareas COMPLETADAS de los tipos indicados (usa
+  /// `_pendingTasks`, que a diferencia del getter público `pendingTasks` sí incluye
+  /// las completadas). Para tareas de "elige N" que se repiten en varios niveles
+  /// compartiendo el mismo pool de opciones (Battle Master Maneuvers, Rune Knight
+  /// Runes, Elemental Disciplines, Infusions...), evita que una elección ya hecha
+  /// en un hito de nivel anterior vuelva a ofrecerse en el siguiente.
+  Set<String> alreadyChosenIn(List<String> taskTypes, {int? excludingTaskId}) {
+    final result = <String>{};
+    for (final task in _pendingTasks) {
+      if (!task.completed) continue;
+      if (task.id == excludingTaskId) continue;
+      if (!taskTypes.contains(task.taskType)) continue;
+      final choice = task.resolvedChoice;
+      if (choice == null || choice.isEmpty) continue;
+      result.addAll(choice.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty));
+    }
+    return result;
+  }
+
   Future<bool> resolveTask(int taskId, String choice, {String? extraData}) async{
     try{
       await _taskService.resolveTask(

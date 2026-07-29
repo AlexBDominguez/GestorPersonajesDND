@@ -151,16 +151,22 @@ class _TaskResolver extends StatelessWidget {
       case 'ASI_OR_FEAT':
         return _AsiOrFeatResolver(task: task, vm: vm);
 
-      // Battle Master — multi-selección con límite (count en metadata)
+      // Battle Master — multi-selección con límite (count en metadata). Se repite en
+      // varios hitos de nivel (3, luego 7) compartiendo el pool de maniobras con Martial
+      // Adept (feat) — alreadyKnown excluye lo ya elegido en cualquiera de las dos fuentes.
       case 'MANEUVER_CHOICE':
         return _MultiPickOptionResolver(
-            task: task, vm: vm, options: kBattleMasterManeuvers);
+            task: task, vm: vm, options: kBattleMasterManeuvers,
+            alreadyKnown: vm.alreadyChosenIn(
+                const ['MANEUVER_CHOICE', 'MARTIAL_ADEPT_MANEUVER'],
+                excludingTaskId: task.id));
 
       // Rune Knight — multi-selección con límite (count en metadata), una tarea por hito de
       // nivel (3/7/10/15) igual que Battle Master Maneuvers. Ver #8.2 RESOURCE_POOL.
       case 'RUNE_CHOICE':
         return _MultiPickOptionResolver(
-            task: task, vm: vm, options: kRuneOptions);
+            task: task, vm: vm, options: kRuneOptions,
+            alreadyKnown: vm.alreadyChosenIn(const ['RUNE_CHOICE'], excludingTaskId: task.id));
 
       // Totem Warrior — una opción por tarea
       case 'TOTEM_SPIRIT':
@@ -180,10 +186,12 @@ class _TaskResolver extends StatelessWidget {
       case 'SUPERIOR_HUNTERS_DEFENSE':
         return _OptionListResolver(task: task, vm: vm, options: kSuperiorHuntersDefense);
 
-      // Four Elements Monk — multi-selección con límite (count en metadata)
+      // Four Elements Monk — multi-selección con límite (count en metadata), se repite
+      // en varios hitos de nivel compartiendo el mismo pool de disciplinas.
       case 'ELEMENTAL_DISCIPLINE':
         return _MultiPickOptionResolver(
-            task: task, vm: vm, options: kFourElementsDisciplines);
+            task: task, vm: vm, options: kFourElementsDisciplines,
+            alreadyKnown: vm.alreadyChosenIn(const ['ELEMENTAL_DISCIPLINE'], excludingTaskId: task.id));
 
       // Circle of the Land Druid — single land type pick
       case 'LAND_TYPE_CHOICE':
@@ -240,9 +248,12 @@ class _TaskResolver extends StatelessWidget {
       case 'SPELL_SNIPER_CANTRIP':
         return _OptionListResolver(task: task, vm: vm, options: kSpellcastingClasses);
 
-      // Feat: Martial Adept — choose a Battle Master maneuver
+      // Feat: Martial Adept — choose a Battle Master maneuver (mismo pool que MANEUVER_CHOICE)
       case 'MARTIAL_ADEPT_MANEUVER':
-        return _OptionListResolver(task: task, vm: vm, options: kBattleMasterManeuvers);
+        return _OptionListResolver(task: task, vm: vm, options: kBattleMasterManeuvers,
+            alreadyKnown: vm.alreadyChosenIn(
+                const ['MANEUVER_CHOICE', 'MARTIAL_ADEPT_MANEUVER'],
+                excludingTaskId: task.id));
 
       // Feat: Elemental Adept — choose an element
       case 'ELEMENTAL_ADEPT_TYPE':
@@ -267,7 +278,8 @@ class _TaskResolver extends StatelessWidget {
       case 'INFUSION_CHOICE':
         return _MultiPickOptionResolver(
             task: task, vm: vm,
-            options: kArtificerInfusionsUpToLevel(task.relatedLevel));
+            options: kArtificerInfusionsUpToLevel(task.relatedLevel),
+            alreadyKnown: vm.alreadyChosenIn(const ['INFUSION_CHOICE'], excludingTaskId: task.id));
 
       default:
         // Fallback: campo de texto libre para tipos no mapeados todavía
@@ -281,8 +293,12 @@ class _OptionListResolver extends StatefulWidget {
   final PendingTask task;
   final CharacterSheetViewModel vm;
   final List<DndChoiceOption> options;
+  /// Opciones ya conocidas por el personaje (de una tarea anterior que comparte
+  /// el mismo pool) — se muestran deshabilitadas, no se pueden reelegir.
+  final Set<String> alreadyKnown;
   const _OptionListResolver(
-      {required this.task, required this.vm, required this.options});
+      {required this.task, required this.vm, required this.options,
+       this.alreadyKnown = const {}});
 
   @override
   State<_OptionListResolver> createState() => _OptionListResolverState();
@@ -295,12 +311,16 @@ class _OptionListResolverState extends State<_OptionListResolver> {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      ...widget.options.map((opt) => _OptionTile(
-            label: opt.name,
-            description: opt.description,
-            selected: _selected == opt.name,
-            onTap: () => setState(() => _selected = opt.name),
-          )),
+      ...widget.options.map((opt) {
+        final isKnown = widget.alreadyKnown.contains(opt.name);
+        return _OptionTile(
+          label: opt.name,
+          description: isKnown ? 'Already known' : opt.description,
+          selected: _selected == opt.name,
+          disabled: isKnown,
+          onTap: isKnown ? null : () => setState(() => _selected = opt.name),
+        );
+      }),
       const SizedBox(height: 12),
       SizedBox(
         width: double.infinity,
@@ -355,12 +375,14 @@ class _OptionTile extends StatelessWidget {
   final String label;
   final String description;
   final bool selected;
-  final VoidCallback onTap;
+  final bool disabled;
+  final VoidCallback? onTap;
   const _OptionTile({
     required this.label,
     required this.description,
     required this.selected,
     required this.onTap,
+    this.disabled = false,
   });
 
   @override
@@ -374,7 +396,9 @@ class _OptionTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? AppTheme.primary.withOpacity(0.12)
-              : AppTheme.surfaceVariant.withOpacity(0.4),
+              : disabled
+                  ? AppTheme.surfaceVariant.withOpacity(0.2)
+                  : AppTheme.surfaceVariant.withOpacity(0.4),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: selected ? AppTheme.primary : Colors.transparent,
@@ -389,7 +413,11 @@ class _OptionTile extends StatelessWidget {
               shape: BoxShape.circle,
               color: selected ? AppTheme.primary : Colors.transparent,
               border: Border.all(
-                color: selected ? AppTheme.primary : AppTheme.textSecondary,
+                color: selected
+                    ? AppTheme.primary
+                    : disabled
+                        ? AppTheme.textSecondary.withOpacity(0.3)
+                        : AppTheme.textSecondary,
                 width: 2,
               ),
             ),
@@ -404,14 +432,19 @@ class _OptionTile extends StatelessWidget {
                   style: GoogleFonts.libreBaskerville(
                       color: selected
                           ? AppTheme.primary
-                          : AppTheme.textPrimary,
+                          : disabled
+                              ? AppTheme.textSecondary.withOpacity(0.4)
+                              : AppTheme.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 2),
               Text(description,
                   style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary,
+                      color: disabled
+                          ? AppTheme.textSecondary.withOpacity(0.5)
+                          : AppTheme.textSecondary,
                       fontSize: 10,
+                      fontStyle: disabled ? FontStyle.italic : FontStyle.normal,
                       height: 1.4)),
             ]),
           ),
@@ -1051,8 +1084,12 @@ class _MultiPickOptionResolver extends StatefulWidget {
   final PendingTask task;
   final CharacterSheetViewModel vm;
   final List<DndChoiceOption> options;
+  /// Opciones ya conocidas por el personaje (de un hito de nivel anterior que
+  /// comparte el mismo pool) — se muestran deshabilitadas, no se pueden reelegir.
+  final Set<String> alreadyKnown;
   const _MultiPickOptionResolver(
-      {required this.task, required this.vm, required this.options});
+      {required this.task, required this.vm, required this.options,
+       this.alreadyKnown = const {}});
 
   @override
   State<_MultiPickOptionResolver> createState() => _MultiPickOptionResolverState();
@@ -1085,14 +1122,18 @@ class _MultiPickOptionResolverState extends State<_MultiPickOptionResolver> {
       ),
       const SizedBox(height: 10),
       ...widget.options.map((opt) {
+        final isKnown = widget.alreadyKnown.contains(opt.name);
         final isSelected = _selected.contains(opt.name);
-        final isDisabled = !isSelected && remaining == 0;
+        final isDisabled = isKnown || (!isSelected && remaining == 0);
         return GestureDetector(
           onTap: isDisabled
               ? null
               : () => setState(() {
-                    if (isSelected) _selected.remove(opt.name);
-                    else _selected.add(opt.name);
+                    if (isSelected) {
+                      _selected.remove(opt.name);
+                    } else {
+                      _selected.add(opt.name);
+                    }
                   }),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
@@ -1132,7 +1173,13 @@ class _MultiPickOptionResolverState extends State<_MultiPickOptionResolver> {
                                   : AppTheme.textPrimary,
                           fontSize: 13,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-                  if (opt.description.isNotEmpty)
+                  if (isKnown)
+                    Text('Already known',
+                        style: GoogleFonts.lato(
+                            color: AppTheme.textSecondary.withOpacity(0.5),
+                            fontSize: 10,
+                            fontStyle: FontStyle.italic))
+                  else if (opt.description.isNotEmpty)
                     Text(opt.description,
                         style: GoogleFonts.lato(
                             color: AppTheme.textSecondary.withOpacity(0.7),
