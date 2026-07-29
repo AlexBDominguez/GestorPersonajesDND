@@ -524,14 +524,16 @@ Confirmado (2026-06-18): al añadir hechizos nuevos a un personaje, la pestaña 
 
 ## 🧹 Deuda técnica
 
-### 12. Revisar y reemplazar usos de `withOpacity`
+### 12. Revisar y reemplazar usos de `withOpacity` ✅ HECHO (2026-07-24)
 **Prioridad: Baja**
 
-`withOpacity` está deprecado en Flutter (genera warnings) y debe sustituirse por `.withValues(alpha: ...)` o el mecanismo recomendado actual.
+`withOpacity` estaba deprecado en Flutter (genera warnings) — sustituido por `.withValues(alpha: ...)`, el mecanismo recomendado actual.
 
-**Alcance real detectado:** ~165 usos repartidos en **19 archivos** dentro de `frontend/lib/views/`, entre otros: `tab_spells.dart`, `tab_inventory.dart`, `tab_abilities.dart`, `tab_combat.dart`, `tab_features.dart`, `login_screen.dart`, `character_sheet_screen.dart`, `character_creator_screen.dart`, `admin_panel_screen.dart`, `pending_tasks_screen.dart`, `add_item_screen.dart`, `character_card.dart`, `class_detail_screen.dart`, `class_options_screen.dart`, y los steps `step_preferences.dart`, `step_equipment.dart`, `step_background.dart`, `step_class.dart`, `step_race.dart`, `step_spells.dart`.
+**Alcance real:** 173 usos en **20 archivos** dentro de `frontend/lib/`: `tab_spells.dart`, `tab_inventory.dart`, `tab_abilities.dart`, `tab_combat.dart`, `tab_features.dart`, `login_screen.dart`, `character_sheet_screen.dart`, `character_creator_screen.dart`, `admin_panel_screen.dart`, `pending_tasks_screen.dart`, `add_item_screen.dart`, `character_card.dart`, `class_detail_screen.dart`, `class_options_screen.dart`, y los steps `step_preferences.dart`, `step_equipment.dart`, `step_background.dart`, `step_class.dart`, `step_race.dart`, `step_spells.dart`.
 
-**Objetivo:** eliminar los warnings y alinear con las recomendaciones actuales del framework.
+**Cómo se hizo:** sustitución mecánica 1:1 (`.withOpacity(X)` → `.withValues(alpha: X)`), sin cambio de comportamiento — `withValues(alpha:)` es el reemplazo directo que recomienda el propio Flutter, no una reimplementación. Se comprobó primero que ningún argumento tuviera paréntesis anidados ni continuara en la línea siguiente (todos son literales numéricos o ternarias simples), así que un reemplazo por regex sobre cada archivo era seguro sin revisar caso por caso.
+
+**Verificado:** `flutter analyze` (0 avisos de `withOpacity` restantes, 0 errores nuevos — bajó de 322 a 149 issues totales, el resto son lints preexistentes sin relación con esto), `flutter test` (59/59 verdes). Solo cambios frontend, sin tocar backend ni necesitar redeploy de nada más que el build web habitual.
 
 ---
 
