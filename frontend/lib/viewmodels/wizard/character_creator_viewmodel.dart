@@ -65,14 +65,18 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   bool get isEditMode => _editMode;
   bool _levelUpMode = false;
   bool get isLevelUpMode => _levelUpMode;
-  /// En modo nivel-up: el nivel mínimo seleccionable. Multiclase (fase 2a): una vez
-  /// elegida la clase objetivo en "classPicker", es nivel-en-esa-clase + 1 (0 para una
-  /// clase nueva), no nivel de personaje + 1 — si no, el slider/dropdown de nivel puede
-  /// quedar con un `value` (p.ej. 1 en una clase nueva) fuera de su propio rango de
-  /// `items` (p.ej. empezando en originalLevel+1), lo que Flutter rechaza con un assert.
-  int get levelUpMinLevel => _levelUpMode
-      ? (_levelUpTargetClassId != null ? _levelUpTargetStartLevel + 1 : _originalLevel + 1)
-      : 1;
+  /// Multiclase (fase 2a): "nivel ya alcanzado" a efectos de filtrar qué es viejo/nuevo
+  /// en level-up — nivel EN LA CLASE elegida una vez hay una (`_levelUpTargetStartLevel`,
+  /// 0 para una clase nueva), o nivel de personaje si todavía no se ha elegido ninguna
+  /// (p.ej. antes de pasar por "classPicker"). Único punto de verdad para
+  /// levelUpMinLevel/classFeatureChoices/subclassFeatureChoices — que antes usaban
+  /// _originalLevel cada uno por su lado y se desincronizaban entre sí al multiclasear
+  /// (ver fix de levelUpMinLevel: sin esto, elecciones como Fighting Style de una clase
+  /// nueva quedaban filtradas como "ya vistas" y nunca se ofrecían en el wizard).
+  int get _levelUpBaselineLevel =>
+      _levelUpTargetClassId != null ? _levelUpTargetStartLevel : _originalLevel;
+  /// En modo nivel-up: el nivel mínimo seleccionable en el dropdown de nivel.
+  int get levelUpMinLevel => _levelUpMode ? _levelUpBaselineLevel + 1 : 1;
   int? _editCharacterId;
   int _originalLevel = 1;
   /// IDs de spells que el personaje ya tenía antes de esta sesión de subida de nivel.
@@ -1604,7 +1608,7 @@ void toggleItem(int itemId) {
   List<WizardChoiceConfig> get classFeatureChoices {
     final rawChoices = _buildClassFeatureChoices();
     if (_levelUpMode) {
-      return rawChoices.where((c) => c.level > _originalLevel).toList();
+      return rawChoices.where((c) => c.level > _levelUpBaselineLevel).toList();
     }
     return rawChoices;
   }
@@ -1746,7 +1750,7 @@ void toggleItem(int itemId) {
 
     // In level-up mode: only show choices for levels the character didn't have before
     if (_levelUpMode) {
-      return choices.where((c) => c.level > _originalLevel).toList();
+      return choices.where((c) => c.level > _levelUpBaselineLevel).toList();
     }
     return choices;
   }
