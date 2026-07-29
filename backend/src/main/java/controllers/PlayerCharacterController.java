@@ -1,5 +1,6 @@
 package controllers;
 
+import dto.LevelUpResultDto;
 import dto.PlayerCharacterDto;
 import entities.User;
 import repositories.UserRepository;
@@ -162,12 +163,14 @@ public class PlayerCharacterController {
         }
 
     @PostMapping("/{id}/level-up")
-    public ResponseEntity<String> levelUp(
+    public ResponseEntity<LevelUpResultDto> levelUp(
             @PathVariable Long id,
-            @RequestParam(required = false) Integer hpRoll){
+            @RequestParam(required = false) Integer hpRoll,
+            @RequestParam(required = false) Long classId,
+            @RequestParam(required = false) Long subclassId){
         verifyCharacterOwnership(id);
-        playerCharacterService.levelUp(id, hpRoll);
-        return ResponseEntity.ok("Character leveled up!");
+        LevelUpResultDto result = playerCharacterService.levelUpMulticlass(id, hpRoll, classId, subclassId);
+        return ResponseEntity.ok(result);
     }
 
     // ========== ENDPOINTS PARA GESTIÓN DE COMBATE Y ESTADO ==========

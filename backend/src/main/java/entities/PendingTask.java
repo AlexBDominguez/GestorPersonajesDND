@@ -21,6 +21,12 @@ public class PendingTask {
     @JoinColumn(name = "character_id", nullable = false)
     private PlayerCharacter character;
 
+    // Clase que originó esta tarea bajo multiclase (nullable: las tareas de personajes
+    // mono-clase, o creadas antes de esto, no la necesitan para desambiguar nada).
+    @ManyToOne
+    @JoinColumn(name = "class_id")
+    private DndClass dndClass;
+
     private String taskType;
 
     private int relatedLevel;
@@ -59,6 +65,14 @@ public class PendingTask {
 
     public void setCharacter(PlayerCharacter character) {
         this.character = character;
+    }
+
+    public DndClass getDndClass() {
+        return dndClass;
+    }
+
+    public void setDndClass(DndClass dndClass) {
+        this.dndClass = dndClass;
     }
 
     public String getTaskType() {

@@ -53,6 +53,8 @@ public class PlayerCharacterService {
     private final NumericBonusService numericBonusService;
     private final InfusionRepository infusionRepository;
     private final CharacterFormulaService formulaService;
+    private final PlayerCharacterClassRepository playerCharacterClassRepository;
+    private final MulticlassRulesService multiclassRulesService;
 
     public PlayerCharacterService(
             PlayerCharacterRepository characterRepository,
@@ -83,7 +85,9 @@ public class PlayerCharacterService {
             ClassSpellService classSpellService,
             NumericBonusService numericBonusService,
             InfusionRepository infusionRepository,
-            CharacterFormulaService formulaService
+            CharacterFormulaService formulaService,
+            PlayerCharacterClassRepository playerCharacterClassRepository,
+            MulticlassRulesService multiclassRulesService
 
         ) {
         this.characterRepository = characterRepository;
@@ -115,6 +119,8 @@ public class PlayerCharacterService {
         this.characterInventoryRepository = characterInventoryRepository;
         this.infusionRepository = infusionRepository;
         this.formulaService = formulaService;
+        this.playerCharacterClassRepository = playerCharacterClassRepository;
+        this.multiclassRulesService = multiclassRulesService;
     }
 
     // ========== CRUD BÁSICO ==========
@@ -368,6 +374,17 @@ public class PlayerCharacterService {
 
         // Aplicar efectos automáticos de traits raciales (proficiencias y hechizos sin elección)
         racialTraitService.applyAutomaticRacialTraits(saved);
+
+        // Fundamento de multiclase (dual-write): la clase de creación siempre es classOrder=0
+        // (proficiencies/saves completas). No sustituye a dndClass/subclass/level de arriba,
+        // que se mantienen intactos como fuente de verdad para personajes mono-clase.
+        PlayerCharacterClass primaryClass = new PlayerCharacterClass();
+        primaryClass.setCharacter(saved);
+        primaryClass.setDndClass(saved.getDndClass());
+        primaryClass.setSubclass(saved.getSubclass());
+        primaryClass.setLevel(saved.getLevel());
+        primaryClass.setClassOrder(0);
+        playerCharacterClassRepository.save(primaryClass);
 
         return toDto(saved);
     }
@@ -749,9 +766,32 @@ public class PlayerCharacterService {
                 .collect(Collectors.toList());
         dto.setSpellSlots(slotDtos);
 
+        dto.setClasses(toClassDtos(playerCharacter));
+
         playerCharacter.clearEffectiveAbilityScores();
 
         return dto;
+    }
+
+    // Fundamento de multiclase (Aurora_Fixes.md #17, fase 1): lista de clases del personaje,
+    // ordenadas por classOrder (0 = clase original). Reutilizada por toDto()/convertToDto().
+    private List<dto.PlayerCharacterClassDto> toClassDtos(PlayerCharacter playerCharacter) {
+        return playerCharacterClassRepository.findByCharacterOrderByClassOrderAsc(playerCharacter)
+                .stream()
+                .map(pcc -> {
+                    dto.PlayerCharacterClassDto classDto = new dto.PlayerCharacterClassDto();
+                    classDto.setId(pcc.getId());
+                    classDto.setDndClassId(pcc.getDndClass().getId());
+                    classDto.setDndClassName(pcc.getDndClass().getName());
+                    if (pcc.getSubclass() != null) {
+                        classDto.setSubclassId(pcc.getSubclass().getId());
+                        classDto.setSubclassName(pcc.getSubclass().getName());
+                    }
+                    classDto.setLevel(pcc.getLevel());
+                    classDto.setClassOrder(pcc.getClassOrder());
+                    return classDto;
+                })
+                .collect(Collectors.toList());
     }
 
     // ========== SPELL MANAGEMENT ==========
@@ -1073,6 +1113,77 @@ public class PlayerCharacterService {
         }
     }
 
+    // Clasificación de lanzador para combinar niveles de multiclase (PHB "Multiclass
+    // Spellcaster" table). Clases ausentes de ambos conjuntos (incl. Artificer, cuyo
+    // indexName varía por sourcebook, y cualquier homebrew) simplemente no aportan al
+    // cómputo combinado -- opción conservadora documentada, no un intento de cubrir
+    // every caso.
+    private static final java.util.Set<String> MULTICLASS_FULL_CASTERS =
+            java.util.Set.of("bard", "cleric", "druid", "sorcerer", "wizard");
+    private static final java.util.Set<String> MULTICLASS_HALF_CASTERS =
+            java.util.Set.of("paladin", "ranger");
+
+    /**
+     * Multiclase (Aurora_Fixes.md #17, fase 1): recalcula los spell slots combinando el
+     * "nivel de lanzador" ponderado de todas las clases del personaje (full=1x, half=0.5x,
+     * third=0.33x, redondeado hacia abajo al final), reutilizando la tabla
+     * SpellSlotProgression ya existente contra un lanzador full-caster de referencia (Wizard)
+     * al nivel combinado -- la tabla "Multiclass Spellcaster" del PHB es numéricamente
+     * idéntica a la de cualquier full caster al mismo nivel.
+     *
+     * LIMITACIÓN CONOCIDA Y DOCUMENTADA: Warlock se excluye a propósito de este cómputo (su
+     * Pact Magic es una reserva paralela, no combinable). Si el personaje tiene Warlock JUNTO
+     * con otra(s) clase(s), este método sobrescribe las mismas filas CharacterSpellSlot que
+     * hoy usa el Pact Magic de Warlock (CharacterSpellSlot no tiene un discriminador de
+     * "pool" -- su clave natural es solo (character, spellLevel)), perdiendo esas slots. Se
+     * deja así deliberadamente: arreglarlo de raíz requiere un cambio de esquema y tocar
+     * shortRest(), que hoy es código crítico para cualquier Warlock mono-clase en producción
+     * -- ver Aurora_Fixes.md #17 para el follow-up.
+     */
+    private void recalculateMulticlassSpellSlots(PlayerCharacter character) {
+        double combinedCasterLevel = 0;
+        for (PlayerCharacterClass pcc : playerCharacterClassRepository.findByCharacterOrderByClassOrderAsc(character)) {
+            String idx = pcc.getDndClass().getIndexName() != null
+                    ? pcc.getDndClass().getIndexName().toLowerCase() : "";
+            if ("warlock".equals(idx)) {
+                continue;
+            } else if (MULTICLASS_FULL_CASTERS.contains(idx)) {
+                combinedCasterLevel += pcc.getLevel();
+            } else if (MULTICLASS_HALF_CASTERS.contains(idx)) {
+                combinedCasterLevel += pcc.getLevel() / 2.0;
+            } else if (pcc.getSubclass() != null && pcc.getSubclass().getSpellcastingAbility() != null
+                    && !pcc.getSubclass().getSpellcastingAbility().isEmpty()) {
+                // Lanzador 1/3 vía subclase (Eldritch Knight / Arcane Trickster)
+                combinedCasterLevel += pcc.getLevel() / 3.0;
+            }
+        }
+
+        int lookupLevel = (int) Math.floor(combinedCasterLevel);
+        if (lookupLevel <= 0) {
+            return;
+        }
+
+        DndClass referenceFullCaster = dndClassRepository.findByIndexName("wizard").orElse(null);
+        if (referenceFullCaster == null) {
+            System.out.println("Multiclass spell slots: reference full-caster class 'wizard' not found in catalog, skipping.");
+            return;
+        }
+
+        List<SpellSlotProgression> progression =
+                spellSlotProgressionRepository.findByDndClassAndCharacterLevel(referenceFullCaster, lookupLevel);
+        for (SpellSlotProgression p : progression) {
+            CharacterSpellSlot slot = slotRepository
+                    .findByCharacterAndSpellLevel(character, p.getSpellLevel())
+                    .orElse(new CharacterSpellSlot());
+            slot.setCharacter(character);
+            slot.setSpellLevel(p.getSpellLevel());
+            slot.setMaxSlots(p.getSlots());
+            slot.setUsedSlots(0);
+            slotRepository.save(slot);
+        }
+        System.out.println("Multiclass spell slots recalculated: combined caster level " + lookupLevel);
+    }
+
     // ========== LEVEL UP ==========
 
     @Transactional
@@ -1131,6 +1242,131 @@ public class PlayerCharacterService {
         return character;
     }
 
+    // ========== LEVEL UP MULTICLASE (Aurora_Fixes.md #17, fase 1) ==========
+
+    /**
+     * Punto de entrada retrocompatible del endpoint de level-up. Cuando classId es null y el
+     * personaje sigue mono-clase, delega tal cual en levelUp(Long, Integer) sin tocar su
+     * cuerpo -- el frontend actual, que nunca envía classId, sigue funcionando exactamente
+     * igual. classId != null (o un personaje ya multiclaseado sin classId, que debe fallar
+     * alto y claro en vez de adivinar) son los únicos caminos nuevos.
+     */
+    @Transactional
+    public dto.LevelUpResultDto levelUpMulticlass(Long characterId, Integer hpRoll, Long classId, Long subclassId) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found"));
+
+        if (classId == null) {
+            long classCount = playerCharacterClassRepository.countByCharacter(character);
+            if (classCount > 1) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "This character is multiclassed — specify classId to level up.");
+            }
+            PlayerCharacter leveled = levelUp(characterId, hpRoll);
+            return new dto.LevelUpResultDto("Character leveled up!", List.of(), toDto(leveled));
+        }
+
+        DndClass targetClass = dndClassRepository.findById(classId)
+                .orElseThrow(() -> new RuntimeException("DndClass not found"));
+
+        if (character.getLevel() >= 20) {
+            throw new RuntimeException("Character is already at max level (20)");
+        }
+
+        List<String> warnings = new ArrayList<>();
+        PlayerCharacterClass row = playerCharacterClassRepository
+                .findByCharacterAndDndClass(character, targetClass).orElse(null);
+        boolean isBrandNewClass = row == null;
+        int levelInClass;
+
+        if (isBrandNewClass) {
+            warnings.addAll(multiclassRulesService.checkAbilityScorePrerequisites(character, targetClass));
+
+            int maxOrder = playerCharacterClassRepository.findByCharacterOrderByClassOrderAsc(character)
+                    .stream().mapToInt(PlayerCharacterClass::getClassOrder).max().orElse(-1);
+            row = new PlayerCharacterClass();
+            row.setCharacter(character);
+            row.setDndClass(targetClass);
+            row.setClassOrder(maxOrder + 1);
+            levelInClass = 1;
+
+            warnings.addAll(multiclassRulesService.grantReducedProficiencies(character, targetClass));
+        } else {
+            levelInClass = row.getLevel() + 1;
+        }
+
+        int newCharacterLevel = character.getLevel() + 1;
+        character.setLevel(newCharacterLevel);
+
+        if (hpRoll != null) {
+            Map<Integer, Integer> hpRolls = character.getHpRolls();
+            if (hpRolls == null) {
+                hpRolls = new HashMap<>();
+            }
+            hpRolls.put(newCharacterLevel, hpRoll);
+            character.setHpRolls(hpRolls);
+        }
+
+        System.out.println("=== Leveling up " + character.getName() + " in " + targetClass.getName()
+                + " to class level " + levelInClass + " (character level " + newCharacterLevel + ") ===");
+
+        // El bono de competencia ya es correcto por nivel TOTAL de personaje -- no cambia con multiclase.
+        updateProficiency(character);
+
+        if (subclassId != null) {
+            Subclass subclass = subclassRepository.findById(subclassId)
+                    .orElseThrow(() -> new RuntimeException("Subclass not found"));
+            assignSubclassForClass(targetClass, row, subclass);
+        }
+
+        processClassLevelFeaturesForClass(character, targetClass, row.getSubclass(), levelInClass, hpRoll);
+        addClassFeaturesFromAPIForClass(character, targetClass, levelInClass);
+
+        row.setLevel(levelInClass);
+        playerCharacterClassRepository.save(row);
+
+        // classOrder=0 es la clase que dndClass/subclass/level de PlayerCharacter reflejan
+        // (dual-write, ver create()) -- se mantiene el espejo también al subir de nivel.
+        if (row.getClassOrder() == 0) {
+            character.setDndClass(targetClass);
+            character.setSubclass(row.getSubclass());
+        }
+
+        // Spell slots combinados: se recalculan una sola vez, tras procesar la clase que sube,
+        // porque dependen de TODAS las clases lanzadoras del personaje a la vez, no solo de esta.
+        if (playerCharacterClassRepository.countByCharacter(character) > 1) {
+            recalculateMulticlassSpellSlots(character);
+        } else {
+            updateSpellSlots(character, levelInClass);
+        }
+
+        characterClassResourceService.initializeClassResourcesForCharacterAndClass(
+                character.getId(), targetClass, row.getSubclass(), levelInClass);
+        characterClassResourceService.updateResourceMaximums(character.getId());
+        characterRaceResourceService.updateResourceMaximums(character.getId());
+        racialTraitService.applyAutomaticRacialTraits(character);
+
+        characterRepository.save(character);
+
+        System.out.println("=== Level up complete! ===");
+
+        return new dto.LevelUpResultDto(
+                "Character leveled up in " + targetClass.getName() + "!", warnings, toDto(character));
+    }
+
+    /** Multiclase: asigna subclase a una PlayerCharacterClass concreta (no a la legacy character.subclass directamente). */
+    private void assignSubclassForClass(DndClass targetClass, PlayerCharacterClass row, Subclass subclass) {
+        if (!subclass.getDndClass().getId().equals(targetClass.getId())) {
+            throw new RuntimeException("Subclass does not belong to the class being leveled");
+        }
+        Integer subclassLevel = targetClass.getSubclassLevel();
+        int levelAfterThisLevelUp = row.getLevel() + 1;
+        if (subclassLevel != null && levelAfterThisLevelUp < subclassLevel) {
+            throw new RuntimeException("Character must be at least level " + subclassLevel
+                    + " in " + targetClass.getName() + " to choose a subclass");
+        }
+        row.setSubclass(subclass);
+    }
 
     // ========== COMBAT METHODS ==========
 
@@ -1926,6 +2162,334 @@ public class PlayerCharacterService {
         }
     }
 
+    // ========== MULTICLASE (Aurora_Fixes.md #17, fase 1) ==========
+    //
+    // Copias deliberadas de los métodos de nivel-por-clase de arriba, parametrizadas con
+    // `targetClass`/`levelInClass` en vez de leer implícitamente character.getDndClass()/
+    // character.getLevel(). Se duplica en vez de añadir un parámetro a los métodos
+    // originales para que el camino mono-clase existente (levelUp(Long, Integer), que
+    // sigue llamando siempre a los métodos de arriba sin tocar) no pueda verse afectado
+    // por ningún bug de este código nuevo, todavía sin ejercitar en producción.
+
+    private void processClassLevelFeaturesForClass(PlayerCharacter character, DndClass targetClass,
+            Subclass subclassForRow, int levelInClass, Integer hpRoll) {
+        ClassLevelProgression progression =
+                classLevelProgressionRepository.findByDndClassAndLevel(targetClass, levelInClass)
+                        .orElse(null);
+
+        if (progression == null) {
+            System.out.println("No progression data found for " + targetClass.getName() + " level " + levelInClass);
+            return;
+        }
+
+        List<ClassLevelFeature> features = progression.getFeatures();
+        if (features == null || features.isEmpty()) {
+            System.out.println("No features configured for this level");
+            return;
+        }
+
+        for (ClassLevelFeature feature : features) {
+            if (feature.isRequiresChoice()) {
+                createTaskForClass(character, targetClass, levelInClass, feature, subclassForRow);
+            } else {
+                applyAutomaticFeatureForClass(character, targetClass, levelInClass, feature, hpRoll);
+            }
+        }
+
+        // Tareas adicionales específicas de la subclase (Battle Master, Totem Warrior, etc.)
+        createSubclassLevelTasksForClass(character, targetClass, subclassForRow, levelInClass);
+
+        // Aplicar hechizos automáticos de subclase/clase base desbloqueados al nuevo nivel
+        // (estos servicios ya reciben clase/subclase como parámetro explícito, no hace falta duplicarlos)
+        subclassSpellService.applySubclassSpells(character, subclassForRow, levelInClass);
+        classSpellService.applyClassSpells(character, targetClass, levelInClass);
+    }
+
+    private void createTaskForClass(PlayerCharacter character, DndClass targetClass, int levelInClass,
+            ClassLevelFeature feature, Subclass subclassForRow) {
+        System.out.println("Creating task for feature type: " + feature.getType() + " (class: " + targetClass.getName() + ")");
+
+        if (feature.getType() == FeatureType.SPELL_LEARN ||
+            feature.getType() == FeatureType.SPELL_PREPARE) {
+            System.out.println("Skipping " + feature.getType() + " – handled by wizard spell selection.");
+            return;
+        }
+
+        if (feature.getType() == FeatureType.SUBCLASS_CHOICE && subclassForRow != null) {
+            System.out.println("Skipping SUBCLASS_CHOICE – subclass already chosen: " + subclassForRow.getName());
+            return;
+        }
+
+        PendingTask task = new PendingTask();
+        task.setCharacter(character);
+        task.setDndClass(targetClass);
+        task.setRelatedLevel(levelInClass);
+        task.setCompleted(false);
+
+        switch (feature.getType()) {
+            case ASI_OR_FEAT:
+                task.setTaskType("ASI_OR_FEAT");
+                task.setDescription("Choose between increasing ability scores (+2 to one or +1 to two) or taking a feat");
+                break;
+
+            case SUBCLASS_CHOICE:
+                task.setTaskType("CHOOSE_SUBCLASS");
+                task.setDescription("Choose your " + targetClass.getName() + " subclass/archetype");
+                break;
+
+            case FIGHTING_STYLE:
+                task.setTaskType("FIGHTING_STYLE");
+                task.setDescription("Choose a fighting style");
+                break;
+
+            case INVOCATION:
+                task.setTaskType("INVOCATION");
+                task.setDescription("Choose Eldritch Invocation(s)");
+                task.setMetadata(feature.getMetadata());
+                break;
+
+            case INFUSION_CHOICE:
+                task.setTaskType("INFUSION_CHOICE");
+                task.setDescription("Choose artificer infusion(s) known (Infuse Item)");
+                task.setMetadata(feature.getMetadata());
+                break;
+
+            case METAMAGIC:
+                task.setTaskType("METAMAGIC");
+                task.setDescription("Choose Metamagic option(s)");
+                task.setMetadata(feature.getMetadata());
+                break;
+
+            case FAVORED_ENEMY:
+                task.setTaskType("FAVORED_ENEMY");
+                task.setDescription("Choose your Favored Enemy");
+                break;
+
+            case FAVORED_TERRAIN:
+                task.setTaskType("FAVORED_TERRAIN");
+                task.setDescription("Choose your Favored Terrain (Natural Explorer)");
+                break;
+
+            case DRACONIC_ANCESTRY:
+                task.setTaskType("DRACONIC_ANCESTRY");
+                task.setDescription("Choose your Draconic Ancestry (determines Breath Weapon damage type)");
+                break;
+
+            case EXPERTISE:
+                task.setTaskType("EXPERTISE");
+                task.setDescription("Choose skills to gain Expertise (double proficiency bonus)");
+                task.setMetadata(feature.getMetadata());
+                break;
+
+            case BLOOD_CURSE_CHOICE:
+                task.setTaskType("BLOOD_CURSE_CHOICE");
+                task.setDescription("Choose a Blood Curse (Blood Hunter)");
+                task.setMetadata(feature.getMetadata());
+                break;
+
+            case TRICK_SHOT_CHOICE:
+                task.setTaskType("TRICK_SHOT_CHOICE");
+                task.setDescription("Choose a Trick Shot (Gunslinger)");
+                task.setMetadata(feature.getMetadata());
+                break;
+
+            default:
+                System.out.println("Unknown task type for: " + feature.getType());
+                return;
+        }
+
+        pendingTaskRepository.save(task);
+        System.out.println("Task created: " + task.getTaskType() + " (class: " + targetClass.getName() + ")");
+    }
+
+    private void createSubclassLevelTasksForClass(PlayerCharacter character, DndClass targetClass,
+            Subclass subclassForRow, int levelInClass) {
+        if (subclassForRow == null) return;
+        String sub = subclassForRow.getIndexName();
+        if (sub == null) return;
+
+        switch (sub) {
+            case "battle-master":
+                if (levelInClass == 3)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "MANEUVER_CHOICE",
+                            "Choose 3 Battle Master Maneuvers", "{\"count\":3}");
+                else if (levelInClass == 7 || levelInClass == 15)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "MANEUVER_CHOICE",
+                            "Choose 2 additional Battle Master Maneuvers", "{\"count\":2}");
+                break;
+
+            case "path-of-the-totem-warrior":
+                if (levelInClass == 3)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "TOTEM_SPIRIT",
+                            "Choose your Totem Spirit (Bear, Eagle, or Wolf)", null);
+                else if (levelInClass == 6)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "TOTEM_ASPECT",
+                            "Choose your Aspect of the Beast (Bear, Eagle, or Wolf)", null);
+                else if (levelInClass == 14)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "TOTEM_ATTUNEMENT",
+                            "Choose your Totemic Attunement (Bear, Eagle, or Wolf)", null);
+                break;
+
+            case "hunter":
+                if (levelInClass == 3)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "HUNTERS_PREY",
+                            "Choose your Hunter's Prey ability", null);
+                else if (levelInClass == 7)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "DEFENSIVE_TACTICS",
+                            "Choose your Defensive Tactics", null);
+                else if (levelInClass == 11)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "HUNTER_MULTIATTACK",
+                            "Choose your Multiattack style", null);
+                else if (levelInClass == 15)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "SUPERIOR_HUNTERS_DEFENSE",
+                            "Choose your Superior Hunter's Defense", null);
+                break;
+
+            case "way-of-the-four-elements":
+                if (levelInClass == 3)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "ELEMENTAL_DISCIPLINE",
+                            "Choose 2 Elemental Disciplines", "{\"count\":2}");
+                else if (levelInClass == 6 || levelInClass == 11 || levelInClass == 17)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "ELEMENTAL_DISCIPLINE",
+                            "Choose an additional Elemental Discipline", "{\"count\":1}");
+                break;
+
+            case "land":
+                if (levelInClass == 3)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "LAND_TYPE_CHOICE",
+                            "Choose your Land type (Arctic, Coast, Desert, Forest, Grassland, Mountain, Swamp, or Underdark)", null);
+                break;
+
+            case "lore":
+                if (levelInClass == 6)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "ADDITIONAL_MAGICAL_SECRETS",
+                            "Learn 2 spells of your choice from any class (they count as bard spells)", null);
+                break;
+
+            case "gunslinger":
+                if (levelInClass == 3)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "TRICK_SHOT_CHOICE",
+                            "Choose 2 Trick Shots (Gunslinger)", "{\"count\":2}");
+                else if (levelInClass == 7 || levelInClass == 10 || levelInClass == 15 || levelInClass == 18)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "TRICK_SHOT_CHOICE",
+                            "Choose an additional Trick Shot (Gunslinger)", "{\"count\":1}");
+                break;
+
+            case "order-of-the-mutant":
+                if (levelInClass == 3) {
+                    int formulaCount = Math.max(1, character.calculateAbilityModifier("int"));
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "MUTAGEN_CHOICE",
+                            "Choose " + formulaCount + " Mutagenic Formula" + (formulaCount == 1 ? "" : "s"),
+                            "{\"count\":" + formulaCount + "}");
+                }
+                break;
+
+            case "ID_WOTC_TCOE_ARCHETYPE_FIGHTER_RUNE_KNIGHT":
+                if (levelInClass == 3)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "RUNE_CHOICE",
+                            "Choose 2 Runes Known", "{\"count\":2}");
+                else if (levelInClass == 7 || levelInClass == 10 || levelInClass == 15)
+                    createSubclassTaskForClass(character, targetClass, levelInClass, "RUNE_CHOICE",
+                            "Choose an additional Rune Known", "{\"count\":1}");
+                break;
+        }
+    }
+
+    /** Crea una PendingTask de subclase evitando duplicados por tipo+nivel+clase. */
+    private void createSubclassTaskForClass(PlayerCharacter character, DndClass targetClass, int levelInClass,
+            String taskType, String description, String initialMetadata) {
+        boolean alreadyExists = pendingTaskRepository.findByCharacter(character).stream()
+                .anyMatch(t -> taskType.equals(t.getTaskType()) && t.getRelatedLevel() == levelInClass
+                        && t.getDndClass() != null && targetClass.getId().equals(t.getDndClass().getId()));
+        if (alreadyExists) return;
+
+        PendingTask task = new PendingTask();
+        task.setCharacter(character);
+        task.setDndClass(targetClass);
+        task.setRelatedLevel(levelInClass);
+        task.setTaskType(taskType);
+        task.setDescription(description);
+        task.setMetadata(initialMetadata);
+        task.setCompleted(false);
+        pendingTaskRepository.save(task);
+        System.out.println("Subclass task created: " + taskType + " at level " + levelInClass
+                + " for " + character.getName() + " (class: " + targetClass.getName() + ")");
+    }
+
+    private void applyAutomaticFeatureForClass(PlayerCharacter character, DndClass targetClass, int levelInClass,
+            ClassLevelFeature feature, Integer hpRoll) {
+        System.out.println("Applying automatic feature: " + feature.getType() + " (class: " + targetClass.getName() + ")");
+
+        switch (feature.getType()) {
+            case HP_INCREASE:
+                addHitPointsForClass(character, targetClass, hpRoll);
+                break;
+
+            case SPELL_SLOT_UPDATE:
+                // No se recalculan aquí: bajo multiclase los slots dependen de TODAS las clases
+                // combinadas (nivel de lanzador ponderado), no solo de la que se está subiendo.
+                // levelUpMulticlass() llama a recalculateMulticlassSpellSlots() una sola vez,
+                // después de procesar todas las clases implicadas en esta subida de nivel.
+                System.out.println("Spell slots recalculados aparte por recalculateMulticlassSpellSlots()");
+                break;
+
+            case CLASS_FEATURE:
+                System.out.println("Class feature (descriptive) - handled separately");
+                break;
+
+            default:
+                System.out.println("No automatic action for: " + feature.getType());
+        }
+    }
+
+    private void addHitPointsForClass(PlayerCharacter character, DndClass targetClass, Integer hpRoll) {
+        int hitDie = targetClass.getHitDie();
+
+        int constitutionModifier = calculateAbilityModifier(
+                character.getAbilityScores().getOrDefault("con", 10)
+        );
+
+        int hpGain = (hpRoll != null ? hpRoll : (hitDie / 2) + 1) + constitutionModifier;
+        if (hpGain < 1) {
+            hpGain = 1;
+        }
+
+        hpGain += numericBonusService.bonusFor(character, "MAX_HP_PER_LEVEL");
+
+        int oldMaxHP = character.getMaxHP();
+        character.setMaxHP(oldMaxHP + hpGain);
+        character.setCurrentHP(character.getMaxHP());
+
+        System.out.println("HP increased by " + hpGain + " (from " + oldMaxHP + " to " + character.getMaxHP() + ", class: " + targetClass.getName() + ")");
+    }
+
+    private void addClassFeaturesFromAPIForClass(PlayerCharacter character, DndClass targetClass, int levelInClass) {
+        List<ClassFeature> newFeatures = classFeatureRepository
+                .findByDndClassAndLevel(targetClass, levelInClass);
+
+        if (newFeatures.isEmpty()) {
+            System.out.println("No API features found for level " + levelInClass + " (class: " + targetClass.getName() + ")");
+            return;
+        }
+
+        for (ClassFeature feature : newFeatures) {
+            boolean alreadyHas = characterFeatureRepository.findByCharacter(character)
+                    .stream()
+                    .anyMatch(cf -> cf.getClassFeature().getId().equals(feature.getId()));
+
+            if (!alreadyHas) {
+                CharacterFeature characterFeature = new CharacterFeature(
+                        character,
+                        feature,
+                        levelInClass
+                );
+                characterFeatureRepository.save(characterFeature);
+
+                System.out.println("Added feature: " + feature.getName() + " (class: " + targetClass.getName() + ")");
+            }
+        }
+    }
+
     // ========== SUBCLASS ==========
    @Transactional
     public PlayerCharacterDto assignSubclass(Long characterId, Long subclassId) {
@@ -2024,7 +2588,9 @@ public class PlayerCharacterService {
         dto.setSpellSaveDC(character.getSpellSaveDC());
         dto.setSpellAttackBonus(character.getSpellAttackBonus());
         dto.setTemporaryHP(character.getTemporaryHP());
-        
+
+        dto.setClasses(toClassDtos(character));
+
         return dto;
     }
 

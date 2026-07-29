@@ -83,7 +83,8 @@ public class PlayerCharacterDto {
     private List<String> classSkillIndices; // input: class skill picks from wizard
     private List<String> expertiseSkillNames; // input: expertise picks from wizard (display names, e.g. "Arcana")
     private List<String> selectedSources;
-    
+    private List<PlayerCharacterClassDto> classes; // fundamento de multiclase (Aurora_Fixes.md #17, fase 1)
+
 
 
     // Getters y setters
@@ -714,5 +715,8 @@ public class PlayerCharacterDto {
 
     public List<String> getSelectedSources() { return selectedSources; }
     public void setSelectedSources(List<String> selectedSources) { this.selectedSources = selectedSources; }
+
+    public List<PlayerCharacterClassDto> getClasses() { return classes; }
+    public void setClasses(List<PlayerCharacterClassDto> classes) { this.classes = classes; }
 
 }

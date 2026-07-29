@@ -3,6 +3,8 @@ package services;
 import entities.CharacterClassResource;
 import entities.PlayerCharacter;
 import entities.ClassResource;
+import entities.DndClass;
+import entities.Subclass;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import repositories.CharacterClassResourceRepository;
@@ -126,6 +128,45 @@ public class CharacterClassResourceService {
             if (characterClassResourceRepository
                     .findByCharacterAndClassResource(character, resource).isEmpty()) {
                 
+                int maxAmount = calculateMaxAmount(character, resource);
+                CharacterClassResource ccr = new CharacterClassResource(character, resource, maxAmount);
+                characterClassResourceRepository.save(ccr);
+            }
+        }
+    }
+
+    // Multiclase (Aurora_Fixes.md #17, fase 1): igual que initializeClassResourcesForCharacter,
+    // pero filtrando por la clase/subclase/nivel-en-esa-clase concretos que se están subiendo,
+    // en vez de character.getDndClass()/character.getLevel() (que solo ven la clase primaria).
+    // LIMITACIÓN CONOCIDA Y DOCUMENTADA: calculateMaxAmount() sigue evaluando la fórmula del
+    // recurso (p.ej. "barbarian_rage_table") contra el nivel TOTAL del personaje, no el nivel
+    // en esta clase concreta -- CharacterFormulaService.evaluate() se comparte con
+    // NumericBonusService, que sí debe seguir leyendo nivel total (Fighting Style, Rune
+    // Knight...), así que darle una variante consciente de nivel-por-clase es un follow-up
+    // aparte, no esta fase. Este método al menos hace que el recurso EXISTA para una clase
+    // secundaria (antes ni eso), aunque su maxAmount pueda salir provisional/incorrecto hasta
+    // ese follow-up.
+    @Transactional
+    public void initializeClassResourcesForCharacterAndClass(Long characterId, DndClass targetClass,
+            Subclass subclassForRow, int levelInClass) {
+        PlayerCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new RuntimeException("Character not found"));
+
+        String subclassIndex = subclassForRow != null ? subclassForRow.getIndexName() : null;
+
+        List<ClassResource> classResources = classResourceRepository
+                .findByDndClassAndLevelUnlockedLessThanEqual(targetClass, levelInClass)
+                .stream()
+                .filter(r -> r.getSubclassRestriction() == null
+                        || r.getSubclassRestriction().equals(subclassIndex))
+                .filter(r -> r.getRequiresMultiChoice() == null
+                        || pendingChoiceService.matchesMultiChoiceCondition(character, r.getRequiresMultiChoice()))
+                .collect(java.util.stream.Collectors.toList());
+
+        for (ClassResource resource : classResources) {
+            if (characterClassResourceRepository
+                    .findByCharacterAndClassResource(character, resource).isEmpty()) {
+
                 int maxAmount = calculateMaxAmount(character, resource);
                 CharacterClassResource ccr = new CharacterClassResource(character, resource, maxAmount);
                 characterClassResourceRepository.save(ccr);

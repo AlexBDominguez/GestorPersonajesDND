@@ -36,6 +36,12 @@ public class PlayerCharacter {
     @JoinColumn(name = "subclass_id")
     private Subclass subclass;
 
+    // Fundamento de multiclase: cada clase que ha tomado el personaje, con su propio nivel.
+    // dndClass/subclass/level de arriba siguen siendo la fuente de verdad para personajes
+    // mono-clase (se mantienen en paralelo, "dual-write") y reflejan la clase con classOrder=0.
+    @OneToMany(mappedBy = "character", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PlayerCharacterClass> classes = new HashSet<>();
+
     @ManyToOne
     @JoinColumn(name = "background_id")
     private Background background;
@@ -317,6 +323,14 @@ public class PlayerCharacter {
 
     public void setCharacterSpells(Set<CharacterSpell> characterSpells) {
         this.characterSpells = characterSpells;
+    }
+
+    public Set<PlayerCharacterClass> getClasses() {
+        return classes;
+    }
+
+    public void setClasses(Set<PlayerCharacterClass> classes) {
+        this.classes = classes;
     }
 
     public int getCopperPieces() {
