@@ -121,6 +121,13 @@ class _SourcesGrid extends StatelessWidget {
   }
 }
 
+/// Etiqueta visible para el código corto de una source. Igual al shortName real
+/// salvo "AI" (Acquisitions Incorporated), que se confunde con "inteligencia
+/// artificial" al verse solo — el shortName real ("AI") no cambia, sigue siendo
+/// lo que se usa para filtrar/seleccionar sources, solo cambia lo que se muestra.
+String _sourceChipLabel(String shortName) =>
+    shortName == 'AI' ? 'Ac. Inc.' : shortName;
+
 class _SourceChip extends StatelessWidget {
   final ContentSource source;
   final bool selected;
@@ -167,7 +174,7 @@ class _SourceChip extends StatelessWidget {
               ),
             const SizedBox(width: 6),
             Text(
-              source.shortName,
+              _sourceChipLabel(source.shortName),
               style: GoogleFonts.libreBaskerville(
                 color: effectiveSelected ? AppTheme.primary : AppTheme.textSecondary,
                 fontSize: 12,
