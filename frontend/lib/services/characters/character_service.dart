@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:gestor_personajes_dnd/config/api_config.dart';
+import 'package:gestor_personajes_dnd/models/character/level_up_result.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character_summary.dart';
 import 'package:gestor_personajes_dnd/services/http/api_client.dart';
@@ -316,12 +317,21 @@ class CharacterService {
       throw Exception('Short rest failed (${res.statusCode})');
     }
 
-    // POST level-up
-    Future<void> levelUp(int characterId, {int? hpRoll}) async {
+    // POST level-up. classId/subclassId (multiclase, Aurora_Fixes.md #17 fase 2a): clase a
+    // la que va este nivel nuevo (existente o nueva); sin ellos, sube de nivel la única
+    // clase del personaje, igual que siempre.
+    Future<LevelUpResult> levelUp(int characterId, {int? hpRoll, int? classId, int? subclassId}) async {
+      final params = <String>[
+        if (hpRoll != null) 'hpRoll=$hpRoll',
+        if (classId != null) 'classId=$classId',
+        if (subclassId != null) 'subclassId=$subclassId',
+      ];
       final path = '${ApiConfig.charactersPath}/$characterId/level-up'
-          '${hpRoll != null ? '?hpRoll=$hpRoll' : ''}';
+          '${params.isNotEmpty ? '?${params.join('&')}' : ''}';
       final res = await _api.post(path);
-      if (res.statusCode == 200) return;
+      if (res.statusCode == 200) {
+        return LevelUpResult.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      }
       if (res.statusCode == 400) {
         final msg = res.body.isNotEmpty ? res.body : 'Character is already at max level';
         throw Exception(msg);

@@ -634,6 +634,10 @@ public class PendingTaskService {
                 dto.setDescription(t.getDescription());
                 dto.setCompleted(t.isCompleted());
                 dto.setMetadata(t.getMetadata());
+                if (t.getDndClass() != null) {
+                        dto.setDndClassId(t.getDndClass().getId());
+                        dto.setDndClassName(t.getDndClass().getName());
+                }
                 return dto;
         }
 

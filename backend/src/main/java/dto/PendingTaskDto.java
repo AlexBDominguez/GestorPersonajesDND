@@ -8,7 +8,25 @@ public class PendingTaskDto {
     private boolean completed;
     private String metadata; //JSON string con opciones disponibles si aplica
 
-    
+    // Multiclase (Aurora_Fixes.md #17, fase 2a): clase que originó esta tarea, para que el
+    // frontend pueda distinguir dos tareas del mismo tipo+nivel venidas de clases distintas.
+    // Null para personajes mono-clase y tareas creadas antes de esta fase.
+    private Long dndClassId;
+    private String dndClassName;
+
+    public Long getDndClassId() {
+        return dndClassId;
+    }
+    public void setDndClassId(Long dndClassId) {
+        this.dndClassId = dndClassId;
+    }
+    public String getDndClassName() {
+        return dndClassName;
+    }
+    public void setDndClassName(String dndClassName) {
+        this.dndClassName = dndClassName;
+    }
+
     public Long getId() {
         return id;
     }

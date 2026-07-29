@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
+import 'package:gestor_personajes_dnd/models/character/character_class_entry.dart';
 import 'package:gestor_personajes_dnd/models/character/character_skill.dart';
+import 'package:gestor_personajes_dnd/models/character/pending_task.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/models/content_source.dart';
 import 'package:gestor_personajes_dnd/models/inventory/inventory_item.dart';
@@ -17,7 +19,7 @@ import 'package:gestor_personajes_dnd/services/wizard/wizard_reference_service.d
 
 
 // - Enums ---------------------
-enum WizardStep {preferences, dndClass, background, race, abilityScores, spells, equipment}
+enum WizardStep {preferences, dndClass, background, race, abilityScores, spells, equipment, classPicker}
 enum AbilityScoreMethod {standardArray, manual}
 
 // - Constante D&D ------------------
@@ -74,6 +76,17 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   int? _initialBackgroundId;
   int? _initialRaceId;
   List<CharacterSkill> _editCharSkills = [];
+  // Multiclase (Aurora_Fixes.md #17, fase 2a): clase elegida en el paso "classPicker" para
+  // este level-up (existente o nueva) — null hasta que el jugador elige, en cuyo caso el
+  // filtro de PendingTasks por clase no descarta nada (mismo comportamiento que antes de
+  // esta fase). Ver también `_levelUpCharacterClasses` (paso classPicker).
+  int? _levelUpTargetClassId;
+  // Nivel EN LA CLASE elegida antes de esta sesión (0 para una clase nueva) — distinto de
+  // _originalLevel (nivel TOTAL de personaje, usado para indexar hpRolls, que siguen
+  // siendo por nivel de personaje sin cambios). selectedLevel pasa a significar "nivel en
+  // la clase elegida" en vez de "nivel de personaje" una vez se elige clase en este flujo.
+  int _levelUpTargetStartLevel = 0;
+  List<CharacterClassEntry> _levelUpCharacterClasses = [];
 
   CharacterCreatorViewModel({
     WizardReferenceService? refService,
@@ -167,6 +180,24 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         _initialRaceId  = char.raceId {
     characterName    = char.name;
     selectedLevel    = char.level + 1;  // Pre-incremento: estamos subiendo de nivel
+    // Multiclase (Aurora_Fixes.md #17, fase 2a): clases del personaje para el paso
+    // "classPicker". Fallback defensivo por si char.classes llega vacío (personaje sin
+    // backfill todavía, o backend anterior a la fase 1) — sintetiza la clase legacy.
+    _levelUpCharacterClasses = char.classes.isNotEmpty
+        ? char.classes
+        : (char.dndClassId != null
+            ? [
+                CharacterClassEntry(
+                  id: 0,
+                  dndClassId: char.dndClassId!,
+                  dndClassName: char.dndClassName ?? '',
+                  subclassId: char.subclassId,
+                  subclassName: char.subclassName,
+                  level: char.level,
+                  classOrder: 0,
+                ),
+              ]
+            : []);
     // Pre-rellenar los IDs de spells existentes para que el paso de spells los muestre como ya seleccionados
     _preExistingSpellIds = char.characterSpells.map((s) => s.spellId).toSet();
     selectedSpellIds.addAll(_preExistingSpellIds);
@@ -197,7 +228,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         ..addAll(char.selectedSources)
         ..add('PHB');
     }
-    _currentStep = WizardStep.dndClass;
+    _currentStep = WizardStep.classPicker;
   }
 
 
@@ -209,7 +240,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
 
   List<WizardStep> get activeSteps {
     if (_levelUpMode) {
-      final steps = [WizardStep.dndClass];
+      final steps = [WizardStep.classPicker, WizardStep.dndClass];
       if (isSpellcaster) steps.add(WizardStep.spells);
       return steps;
     }
@@ -399,6 +430,7 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       case WizardStep.abilityScores: return abilityScoresValid;
       case WizardStep.spells: return spellsValid;
       case WizardStep.equipment: return selectedItemIds.isNotEmpty; // optional step, tick only if items selected
+      case WizardStep.classPicker: return _levelUpTargetClassId != null;
     }
   }
 
@@ -564,9 +596,50 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     magicalSecretIds.clear();
     additionalMagicalSecretIds.clear();
     magicalSecretsPool.clear();
+    if (_levelUpMode) {
+      // Multiclase (Aurora_Fixes.md #17, fase 2a): en level-up, elegir una clase del
+      // catálogo (este método) solo pasa al tomar una clase NUEVA — la clase que se
+      // continúa se auto-selecciona en loadClasses() sin pasar por aquí (ver
+      // selectLevelUpTargetClass) — así que siempre es nivel 1 en esa clase, no
+      // nivel de personaje + 1.
+      _levelUpTargetClassId = c.id;
+      _levelUpTargetStartLevel = 0;
+      selectedLevel = 1;
+    }
     _markDirty(WizardStep.dndClass);
     notifyListeners();
     _loadSubclassesFor(c.id);
+  }
+
+  /// Multiclase (Aurora_Fixes.md #17, fase 2a): getters para el paso "classPicker".
+  List<CharacterClassEntry> get characterClasses => _levelUpCharacterClasses;
+  int? get levelUpTargetClassId => _levelUpTargetClassId;
+
+  /// El jugador elige subir de nivel una clase que YA tiene (existente en
+  /// `characterClasses`), no una nueva — busca su ClassOption/SubclassOption en el
+  /// catálogo y fija selectedLevel = nivel-en-esa-clase + 1 (no nivel de personaje + 1).
+  Future<void> selectLevelUpTargetClass(CharacterClassEntry entry) async {
+    _levelUpTargetClassId = entry.dndClassId;
+    _levelUpTargetStartLevel = entry.level;
+    selectedSubclass = null;
+    subclasses = [];
+    if (classes.isEmpty) await loadClasses();
+    final match = classes.where((c) => c.id == entry.dndClassId);
+    if (match.isNotEmpty) selectedClass = match.first;
+    selectedLevel = entry.level + 1;
+    if (selectedClass != null) {
+      await loadClassFeatures(selectedClass!.id);
+      await _loadSubclassesFor(selectedClass!.id);
+      if (entry.subclassId != null) {
+        final subMatch = subclasses.where((s) => s.id == entry.subclassId);
+        if (subMatch.isNotEmpty) selectedSubclass = subMatch.first;
+      }
+    }
+    // Re-ejecutar ahora que _levelUpTargetClassId ya se conoce, para que las elecciones
+    // ya resueltas de ESTA clase (y no de otra) se prellenen correctamente.
+    await _prePopulateFeatureChoicesForEdit();
+    _markDirty(WizardStep.classPicker);
+    notifyListeners();
   }
 
   void clearClass() {
@@ -1712,6 +1785,12 @@ void toggleItem(int itemId) {
   int? _createdCharacterId;
   int? get createdCharacterId => _createdCharacterId;
 
+  // Multiclase (Aurora_Fixes.md #17, fase 2a): avisos no bloqueantes devueltos por el
+  // backend al subir de nivel (prerrequisitos de característica, elecciones de
+  // proficiency no automatizadas) — para que la pantalla los muestre tras guardar.
+  List<String> _lastLevelUpWarnings = [];
+  List<String> get lastLevelUpWarnings => _lastLevelUpWarnings;
+
   Object? get requiredFeatureChoices => null;
 
   Future<void> submit() async {
@@ -1818,10 +1897,16 @@ void toggleItem(int itemId) {
   /// Expertise, Favored Enemy, elecciones de raza/subraza, etc.) para que no aparezcan
   /// vacías al entrar en modo edición — de lo contrario el usuario las ve como pendientes
   /// y, si las vuelve a elegir, puede sobrescribir la elección original (bug #1 del backlog).
+  /// Multiclase (Aurora_Fixes.md #17, fase 2a): en modo level-up, solo se rellenan las
+  /// elecciones ya resueltas de la clase objetivo (`_levelUpTargetClassId`) — si todavía no
+  /// se ha elegido (p.ej. la primera carga, antes de pasar por el paso "classPicker"), el
+  /// filtro no descarta nada (mismo comportamiento que antes de esta fase, ver
+  /// `_taskBelongsToLevelUpTarget`). Se vuelve a llamar tras elegir clase, ver setLevelUpTargetClass().
   Future<void> _prePopulateFeatureChoicesForEdit() async {
     if (_editCharacterId == null) return;
     try {
-      final tasks = await _pendingTaskService.getPendingTasks(_editCharacterId!);
+      final tasks = (await _pendingTaskService.getPendingTasks(_editCharacterId!))
+          .where(_taskBelongsToLevelUpTarget);
       final allConfigs = [
         ...allClassFeatureChoices,
         ...subclassFeatureChoices,
@@ -1916,7 +2001,13 @@ void toggleItem(int itemId) {
     // can display them as read-only for old levels.
     if (_editCharacterId != null) {
       try {
-        final tasks = await _pendingTaskService.getPendingTasks(_editCharacterId!);
+        // Multiclase (fase 2a): filtrado por _taskBelongsToLevelUpTarget — en esta
+        // primera carga _levelUpTargetClassId todavía es null (el usuario no ha pasado
+        // por "classPicker" todavía), así que el filtro no descarta nada aquí; se vuelve
+        // a poblar correctamente por clase en selectLevelUpTargetClass()/selectClass()
+        // vía _prePopulateFeatureChoicesForEdit().
+        final tasks = (await _pendingTaskService.getPendingTasks(_editCharacterId!))
+            .where(_taskBelongsToLevelUpTarget);
         for (final t in tasks) {
           if (t.completed && t.resolvedChoice != null) {
             featureChoices['${t.taskType}_${t.relatedLevel}'] = t.resolvedChoice!;
@@ -1936,13 +2027,28 @@ void toggleItem(int itemId) {
     try {
       // 1. Level-up if needed (one POST per level gained), enviando la tirada de HP
       // que el usuario hizo para ese nivel concreto en "Manage HP" (si la hizo).
-      final levelsGained = selectedLevel - _originalLevel;
+      // Multiclase (Aurora_Fixes.md #17, fase 2a): en level-up, selectedLevel significa
+      // "nivel en la clase elegida" (ver selectClass/selectLevelUpTargetClass), no nivel
+      // de personaje — levelsGained se calcula contra _levelUpTargetStartLevel, no contra
+      // _originalLevel (que sigue usándose tal cual para indexar _hpRolls, siempre por
+      // nivel TOTAL de personaje). En edición pura (sin level-up) el cálculo no cambia.
+      final levelsGained = (_levelUpMode && _levelUpTargetClassId != null)
+          ? selectedLevel - _levelUpTargetStartLevel
+          : selectedLevel - _originalLevel;
+      final levelUpWarnings = <String>[];
       if (levelsGained > 0) {
         for (int i = 0; i < levelsGained; i++) {
           final newLevel = _originalLevel + i + 1;
-          await _charService.levelUp(_editCharacterId!, hpRoll: _hpRolls[newLevel]);
+          final result = await _charService.levelUp(
+            _editCharacterId!,
+            hpRoll: _hpRolls[newLevel],
+            classId: _levelUpTargetClassId,
+            subclassId: _levelUpTargetClassId != null ? selectedSubclass?.id : null,
+          );
+          levelUpWarnings.addAll(result.warnings);
         }
       }
+      _lastLevelUpWarnings = levelUpWarnings;
 
       // 2. Actualizar metadatos del perfil
       await _charService.updateProfile(
@@ -2134,11 +2240,20 @@ void toggleItem(int itemId) {
     return values.isEmpty ? null : values.join(',');
   }
 
+  /// Multiclase (Aurora_Fixes.md #17, fase 2a): una tarea pendiente "pertenece" a la clase
+  /// que se está subiendo en esta sesión si no tiene clase asignada (personaje mono-clase,
+  /// o tarea creada antes de esta fase) o si es exactamente esa clase. Sin esto, dos clases
+  /// distintas que alcanzan el mismo taskType al mismo nivel-en-su-clase (p.ej. ambas su
+  /// propio ASI de nivel 4) colisionarían en la misma clave `taskType_relatedLevel`.
+  bool _taskBelongsToLevelUpTarget(PendingTask t) =>
+      t.dndClassId == null || t.dndClassId == _levelUpTargetClassId;
+
   /// Carga las tareas pendientes del personaje recién creado y resuelve silenciosamente
   /// cualquier tarea cuya clave (taskType_relatedLevel) coincida con una elección recogida en el wizard.
   Future<void> _autoResolveFeatureChoices(int characterId) async {
     try {
-      final tasks = await _pendingTaskService.getPendingTasks(characterId);
+      final tasks = (await _pendingTaskService.getPendingTasks(characterId))
+          .where(_taskBelongsToLevelUpTarget);
       for (final task in tasks) {
         // Las tareas ya completadas no se pueden volver a resolver — el backend lo rechaza
         // con un error. En modo edición, featureChoices puede tener un valor no-nulo para
@@ -2190,6 +2305,10 @@ void toggleItem(int itemId) {
         if (availableContentSources.isEmpty) loadContentSources();
         break;
       case WizardStep.dndClass:
+        if (classes.isEmpty) loadClasses();
+        break;
+      case WizardStep.classPicker:
+        // Necesario para poder ofrecer "Take a new class" con el catálogo completo.
         if (classes.isEmpty) loadClasses();
         break;
       case WizardStep.background:

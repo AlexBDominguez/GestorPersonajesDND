@@ -2,6 +2,7 @@ import 'package:gestor_personajes_dnd/models/character/character_skill.dart';
 import 'package:gestor_personajes_dnd/models/character/spell_slot.dart';
 import 'package:gestor_personajes_dnd/models/character/character_saving_throw.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
+import 'package:gestor_personajes_dnd/models/character/character_class_entry.dart';
 
 class PlayerCharacter{
   final int id;
@@ -69,6 +70,9 @@ class PlayerCharacter{
   final List<CharacterSkill> skills;
   final List<CharacterSavingThrow> savingThrows;
   final List<CharacterSpell> characterSpells;
+  // Multiclase (Aurora_Fixes.md #17): clases del personaje, ordenadas por classOrder
+  // (0 = clase original, la que dndClassId/dndClassName/subclassId/level ya reflejan).
+  final List<CharacterClassEntry> classes;
   final int copperPieces;
   final int silverPieces;
   final int electrumPieces;
@@ -144,6 +148,7 @@ class PlayerCharacter{
     this.skills = const [],
     this.savingThrows = const [],
     this.characterSpells = const [],
+    this.classes = const [],
     required this.copperPieces,
     required this.silverPieces,
     required this.electrumPieces,
@@ -233,6 +238,9 @@ class PlayerCharacter{
                                 .toList(),
       characterSpells:     (j['characterSpells'] as List<dynamic>? ?? [])
                                .map((e) => CharacterSpell.fromJson(e as Map<String, dynamic>))
+                               .toList(),
+      classes:             (j['classes'] as List<dynamic>? ?? [])
+                               .map((e) => CharacterClassEntry.fromJson(e as Map<String, dynamic>))
                                .toList(),
       copperPieces:        (j['copperPieces']   as num?)?.toInt() ?? 0,
       silverPieces:        (j['silverPieces']   as num?)?.toInt() ?? 0,

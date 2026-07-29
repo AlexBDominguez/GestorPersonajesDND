@@ -6,6 +6,7 @@ import '../../../config/app_theme.dart';
 import '../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import 'steps/step_race.dart';
 import 'steps/step_class.dart';
+import 'steps/step_class_picker.dart';
 import 'steps/step_ability_scores.dart';
 import 'steps/step_background.dart';
 import 'steps/step_preferences.dart';
@@ -36,6 +37,7 @@ class CharacterWizardBody extends StatelessWidget {
     WizardStep.abilityScores: (title: 'Stats',    icon: Icons.bar_chart),
     WizardStep.spells:        (title: 'Spells',   icon: Icons.auto_fix_high_outlined),
     WizardStep.equipment:     (title: 'Items',    icon: Icons.backpack_outlined),
+    WizardStep.classPicker:   (title: 'Level Up', icon: Icons.upgrade_outlined),
   };
 
   String _stepTitle(BuildContext context, WizardStep step) {
@@ -47,6 +49,7 @@ class CharacterWizardBody extends StatelessWidget {
       WizardStep.abilityScores => 'Stats',
       WizardStep.spells => 'Spells',
       WizardStep.equipment => 'Items',
+      WizardStep.classPicker => 'Level Up',
     };
   }
 
@@ -59,6 +62,7 @@ class CharacterWizardBody extends StatelessWidget {
       case WizardStep.abilityScores: return const StepAbilityScores();
       case WizardStep.spells:        return const StepSpells();
       case WizardStep.equipment:     return const StepEquipment();
+      case WizardStep.classPicker:   return const StepClassPicker();
     }
   }
 
@@ -66,9 +70,31 @@ class CharacterWizardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.watch<CharacterCreatorViewModel>();
 
-    // When saved successfully, go back — pass new character ID on create, true on edit
+    // When saved successfully, go back — pass new character ID on create, true on edit.
+    // Multiclase (Aurora_Fixes.md #17, fase 2a): si el level-up devolvió avisos no
+    // bloqueantes (prerrequisitos/proficiencies), se muestran antes de volver.
     if (vm.saveSuccess) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!context.mounted) return;
+        final warnings = vm.lastLevelUpWarnings;
+        if (warnings.isNotEmpty) {
+          await showDialog<void>(
+            context: context,
+            builder: (_) => AlertDialog(
+              backgroundColor: AppTheme.surface,
+              title: Text('Heads up', style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
+              content: Text(warnings.join('\n\n'),
+                  style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
+        if (!context.mounted) return;
         Navigator.of(context).pop(vm.isEditMode ? true : vm.createdCharacterId);
       });
     }

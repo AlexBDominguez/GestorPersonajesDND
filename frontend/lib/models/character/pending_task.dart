@@ -7,6 +7,10 @@ class PendingTask{
   final String description;
   final bool completed;
   final String? metadata;
+  // Multiclase (Aurora_Fixes.md #17, fase 2a): clase que originó esta tarea. Null para
+  // personajes mono-clase y tareas creadas antes de esta fase.
+  final int? dndClassId;
+  final String? dndClassName;
 
   const PendingTask({
     required this.id,
@@ -14,7 +18,9 @@ class PendingTask{
     required this.relatedLevel,
     required this.description,
     required this.completed,
-    this.metadata
+    this.metadata,
+    this.dndClassId,
+    this.dndClassName,
   });
 
   factory PendingTask.fromJson(Map<String, dynamic> j) => PendingTask(
@@ -24,6 +30,8 @@ class PendingTask{
     description:  j['description'] as String? ?? '',
     completed:    j['completed'] as bool? ?? false,
     metadata:     j['metadata'] as String?,
+    dndClassId:   (j['dndClassId'] as num?)?.toInt(),
+    dndClassName: j['dndClassName'] as String?,
   );
 
   ///Si la tarea ya tiene una elección resuelta, la extrae del metadata.
