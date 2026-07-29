@@ -627,9 +627,9 @@ class _FeatureTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor = _needsChoice && !_choiceDone
-        ? AppTheme.accent.withOpacity(0.5)
+        ? AppTheme.accent.withValues(alpha: 0.5)
         : isExpanded
-            ? AppTheme.primary.withOpacity(0.4)
+            ? AppTheme.primary.withValues(alpha: 0.4)
             : AppTheme.divider;
 
     return AnimatedContainer(
@@ -637,9 +637,9 @@ class _FeatureTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
         color: isExpanded
-            ? AppTheme.primary.withOpacity(0.08)
+            ? AppTheme.primary.withValues(alpha: 0.08)
             : (_needsChoice && !_choiceDone
-                ? AppTheme.accent.withOpacity(0.04)
+                ? AppTheme.accent.withValues(alpha: 0.04)
                 : AppTheme.surface),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: borderColor),
@@ -656,7 +656,7 @@ class _FeatureTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.15),
+                    color: AppTheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text('Lv${feature.level}',
@@ -764,7 +764,7 @@ class _ChoiceBadgeDone extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: AppTheme.primary.withOpacity(0.15),
+          color: AppTheme.primary.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(text,
@@ -779,7 +779,7 @@ class _ChoiceBadgePending extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: AppTheme.accent.withOpacity(0.15),
+          color: AppTheme.accent.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text('Choose!',
@@ -929,10 +929,10 @@ class _PickedChip extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 4),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: AppTheme.primary.withOpacity(0.12),
+            color: AppTheme.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
             border:
-                Border.all(color: AppTheme.primary.withOpacity(0.3)),
+                Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
           ),
           child: Row(children: [
             Expanded(
@@ -944,7 +944,7 @@ class _PickedChip extends StatelessWidget {
             ),
             if (onClear != null)
               Icon(Icons.close,
-                  color: AppTheme.primary.withOpacity(0.6), size: 14),
+                  color: AppTheme.primary.withValues(alpha: 0.6), size: 14),
           ]),
         ),
       );
@@ -966,7 +966,7 @@ class _InlineOptionTile extends StatelessWidget {
   });
   Widget build(BuildContext context) {
     final effectiveColor = disabled
-        ? AppTheme.textSecondary.withOpacity(0.4)
+        ? AppTheme.textSecondary.withValues(alpha: 0.4)
         : selected ? AppTheme.primary : AppTheme.textPrimary;
 
     return GestureDetector(
@@ -977,10 +977,10 @@ class _InlineOptionTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: disabled
-              ? AppTheme.surfaceVariant.withOpacity(0.2)
+              ? AppTheme.surfaceVariant.withValues(alpha: 0.2)
               : selected
-                  ? AppTheme.primary.withOpacity(0.12)
-                  : AppTheme.surfaceVariant.withOpacity(0.4),
+                  ? AppTheme.primary.withValues(alpha: 0.12)
+                  : AppTheme.surfaceVariant.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: selected && !disabled ? AppTheme.primary : Colors.transparent,
@@ -1017,7 +1017,7 @@ class _InlineOptionTile extends StatelessWidget {
                 Text(
                   disabled ? '(already chosen)' : description,
                   style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary.withOpacity(disabled ? 0.4 : 1.0),
+                      color: AppTheme.textSecondary.withValues(alpha: disabled ? 0.4 : 1.0),
                       fontSize: 10,
                       height: 1.4)),
               ],
@@ -1181,7 +1181,7 @@ class _AsiToggleButton extends StatelessWidget {
       duration: const Duration(milliseconds: 140),
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
       decoration: BoxDecoration(
-        color: selected ? AppTheme.primary.withOpacity(0.15) : AppTheme.surfaceVariant.withOpacity(0.4),
+        color: selected ? AppTheme.primary.withValues(alpha: 0.15) : AppTheme.surfaceVariant.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: selected ? AppTheme.primary : AppTheme.surfaceVariant, width: selected ? 1.5 : 1),
       ),
@@ -1207,7 +1207,7 @@ class _AbilityDropdown extends StatelessWidget {
     decoration: BoxDecoration(
       color: AppTheme.surface,
       borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: value == null ? AppTheme.accent.withOpacity(0.4) : AppTheme.divider),
+      border: Border.all(color: value == null ? AppTheme.accent.withValues(alpha: 0.4) : AppTheme.divider),
     ),
     child: DropdownButtonHideUnderline(
       child: DropdownButton<String>(
@@ -1251,7 +1251,7 @@ class _HpRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: (!readOnly && value == null)
-              ? AppTheme.accent.withOpacity(0.5)
+              ? AppTheme.accent.withValues(alpha: 0.5)
               : AppTheme.divider,
         ),
       ),
@@ -1482,8 +1482,8 @@ class _SubclassChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primary.withOpacity(0.12)
-              : AppTheme.surfaceVariant.withOpacity(0.5),
+              ? AppTheme.primary.withValues(alpha: 0.12)
+              : AppTheme.surfaceVariant.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected ? AppTheme.primary : AppTheme.surfaceVariant,
@@ -1704,20 +1704,20 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(
                   color: fromBackground
-                      ? AppTheme.surfaceVariant.withOpacity(0.2)
+                      ? AppTheme.surfaceVariant.withValues(alpha: 0.2)
                       : fromBonusProf
-                          ? AppTheme.accent.withOpacity(0.08)
+                          ? AppTheme.accent.withValues(alpha: 0.08)
                           : isSelected
                               ? AppTheme.primary
                               : isDisabled
-                                  ? AppTheme.surfaceVariant.withOpacity(0.4)
+                                  ? AppTheme.surfaceVariant.withValues(alpha: 0.4)
                                   : AppTheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: fromBackground
-                        ? AppTheme.textSecondary.withOpacity(0.3)
+                        ? AppTheme.textSecondary.withValues(alpha: 0.3)
                         : fromBonusProf
-                            ? AppTheme.accent.withOpacity(0.3)
+                            ? AppTheme.accent.withValues(alpha: 0.3)
                             : isSelected ? AppTheme.primary : AppTheme.divider,
                   ),
                 ),
@@ -1727,13 +1727,13 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
                     if (fromBackground) ...[
                       Icon(Icons.book_outlined,
                           size: 11,
-                          color: AppTheme.textSecondary.withOpacity(0.5)),
+                          color: AppTheme.textSecondary.withValues(alpha: 0.5)),
                       const SizedBox(width: 4),
                     ],
                     if (fromBonusProf) ...[
                       Icon(Icons.auto_awesome,
                           size: 11,
-                          color: AppTheme.accent.withOpacity(0.5)),
+                          color: AppTheme.accent.withValues(alpha: 0.5)),
                       const SizedBox(width: 4),
                     ],
                     Text(
@@ -1742,13 +1742,13 @@ class _SkillPickerSectionState extends State<_SkillPickerSection> {
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: fromBackground
-                            ? AppTheme.textSecondary.withOpacity(0.4)
+                            ? AppTheme.textSecondary.withValues(alpha: 0.4)
                             : fromBonusProf
-                                ? AppTheme.accent.withOpacity(0.5)
+                                ? AppTheme.accent.withValues(alpha: 0.5)
                                 : isSelected
                                     ? AppTheme.background
                                     : isDisabled
-                                        ? AppTheme.textSecondary.withOpacity(0.4)
+                                        ? AppTheme.textSecondary.withValues(alpha: 0.4)
                                         : AppTheme.textPrimary,
                       ),
                     ),

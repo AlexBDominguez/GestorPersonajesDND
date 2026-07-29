@@ -119,7 +119,7 @@ class _AbilityCell extends StatelessWidget{
             decoration: BoxDecoration(
               color: AppTheme.background,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppTheme.primary.withOpacity(0.6)),
+              border: Border.all(color: AppTheme.primary.withValues(alpha: 0.6)),
             ),
             child: Center(
               child: Text(bigLabel,
@@ -135,7 +135,7 @@ class _AbilityCell extends StatelessWidget{
           Container(
             width: 38, height: 22,
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.18),
+              color: AppTheme.primary.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(11),
               border: Border.all(color: AppTheme.primary, width: 1),
             ),
@@ -176,7 +176,7 @@ class _SavingThrowRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: proficient
-              ? AppTheme.primary.withOpacity(0.5)
+              ? AppTheme.primary.withValues(alpha: 0.5)
               : AppTheme.surfaceVariant,
         ),
       ),
@@ -262,7 +262,7 @@ class _SpecialSenseRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
       ),
       child: Row(children: [
         const Icon(Icons.visibility_outlined,

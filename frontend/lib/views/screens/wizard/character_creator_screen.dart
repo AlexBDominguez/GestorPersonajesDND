@@ -110,7 +110,7 @@ class CharacterWizardBody extends StatelessWidget {
         if (vm.error != null)
           Container(
             width: double.infinity,
-            color: AppTheme.accent.withOpacity(0.15),
+            color: AppTheme.accent.withValues(alpha: 0.15),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(children: [
               const Icon(Icons.error_outline, color: AppTheme.accent, size: 18),
@@ -286,13 +286,13 @@ class _StepDot extends StatelessWidget {
     } else if (isDone) {
       dotColor    = AppTheme.primary;
       borderColor = AppTheme.primary;
-      bgColor     = AppTheme.primary.withOpacity(0.25);
+      bgColor     = AppTheme.primary.withValues(alpha: 0.25);
       dotIcon     = Icons.check;
       labelColor  = AppTheme.primary;
     } else if (isPartial) {
       dotColor    = Colors.amber;
       borderColor = Colors.amber;
-      bgColor     = Colors.amber.withOpacity(0.15);
+      bgColor     = Colors.amber.withValues(alpha: 0.15);
       dotIcon     = Icons.warning_amber_rounded;
       labelColor  = Colors.amber;
     } else {

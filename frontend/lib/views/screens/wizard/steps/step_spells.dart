@@ -184,7 +184,7 @@ class _StepSpellsState extends State<StepSpells> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               margin: const EdgeInsets.only(bottom: 6),
               decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.08),
+                color: Colors.amber.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Row(children: [
@@ -204,7 +204,7 @@ class _StepSpellsState extends State<StepSpells> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               margin: const EdgeInsets.only(bottom: 6),
               decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.08),
+                color: Colors.amber.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Row(children: [
@@ -360,7 +360,7 @@ class _SectionTab extends StatelessWidget {
             color: selected ? AppTheme.primary : AppTheme.divider,
           ),
           boxShadow: selected ? [
-            BoxShadow(color: AppTheme.primary.withOpacity(0.25), blurRadius: 4, offset: const Offset(0, 2)),
+            BoxShadow(color: AppTheme.primary.withValues(alpha: 0.25), blurRadius: 4, offset: const Offset(0, 2)),
           ] : null,
         ),
         child: Text(
@@ -398,7 +398,7 @@ class _SlotCounter extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: full
-            ? color.withOpacity(0.15)
+            ? color.withValues(alpha: 0.15)
             : AppTheme.surfaceVariant,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: full ? color : AppTheme.divider),
@@ -443,9 +443,9 @@ class _SpellTile extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primary.withOpacity(0.12)
+              ? AppTheme.primary.withValues(alpha: 0.12)
               : isBlocked
-                  ? AppTheme.surfaceVariant.withOpacity(0.5)
+                  ? AppTheme.surfaceVariant.withValues(alpha: 0.5)
                   : AppTheme.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
@@ -672,10 +672,10 @@ class _LvTag extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: AppTheme.primary.withOpacity(0.15),
+          color: AppTheme.primary.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: AppTheme.primary.withOpacity(0.4),
+            color: AppTheme.primary.withValues(alpha: 0.4),
             width: 0.8,
           ),
         ),

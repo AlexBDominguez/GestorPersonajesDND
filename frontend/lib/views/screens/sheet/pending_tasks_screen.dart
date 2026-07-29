@@ -72,7 +72,7 @@ class _TaskCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -80,7 +80,7 @@ class _TaskCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.08),
+              color: AppTheme.primary.withValues(alpha: 0.08),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),              
             ),
             child: Row(children: [
@@ -411,10 +411,10 @@ class _OptionTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: selected
-              ? AppTheme.primary.withOpacity(0.12)
+              ? AppTheme.primary.withValues(alpha: 0.12)
               : disabled
-                  ? AppTheme.surfaceVariant.withOpacity(0.2)
-                  : AppTheme.surfaceVariant.withOpacity(0.4),
+                  ? AppTheme.surfaceVariant.withValues(alpha: 0.2)
+                  : AppTheme.surfaceVariant.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: selected ? AppTheme.primary : Colors.transparent,
@@ -432,7 +432,7 @@ class _OptionTile extends StatelessWidget {
                 color: selected
                     ? AppTheme.primary
                     : disabled
-                        ? AppTheme.textSecondary.withOpacity(0.3)
+                        ? AppTheme.textSecondary.withValues(alpha: 0.3)
                         : AppTheme.textSecondary,
                 width: 2,
               ),
@@ -449,7 +449,7 @@ class _OptionTile extends StatelessWidget {
                       color: selected
                           ? AppTheme.primary
                           : disabled
-                              ? AppTheme.textSecondary.withOpacity(0.4)
+                              ? AppTheme.textSecondary.withValues(alpha: 0.4)
                               : AppTheme.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.bold)),
@@ -457,7 +457,7 @@ class _OptionTile extends StatelessWidget {
               Text(description,
                   style: GoogleFonts.lato(
                       color: disabled
-                          ? AppTheme.textSecondary.withOpacity(0.5)
+                          ? AppTheme.textSecondary.withValues(alpha: 0.5)
                           : AppTheme.textSecondary,
                       fontSize: 10,
                       fontStyle: disabled ? FontStyle.italic : FontStyle.normal,
@@ -643,7 +643,7 @@ class _AsiModeChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.primary.withOpacity(0.12) : AppTheme.surfaceVariant.withOpacity(0.4),
+          color: selected ? AppTheme.primary.withValues(alpha: 0.12) : AppTheme.surfaceVariant.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
               color: selected ? AppTheme.primary : Colors.transparent, width: 1.5),
@@ -771,7 +771,7 @@ class _FeatAbilityChoiceResolverState extends State<_FeatAbilityChoiceResolver> 
             fillColor: AppTheme.background,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppTheme.primary.withOpacity(0.4)),
+              borderSide: BorderSide(color: AppTheme.primary.withValues(alpha: 0.4)),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           ),
@@ -913,9 +913,9 @@ class _SkillVersatilityResolverState
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: AppTheme.primary.withOpacity(0.12),
+            color: AppTheme.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+            border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
           ),
           child: Row(children: [
             const Icon(Icons.check_circle, color: AppTheme.primary, size: 14),
@@ -1157,10 +1157,10 @@ class _MultiPickOptionResolverState extends State<_MultiPickOptionResolver> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppTheme.primary.withOpacity(0.12)
+                  ? AppTheme.primary.withValues(alpha: 0.12)
                   : isDisabled
-                      ? AppTheme.surfaceVariant.withOpacity(0.2)
-                      : AppTheme.surfaceVariant.withOpacity(0.4),
+                      ? AppTheme.surfaceVariant.withValues(alpha: 0.2)
+                      : AppTheme.surfaceVariant.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isSelected ? AppTheme.primary : AppTheme.divider,
@@ -1174,7 +1174,7 @@ class _MultiPickOptionResolverState extends State<_MultiPickOptionResolver> {
                 color: isSelected
                     ? AppTheme.primary
                     : isDisabled
-                        ? AppTheme.textSecondary.withOpacity(0.3)
+                        ? AppTheme.textSecondary.withValues(alpha: 0.3)
                         : AppTheme.textSecondary,
               ),
               const SizedBox(width: 10),
@@ -1185,20 +1185,20 @@ class _MultiPickOptionResolverState extends State<_MultiPickOptionResolver> {
                           color: isSelected
                               ? AppTheme.primary
                               : isDisabled
-                                  ? AppTheme.textSecondary.withOpacity(0.4)
+                                  ? AppTheme.textSecondary.withValues(alpha: 0.4)
                                   : AppTheme.textPrimary,
                           fontSize: 13,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
                   if (isKnown)
                     Text('Already known',
                         style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary.withOpacity(0.5),
+                            color: AppTheme.textSecondary.withValues(alpha: 0.5),
                             fontSize: 10,
                             fontStyle: FontStyle.italic))
                   else if (opt.description.isNotEmpty)
                     Text(opt.description,
                         style: GoogleFonts.lato(
-                            color: AppTheme.textSecondary.withOpacity(0.7),
+                            color: AppTheme.textSecondary.withValues(alpha: 0.7),
                             fontSize: 10,
                             height: 1.4)),
                 ]),
@@ -1306,10 +1306,10 @@ class _ExpertiseResolverState extends State<_ExpertiseResolver> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppTheme.primary.withOpacity(0.12)
+                  ? AppTheme.primary.withValues(alpha: 0.12)
                   : isDisabled
-                      ? AppTheme.surfaceVariant.withOpacity(0.2)
-                      : AppTheme.surfaceVariant.withOpacity(0.4),
+                      ? AppTheme.surfaceVariant.withValues(alpha: 0.2)
+                      : AppTheme.surfaceVariant.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isSelected ? AppTheme.primary : AppTheme.divider,
@@ -1323,7 +1323,7 @@ class _ExpertiseResolverState extends State<_ExpertiseResolver> {
                 color: isSelected
                     ? AppTheme.primary
                     : isDisabled
-                        ? AppTheme.textSecondary.withOpacity(0.3)
+                        ? AppTheme.textSecondary.withValues(alpha: 0.3)
                         : AppTheme.textSecondary,
               ),
               const SizedBox(width: 10),
@@ -1333,14 +1333,14 @@ class _ExpertiseResolverState extends State<_ExpertiseResolver> {
                         color: isSelected
                             ? AppTheme.primary
                             : isDisabled
-                                ? AppTheme.textSecondary.withOpacity(0.4)
+                                ? AppTheme.textSecondary.withValues(alpha: 0.4)
                                 : AppTheme.textPrimary,
                         fontSize: 13,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
               ),
               Text(opt.description,
                   style: GoogleFonts.lato(
-                      color: AppTheme.textSecondary.withOpacity(0.6), fontSize: 10)),
+                      color: AppTheme.textSecondary.withValues(alpha: 0.6), fontSize: 10)),
             ]),
           ),
         );
@@ -1434,7 +1434,7 @@ class _RacialAsiResolverState extends State<_RacialAsiResolver> {
             fillColor: AppTheme.background,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppTheme.primary.withOpacity(0.4)),
+              borderSide: BorderSide(color: AppTheme.primary.withValues(alpha: 0.4)),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           ),
@@ -1457,7 +1457,7 @@ class _RacialAsiResolverState extends State<_RacialAsiResolver> {
             fillColor: AppTheme.background,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: AppTheme.primary.withOpacity(0.4)),
+              borderSide: BorderSide(color: AppTheme.primary.withValues(alpha: 0.4)),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           ),
@@ -1473,7 +1473,7 @@ class _RacialAsiResolverState extends State<_RacialAsiResolver> {
           onPressed: _valid && !_saving ? () => _confirm(context) : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppTheme.primary,
-            disabledBackgroundColor: AppTheme.primary.withOpacity(0.3),
+            disabledBackgroundColor: AppTheme.primary.withValues(alpha: 0.3),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             padding: const EdgeInsets.symmetric(vertical: 12),
           ),

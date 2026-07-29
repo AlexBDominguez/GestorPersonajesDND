@@ -161,7 +161,7 @@ class _SelectedClassBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.primary.withOpacity(0.12),
+        color: AppTheme.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppTheme.primary, width: 1.5),
       ),
@@ -224,16 +224,16 @@ class _ClassCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primary.withOpacity(0.12)
+              ? AppTheme.primary.withValues(alpha: 0.12)
               : isDisabled
-                  ? AppTheme.surface.withOpacity(0.4)
+                  ? AppTheme.surface.withValues(alpha: 0.4)
                   : AppTheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? AppTheme.primary
                 : isDisabled
-                    ? AppTheme.surfaceVariant.withOpacity(0.4)
+                    ? AppTheme.surfaceVariant.withValues(alpha: 0.4)
                     : AppTheme.surfaceVariant,
             width: isSelected ? 2 : 1,
           ),
@@ -266,7 +266,7 @@ class _ClassCard extends StatelessWidget {
                           color: isSelected
                               ? AppTheme.primary
                               : isDisabled
-                                  ? AppTheme.textSecondary.withOpacity(0.4)
+                                  ? AppTheme.textSecondary.withValues(alpha: 0.4)
                                   : AppTheme.textPrimary,
                           fontSize: 15,
                           fontWeight: FontWeight.bold)),
@@ -304,10 +304,10 @@ class _HitDieBadge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
           color: selected
-              ? AppTheme.primary.withOpacity(0.2)
+              ? AppTheme.primary.withValues(alpha: 0.2)
               : AppTheme.background,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: AppTheme.primary.withOpacity(0.4)),
+          border: Border.all(color: AppTheme.primary.withValues(alpha: 0.4)),
         ),
         child: Text('d$hitDie',
             style: GoogleFonts.libreBaskerville(

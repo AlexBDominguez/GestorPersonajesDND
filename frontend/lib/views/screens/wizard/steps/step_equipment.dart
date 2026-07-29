@@ -79,7 +79,7 @@ class _StepEquipmentState extends State<StepEquipment>
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.15),
+                    color: AppTheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppTheme.primary),
                   ),
@@ -164,7 +164,7 @@ class _StepEquipmentState extends State<StepEquipment>
                         horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: active
-                          ? AppTheme.primary.withOpacity(0.15)
+                          ? AppTheme.primary.withValues(alpha: 0.15)
                           : AppTheme.surfaceVariant,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
@@ -358,7 +358,7 @@ class _SelectedTab extends StatelessWidget {
         width: double.infinity,
         padding:
           const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        color: AppTheme.surfaceVariant.withOpacity(0.4),
+        color: AppTheme.surfaceVariant.withValues(alpha: 0.4),
         child: Text(
           '${selected.length} items · ${totalWeight.toStringAsFixed(1)} lb total',
           style: GoogleFonts.lato(
@@ -401,7 +401,7 @@ class _ItemTile extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primary.withOpacity(0.1)
+              ? AppTheme.primary.withValues(alpha: 0.1)
               : AppTheme.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(

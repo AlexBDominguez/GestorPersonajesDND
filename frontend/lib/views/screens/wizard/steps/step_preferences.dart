@@ -153,7 +153,7 @@ class _SourceChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: effectiveSelected
-                ? AppTheme.primary.withOpacity(0.15)
+                ? AppTheme.primary.withValues(alpha: 0.15)
                 : AppTheme.surface,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
@@ -213,7 +213,7 @@ class _DisplayModeTile extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.primary.withOpacity(0.12) : AppTheme.surface,
+          color: selected ? AppTheme.primary.withValues(alpha: 0.12) : AppTheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? AppTheme.primary : AppTheme.surfaceVariant,
@@ -244,7 +244,7 @@ class _DisplayModeTile extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: (selected ? AppTheme.primary : AppTheme.textSecondary)
-                  .withOpacity(0.18),
+                  .withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(9),
             ),
             child: Text(subtitle,

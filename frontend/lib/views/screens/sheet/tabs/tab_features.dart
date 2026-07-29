@@ -295,10 +295,10 @@ class _FeatureTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.15),
+                    color: AppTheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
-                      color: AppTheme.primary.withOpacity(0.4)),
+                      color: AppTheme.primary.withValues(alpha: 0.4)),
                   ),
                   child: Text('combat',
                     style: GoogleFonts.lato(
@@ -312,9 +312,9 @@ class _FeatureTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFC8A45A).withOpacity(0.15),
+                    color: const Color(0xFFC8A45A).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFC8A45A).withOpacity(0.5)),
+                    border: Border.all(color: const Color(0xFFC8A45A).withValues(alpha: 0.5)),
                   ),
                   child: Text(resolvedChoice,
                     style: GoogleFonts.lato(
@@ -386,9 +386,9 @@ class _FeatureTile extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFC8A45A).withOpacity(0.1),
+                  color: const Color(0xFFC8A45A).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFC8A45A).withOpacity(0.4)),
+                  border: Border.all(color: const Color(0xFFC8A45A).withValues(alpha: 0.4)),
                 ),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Chosen:',
@@ -547,9 +547,9 @@ class _RacialTraitTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFC8A45A).withOpacity(0.15),
+                    color: const Color(0xFFC8A45A).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFC8A45A).withOpacity(0.5)),
+                    border: Border.all(color: const Color(0xFFC8A45A).withValues(alpha: 0.5)),
                   ),
                   child: Text(ancestrySuffix,
                     style: GoogleFonts.lato(
@@ -602,9 +602,9 @@ class _TypeBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
     decoration: BoxDecoration(
-      color: color.withOpacity(0.15),
+      color: color.withValues(alpha: 0.15),
       borderRadius: BorderRadius.circular(4),
-      border: Border.all(color: color.withOpacity(0.4)),
+      border: Border.all(color: color.withValues(alpha: 0.4)),
     ),
     child: Text(label,
       style: GoogleFonts.lato(
@@ -649,7 +649,7 @@ class _FeatsSection extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFC8A45A).withOpacity(0.4)),
+          border: Border.all(color: const Color(0xFFC8A45A).withValues(alpha: 0.4)),
         ),
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),

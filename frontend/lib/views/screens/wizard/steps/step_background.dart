@@ -284,7 +284,7 @@ class _BackgroundDetail extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.4), width: 1),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.4), width: 1),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Nombre
@@ -371,9 +371,9 @@ class _FeatureBoxState extends State<_FeatureBox> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppTheme.primary.withOpacity(0.08),
+          color: AppTheme.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+          border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [

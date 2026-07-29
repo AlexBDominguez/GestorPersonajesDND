@@ -207,7 +207,7 @@ class _StatBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: AppTheme.primary.withOpacity(0.15),
+          color: AppTheme.primary.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(6),
         ),
         child: RichText(
@@ -321,12 +321,12 @@ class _FeatureTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
           color: isExpanded
-              ? AppTheme.primary.withOpacity(0.08)
+              ? AppTheme.primary.withValues(alpha: 0.08)
               : AppTheme.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color:
-                isExpanded ? AppTheme.primary.withOpacity(0.4) : AppTheme.divider,
+                isExpanded ? AppTheme.primary.withValues(alpha: 0.4) : AppTheme.divider,
           ),
         ),
         child: Column(

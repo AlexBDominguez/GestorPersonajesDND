@@ -135,14 +135,14 @@ class _UserTile extends StatelessWidget {
         border: Border.all(
           color: user.active
               ? AppTheme.surfaceVariant
-              : AppTheme.accent.withOpacity(0.4),
+              : AppTheme.accent.withValues(alpha: 0.4),
         ),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         leading: CircleAvatar(
           backgroundColor: user.isAdmin
-              ? AppTheme.primary.withOpacity(0.2)
+              ? AppTheme.primary.withValues(alpha: 0.2)
               : AppTheme.surfaceVariant,
           child: Icon(
             user.isAdmin ? Icons.shield : Icons.person,
@@ -586,7 +586,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.accent.withOpacity(0.15),
+                  color: AppTheme.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(_error!,
@@ -699,7 +699,7 @@ class _ChangeUsernameScreenState extends State<ChangeUsernameScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.accent.withOpacity(0.15),
+                  color: AppTheme.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(_error!,
@@ -772,7 +772,7 @@ class _RoleChip extends StatelessWidget {
       duration: const Duration(milliseconds: 150),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: selected ? AppTheme.primary.withOpacity(0.15) : AppTheme.surfaceVariant,
+        color: selected ? AppTheme.primary.withValues(alpha: 0.15) : AppTheme.surfaceVariant,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: selected ? AppTheme.primary : AppTheme.divider,
@@ -798,9 +798,9 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
     decoration: BoxDecoration(
-      color: color.withOpacity(0.15),
+      color: color.withValues(alpha: 0.15),
       borderRadius: BorderRadius.circular(4),
-      border: Border.all(color: color.withOpacity(0.4)),
+      border: Border.all(color: color.withValues(alpha: 0.4)),
     ),
     child: Text(label,
       style: GoogleFonts.lato(

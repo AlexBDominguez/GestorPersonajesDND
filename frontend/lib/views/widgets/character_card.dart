@@ -188,7 +188,7 @@ class _MoreMenuButton extends StatelessWidget {
   void _confirmDelete(BuildContext context) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.7),
+      barrierColor: Colors.black.withValues(alpha: 0.7),
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
         scrollable: true,

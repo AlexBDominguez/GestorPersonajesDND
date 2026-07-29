@@ -358,12 +358,12 @@ class _FeatureTile extends StatelessWidget {
                         horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: remaining > 0
-                          ? AppTheme.primary.withOpacity(0.15)
+                          ? AppTheme.primary.withValues(alpha: 0.15)
                           : AppTheme.surfaceVariant,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
                           color: remaining > 0
-                              ? AppTheme.primary.withOpacity(0.4)
+                              ? AppTheme.primary.withValues(alpha: 0.4)
                               : Colors.transparent),
                     ),
                     child: Text('USE',
@@ -497,7 +497,7 @@ class _FeatureDetailSheet extends StatelessWidget {
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                           side: BorderSide(
-                              color: AppTheme.primary.withOpacity(0.5))),
+                              color: AppTheme.primary.withValues(alpha: 0.5))),
                       icon: const Icon(Icons.refresh,
                           size: 14, color: AppTheme.primary),
                       label: Text('Restore',
@@ -702,7 +702,7 @@ class _StandardActionsCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppTheme.surface,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppTheme.primary.withOpacity(0.35)),
+            border: Border.all(color: AppTheme.primary.withValues(alpha: 0.35)),
           ),
           child: Row(children: [
             const Icon(Icons.list_alt_outlined,
@@ -787,7 +787,7 @@ class _OffhandWeaponCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF48A999).withOpacity(0.5)),
+        border: Border.all(color: const Color(0xFF48A999).withValues(alpha: 0.5)),
       ),
       child: Column(children: [
         // Header
@@ -833,7 +833,7 @@ class _OffhandWeaponCard extends StatelessWidget {
                     if (!twoWF)
                       Text('No ability mod to damage',
                           style: GoogleFonts.lato(
-                              color: AppTheme.textSecondary.withOpacity(0.7),
+                              color: AppTheme.textSecondary.withValues(alpha: 0.7),
                               fontSize: 9,
                               fontStyle: FontStyle.italic)),
                   ]),
@@ -899,9 +899,9 @@ class _FightingStyleBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.primary.withOpacity(0.08),
+        color: AppTheme.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Icon(Icons.sports_martial_arts, color: AppTheme.primary, size: 16),
@@ -1719,7 +1719,7 @@ class _DeathSavesRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppTheme.accent.withOpacity(0.5)),
+          border: Border.all(color: AppTheme.accent.withValues(alpha: 0.5)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

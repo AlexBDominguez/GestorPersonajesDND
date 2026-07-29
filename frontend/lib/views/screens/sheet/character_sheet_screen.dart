@@ -395,8 +395,8 @@ class _DyingBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: isStable
-          ? AppTheme.primary.withOpacity(0.12)
-          : AppTheme.accent.withOpacity(0.12),
+          ? AppTheme.primary.withValues(alpha: 0.12)
+          : AppTheme.accent.withValues(alpha: 0.12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(children: [
         Icon(
@@ -492,7 +492,7 @@ class _SheetHeader extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _hpColor(c).withOpacity(0.15),
+                  color: _hpColor(c).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: _hpColor(c), width: 1.5),
                 ),
@@ -825,11 +825,11 @@ class _HpField extends StatelessWidget {
         prefixIcon: Icon(icon, color: color, size: 18),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: color.withOpacity(0.4)),
+          borderSide: BorderSide(color: color.withValues(alpha: 0.4)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: color.withOpacity(0.4)),
+          borderSide: BorderSide(color: color.withValues(alpha: 0.4)),
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 10),
       ),
@@ -853,9 +853,9 @@ class _RestButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
+          color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.5), width: 1),
+          border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, color: color, size: 18),
@@ -1007,7 +1007,7 @@ class _LongRestModalState extends State<_LongRestModal> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Long rest completed! HP and all spell slots restored.',
               style: GoogleFonts.lato(color: Colors.white)),
-          backgroundColor: AppTheme.primary.withOpacity(0.9),
+          backgroundColor: AppTheme.primary.withValues(alpha: 0.9),
           duration: const Duration(seconds: 3),
         ));
       }
@@ -1131,7 +1131,7 @@ class _ShortRestModalState extends State<_ShortRestModal> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Short rest completed.$healMsg',
               style: GoogleFonts.lato(color: Colors.white)),
-          backgroundColor: const Color(0xFF7B9ECC).withOpacity(0.9),
+          backgroundColor: const Color(0xFF7B9ECC).withValues(alpha: 0.9),
           duration: const Duration(seconds: 3),
         ));
       }

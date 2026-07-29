@@ -64,7 +64,7 @@ class _RaceCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primary.withOpacity(0.15)
+              ? AppTheme.primary.withValues(alpha: 0.15)
               : AppTheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -197,8 +197,8 @@ class _SubraceChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primary.withOpacity(0.12)
-              : AppTheme.surfaceVariant.withOpacity(0.5),
+              ? AppTheme.primary.withValues(alpha: 0.12)
+              : AppTheme.surfaceVariant.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected ? AppTheme.primary : AppTheme.surfaceVariant,
@@ -369,8 +369,8 @@ class _RaceChoiceBlockState extends State<_RaceChoiceBlock> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: done
-              ? AppTheme.primary.withOpacity(0.6)
-              : AppTheme.accent.withOpacity(0.4),
+              ? AppTheme.primary.withValues(alpha: 0.6)
+              : AppTheme.accent.withValues(alpha: 0.4),
           width: done ? 1.5 : 1,
         ),
       ),
@@ -384,8 +384,8 @@ class _RaceChoiceBlockState extends State<_RaceChoiceBlock> {
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
               decoration: BoxDecoration(
                 color: done
-                    ? AppTheme.primary.withOpacity(0.10)
-                    : AppTheme.accent.withOpacity(0.06),
+                    ? AppTheme.primary.withValues(alpha: 0.10)
+                    : AppTheme.accent.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.vertical(
                   top: const Radius.circular(10),
                   bottom: _expanded ? Radius.zero : const Radius.circular(10),
@@ -468,8 +468,8 @@ class _RaceOptionTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
           color: selected
-              ? AppTheme.primary.withOpacity(0.12)
-              : AppTheme.surfaceVariant.withOpacity(0.4),
+              ? AppTheme.primary.withValues(alpha: 0.12)
+              : AppTheme.surfaceVariant.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: selected ? AppTheme.primary : Colors.transparent,

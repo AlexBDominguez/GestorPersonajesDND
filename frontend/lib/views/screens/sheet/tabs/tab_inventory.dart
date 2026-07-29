@@ -465,7 +465,7 @@ class _TabInventoryState extends State<TabInventory> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.15),
+                  color: AppTheme.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppTheme.primary),
                 ),
@@ -603,9 +603,9 @@ class _EquippedDropZoneState extends State<_EquippedDropZone> {
               width: 2,
             ),
             color: isMagicRejected
-                ? AppTheme.accent.withOpacity(0.06)
+                ? AppTheme.accent.withValues(alpha: 0.06)
                 : isHovering
-                    ? AppTheme.primary.withOpacity(0.06)
+                    ? AppTheme.primary.withValues(alpha: 0.06)
                     : Colors.transparent,
           ),
           child:
@@ -717,9 +717,9 @@ class _AttunedDropZoneState extends State<_AttunedDropZone> {
               width: 2,
             ),
             color: invalidHover
-                ? AppTheme.accent.withOpacity(0.06)
+                ? AppTheme.accent.withValues(alpha: 0.06)
                 : isHovering
-                    ? const Color(0xFFB07DFF).withOpacity(0.06)
+                    ? const Color(0xFFB07DFF).withValues(alpha: 0.06)
                     : Colors.transparent,
           ),
           child:
@@ -858,7 +858,7 @@ class _DraggableItemTile extends StatelessWidget {
               border: Border.all(color: AppTheme.primary, width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primary.withOpacity(0.3),
+                  color: AppTheme.primary.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -1127,7 +1127,7 @@ class _ItemTileContent extends StatelessWidget {
     final Color borderColor = attunedBorder
         ? const Color(0xFFB07DFF)
         : accentBorder
-            ? AppTheme.primary.withOpacity(0.6)
+            ? AppTheme.primary.withValues(alpha: 0.6)
             : AppTheme.surfaceVariant;
 
     return Container(
@@ -1240,7 +1240,7 @@ class _ItemTileContent extends StatelessWidget {
                     size: 12,
                     color: item.quantity > 1
                         ? AppTheme.textSecondary
-                        : AppTheme.textSecondary.withOpacity(0.3)),
+                        : AppTheme.textSecondary.withValues(alpha: 0.3)),
               ),
             ),
             Container(
@@ -1322,10 +1322,10 @@ class _DropHint extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: active ? color.withOpacity(0.12) : color.withOpacity(0.04),
+        color: active ? color.withValues(alpha: 0.12) : color.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: active ? color : color.withOpacity(0.3),
+          color: active ? color : color.withValues(alpha: 0.3),
           width: active ? 1.5 : 1,
         ),
       ),
@@ -1807,7 +1807,7 @@ class _CurrencyRowState extends State<_CurrencyRow> {
             decoration: BoxDecoration(
               color: AppTheme.surface,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: color.withOpacity(0.5)),
+              border: Border.all(color: color.withValues(alpha: 0.5)),
             ),
             child: Column(children: [
               // + button
@@ -1818,7 +1818,7 @@ class _CurrencyRowState extends State<_CurrencyRow> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 3),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(7)),
                   ),
@@ -1853,12 +1853,12 @@ class _CurrencyRowState extends State<_CurrencyRow> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 3),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.08),
+                    color: color.withValues(alpha: 0.08),
                     borderRadius:
                         const BorderRadius.vertical(bottom: Radius.circular(7)),
                   ),
                   child: Icon(Icons.remove,
-                      color: color.withOpacity(0.7), size: 14),
+                      color: color.withValues(alpha: 0.7), size: 14),
                 ),
               ),
             ]),

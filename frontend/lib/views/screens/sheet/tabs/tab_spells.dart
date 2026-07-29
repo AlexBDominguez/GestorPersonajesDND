@@ -128,7 +128,7 @@ class _SpellStatsHeader extends StatelessWidget {
     final c = character;
 
     return Container(
-      color: AppTheme.surfaceVariant.withOpacity(0.4),
+      color: AppTheme.surfaceVariant.withValues(alpha: 0.4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -995,7 +995,7 @@ class _ManageSpellTile extends StatelessWidget {
         Container(
           width: 32, height: 32,
           decoration: BoxDecoration(
-            color: AppTheme.primary.withOpacity(0.12),
+            color: AppTheme.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Center(
@@ -1311,7 +1311,7 @@ class _LearnNewTabState extends State<_LearnNewTab> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Spell learned: "${spell.name}"'),
-          backgroundColor: AppTheme.primary.withOpacity(0.9),
+          backgroundColor: AppTheme.primary.withValues(alpha: 0.9),
           duration: const Duration(seconds: 2),
         ));
       }
@@ -1337,11 +1337,11 @@ class _LearnSpellTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: isKnown
-            ? AppTheme.primary.withOpacity(0.07)
+            ? AppTheme.primary.withValues(alpha: 0.07)
             : AppTheme.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isKnown ? AppTheme.primary.withOpacity(0.3) : AppTheme.surfaceVariant,
+          color: isKnown ? AppTheme.primary.withValues(alpha: 0.3) : AppTheme.surfaceVariant,
         ),
       ),
       child: Row(children: [
@@ -1349,7 +1349,7 @@ class _LearnSpellTile extends StatelessWidget {
         Container(
           width: 32, height: 32,
           decoration: BoxDecoration(
-            color: AppTheme.primary.withOpacity(isKnown ? 0.2 : 0.1),
+            color: AppTheme.primary.withValues(alpha: isKnown ? 0.2 : 0.1),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Center(
@@ -1398,9 +1398,9 @@ class _LearnSpellTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.15),
+              color: AppTheme.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppTheme.primary.withOpacity(0.4)),
+              border: Border.all(color: AppTheme.primary.withValues(alpha: 0.4)),
             ),
             child: Text('Known',
                 style: GoogleFonts.lato(
