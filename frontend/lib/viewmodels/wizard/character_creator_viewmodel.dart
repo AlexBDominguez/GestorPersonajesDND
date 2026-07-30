@@ -52,6 +52,48 @@ class WizardChoiceConfig {
   String get key => '${type}_$level';
 }
 
+/// Multiclase (Aurora_Fixes.md #17, fase 2b): configuración ya confirmada de una clase
+/// adicional añadida durante la creación (además de la primaria). `featureChoices`/
+/// `hpRolls` llevan claves relativas a ESTA clase (nivel 1..N), igual que si fuera la
+/// única clase del wizard.
+class _AdditionalClassConfig {
+  final ClassOption classOption;
+  final SubclassOption? subclass;
+  final int level;
+  final Map<String, String> featureChoices;
+  final Map<int, int?> hpRolls;
+
+  const _AdditionalClassConfig({
+    required this.classOption,
+    required this.subclass,
+    required this.level,
+    required this.featureChoices,
+    required this.hpRolls,
+  });
+}
+
+/// Multiclase (fase 2b): estado de la clase primaria guardado aparte mientras se
+/// configura una clase adicional en los mismos campos compartidos del ViewModel.
+class _PrimaryClassSnapshot {
+  final ClassOption? selectedClass;
+  final SubclassOption? selectedSubclass;
+  final int selectedLevel;
+  final List<ClassFeature> classFeatures;
+  final List<SubclassOption> subclasses;
+  final Map<String, String> featureChoices;
+  final Map<int, int?> hpRolls;
+
+  const _PrimaryClassSnapshot({
+    required this.selectedClass,
+    required this.selectedSubclass,
+    required this.selectedLevel,
+    required this.classFeatures,
+    required this.subclasses,
+    required this.featureChoices,
+    required this.hpRolls,
+  });
+}
+
 
 // - ViewModel -------------------
 class CharacterCreatorViewModel extends ChangeNotifier {
@@ -563,6 +605,86 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   SubclassOption? selectedSubclass;
   int selectedLevel = 1;
 
+  // Multiclase (Aurora_Fixes.md #17, fase 2b): permite configurar varias clases dentro
+  // del propio wizard de creación reutilizando los mismos campos compartidos de arriba
+  // (selectedClass/selectedSubclass/selectedLevel/featureChoices/_hpRolls) para "la clase
+  // que se está configurando ahora mismo" -- nunca hay dos clases compartiéndolos a la
+  // vez. Al empezar a configurar una clase adicional se guarda aparte (snapshot) lo que
+  // hubiera en esos campos y se limpian; al confirmar o cancelar se archiva o se descarta
+  // y se restaura el snapshot. Ver setHpRolls()/clearClass() para los puntos de enganche.
+  final List<_AdditionalClassConfig> _additionalClasses = [];
+  List<_AdditionalClassConfig> get additionalClasses => List.unmodifiable(_additionalClasses);
+  bool _configuringAdditionalClass = false;
+  bool get isConfiguringAdditionalClass => _configuringAdditionalClass;
+  _PrimaryClassSnapshot? _primaryClassSnapshot;
+
+  /// Empieza a configurar una clase adicional: guarda aparte la clase actualmente en los
+  /// campos compartidos (solo la primera vez -- si ya había un snapshot de una clase
+  /// adicional anterior ya confirmada, no se pisa) y los deja en blanco para la nueva.
+  void startConfiguringAdditionalClass() {
+    _primaryClassSnapshot ??= _PrimaryClassSnapshot(
+      selectedClass: selectedClass,
+      selectedSubclass: selectedSubclass,
+      selectedLevel: selectedLevel,
+      classFeatures: List.of(classFeatures),
+      subclasses: List.of(subclasses),
+      featureChoices: Map.of(featureChoices),
+      hpRolls: Map.of(_hpRolls),
+    );
+    featureChoices.clear();
+    _hpRolls.clear();
+    selectedClass = null;
+    selectedSubclass = null;
+    subclasses = [];
+    classFeatures = [];
+    selectedLevel = 1;
+    _configuringAdditionalClass = true;
+    notifyListeners();
+  }
+
+  /// Descarta o archiva la clase adicional en construcción y restaura el snapshot
+  /// primario. `save`=true la guarda en additionalClasses antes de restaurar (confirmar);
+  /// `save`=false la descarta (cancelar / vuelta atrás sin confirmar).
+  void _endConfiguringAdditionalClass({required bool save}) {
+    if (!_configuringAdditionalClass) return;
+    if (save && selectedClass != null) {
+      _additionalClasses.add(_AdditionalClassConfig(
+        classOption: selectedClass!,
+        subclass: selectedSubclass,
+        level: selectedLevel,
+        featureChoices: Map.of(featureChoices),
+        hpRolls: Map.of(_hpRolls),
+      ));
+    }
+    final snap = _primaryClassSnapshot!;
+    selectedClass = snap.selectedClass;
+    selectedSubclass = snap.selectedSubclass;
+    selectedLevel = snap.selectedLevel;
+    classFeatures = snap.classFeatures;
+    subclasses = snap.subclasses;
+    featureChoices
+      ..clear()
+      ..addAll(snap.featureChoices);
+    _hpRolls
+      ..clear()
+      ..addAll(snap.hpRolls);
+    _configuringAdditionalClass = false;
+  }
+
+  /// Limpia un flujo de "clase adicional" que quedó a medias (p.ej. el usuario volvió
+  /// atrás desde ClassDetailScreen con la flecha, sin llegar a confirmar ni cancelar
+  /// explícitamente) — restaura la clase primaria sin archivar nada.
+  void cancelDanglingAdditionalClass() {
+    _endConfiguringAdditionalClass(save: false);
+    notifyListeners();
+  }
+
+  void removeAdditionalClass(int index) {
+    if (index < 0 || index >= _additionalClasses.length) return;
+    _additionalClasses.removeAt(index);
+    notifyListeners();
+  }
+
   Future<void> loadClasses() async {
     _setLoading(true);
     _setError(null);
@@ -653,6 +775,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   }
 
   void clearClass() {
+    // Multiclase (fase 2b): si se estaba configurando una clase adicional, "Cancel" en
+    // ClassOptionsScreen (que llama a este método, sin cambios en ese archivo) descarta
+    // esa clase y restaura la primaria, en vez del reset completo de siempre.
+    if (_configuringAdditionalClass) {
+      _endConfiguringAdditionalClass(save: false);
+      notifyListeners();
+      return;
+    }
     _resetClassState();
     _markDirty(WizardStep.dndClass);
     notifyListeners();
@@ -762,6 +892,13 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _hpRolls
       ..clear()
       ..addAll(rolls);
+    // Multiclase (fase 2b): _onConfirm() de ClassOptionsScreen llama a setLevel() y luego
+    // a este método como último paso antes de cerrar la pantalla con éxito -- si se
+    // estaba configurando una clase adicional, es la señal de "confirmado": se archiva y
+    // se restaura la clase primaria, sin tocar ClassOptionsScreen.
+    if (_configuringAdditionalClass) {
+      _endConfiguringAdditionalClass(save: true);
+    }
     notifyListeners();
   }
 
@@ -1873,6 +2010,44 @@ void toggleItem(int itemId) {
           }
         }
       }
+
+      // Multiclase (Aurora_Fixes.md #17, fase 2b): clases adicionales configuradas en el
+      // wizard, enviadas ahora como subidas de nivel secuenciales sobre el personaje ya
+      // creado -- una llamada por nivel de esa clase, igual que hace _submitEdit() para
+      // un level-up normal. El backend sigue sin saber nada de "creación multiclase": es
+      // el mismo mecanismo ya probado de la fase 2a, solo que encadenado automáticamente
+      // aquí en vez de a través del wizard de level-up.
+      final creationWarnings = <String>[];
+      for (final add in _additionalClasses) {
+        for (int lvl = 1; lvl <= add.level; lvl++) {
+          final result = await _charService.levelUp(
+            _createdCharacterId!,
+            hpRoll: lvl > 1 ? add.hpRolls[lvl] : null,
+            classId: add.classOption.id,
+            // subclassId solo en la última llamada: el backend valida que el nivel-en-
+            // esta-clase alcanzado ya cumpla el mínimo de la subclase, y por construcción
+            // el usuario solo pudo elegirla en el wizard si el nivel ya estaba ahí.
+            subclassId: (lvl == add.level) ? add.subclass?.id : null,
+          );
+          creationWarnings.addAll(result.warnings);
+        }
+        // Resolver las PendingTask de ESTA clase adicional -- se intercambia featureChoices/
+        // _levelUpTargetClassId por su propio snapshot (claves de nivel relativas a ella)
+        // para no arrastrar las elecciones de la clase primaria, y se restauran después.
+        final previousFeatureChoices = Map<String, String>.from(featureChoices);
+        final previousTargetClassId = _levelUpTargetClassId;
+        featureChoices
+          ..clear()
+          ..addAll(add.featureChoices);
+        _levelUpTargetClassId = add.classOption.id;
+        await _autoResolveFeatureChoices(_createdCharacterId!);
+        featureChoices
+          ..clear()
+          ..addAll(previousFeatureChoices);
+        _levelUpTargetClassId = previousTargetClassId;
+      }
+      _lastLevelUpWarnings = creationWarnings;
+
       _saveSuccess = true;
     } catch (e) {
       _setError('Error saving character: $e');

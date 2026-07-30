@@ -244,10 +244,14 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Skill Picks — hidden in level-up mode (already chosen at creation)
+                  // Skill Picks — hidden in level-up mode (already chosen at creation) and
+                  // when configuring an additional class during creation (multiclase, fase
+                  // 2b): solo la clase inicial otorga elección de skills, y hoy no hay forma
+                  // de enviar las de una clase adicional al backend (levelUp() no las acepta).
                   if (cls.skillChoiceCount > 0 &&
                       cls.allowedSkillIndices.isNotEmpty &&
-                      !widget.vm.isLevelUpMode) ...[
+                      !widget.vm.isLevelUpMode &&
+                      !widget.vm.isConfiguringAdditionalClass) ...[
                     _SkillPickerSection(
                       cls: cls,
                       vm: widget.vm,

@@ -77,6 +77,24 @@ class StepClass extends StatelessWidget {
               onEdit: () => _openClassEdit(context, vm),
             ),
           ),
+        // Multiclase (Aurora_Fixes.md #17, fase 2b): clases adicionales ya añadidas +
+        // opción de añadir otra, dentro del propio wizard de creación.
+        if (vm.selectedClass != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (int i = 0; i < vm.additionalClasses.length; i++)
+                  _AdditionalClassBadge(
+                    className: vm.additionalClasses[i].classOption.name,
+                    level: vm.additionalClasses[i].level,
+                    onRemove: () => vm.removeAdditionalClass(i),
+                  ),
+                const _AddAnotherClassSection(),
+              ],
+            ),
+          ),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -291,6 +309,126 @@ class _ClassCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Multiclase (fase 2b): badge de una clase adicional ya confirmada, con opción de quitarla.
+class _AdditionalClassBadge extends StatelessWidget {
+  final String className;
+  final int level;
+  final VoidCallback onRemove;
+
+  const _AdditionalClassBadge({
+    required this.className,
+    required this.level,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.primary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.primary, width: 1.5),
+      ),
+      child: Row(children: [
+        FaIcon(classIcon(className), color: AppTheme.primary, size: 18),
+        const SizedBox(width: 10),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: GoogleFonts.lato(color: AppTheme.textPrimary, fontSize: 13),
+              children: [
+                TextSpan(
+                    text: className,
+                    style: GoogleFonts.libreBaskerville(
+                        color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                TextSpan(text: '  ·  Level $level'),
+              ],
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: onRemove,
+          child: const Icon(Icons.close, color: AppTheme.textSecondary, size: 18),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Multiclase (fase 2b): "Add another class" expandible — muestra el catálogo (menos las
+/// clases ya usadas) y, al tocar una, arranca el flujo de configurarla como adicional.
+class _AddAnotherClassSection extends StatefulWidget {
+  const _AddAnotherClassSection();
+
+  @override
+  State<_AddAnotherClassSection> createState() => _AddAnotherClassSectionState();
+}
+
+class _AddAnotherClassSectionState extends State<_AddAnotherClassSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<CharacterCreatorViewModel>();
+    final usedIds = <int>{
+      if (vm.selectedClass != null) vm.selectedClass!.id,
+      ...vm.additionalClasses.map((c) => c.classOption.id),
+    };
+    final available = vm.classes.where((c) => !usedIds.contains(c.id)).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(children: [
+              Icon(_expanded ? Icons.remove_circle_outline : Icons.add_circle_outline,
+                  color: AppTheme.primary, size: 20),
+              const SizedBox(width: 8),
+              Text('Add another class (multiclass)',
+                  style: GoogleFonts.libreBaskerville(
+                      color: AppTheme.primary, fontWeight: FontWeight.bold)),
+            ]),
+          ),
+        ),
+        if (_expanded)
+          ...available.map((cls) => _ClassCard(
+                cls: cls,
+                isSelected: false,
+                onTap: () => _addAnotherClass(context, vm, cls),
+              )),
+      ],
+    );
+  }
+
+  Future<void> _addAnotherClass(
+      BuildContext context, CharacterCreatorViewModel vm, ClassOption cls) async {
+    vm.startConfiguringAdditionalClass();
+    await vm.loadClassFeatures(cls.id);
+    if (!context.mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ClassDetailScreen(
+          classOption: cls,
+          features: vm.classFeatures,
+          vm: vm,
+        ),
+      ),
+    );
+    // Si el usuario volvió atrás sin confirmar ni cancelar explícitamente (p.ej. la
+    // flecha de retroceso de ClassDetailScreen, que no toca el VM), no dejar el wizard
+    // colgado con selectedClass=null a mitad de flujo.
+    if (vm.isConfiguringAdditionalClass) {
+      vm.cancelDanglingAdditionalClass();
+    }
+    if (mounted) setState(() {});
   }
 }
 
