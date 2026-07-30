@@ -3,7 +3,9 @@ import 'package:gestor_personajes_dnd/views/screens/wizard/steps/step_equipment.
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../config/app_theme.dart';
+import '../../../services/characters/character_service.dart';
 import '../../../viewmodels/wizard/character_creator_viewmodel.dart';
+import 'level_up_screen.dart';
 import 'steps/step_race.dart';
 import 'steps/step_class.dart';
 import 'steps/step_class_picker.dart';
@@ -94,6 +96,53 @@ class CharacterWizardBody extends StatelessWidget {
             ),
           );
         }
+
+        // Multiclase (Aurora_Fixes.md #17, fase 2b): tras crear el personaje (no en
+        // edición/level-up), ofrecer encadenar directamente el selector de clase de la
+        // fase 2a para añadir una segunda clase sin volver a la ficha primero.
+        if (!vm.isEditMode && vm.createdCharacterId != null) {
+          if (!context.mounted) return;
+          final addAnother = await showDialog<bool>(
+            context: context,
+            builder: (_) => AlertDialog(
+              backgroundColor: AppTheme.surface,
+              title: Text('Character created',
+                  style: GoogleFonts.libreBaskerville(color: AppTheme.primary)),
+              content: Text('Add a second class now (multiclass)?',
+                  style: GoogleFonts.lato(color: AppTheme.textPrimary)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Not now'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Add a class'),
+                ),
+              ],
+            ),
+          );
+          if (addAnother == true) {
+            if (!context.mounted) return;
+            try {
+              final character =
+                  await CharacterService().getCharacterById(vm.createdCharacterId!);
+              if (!context.mounted) return;
+              // push (no pushReplacement): esta ruta de creación la abrió dashboard_screen.dart
+              // con Navigator.push<int>(...), esperando el id del personaje al cerrarse. El
+              // wizard de level-up (misma CharacterWizardBody) se cierra con pop(true) (bool,
+              // vm.isEditMode=true en level-up) -- sustituir la ruta pasaría ese bool a resolver
+              // el Future<int?> original. Apilando en vez de sustituir, esta ruta sigue siendo
+              // la que cierra el push<int> original, con el tipo correcto, cuando la de abajo termine.
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => LevelUpScreen(character: character)),
+              );
+            } catch (_) {
+              // Si falla cargar el personaje recién creado, no bloquear: caer al pop normal.
+            }
+          }
+        }
+
         if (!context.mounted) return;
         Navigator.of(context).pop(vm.isEditMode ? true : vm.createdCharacterId);
       });
