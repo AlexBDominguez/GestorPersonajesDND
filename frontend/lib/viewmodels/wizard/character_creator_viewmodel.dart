@@ -82,6 +82,8 @@ class _PrimaryClassSnapshot {
   final List<SubclassOption> subclasses;
   final Map<String, String> featureChoices;
   final Map<int, int?> hpRolls;
+  final Set<String> classSkillIndices;
+  final int classSkillRequiredCount;
 
   const _PrimaryClassSnapshot({
     required this.selectedClass,
@@ -91,6 +93,8 @@ class _PrimaryClassSnapshot {
     required this.subclasses,
     required this.featureChoices,
     required this.hpRolls,
+    required this.classSkillIndices,
+    required this.classSkillRequiredCount,
   });
 }
 
@@ -630,9 +634,16 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       subclasses: List.of(subclasses),
       featureChoices: Map.of(featureChoices),
       hpRolls: Map.of(_hpRolls),
+      classSkillIndices: Set.of(_classSkillIndices),
+      classSkillRequiredCount: _classSkillRequiredCount,
     );
     featureChoices.clear();
     _hpRolls.clear();
+    // Una clase adicional nunca otorga elección de skills (regla real, ver guard en
+    // class_options_screen.dart), pero se limpia igualmente por si acaso -- que quede
+    // vacío durante toda la sub-sesión, nunca con las skills de la clase primaria.
+    _classSkillIndices.clear();
+    _classSkillRequiredCount = 0;
     selectedClass = null;
     selectedSubclass = null;
     subclasses = [];
@@ -668,6 +679,10 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _hpRolls
       ..clear()
       ..addAll(snap.hpRolls);
+    _classSkillIndices
+      ..clear()
+      ..addAll(snap.classSkillIndices);
+    _classSkillRequiredCount = snap.classSkillRequiredCount;
     _configuringAdditionalClass = false;
   }
 
