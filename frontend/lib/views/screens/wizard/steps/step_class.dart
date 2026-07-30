@@ -9,8 +9,20 @@ import '../../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import '../class_detail_screen.dart';
 import '../class_options_screen.dart';
 
-class StepClass extends StatelessWidget {
+class StepClass extends StatefulWidget {
   const StepClass({super.key});
+
+  @override
+  State<StepClass> createState() => _StepClassState();
+}
+
+class _StepClassState extends State<StepClass> {
+  // Multiclase (fase 2b): alterna qué catálogo muestra la lista scrolleable de abajo --
+  // la clase primaria (de siempre) o las candidatas a clase adicional. Vive aquí (estado
+  // de UI puro, no del ViewModel) para reutilizar el ÚNICO área scrolleable existente
+  // (Expanded+ListView) en vez de añadir una lista sin scroll propio que desborde la
+  // pantalla al expandirse (el bug real de la captura del usuario).
+  bool _addingAnotherClass = false;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +90,9 @@ class StepClass extends StatelessWidget {
             ),
           ),
         // Multiclase (Aurora_Fixes.md #17, fase 2b): clases adicionales ya añadidas +
-        // opción de añadir otra, dentro del propio wizard de creación.
+        // opción de añadir otra, dentro del propio wizard de creación. La lista de
+        // candidatas (cuando _addingAnotherClass es true) se muestra reutilizando el
+        // ÚNICO ListView scrolleable de más abajo, no aquí (ver ese Expanded).
         if (vm.selectedClass != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -91,12 +105,40 @@ class StepClass extends StatelessWidget {
                     level: vm.additionalClasses[i].level,
                     onRemove: () => vm.removeAdditionalClass(i),
                   ),
-                const _AddAnotherClassSection(),
+                GestureDetector(
+                  onTap: () => setState(() => _addingAnotherClass = !_addingAnotherClass),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(children: [
+                      Icon(
+                          _addingAnotherClass
+                              ? Icons.remove_circle_outline
+                              : Icons.add_circle_outline,
+                          color: AppTheme.primary,
+                          size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                          _addingAnotherClass
+                              ? 'Cancel adding a class'
+                              : 'Add another class (multiclass)',
+                          style: GoogleFonts.libreBaskerville(
+                              color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                    ]),
+                  ),
+                ),
               ],
             ),
           ),
         Expanded(
-          child: ListView.builder(
+          child: _addingAnotherClass
+              ? _AdditionalClassCatalog(
+                  vm: vm,
+                  onPicked: (cls) async {
+                    await _addAnotherClass(context, vm, cls);
+                    if (mounted) setState(() => _addingAnotherClass = false);
+                  },
+                )
+              : ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: vm.classes.length,
             itemBuilder: (_, i) {
@@ -134,6 +176,30 @@ class StepClass extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Multiclase (fase 2b): arranca la configuración de una clase adicional (snapshot de
+  /// la primaria + campos en blanco), abre el mismo ClassDetailScreen/ClassOptionsScreen
+  /// de siempre para configurarla, y limpia el estado si el usuario vuelve atrás sin
+  /// confirmar ni cancelar explícitamente (p.ej. la flecha de retroceso de
+  /// ClassDetailScreen, que no toca el ViewModel).
+  Future<void> _addAnotherClass(
+      BuildContext context, CharacterCreatorViewModel vm, ClassOption cls) async {
+    vm.startConfiguringAdditionalClass();
+    await vm.loadClassFeatures(cls.id);
+    if (!context.mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ClassDetailScreen(
+          classOption: cls,
+          features: vm.classFeatures,
+          vm: vm,
+        ),
+      ),
+    );
+    if (vm.isConfiguringAdditionalClass) {
+      vm.cancelDanglingAdditionalClass();
+    }
   }
 
   /// Opens ClassOptionsScreen directly for editing an already-selected class.
@@ -360,75 +426,35 @@ class _AdditionalClassBadge extends StatelessWidget {
   }
 }
 
-/// Multiclase (fase 2b): "Add another class" expandible — muestra el catálogo (menos las
-/// clases ya usadas) y, al tocar una, arranca el flujo de configurarla como adicional.
-class _AddAnotherClassSection extends StatefulWidget {
-  const _AddAnotherClassSection();
+/// Multiclase (fase 2b): catálogo de clases candidatas a clase adicional (todas menos la
+/// primaria y las ya añadidas), mostrado en el mismo ListView scrolleable que el catálogo
+/// normal — evita el overflow de tener una lista sin scroll propio fuera de él.
+class _AdditionalClassCatalog extends StatelessWidget {
+  final CharacterCreatorViewModel vm;
+  final ValueChanged<ClassOption> onPicked;
 
-  @override
-  State<_AddAnotherClassSection> createState() => _AddAnotherClassSectionState();
-}
-
-class _AddAnotherClassSectionState extends State<_AddAnotherClassSection> {
-  bool _expanded = false;
+  const _AdditionalClassCatalog({required this.vm, required this.onPicked});
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<CharacterCreatorViewModel>();
     final usedIds = <int>{
       if (vm.selectedClass != null) vm.selectedClass!.id,
       ...vm.additionalClasses.map((c) => c.classOption.id),
     };
     final available = vm.classes.where((c) => !usedIds.contains(c.id)).toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: () => setState(() => _expanded = !_expanded),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(children: [
-              Icon(_expanded ? Icons.remove_circle_outline : Icons.add_circle_outline,
-                  color: AppTheme.primary, size: 20),
-              const SizedBox(width: 8),
-              Text('Add another class (multiclass)',
-                  style: GoogleFonts.libreBaskerville(
-                      color: AppTheme.primary, fontWeight: FontWeight.bold)),
-            ]),
-          ),
-        ),
-        if (_expanded)
-          ...available.map((cls) => _ClassCard(
-                cls: cls,
-                isSelected: false,
-                onTap: () => _addAnotherClass(context, vm, cls),
-              )),
-      ],
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: available.length,
+      itemBuilder: (_, i) {
+        final cls = available[i];
+        return _ClassCard(
+          cls: cls,
+          isSelected: false,
+          onTap: () => onPicked(cls),
+        );
+      },
     );
-  }
-
-  Future<void> _addAnotherClass(
-      BuildContext context, CharacterCreatorViewModel vm, ClassOption cls) async {
-    vm.startConfiguringAdditionalClass();
-    await vm.loadClassFeatures(cls.id);
-    if (!context.mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ClassDetailScreen(
-          classOption: cls,
-          features: vm.classFeatures,
-          vm: vm,
-        ),
-      ),
-    );
-    // Si el usuario volvió atrás sin confirmar ni cancelar explícitamente (p.ej. la
-    // flecha de retroceso de ClassDetailScreen, que no toca el VM), no dejar el wizard
-    // colgado con selectedClass=null a mitad de flujo.
-    if (vm.isConfiguringAdditionalClass) {
-      vm.cancelDanglingAdditionalClass();
-    }
-    if (mounted) setState(() {});
   }
 }
 
