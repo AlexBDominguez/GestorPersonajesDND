@@ -197,7 +197,15 @@ class _StepClassState extends State<StepClass> {
         ),
       ),
     );
-    if (vm.isConfiguringAdditionalClass) {
+    // ClassDetailScreen.onAdd hace pushReplacement (no push) hacia ClassOptionsScreen --
+    // eso completa este await INMEDIATAMENTE al reemplazar la ruta, no cuando
+    // ClassOptionsScreen se cierra de verdad (semántica de Navigator.pushReplacement).
+    // Por eso NO se puede usar solo isConfiguringAdditionalClass para detectar "volvió
+    // atrás sin elegir clase": selectClass(cls) ya se habrá llamado (dentro de ese mismo
+    // onAdd, justo antes del pushReplacement) en el caso normal de haber avanzado, así
+    // que solo limpiamos si selectedClass sigue null -- señal fiable de que el usuario
+    // volvió atrás desde ClassDetailScreen (flecha o "Cancel") sin llegar a elegir nada.
+    if (vm.isConfiguringAdditionalClass && vm.selectedClass == null) {
       vm.cancelDanglingAdditionalClass();
     }
   }
