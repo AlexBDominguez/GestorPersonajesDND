@@ -13,10 +13,12 @@ import entities.CharacterFeat;
 import entities.CharacterLanguage;
 import entities.CharacterProficiency;
 import entities.CharacterSpell;
+import entities.DndClass;
 import entities.Feat;
 import entities.Language;
 import entities.PendingTask;
 import entities.PlayerCharacter;
+import entities.PlayerCharacterClass;
 import entities.Proficiency;
 import entities.Spell;
 import entities.Subclass;
@@ -28,6 +30,7 @@ import repositories.CharacterSpellRepository;
 import repositories.FeatRepository;
 import repositories.LanguageRepository;
 import repositories.PendingTaskRepository;
+import repositories.PlayerCharacterClassRepository;
 import repositories.PlayerCharacterRepository;
 import repositories.ProficiencyRepository;
 import repositories.SpellRepository;
@@ -53,6 +56,7 @@ public class PendingTaskService {
     private final FeatMechanicalEffectService featMechanicalEffectService;
     private final NumericBonusService numericBonusService;
     private final CharacterClassResourceService characterClassResourceService;
+    private final PlayerCharacterClassRepository playerCharacterClassRepository;
 
     public PendingTaskService(PendingTaskRepository taskRepository,
                               PlayerCharacterRepository characterRepository,
@@ -70,7 +74,8 @@ public class PendingTaskService {
                               SubclassProficiencyService subclassProficiencyService,
                               FeatMechanicalEffectService featMechanicalEffectService,
                               NumericBonusService numericBonusService,
-                              CharacterClassResourceService characterClassResourceService) {
+                              CharacterClassResourceService characterClassResourceService,
+                              PlayerCharacterClassRepository playerCharacterClassRepository) {
         this.taskRepository = taskRepository;
         this.characterRepository = characterRepository;
         this.characterSkillService = characterSkillService;
@@ -88,6 +93,7 @@ public class PendingTaskService {
         this.featMechanicalEffectService = featMechanicalEffectService;
         this.numericBonusService = numericBonusService;
         this.characterClassResourceService = characterClassResourceService;
+        this.playerCharacterClassRepository = playerCharacterClassRepository;
     }
 
     /** Todas las tareas pendientes (sin completar) de un personaje */
@@ -261,20 +267,43 @@ public class PendingTaskService {
                 }
 
                 case "CHOOSE_SUBCLASS": {
-                        // choice = subclass display name; assign if not already set
-                        if (character.getSubclass() == null && character.getDndClass() != null) {
-                            List<Subclass> subclasses = subclassRepository.findByDndClass(character.getDndClass());
-                            subclasses.stream()
-                                    .filter(sc -> sc.getName().equalsIgnoreCase(choice.trim()))
-                                    .findFirst()
-                                    .ifPresent(sc -> {
+                        // choice = subclass display name; assign if not already set.
+                        // Multiclase (Aurora_Fixes.md #17, mantenimiento): la clase a la que
+                        // pertenece esta elección es la de la propia tarea (task.getDndClass()),
+                        // no necesariamente la clase legacy del personaje -- una tarea de este
+                        // tipo puede pertenecer a una clase secundaria. Tareas sin dndClass
+                        // (mono-clase, o creadas antes de este campo) caen a character.getDndClass().
+                        DndClass taskClass = task.getDndClass() != null ? task.getDndClass() : character.getDndClass();
+                        if (taskClass == null) break;
+
+                        PlayerCharacterClass row = playerCharacterClassRepository
+                                .findByCharacterAndDndClass(character, taskClass).orElse(null);
+                        boolean alreadyAssigned = row != null ? row.getSubclass() != null : character.getSubclass() != null;
+                        if (alreadyAssigned) break;
+
+                        List<Subclass> subclasses = subclassRepository.findByDndClass(taskClass);
+                        subclasses.stream()
+                                .filter(sc -> sc.getName().equalsIgnoreCase(choice.trim()))
+                                .findFirst()
+                                .ifPresent(sc -> {
+                                    int levelForSpells = character.getLevel();
+                                    if (row != null) {
+                                        row.setSubclass(sc);
+                                        playerCharacterClassRepository.save(row);
+                                        levelForSpells = row.getLevel();
+                                        // classOrder=0 es la clase que dndClass/subclass de PlayerCharacter
+                                        // reflejan (dual-write, ver PlayerCharacterService.create()).
+                                        if (row.getClassOrder() == 0) {
+                                            character.setSubclass(sc);
+                                        }
+                                    } else {
                                         character.setSubclass(sc);
-                                        subclassSpellService.applySubclassSpells(character, sc, character.getLevel());
-                                        subclassProficiencyService.applySubclassProficiencies(character, sc);
-                                        applySubclassStatEffects(character, sc);
-                                        applyRetroactiveMaxHpBonus(character);
-                                    });
-                        }
+                                    }
+                                    subclassSpellService.applySubclassSpells(character, sc, levelForSpells);
+                                    subclassProficiencyService.applySubclassProficiencies(character, sc);
+                                    applySubclassStatEffects(character, sc);
+                                    applyRetroactiveMaxHpBonus(character);
+                                });
                         break;
                 }
 
@@ -295,9 +324,24 @@ public class PendingTaskService {
                 // en la creación ANTES de que esta tarea existiera/se resolviera, así que las
                 // runas elegidas no se habían podido inicializar todavía. Idempotente -- solo
                 // crea lo que falte. Ver #8.2 RESOURCE_POOL.
-                case "RUNE_CHOICE":
-                        characterClassResourceService.initializeClassResourcesForCharacter(character.getId());
+                // Multiclase (Aurora_Fixes.md #17, mantenimiento): si Rune Knight es una clase
+                // secundaria, initializeClassResourcesForCharacter() miraba solo
+                // character.getDndClass()/getLevel() (la clase primaria) y nunca creaba el
+                // recurso -- usar la variante consciente de clase con la fila real de
+                // PlayerCharacterClass de esta tarea, igual que hace levelUpMulticlass().
+                case "RUNE_CHOICE": {
+                        DndClass taskClass = task.getDndClass() != null ? task.getDndClass() : character.getDndClass();
+                        PlayerCharacterClass row = taskClass != null
+                                ? playerCharacterClassRepository.findByCharacterAndDndClass(character, taskClass).orElse(null)
+                                : null;
+                        if (row != null) {
+                            characterClassResourceService.initializeClassResourcesForCharacterAndClass(
+                                    character.getId(), row.getDndClass(), row.getSubclass(), row.getLevel());
+                        } else {
+                            characterClassResourceService.initializeClassResourcesForCharacter(character.getId());
+                        }
                         break;
+                }
 
                 // Totem Warrior — choice stored in metadata
                 case "TOTEM_SPIRIT":

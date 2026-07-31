@@ -75,7 +75,8 @@ public class MulticlassRulesService {
             Map.entry("ranger",    List.of("light-armor", "simple-weapons", "martial-weapons")),
             Map.entry("rogue",     List.of("light-armor", "thieves-tools")),
             Map.entry("warlock",   List.of("light-armor", "simple-weapons")),
-            // Monk, Sorcerer y Wizard no otorgan ninguna proficiency al multiclasear (regla real).
+            Map.entry("monk",      List.of("simple-weapons", "shortswords")),
+            // Sorcerer y Wizard no otorgan ninguna proficiency al multiclasear (regla real).
             // Artificer (TCE p.10): armadura ligera + una herramienta de artesano a elegir (la
             // elección de herramienta no se automatiza, ver EXTRA_CHOICE_NOTES).
             Map.entry("artificer-erlw", List.of("light-armor")),
@@ -92,7 +93,7 @@ public class MulticlassRulesService {
     // Elecciones de la tabla de multiclase que este mapa no automatiza (skill de la lista de
     // la clase, herramienta de artesano...) -- se comunican como aviso informativo.
     private static final Map<String, String> EXTRA_CHOICE_NOTES = Map.ofEntries(
-            Map.entry("bard",   "one skill of your choice from its class skill list"),
+            Map.entry("bard",   "one skill of your choice from its class skill list, and one musical instrument of your choice"),
             Map.entry("ranger", "one skill of your choice from its class skill list"),
             Map.entry("rogue",  "one skill of your choice from its class skill list"),
             Map.entry("artificer-erlw", "one type of artisan's tools of your choice"),

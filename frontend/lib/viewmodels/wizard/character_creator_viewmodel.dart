@@ -2239,11 +2239,21 @@ void toggleItem(int itemId) {
       if (levelsGained > 0) {
         for (int i = 0; i < levelsGained; i++) {
           final newLevel = _originalLevel + i + 1;
+          // Mantenimiento multiclase (Aurora_Fixes.md #17): subclassId solo va en la ÚLTIMA
+          // llamada del bucle, igual que ya hace submit() para las clases adicionales del
+          // wizard de creación (ver más abajo). Enviarlo en TODAS las iteraciones rompía
+          // cualquier salto de 2+ niveles a la vez que cruzara el nivel de elección de
+          // subclase: el backend valida el nivel-en-la-clase alcanzado en CADA llamada, así
+          // que la primera iteración (todavía por debajo de ese nivel) lo rechazaba y abortaba
+          // el submit entero -- afectaba tanto a mono-clase como a multiclase.
+          final isLastLevelUpCall = i == levelsGained - 1;
           final result = await _charService.levelUp(
             _editCharacterId!,
             hpRoll: _hpRolls[newLevel],
             classId: _levelUpTargetClassId,
-            subclassId: _levelUpTargetClassId != null ? selectedSubclass?.id : null,
+            subclassId: (_levelUpTargetClassId != null && isLastLevelUpCall)
+                ? selectedSubclass?.id
+                : null,
           );
           levelUpWarnings.addAll(result.warnings);
         }
@@ -2267,7 +2277,13 @@ void toggleItem(int itemId) {
         weight:  weight.isNotEmpty   ? weight   : null,
         abilityDisplayMode: abilityDisplayMode,
         useEncumbrance: useEncumbrance,
-        subclassId: selectedSubclass?.id,
+        // Mantenimiento multiclase (Aurora_Fixes.md #17): updateProfile() valida subclassId
+        // contra la clase PRIMARIA del personaje (campo legacy) -- cuando hay una clase
+        // objetivo de level-up, la elección de subclase ya la maneja correctamente el
+        // levelUp() de arriba (por clase, incluida una clase secundaria); reenviarla aquí
+        // rompía con "Subclass does not belong to character's class" en cuanto la subclase
+        // pertenecía a una clase secundaria.
+        subclassId: (_levelUpMode && _levelUpTargetClassId != null) ? null : selectedSubclass?.id,
         backgroundId: selectedBackground?.id,
         raceId: selectedRace?.id,
         subraceId: selectedSubrace?.id,
