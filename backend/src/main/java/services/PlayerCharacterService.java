@@ -817,16 +817,112 @@ public class PlayerCharacterService {
         characterSpellRepository.save(characterSpell);
     }
 
+    // Multiclase (Aurora_Fixes.md #17, fase 4a): clases "de conocidos" (lista fija de
+    // hechizos conocidos, no preparan de toda la lista de clase) -- mismo set que ya usa
+    // `alwaysPreparedClass` en el frontend. Wizard también siembra ClassLevelFeature
+    // SPELL_LEARN (crecimiento de su libro de conjuros), pero deliberadamente NO se trata
+    // aquí como límite de "conocidos" -- ver limitación documentada en el plan de la fase 4.
+    private static final java.util.Set<String> KNOWN_CASTER_CLASSES =
+            java.util.Set.of("sorcerer", "bard", "warlock", "ranger");
+
+    /**
+     * Total de hechizos "conocidos" que esta clase permite tener a este nivel EN ESA CLASE,
+     * sumando los deltas ya sembrados como ClassLevelFeature(SPELL_LEARN, metadata=
+     * {"count":N}) por DndClassSyncService en cada nivel de 1 a levelInClass. Devuelve -1 si
+     * la clase no es "de conocidos" (no aplica este límite).
+     */
+    private int maxKnownSpellsForClass(DndClass dndClass, int levelInClass) {
+        String idx = dndClass.getIndexName() != null ? dndClass.getIndexName().toLowerCase() : "";
+        if (!KNOWN_CASTER_CLASSES.contains(idx)) {
+            return -1;
+        }
+        int total = 0;
+        for (int lvl = 1; lvl <= levelInClass; lvl++) {
+            ClassLevelProgression progression = classLevelProgressionRepository
+                    .findByDndClassAndLevel(dndClass, lvl).orElse(null);
+            if (progression == null || progression.getFeatures() == null) continue;
+            for (ClassLevelFeature feature : progression.getFeatures()) {
+                if (feature.getType() == FeatureType.SPELL_LEARN) {
+                    total += parseCountFromMetadata(feature.getMetadata());
+                }
+            }
+        }
+        return total;
+    }
+
+    private int parseCountFromMetadata(String metadata) {
+        if (metadata == null) return 0;
+        int idx = metadata.indexOf("\"count\":");
+        if (idx == -1) return 0;
+        int start = idx + 8;
+        while (start < metadata.length() && !Character.isDigit(metadata.charAt(start))) start++;
+        int end = start;
+        while (end < metadata.length() && Character.isDigit(metadata.charAt(end))) end++;
+        if (end <= start) return 0;
+        try {
+            return Integer.parseInt(metadata.substring(start, end));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     @Transactional
     public void learnSpell(Long characterId, Long spellId, boolean prepared) {
+        learnSpell(characterId, spellId, prepared, null);
+    }
+
+    /**
+     * Multiclase (Aurora_Fixes.md #17, fase 4a): con classId informado, el límite se
+     * comprueba SOLO contra esa clase (conocidos o preparados, según lo que otorgue) y el
+     * hechizo queda atribuido a ella. Sin classId (retrocompatible, comportamiento de
+     * siempre), se mantiene el límite de preparados character-wide y el hechizo se guarda
+     * sin clase atribuida.
+     */
+    @Transactional
+    public void learnSpell(Long characterId, Long spellId, boolean prepared, Long classId) {
         PlayerCharacter character = characterRepository.findById(characterId)
                 .orElseThrow(() -> new RuntimeException("Character not found"));
 
         Spell spell = spellRepository.findById(spellId)
                 .orElseThrow(() -> new RuntimeException("Spell not found"));
 
-        // Al aprender como preparado, validar el límite de preparación
-        if (prepared && spell.getLevel() > 0) {
+        DndClass targetClass = null;
+        if (classId != null) {
+            targetClass = dndClassRepository.findById(classId)
+                    .orElseThrow(() -> new RuntimeException("DndClass not found"));
+        }
+
+        if (targetClass != null && spell.getLevel() > 0) {
+            String idx = targetClass.getIndexName() != null ? targetClass.getIndexName().toLowerCase() : "";
+            if (KNOWN_CASTER_CLASSES.contains(idx)) {
+                PlayerCharacterClass row = playerCharacterClassRepository
+                        .findByCharacterAndDndClass(character, targetClass).orElse(null);
+                int levelInClass = row != null ? row.getLevel() : character.getLevel();
+                int maxKnown = maxKnownSpellsForClass(targetClass, levelInClass);
+                if (maxKnown >= 0) {
+                    int currentKnown = characterSpellRepository
+                            .countKnownNonCantripsByCharacterIdAndClass(characterId, classId);
+                    if (currentKnown >= maxKnown) {
+                        throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                                "Known spell limit reached for " + targetClass.getName()
+                                        + " (" + currentKnown + "/" + maxKnown + ")");
+                    }
+                }
+            } else if (prepared && targetClass.getSpellcastingAbility() != null
+                    && !targetClass.getSpellcastingAbility().isEmpty()) {
+                Integer maxPrepared = character.getMaxPreparedSpellsByClass().get(classId);
+                if (maxPrepared != null && maxPrepared > 0) {
+                    int currentPrepared = characterSpellRepository
+                            .countPreparedNonCantripsByCharacterIdAndClass(characterId, classId);
+                    if (currentPrepared >= maxPrepared) {
+                        throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                                "Spell preparation limit reached for " + targetClass.getName()
+                                        + " (" + currentPrepared + "/" + maxPrepared + ")");
+                    }
+                }
+            }
+        } else if (targetClass == null && prepared && spell.getLevel() > 0) {
+            // Comportamiento legacy character-wide, sin cambios.
             int maxPrepared = character.getMaxPreparedSpells();
             if (maxPrepared > 0) {
                 int currentPrepared = characterSpellRepository.countPreparedNonCantripsByCharacterId(characterId);
@@ -839,6 +935,7 @@ public class PlayerCharacterService {
         }
 
         CharacterSpell characterSpell = new CharacterSpell(character, spell);
+        characterSpell.setDndClass(targetClass);
         // Los cantrips siempre están preparados; los no-cantrips respetan el flag 'prepared'
         characterSpell.setPrepared(spell.getLevel() == 0 || prepared);
         characterSpellRepository.save(characterSpell);
@@ -856,23 +953,35 @@ public class PlayerCharacterService {
             //Los cantrips(nivel 0) no se pueden preparar/despreparar
             if(characterSpell.getSpell().getLevel() == 0){
                 throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Cantrips are always available and cannot be prepared/unprepared");                
+                    HttpStatus.BAD_REQUEST, "Cantrips are always available and cannot be prepared/unprepared");
             }
 
-            // Si va a preparar (actualmente no preparado), verificar el límite
+            // Si va a preparar (actualmente no preparado), verificar el límite. Multiclase
+            // (Aurora_Fixes.md #17, fase 4a): si el hechizo tiene clase atribuida (dndClass,
+            // guardado al aprenderlo), el límite se comprueba SOLO contra esa clase; si no
+            // (fila legacy sin classId), se mantiene el comportamiento character-wide de siempre.
             if (!characterSpell.isPrepared()) {
                 PlayerCharacter character = characterRepository.findById(characterId)
                     .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Character not found"));
-                int maxPrepared = character.getMaxPreparedSpells();
-                if (maxPrepared > 0) {
-                    int currentPrepared = characterSpellRepository
+                DndClass spellClass = characterSpell.getDndClass();
+                int maxPrepared;
+                int currentPrepared;
+                if (spellClass != null) {
+                    Integer max = character.getMaxPreparedSpellsByClass().get(spellClass.getId());
+                    maxPrepared = max != null ? max : 0;
+                    currentPrepared = characterSpellRepository
+                            .countPreparedNonCantripsByCharacterIdAndClass(characterId, spellClass.getId());
+                } else {
+                    maxPrepared = character.getMaxPreparedSpells();
+                    currentPrepared = characterSpellRepository
                         .countPreparedNonCantripsByCharacterId(characterId);
-                    if (currentPrepared >= maxPrepared) {
-                        throw new ResponseStatusException(
-                            HttpStatus.UNPROCESSABLE_ENTITY,
-                            "Spell preparation limit reached (" + maxPrepared + "/" + maxPrepared + ")");
-                    }
+                }
+                if (maxPrepared > 0 && currentPrepared >= maxPrepared) {
+                    throw new ResponseStatusException(
+                        HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Spell preparation limit reached (" + currentPrepared + "/" + maxPrepared + ")"
+                            + (spellClass != null ? " for " + spellClass.getName() : ""));
                 }
             }
 

@@ -17,5 +17,15 @@ public interface CharacterSpellRepository extends JpaRepository<CharacterSpell, 
 
     @Query("SELECT COUNT(cs) FROM CharacterSpell cs WHERE cs.character.id = :characterId AND cs.prepared = true AND cs.spell.level > 0")
     int countPreparedNonCantripsByCharacterId(@Param("characterId") Long characterId);
+
+    // Multiclase (Aurora_Fixes.md #17, fase 4a): variantes por clase, para aplicar el límite
+    // de preparados/conocidos de CADA clase lanzadora por separado cuando hay dos.
+    @Query("SELECT COUNT(cs) FROM CharacterSpell cs WHERE cs.character.id = :characterId "
+            + "AND cs.dndClass.id = :classId AND cs.prepared = true AND cs.spell.level > 0")
+    int countPreparedNonCantripsByCharacterIdAndClass(@Param("characterId") Long characterId, @Param("classId") Long classId);
+
+    @Query("SELECT COUNT(cs) FROM CharacterSpell cs WHERE cs.character.id = :characterId "
+            + "AND cs.dndClass.id = :classId AND cs.spell.level > 0")
+    int countKnownNonCantripsByCharacterIdAndClass(@Param("characterId") Long characterId, @Param("classId") Long classId);
 }
 

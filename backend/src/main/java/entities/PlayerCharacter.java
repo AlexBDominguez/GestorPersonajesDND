@@ -931,6 +931,28 @@ public class PlayerCharacter {
     }
 
     /**
+     * Multiclase (Aurora_Fixes.md #17, fase 4a): máximo de hechizos preparados POR CADA clase
+     * preparadora del personaje (classId -> máximo), no solo la de menor classOrder --
+     * necesario para aplicar el límite de cada clase por separado cuando hay dos (p.ej.
+     * Cleric+Druid). getMaxPreparedSpells() (sin argumentos, arriba) se mantiene tal cual
+     * para el código que todavía no es consciente de multiclase.
+     */
+    @Transient
+    public java.util.Map<Long, Integer> getMaxPreparedSpellsByClass() {
+        java.util.Map<Long, Integer> result = new java.util.HashMap<>();
+        if (classes != null) {
+            for (PlayerCharacterClass pcc : classes) {
+                DndClass c = pcc.getDndClass();
+                if (c != null && c.getSpellcastingAbility() != null && !c.getSpellcastingAbility().isEmpty()) {
+                    int abilityModifier = calculateAbilityModifier(c.getSpellcastingAbility());
+                    result.put(c.getId(), Math.max(1, abilityModifier + pcc.getLevel()));
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
      * Calcula la capacidad de carga máxima
      * Fórmula: STR × 15 (en libras)
      */

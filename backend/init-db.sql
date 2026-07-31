@@ -438,20 +438,28 @@ CREATE TABLE IF NOT EXISTS character_spells (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     character_id BIGINT NOT NULL,
     spell_id BIGINT NOT NULL,
+    class_id BIGINT NULL,
     prepared BOOLEAN NOT NULL DEFAULT FALSE,
     learned BOOLEAN NOT NULL DEFAULT FALSE,
     times_cast INT NOT NULL DEFAULT 0,
     FOREIGN KEY (character_id) REFERENCES characters(id) ON DELETE CASCADE,
     FOREIGN KEY (spell_id) REFERENCES spells(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_character_spell (character_id, spell_id),
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL,
+    UNIQUE KEY unique_character_spell (character_id, spell_id, class_id),
     INDEX idx_character_spells_char (character_id),
     INDEX idx_character_spells_spell (spell_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Columna spell_source en character_spells
 -- (si el script se ejecuta sobre una BD existente)
-ALTER TABLE character_spells 
+ALTER TABLE character_spells
     ADD COLUMN IF NOT EXISTS spell_source VARCHAR(20) DEFAULT 'CLASS';
+
+-- Multiclase (Aurora_Fixes.md #17, fase 4a): clase a la que se atribuye el hechizo (nullable
+-- -- si el script se ejecuta sobre una BD existente que ya tenía la tabla; en el VPS el
+-- UNIQUE KEY antiguo se migra aparte con backend/scripts/patch_character_spells_class_id.sql).
+ALTER TABLE character_spells
+    ADD COLUMN IF NOT EXISTS class_id BIGINT NULL;
 
 -- ============================================
 -- Tabla: character_spell_slots (Espacios de Hechizo del Personaje)

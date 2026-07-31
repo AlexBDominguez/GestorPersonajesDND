@@ -92,7 +92,14 @@ public class PlayerCharacterController {
 
         verifyCharacterOwnership(characterId);
         boolean prepared = body != null && Boolean.TRUE.equals(body.get("prepared"));
-        playerCharacterService.learnSpell(characterId, spellId, prepared);
+        // Multiclase (Aurora_Fixes.md #17, fase 4a): classId opcional -- si viene informado,
+        // el hechizo queda atribuido a esa clase y sus límites se comprueban contra ella en
+        // vez del límite character-wide de siempre.
+        Long classId = null;
+        if (body != null && body.get("classId") != null) {
+            classId = Long.valueOf(body.get("classId").toString());
+        }
+        playerCharacterService.learnSpell(characterId, spellId, prepared, classId);
     }
 
     @PostMapping("/{characterId}/spells/{spellId}/prepare")

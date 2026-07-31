@@ -25,6 +25,15 @@ public class CharacterSpell {
     @JoinColumn(name = "spell_id", nullable = false)
     private Spell spell;
 
+    // Multiclase (Aurora_Fixes.md #17, fase 4a): clase concreta a la que se atribuye este
+    // hechizo (para aplicar límites de conocidos/preparados por clase cuando el personaje
+    // tiene dos clases lanzadoras). Nullable: mismo patrón que PendingTask.dndClass -- null
+    // significa "sin clase concreta atribuida" (filas de antes de este campo, o hechizos de
+    // un personaje mono-clase donde no hace falta desambiguar).
+    @ManyToOne
+    @JoinColumn(name = "class_id")
+    private DndClass dndClass;
+
     private boolean prepared;
     private boolean learned;
     private int timesCast;
@@ -76,6 +85,14 @@ public class CharacterSpell {
 
     public void setSpell(Spell spell) {
         this.spell = spell;
+    }
+
+    public DndClass getDndClass() {
+        return dndClass;
+    }
+
+    public void setDndClass(DndClass dndClass) {
+        this.dndClass = dndClass;
     }
 
     public boolean isPrepared() {
