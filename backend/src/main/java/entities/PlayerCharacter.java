@@ -572,8 +572,9 @@ public class PlayerCharacter {
         // Magic Item Adept (nivel 10, 3->4), Savant (nivel 14, ->5) y Master (nivel 18, ->6):
         // features de clase base del Artificiero, fijas por nivel (no SubclassFeature), igual
         // que Magic Item Adept ya se trataba -- ver Aurora_Fixes.md #3.
-        if (dndClass != null && dndClass.getName() != null
-                && dndClass.getName().toLowerCase().startsWith("artificer")) {
+        // Multiclase (mantenimiento): Artificer como clase secundaria también cuenta, no solo
+        // la primaria -- hasClassNameStartingWith() mira classes además de dndClass.
+        if (hasClassNameStartingWith("artificer")) {
             if (getLevel() >= 18) return 6;
             if (getLevel() >= 14) return 5;
             if (getLevel() >= 10) return 4;
@@ -614,7 +615,6 @@ public class PlayerCharacter {
     @Transient
     public int getArmorClass(CharacterEquipment equipment, List<CharacterActiveEffect> activeEffects) {
         int dexModifier = calculateAbilityModifier("dex");
-        String classIndex = dndClass != null ? dndClass.getIndexName() : "";
 
         Item armor = equipment != null ? equipment.getArmor() : null;
         Item offHand = equipment != null ? equipment.getOffHand() : null;
@@ -638,10 +638,12 @@ public class PlayerCharacter {
                 baseAC = armorAC + dexModifier;
             }
         } else {
-            // Sin armadura: aplicar Unarmored Defense según la clase
-            boolean isBarbarian = "barbarian".equalsIgnoreCase(classIndex);
+            // Sin armadura: aplicar Unarmored Defense según la clase. Multiclase
+            // (mantenimiento): Barbarian/Monk cuentan aunque sean una clase secundaria, no
+            // solo la primaria -- ver hasClassIndexName().
+            boolean isBarbarian = hasClassIndexName("barbarian");
             // El Monje pierde Unarmored Defense si lleva escudo
-            boolean isMonkUnarmored = "monk".equalsIgnoreCase(classIndex) && !hasShield;
+            boolean isMonkUnarmored = hasClassIndexName("monk") && !hasShield;
 
             if (isBarbarian) {
                 // Unarmored Defense del Bárbaro: 10 + DEX + CON (escudo permitido)
@@ -710,14 +712,7 @@ public class PlayerCharacter {
 
     @Transient
     public int getSpellSaveDC() {
-        String spellcastingAbility = null;
-        if (dndClass != null && dndClass.getSpellcastingAbility() != null
-                && !dndClass.getSpellcastingAbility().isEmpty()) {
-            spellcastingAbility = dndClass.getSpellcastingAbility();
-        } else if (subclass != null && subclass.getSpellcastingAbility() != null
-                && !subclass.getSpellcastingAbility().isEmpty()) {
-            spellcastingAbility = subclass.getSpellcastingAbility();
-        }
+        String spellcastingAbility = resolveSpellcastingAbility();
         if (spellcastingAbility == null) {
             return 0; // No es lanzador de hechizos
         }
@@ -733,19 +728,103 @@ public class PlayerCharacter {
 
     @Transient
     public int getSpellAttackBonus(){
-        String spellcastingAbility = null;
-        if (dndClass != null && dndClass.getSpellcastingAbility() != null
-                && !dndClass.getSpellcastingAbility().isEmpty()) {
-            spellcastingAbility = dndClass.getSpellcastingAbility();
-        } else if (subclass != null && subclass.getSpellcastingAbility() != null
-                && !subclass.getSpellcastingAbility().isEmpty()) {
-            spellcastingAbility = subclass.getSpellcastingAbility();
-        }
+        String spellcastingAbility = resolveSpellcastingAbility();
         if (spellcastingAbility == null) {
             return 0; // No es lanzador de hechizos
         }
         int abilityModifier = calculateAbilityModifier(spellcastingAbility);
         return proficiencyBonus + abilityModifier;
+    }
+
+    /**
+     * Multiclase (Aurora_Fixes.md #17, mantenimiento): dndClass/subclass (arriba) son la
+     * clase PRIMARIA -- si esa clase no lanza hechizos pero otra clase del personaje sí
+     * (p.ej. Barbarian primaria / Druid secundaria), sin este fallback getSpellSaveDC()/
+     * getSpellAttackBonus() devolvían 0 siempre, aunque el personaje sí sea lanzador.
+     * Simplificación conocida: si hay dos clases lanzadoras con habilidades distintas
+     * (p.ej. Cleric+Wizard), esta app solo modela un DC/bonus combinado, no uno por clase
+     * -- se usa la de menor classOrder, mismo criterio que el resto del sistema de
+     * hechizos bajo multiclase.
+     */
+    @Transient
+    private String resolveSpellcastingAbility() {
+        if (dndClass != null && dndClass.getSpellcastingAbility() != null
+                && !dndClass.getSpellcastingAbility().isEmpty()) {
+            return dndClass.getSpellcastingAbility();
+        }
+        if (subclass != null && subclass.getSpellcastingAbility() != null
+                && !subclass.getSpellcastingAbility().isEmpty()) {
+            return subclass.getSpellcastingAbility();
+        }
+        PlayerCharacterClass row = resolveSpellcastingClassRow();
+        if (row == null) {
+            return null;
+        }
+        if (row.getDndClass() != null && row.getDndClass().getSpellcastingAbility() != null
+                && !row.getDndClass().getSpellcastingAbility().isEmpty()) {
+            return row.getDndClass().getSpellcastingAbility();
+        }
+        if (row.getSubclass() != null && row.getSubclass().getSpellcastingAbility() != null
+                && !row.getSubclass().getSpellcastingAbility().isEmpty()) {
+            return row.getSubclass().getSpellcastingAbility();
+        }
+        return null;
+    }
+
+    /** La fila de `classes` (de menor classOrder) cuya clase o subclase lance hechizos, si hay alguna. */
+    @Transient
+    private PlayerCharacterClass resolveSpellcastingClassRow() {
+        PlayerCharacterClass best = null;
+        if (classes != null) {
+            for (PlayerCharacterClass pcc : classes) {
+                boolean casts = (pcc.getDndClass() != null && pcc.getDndClass().getSpellcastingAbility() != null
+                            && !pcc.getDndClass().getSpellcastingAbility().isEmpty())
+                        || (pcc.getSubclass() != null && pcc.getSubclass().getSpellcastingAbility() != null
+                            && !pcc.getSubclass().getSpellcastingAbility().isEmpty());
+                if (casts && (best == null || pcc.getClassOrder() < best.getClassOrder())) {
+                    best = pcc;
+                }
+            }
+        }
+        return best;
+    }
+
+    /**
+     * Multiclase (mantenimiento): true si dndClass (primaria) o cualquier clase de
+     * `classes` (secundaria) tiene este indexName -- p.ej. "barbarian"/"monk" para
+     * Unarmored Defense, que aplica sin importar si esa clase es la primaria o no.
+     */
+    @Transient
+    private boolean hasClassIndexName(String indexName) {
+        if (dndClass != null && indexName.equalsIgnoreCase(dndClass.getIndexName())) {
+            return true;
+        }
+        if (classes != null) {
+            for (PlayerCharacterClass pcc : classes) {
+                if (pcc.getDndClass() != null && indexName.equalsIgnoreCase(pcc.getDndClass().getIndexName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Igual que hasClassIndexName() pero comparando el nombre de clase por prefijo (p.ej. "artificer"). */
+    @Transient
+    private boolean hasClassNameStartingWith(String prefix) {
+        if (dndClass != null && dndClass.getName() != null
+                && dndClass.getName().toLowerCase().startsWith(prefix)) {
+            return true;
+        }
+        if (classes != null) {
+            for (PlayerCharacterClass pcc : classes) {
+                DndClass c = pcc.getDndClass();
+                if (c != null && c.getName() != null && c.getName().toLowerCase().startsWith(prefix)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -829,16 +908,26 @@ public class PlayerCharacter {
 
     @Transient
     public int getMaxPreparedSpells(){
-        if(dndClass == null || dndClass.getSpellcastingAbility() == null) {
-            return 0; // No es lanzador de hechizos
+        // Algunas clases no preparan hechizos (Bard, Sorcerer, Warlock, Ranger conocen hechizos)
+        //Esto se podría refinar con un campo en DndClass
+        if (dndClass != null && dndClass.getSpellcastingAbility() != null
+                && !dndClass.getSpellcastingAbility().isEmpty()) {
+            int abilityModifier = calculateAbilityModifier(dndClass.getSpellcastingAbility());
+            return Math.max(1, abilityModifier + level);
         }
 
-    // Algunas clases no preparan hechizos (Bard, Sorcerer, Warlock, Ranger conocen hechizos)
-    //Esto se podría refinar con un campo en DndClass
-        String spellcastingAbility = dndClass.getSpellcastingAbility();
-        int abilityModifier = calculateAbilityModifier(spellcastingAbility);
-
-        return Math.max(1, abilityModifier + level);
+        // Multiclase (Aurora_Fixes.md #17, mantenimiento): la clase primaria (dndClass) no
+        // siempre es la que prepara -- si otra clase del personaje sí (p.ej. Barbarian
+        // primaria / Druid secundaria), antes esto devolvía 0 siempre, así que el límite de
+        // hechizos preparados no se aplicaba nunca para esa clase secundaria. Usa el propio
+        // nivel EN esa clase (no el nivel total de personaje), como pide la fórmula del PHB.
+        PlayerCharacterClass row = resolveSpellcastingClassRow();
+        if (row == null || row.getDndClass() == null || row.getDndClass().getSpellcastingAbility() == null
+                || row.getDndClass().getSpellcastingAbility().isEmpty()) {
+            return 0; // No es lanzador de hechizos
+        }
+        int abilityModifier = calculateAbilityModifier(row.getDndClass().getSpellcastingAbility());
+        return Math.max(1, abilityModifier + row.getLevel());
     }
 
     /**
