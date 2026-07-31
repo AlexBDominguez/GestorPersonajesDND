@@ -96,8 +96,15 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
 
   // Computed locally from cls (widget param) to avoid stale vm.selectedClass data
   bool get _classSkillsDone {
-    // In level-up and edit modes, skills were already chosen at creation — always done
-    if (widget.vm.isLevelUpMode || widget.isEditing) return true;
+    // In level-up mode, edit mode, and when configuring an additional class during
+    // creation (multiclase, fase 2b) skills were already chosen at creation (or no
+    // aplica, ver guard del selector más abajo) — siempre done. Sin este último caso,
+    // classSkillIndices queda vacío a propósito para una clase adicional (aislamiento,
+    // ver startConfiguringAdditionalClass) y este check nunca se podría satisfacer, ya
+    // que el selector que lo rellenaría está oculto para esa misma clase.
+    if (widget.vm.isLevelUpMode || widget.isEditing || widget.vm.isConfiguringAdditionalClass) {
+      return true;
+    }
     if (cls.skillChoiceCount == 0 || cls.allowedSkillIndices.isEmpty) return true;
     return widget.vm.classSkillIndices.length >= cls.skillChoiceCount;
   }
