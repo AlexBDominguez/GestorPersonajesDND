@@ -105,8 +105,10 @@ class _TabInventoryState extends State<TabInventory> {
 
   // Infuse Item (Artificiero, #8) — solo se ofrece desde el Backpack (ver _DraggableItemTile);
   // aplicar/quitar una infusión no requiere que el objeto esté equipado o sintonizado.
-  bool get _isArtificer =>
-      (widget.character.dndClassName ?? '').toLowerCase().contains('artificer');
+  // Multiclase (Aurora_Fixes.md #17, fase 3): antes solo miraba la clase primaria, así que un
+  // Artificiero como clase secundaria perdía el acceso a "Infuse Item".
+  bool get _isArtificer => widget.character.classes
+      .any((c) => c.dndClassName.toLowerCase().contains('artificer'));
 
   Future<void> _applyInfusion(InventoryItem item, String infusionName) async {
     final idx = _items.indexWhere((i) => i.id == item.id);

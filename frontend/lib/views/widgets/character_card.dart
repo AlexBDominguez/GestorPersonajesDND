@@ -104,11 +104,17 @@ class CharacterCard extends StatelessWidget {
     );
   }
 
+  // Multiclase (Aurora_Fixes.md #17, fase 3): "Barbarian 3 / Druid 2" para multiclase. Para
+  // mono-clase se mantiene EXACTAMENTE el formato de siempre (solo el nombre, sin nivel --
+  // el nivel total ya lo muestra _LevelBadge aparte; en multiclase sí hace falta el
+  // desglose por clase porque el badge no lo cuenta).
   String _classLine() {
-    final parts = <String>[];
-    if (character.dndClassName != null) parts.add(character.dndClassName!);
-    //subclassName no está en el summary aún - se puede añadir después
-    return parts.join(' | ');
+    if (character.classes.length > 1) {
+      final sorted = [...character.classes]
+        ..sort((a, b) => a.classOrder.compareTo(b.classOrder));
+      return sorted.map((c) => '${c.dndClassName} ${c.level}').join(' / ');
+    }
+    return character.dndClassName ?? '';
   }
 }
 

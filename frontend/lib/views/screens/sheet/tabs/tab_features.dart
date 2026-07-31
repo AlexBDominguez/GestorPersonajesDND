@@ -22,61 +22,77 @@ class TabFeatures extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context) {
-    final isLoading = vm.isLoadingFeatures || vm.isLoadingSubclassFeatures;
+    final isLoading = vm.isLoadingFeatures;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 32),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
-        //-- Class Features
-        _GroupHeader(
-          label: 'Class Features',
-          sublabel: character.dndClassName,
-          icon: Icons.auto_fix_high_outlined,
-          color: AppTheme.primary,
-        ),
-        const SizedBox(height: 8),
-        if (isLoading)
-          const _LoadingRow()
-        else if (vm.classFeatures.isEmpty)
-          _EmptyCard(message: 'No class features loaded.')
-        else
-          ...vm.classFeatures.map((f) => _FeatureTile(
-            feature: f,
-            vm: vm,
-            showCombatBadge: isCombatRelevant(f.indexName),
-          )),
-
-        // -- Subclass Features (si las hay, en el mismo bloque de clase)
-        if (vm.subclassFeatures.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.only(left: 2, bottom: 6, top: 4),
-            child: Row(children: [
-              const Icon(Icons.arrow_right,
-                color: AppTheme.textSecondary, size: 16),
-              Text(
-                character.subclassName ?? 'Subclass',
-                style: GoogleFonts.lato(
-                  color: AppTheme.textSecondary,
-                  fontSize: 14, 
-                  fontWeight: FontWeight.bold,
-                  fontStyle: FontStyle.italic),
-              ),
-            ]),
+        //-- Class Features, una sección por cada clase del personaje (Aurora_Fixes.md #17,
+        // fase 3) -- para un personaje mono-clase esto es un único grupo, visualmente
+        // idéntico a como se mostraba antes.
+        if (vm.classFeatureGroups.isEmpty) ...[
+          _GroupHeader(
+            label: 'Class Features',
+            sublabel: character.dndClassName,
+            icon: Icons.auto_fix_high_outlined,
+            color: AppTheme.primary,
           ),
-          ...() {
-            // Deduplicate: skip subclass features already shown by class features
-            final classIndexNames = vm.classFeatures.map((f) => f.indexName).toSet();
-            return vm.subclassFeatures
-                .where((f) => !classIndexNames.contains(f.indexName))
-                .map((f) => _FeatureTile(
-                      feature: f,
-                      vm: vm,
-                      showCombatBadge: isCombatRelevant(f.indexName),
-                    ));
-          }(),
-        ],
+          const SizedBox(height: 8),
+          if (isLoading)
+            const _LoadingRow()
+          else
+            _EmptyCard(message: 'No class features loaded.'),
+        ] else
+          for (final group in vm.classFeatureGroups) ...[
+            _GroupHeader(
+              label: 'Class Features',
+              sublabel: '${group.entry.dndClassName} ${group.entry.level}',
+              icon: Icons.auto_fix_high_outlined,
+              color: AppTheme.primary,
+            ),
+            const SizedBox(height: 8),
+            if (group.classFeatures.isEmpty)
+              _EmptyCard(message: 'No class features loaded.')
+            else
+              ...group.classFeatures.map((f) => _FeatureTile(
+                feature: f,
+                vm: vm,
+                showCombatBadge: isCombatRelevant(f.indexName),
+              )),
+
+            // -- Subclass Features de ESTA clase (si las hay, en el mismo bloque)
+            if (group.subclassFeatures.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 2, bottom: 6, top: 4),
+                child: Row(children: [
+                  const Icon(Icons.arrow_right,
+                    color: AppTheme.textSecondary, size: 16),
+                  Text(
+                    group.entry.subclassName ?? 'Subclass',
+                    style: GoogleFonts.lato(
+                      color: AppTheme.textSecondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      fontStyle: FontStyle.italic),
+                  ),
+                ]),
+              ),
+              ...() {
+                // Deduplicate: skip subclass features already shown by this class's own features
+                final classIndexNames = group.classFeatures.map((f) => f.indexName).toSet();
+                return group.subclassFeatures
+                    .where((f) => !classIndexNames.contains(f.indexName))
+                    .map((f) => _FeatureTile(
+                          feature: f,
+                          vm: vm,
+                          showCombatBadge: isCombatRelevant(f.indexName),
+                        ));
+              }(),
+            ],
+            const SizedBox(height: 16),
+          ],
 
         // Rune Knight: runas conocidas — no son SubclassFeature reales (ver #8.2
         // RESOURCE_POOL, knownRuneFeatures en el ViewModel), así que se muestran en su

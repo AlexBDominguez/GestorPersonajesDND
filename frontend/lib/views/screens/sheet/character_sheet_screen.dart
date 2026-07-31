@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
+import 'package:gestor_personajes_dnd/models/character/character_class_entry.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:gestor_personajes_dnd/viewmodels/characters/character_sheet_viewmodel.dart';
 import 'package:gestor_personajes_dnd/views/screens/sheet/pending_tasks_screen.dart';
@@ -320,10 +321,13 @@ class _NavBar extends StatelessWidget {
   }
 
   String _subtitle() {
+    // Multiclase (Aurora_Fixes.md #17, fase 3): "Barbarian 3 / Druid 2" en vez de solo la
+    // clase primaria + nivel de personaje total.
+    final classSummary = formatClassSummary(character.classes,
+        fallbackClassName: character.dndClassName, fallbackLevel: character.level);
     final parts = [
       if (character.raceName != null) character.raceName!,
-      if (character.dndClassName != null) character.dndClassName!,
-      'Lvl ${character.level}',
+      if (classSummary.isNotEmpty) classSummary,
     ];
     return parts.join(' · ');
   }

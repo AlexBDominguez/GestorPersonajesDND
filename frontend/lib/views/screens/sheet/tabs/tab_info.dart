@@ -68,25 +68,33 @@ class TabInfo extends StatelessWidget{
         _SectionTitle('Identity'),
         const SizedBox(height: 12),
 
-        Row(children: [
-          Expanded(
-            child: _InfoPill(
-              label: 'Race',
-              value: c.subraceName != null
-                  ? '${c.raceName ?? '—'} (${c.subraceName})'
-                  : c.raceName ?? '—',
+        // Multiclase (Aurora_Fixes.md #17, fase 3): con 2+ clases el pill de Class ocupa
+        // toda la fila (no comparte Row con Race) -- con la primaria + subclase ya truncaba
+        // en el ancho medio de un Row, con varias clases no habría sitio ni para eso.
+        if (c.classes.length > 1) ...[
+          _InfoPill(label: 'Race', value: c.subraceName != null
+              ? '${c.raceName ?? '—'} (${c.subraceName})'
+              : c.raceName ?? '—'),
+          const SizedBox(height: 8),
+          _InfoPill(label: 'Class', value: _classPillValue(c)),
+        ] else
+          Row(children: [
+            Expanded(
+              child: _InfoPill(
+                label: 'Race',
+                value: c.subraceName != null
+                    ? '${c.raceName ?? '—'} (${c.subraceName})'
+                    : c.raceName ?? '—',
+              ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _InfoPill(
-              label: 'Class',
-              value: c.subclassName != null
-                  ? '${c.dndClassName ?? '—'} · ${c.subclassName}'
-                  : c.dndClassName ?? '—',
+            const SizedBox(width: 10),
+            Expanded(
+              child: _InfoPill(
+                label: 'Class',
+                value: _classPillValue(c),
+              ),
             ),
-          ),
-        ]),
+          ]),
         const SizedBox(height: 8),
         Row(children: [
           Expanded(
@@ -161,6 +169,27 @@ class TabInfo extends StatelessWidget{
       ]),
     );
   }
+}
+
+/// Multiclase (Aurora_Fixes.md #17, fase 3): "Barbarian 3 (Path of the Totem Warrior) /
+/// Druid 2" para multiclase, idéntico al formato de siempre para mono-clase.
+String _classPillValue(PlayerCharacter c) {
+  if (c.classes.isEmpty) {
+    return c.subclassName != null
+        ? '${c.dndClassName ?? '—'} · ${c.subclassName}'
+        : c.dndClassName ?? '—';
+  }
+  if (c.classes.length == 1) {
+    final entry = c.classes.first;
+    return entry.subclassName != null
+        ? '${entry.dndClassName} · ${entry.subclassName}'
+        : entry.dndClassName;
+  }
+  final sorted = [...c.classes]..sort((a, b) => a.classOrder.compareTo(b.classOrder));
+  return sorted.map((e) {
+    final base = '${e.dndClassName} ${e.level}';
+    return e.subclassName != null ? '$base (${e.subclassName})' : base;
+  }).join(' / ');
 }
 
 //Widgets auxliares

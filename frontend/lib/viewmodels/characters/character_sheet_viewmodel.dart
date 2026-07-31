@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/combat_features.dart';
 import 'package:gestor_personajes_dnd/config/dnd_choice_options.dart';
 import 'package:gestor_personajes_dnd/services/storage/local_cache_service.dart';
+import 'package:gestor_personajes_dnd/models/character/character_class_entry.dart';
 import 'package:gestor_personajes_dnd/models/character/pending_task.dart';
 import 'package:gestor_personajes_dnd/models/character/character_class_resource.dart';
 import 'package:gestor_personajes_dnd/models/character/character_spell.dart';
@@ -132,6 +133,19 @@ const _kBardicInspirationConsumingFeatures = <String>{
   'lore-cutting-words',
   'valor-combat-inspiration',
 };
+
+/// Multiclase (Aurora_Fixes.md #17, fase 3): features de clase base + subclase de UNA
+/// clase concreta del personaje, para agrupar la pestaña Features por clase de origen.
+class ClassFeatureGroup {
+  final CharacterClassEntry entry;
+  final List<ClassFeature> classFeatures;
+  final List<ClassFeature> subclassFeatures;
+  const ClassFeatureGroup({
+    required this.entry,
+    required this.classFeatures,
+    required this.subclassFeatures,
+  });
+}
 
 class CharacterSheetViewModel extends ChangeNotifier {
   // Varios métodos de carga (_loadSubclassFeaturesIfNeeded, _loadClassFeaturesIfNeeded, etc.)
@@ -318,11 +332,10 @@ class CharacterSheetViewModel extends ChangeNotifier {
       await _loadPendingTasks();
       _initSpellSlots();
       _loadInventory();
-      if (character?.dndClassId != null && _classFeatures.isEmpty) {
-        _loadClassFeaturesIfNeeded();
-      }
-      if (character?.subclassId != null && _subclassFeatures.isEmpty) {
-        _loadSubclassFeaturesIfNeeded();
+      // Multiclase (Aurora_Fixes.md #17, fase 3): una sola carga por todas las clases del
+      // personaje (antes eran dos comprobaciones separadas, solo para la clase primaria).
+      if ((character?.classes.isNotEmpty ?? false) && _classFeatureGroups.isEmpty) {
+        _loadClassFeatureGroupsIfNeeded();
       }
       _loadCharacterResources();
       if (character?.raceId != null && _racialTraits.isEmpty){
@@ -558,11 +571,18 @@ class CharacterSheetViewModel extends ChangeNotifier {
     }
   }
 
-  // ── Class Features 
+  // ── Class Features
   List<ClassFeature> _classFeatures = [];
   List<ClassFeature> get classFeatures => _classFeatures;
   bool _isLoadingFeatures = false;
   bool get isLoadingFeatures => _isLoadingFeatures;
+  // Multiclase (Aurora_Fixes.md #17, fase 3): features de clase base + subclase agrupadas
+  // por clase de origen -- _classFeatures/_subclassFeatures (arriba) se mantienen como la
+  // UNIÓN de todos los grupos para no romper combatClassFeatures/combatFeaturesByCategory/
+  // combatSubclassFeatures (tab_combat.dart), que deben seguir viendo features de TODAS
+  // las clases mezcladas.
+  List<ClassFeatureGroup> _classFeatureGroups = [];
+  List<ClassFeatureGroup> get classFeatureGroups => _classFeatureGroups;
 
   // ── Long Rest / Short Rest ─────────────────────────────────────────────────
 
@@ -593,17 +613,44 @@ class CharacterSheetViewModel extends ChangeNotifier {
           .where((f) => classifyFeature(f.indexName) == cat)
           .toList();
 
-  Future<void> _loadClassFeaturesIfNeeded() async {
-    final id = character?.dndClassId;
-    if (id == null) return;
+  /// Multiclase (Aurora_Fixes.md #17, fase 3): recorre TODAS las clases del personaje (no
+  /// solo la primaria) cargando las features de clase base + subclase de cada una, filtradas
+  /// por el nivel EN ESA CLASE (no el nivel total del personaje). Sustituye a las antiguas
+  /// _loadClassFeaturesIfNeeded()/_loadSubclassFeaturesIfNeeded(), que solo miraban
+  /// character.dndClassId/subclassId/level (la clase primaria únicamente).
+  Future<void> _loadClassFeatureGroupsIfNeeded() async {
+    final classes = character?.classes ?? [];
+    if (classes.isEmpty) return;
     _isLoadingFeatures = true;
     notifyListeners();
     try {
-      final all = await _refService.getClassFeatures(id);
-      final charLevel = character?.level ?? 1;
-      _classFeatures = _dedupeTieredFeatures(
-          all.where((f) => f.level <= charLevel).toList())
-        ..sort((a, b) => a.level.compareTo(b.level));
+      final groups = <ClassFeatureGroup>[];
+      for (final entry in classes) {
+        final classFeats = await _refService.getClassFeatures(entry.dndClassId);
+        final filteredClassFeats = _dedupeTieredFeatures(
+            classFeats.where((f) => f.level <= entry.level).toList())
+          ..sort((a, b) => a.level.compareTo(b.level));
+
+        List<ClassFeature> subFeats = [];
+        if (entry.subclassId != null) {
+          final allSub = await _refService.getSubclassFeatures(entry.subclassId!);
+          subFeats = _dedupeTieredFeatures(
+              allSub.where((f) => f.level <= entry.level).toList())
+            ..sort((a, b) => a.level.compareTo(b.level));
+        }
+
+        groups.add(ClassFeatureGroup(
+          entry: entry,
+          classFeatures: filteredClassFeats,
+          subclassFeatures: subFeats,
+        ));
+      }
+      _classFeatureGroups = groups;
+      // Unión plana para combatClassFeatures/combatFeaturesByCategory/combatSubclassFeatures
+      // (tab_combat.dart), que deben seguir viendo features combat-relevantes de TODAS las
+      // clases mezcladas, sin distinguir origen.
+      _classFeatures = groups.expand((g) => g.classFeatures).toList();
+      _subclassFeatures = groups.expand((g) => g.subclassFeatures).toList();
     } catch (_) {
       // silencioso
     } finally {
@@ -612,11 +659,9 @@ class CharacterSheetViewModel extends ChangeNotifier {
     }
   }
 
-  // ── Subclass Features 
+  // ── Subclass Features
   List<ClassFeature> _subclassFeatures = [];
   List<ClassFeature> get subclassFeatures => _subclassFeatures;
-  bool _isLoadingSubclassFeatures = false;
-  bool get isLoadingSubclassFeatures => _isLoadingSubclassFeatures;
 
   List<ClassFeature> get combatSubclassFeatures => _subclassFeatures
       .where((f) => isCombatRelevant(f.indexName))
@@ -713,25 +758,6 @@ class CharacterSheetViewModel extends ChangeNotifier {
       ));
     }
     return result;
-  }
-
-  Future<void> _loadSubclassFeaturesIfNeeded() async {
-    final id = character?.subclassId;
-    if (id == null) return;
-    _isLoadingSubclassFeatures = true;
-    notifyListeners();
-    try {
-      final all = await _refService.getSubclassFeatures(id);
-      final charLevel = character?.level ?? 1;
-      _subclassFeatures = _dedupeTieredFeatures(
-          all.where((f) => f.level <= charLevel).toList())
-        ..sort((a, b) => a.level.compareTo(b.level));
-    } catch (_) {
-      // silencioso
-    } finally {
-      _isLoadingSubclassFeatures = false;
-      notifyListeners();
-    }
   }
 
   /// Carga las subclases disponibles para la clase del personaje (usado por el
