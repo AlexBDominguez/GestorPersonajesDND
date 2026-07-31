@@ -23,6 +23,10 @@ class AdditionalClassSpellsScreen extends StatefulWidget {
 
 class _AdditionalClassSpellsScreenState
     extends State<AdditionalClassSpellsScreen> {
+  // Mismo motivo que ManageClassScreen (fase 4c): distingue un pop por "Add Class" (ya
+  // limpiado por confirmAdditionalClass()) de cualquier otra forma de salir de la pantalla.
+  bool _confirmed = false;
+
   @override
   void initState() {
     super.initState();
@@ -32,15 +36,8 @@ class _AdditionalClassSpellsScreenState
     });
   }
 
-  void _onCancel(CharacterCreatorViewModel vm) {
-    // Descarta TODA la clase adicional (nivel, subclase, features ya elegidos incluidos)
-    // -- ClassOptionsScreen ya no está en la pila de navegación para volver a ella, mismo
-    // criterio que _onCancel() allí.
-    vm.cancelDanglingAdditionalClass();
-    Navigator.of(context).pop();
-  }
-
   void _onConfirm(CharacterCreatorViewModel vm) {
+    _confirmed = true;
     vm.confirmAdditionalClass();
     Navigator.of(context).pop();
   }
@@ -50,28 +47,36 @@ class _AdditionalClassSpellsScreenState
     final vm = context.watch<CharacterCreatorViewModel>();
     final className = vm.selectedClass?.name ?? 'Class';
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: Text('$className Spells',
-            style: GoogleFonts.libreBaskerville(
-                color: AppTheme.primary, fontWeight: FontWeight.bold)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => _onCancel(vm),
+    // Multiclase (Aurora_Fixes.md #17, mantenimiento): captura CUALQUIER forma de salir de
+    // esta pantalla sin pulsar "Add Class" -- flecha, gesto de retroceso o botón físico
+    // incluidos -- para descartar TODA la clase adicional (nivel, subclase y features ya
+    // elegidos incluidos). Antes solo la flecha de la AppBar limpiaba la sesión; salir por
+    // el gesto del sistema dejaba isConfiguringAdditionalClass atascado en true.
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop || _confirmed) return;
+        vm.cancelDanglingAdditionalClass();
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        appBar: AppBar(
+          title: Text('$className Spells',
+              style: GoogleFonts.libreBaskerville(
+                  color: AppTheme.primary, fontWeight: FontWeight.bold)),
         ),
-      ),
-      body: const StepSpells(),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => _onConfirm(vm),
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-              child: Text('Add Class',
-                  style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
+        body: const StepSpells(),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => _onConfirm(vm),
+                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                child: Text('Add Class',
+                    style: GoogleFonts.libreBaskerville(fontWeight: FontWeight.bold)),
+              ),
             ),
           ),
         ),

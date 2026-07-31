@@ -121,11 +121,12 @@ public class PlayerCharacterController {
     @DeleteMapping("/{characterId}/spells/{spellId}")
     public ResponseEntity<Void> removeSpellFromCharacter(
         @PathVariable Long characterId,
-        @PathVariable Long spellId) {
+        @PathVariable Long spellId,
+        @RequestParam(required = false) Long classId) {
             verifyCharacterOwnership(characterId);
-            playerCharacterService.removeSpellFromCharacter(characterId, spellId);
+            playerCharacterService.removeSpellFromCharacter(characterId, spellId, classId);
             return ResponseEntity.noContent().build();
-        }    
+        }
     
 
     @PostMapping("/{characterId}/spells/{spellId}/cast")
@@ -183,6 +184,23 @@ public class PlayerCharacterController {
             @RequestParam(required = false) Long subclassId){
         verifyCharacterOwnership(id);
         LevelUpResultDto result = playerCharacterService.levelUpMulticlass(id, hpRoll, classId, subclassId);
+        return ResponseEntity.ok(result);
+    }
+
+    // Multiclase (Aurora_Fixes.md #17, fase 4c): asignar/cambiar la subclase de una clase
+    // concreta del personaje SIN subir de nivel -- para "Edit Character", tanto en la clase
+    // primaria como en cualquier secundaria.
+    @PatchMapping("/{id}/classes/{classId}/subclass")
+    public ResponseEntity<PlayerCharacterDto> assignSubclassToClass(
+            @PathVariable Long id,
+            @PathVariable Long classId,
+            @RequestBody Map<String, Object> body) {
+        verifyCharacterOwnership(id);
+        Long subclassId = body.get("subclassId") != null ? Long.valueOf(body.get("subclassId").toString()) : null;
+        if (subclassId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "subclassId is required");
+        }
+        PlayerCharacterDto result = playerCharacterService.assignSubclassToClass(id, classId, subclassId);
         return ResponseEntity.ok(result);
     }
 

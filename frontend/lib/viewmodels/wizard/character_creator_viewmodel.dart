@@ -52,6 +52,19 @@ class WizardChoiceConfig {
   String get key => '${type}_$level';
 }
 
+/// Multiclase (Aurora_Fixes.md #17, fase 4c): cambios pendientes (subclase + hechizos) de
+/// una clase YA EXISTENTE del personaje, hechos durante "Edit Character" -- `subclass` null
+/// significa "sin elegir/sin cambiar", no "quitar la que tenía".
+class _ExistingClassEdit {
+  final SubclassOption? subclass;
+  final Set<int> spellIds;
+
+  const _ExistingClassEdit({
+    required this.subclass,
+    required this.spellIds,
+  });
+}
+
 /// Multiclase (Aurora_Fixes.md #17, fase 2b): configuración ya confirmada de una clase
 /// adicional añadida durante la creación (además de la primaria). `featureChoices`/
 /// `hpRolls` llevan claves relativas a ESTA clase (nivel 1..N), igual que si fuera la
@@ -149,6 +162,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   int _originalLevel = 1;
   /// IDs de spells que el personaje ya tenía antes de esta sesión de subida de nivel.
   Set<int> _preExistingSpellIds = {};
+  // Multiclase (fase 4c): hechizos ya conocidos por cada clase del personaje en edición
+  // (dndClassId -> spellIds), poblado en forEdit(). Ver startManagingExistingClass().
+  final Map<int, Set<int>> _classSpellIds = {};
   int? _initialClassId;
   int? _initialSubclassId;
   int? _initialBackgroundId;
@@ -216,8 +232,24 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       abilityScores[key] = char.abilityScores[key] ?? 10;
     }
     scoreMethod = AbilityScoreMethod.manual;
-    // Pre-rellenar los IDs de spells existentes para que el paso de spells los muestre como ya seleccionados
-    _preExistingSpellIds = char.characterSpells.map((s) => s.spellId).toSet();
+    // Multiclase (Aurora_Fixes.md #17, fase 4c): hechizos ya conocidos por cada clase del
+    // personaje (dndClassId -> spellIds) -- necesario para pre-poblar/diffear la edición de
+    // una clase secundaria concreta (ver startManagingExistingClass()). Los hechizos sin
+    // clase atribuida (dndClassId null -- filas de antes de la fase 4a) se asumen de la
+    // clase PRIMARIA, mismo criterio que ya usa el resto de la app para ese campo.
+    for (final s in char.characterSpells) {
+      final cid = s.dndClassId ?? char.dndClassId;
+      if (cid != null) {
+        _classSpellIds.putIfAbsent(cid, () => {}).add(s.spellId);
+      }
+    }
+    // Pre-rellenar los IDs de spells existentes para que el paso de spells los muestre como
+    // ya seleccionados -- SOLO los de la clase primaria (antes incluía TODOS los hechizos
+    // del personaje sin distinguir clase, contaminando el paso de hechizos de la primaria
+    // con los de cualquier clase secundaria).
+    _preExistingSpellIds = char.dndClassId != null
+        ? Set.of(_classSpellIds[char.dndClassId] ?? {})
+        : {};
     selectedSpellIds.addAll(_preExistingSpellIds);
     // Guardar skills del personaje para pre-popular la selección de clase tras cargar los datos
     _editCharSkills = char.skills;
@@ -234,6 +266,24 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         ..addAll(char.selectedSources)
         ..add('PHB');
     }
+    // Multiclase (fase 4c): clases del personaje para el nuevo paso de gestión de clases en
+    // Edit Character -- mismo fallback defensivo que forLevelUp() por si char.classes llega
+    // vacío (personaje sin backfill todavía).
+    _levelUpCharacterClasses = char.classes.isNotEmpty
+        ? char.classes
+        : (char.dndClassId != null
+            ? [
+                CharacterClassEntry(
+                  id: 0,
+                  dndClassId: char.dndClassId!,
+                  dndClassName: char.dndClassName ?? '',
+                  subclassId: char.subclassId,
+                  subclassName: char.subclassName,
+                  level: char.level,
+                  classOrder: 0,
+                ),
+              ]
+            : []);
   }
 
   /// Constructor nombrado para subir de nivel a un personaje existente.
@@ -322,10 +372,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       if (isSpellcaster) steps.add(WizardStep.spells);
       return steps;
     }
-    // Modo edición: wizard completo (Preferencias, Clase, Background, Raza, Ability Scores, + Spells si es spellcaster)
+    // Modo edición: wizard completo (Preferencias, Clase, Background, Raza, Ability Scores,
+    // Equipment). Multiclase (Aurora_Fixes.md #17, fase 4c): sin paso Spells propio -- el
+    // paso Clase ahora muestra "Your Classes" (todas las del personaje, primaria incluida)
+    // y gestionar hechizos de cualquiera de ellas se hace desde ahí (ManageClassScreen), no
+    // aquí -- tener las dos rutas a la vez editaría el mismo estado compartido de formas
+    // que podrían pisarse entre sí.
     if (_editMode) {
       final steps = [WizardStep.preferences, WizardStep.dndClass, WizardStep.background, WizardStep.race, WizardStep.abilityScores];
-      if (isSpellcaster) steps.add(WizardStep.spells);
       steps.add(WizardStep.equipment);
       return steps;
     }
@@ -706,6 +760,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         additionalMagicalSecretIds: Set.of(additionalMagicalSecretIds),
       ));
     }
+    _restorePrimaryClassSnapshot();
+    _configuringAdditionalClass = false;
+  }
+
+  /// Restaura en los campos compartidos el snapshot de la clase primaria guardado por
+  /// startConfiguringAdditionalClass()/startManagingExistingClass() -- común a ambos
+  /// mecanismos (clase nueva en creación vs. gestionar una clase existente en edición).
+  void _restorePrimaryClassSnapshot() {
     final snap = _primaryClassSnapshot!;
     selectedClass = snap.selectedClass;
     selectedSubclass = snap.selectedSubclass;
@@ -734,7 +796,100 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       ..clear()
       ..addAll(snap.additionalMagicalSecretIds);
     _spellsStepVisited = snap.spellsStepVisited;
-    _configuringAdditionalClass = false;
+  }
+
+  // Multiclase (Aurora_Fixes.md #17, fase 4c): gestión (subclase + hechizos) de una clase
+  // YA EXISTENTE del personaje desde "Edit Character" -- distinto de
+  // _configuringAdditionalClass (clase NUEVA en creación). El nivel no se toca aquí (solo
+  // desde "Level Up", decisión confirmada con el usuario). Reutiliza el mismo snapshot/
+  // restore de los campos compartidos, pre-cargando lo que la clase ya tenga en vez de
+  // dejarlo en blanco; al confirmar, los cambios se guardan en _existingClassEdits para que
+  // _submitEdit() los sincronice (no se archivan como clase nueva).
+  int? _managingClassId;
+  bool get isManagingExistingClass => _managingClassId != null;
+  CharacterClassEntry? get managingClassEntry => _managingClassId == null
+      ? null
+      : _levelUpCharacterClasses.where((e) => e.dndClassId == _managingClassId).firstOrNull;
+  final Map<int, _ExistingClassEdit> _existingClassEdits = {};
+  /// dndClassId de las clases con cambios ya confirmados en esta sesión de edición (para
+  /// que la lista de clases pueda mostrar un indicador de "editado").
+  Set<int> get editedClassIds => _existingClassEdits.keys.toSet();
+
+  Future<void> startManagingExistingClass(CharacterClassEntry entry) async {
+    _primaryClassSnapshot ??= _PrimaryClassSnapshot(
+      selectedClass: selectedClass,
+      selectedSubclass: selectedSubclass,
+      selectedLevel: selectedLevel,
+      classFeatures: List.of(classFeatures),
+      subclasses: List.of(subclasses),
+      featureChoices: Map.of(featureChoices),
+      hpRolls: Map.of(_hpRolls),
+      classSkillIndices: Set.of(_classSkillIndices),
+      classSkillRequiredCount: _classSkillRequiredCount,
+      availableSpells: List.of(availableSpells),
+      selectedSpellIds: Set.of(selectedSpellIds),
+      magicalSecretsPool: List.of(magicalSecretsPool),
+      magicalSecretIds: Set.of(magicalSecretIds),
+      additionalMagicalSecretIds: Set.of(additionalMagicalSecretIds),
+      spellsStepVisited: _spellsStepVisited,
+    );
+
+    if (classes.isEmpty) await loadClasses();
+    final match = classes.where((c) => c.id == entry.dndClassId);
+    selectedClass = match.isNotEmpty ? match.first : null;
+    selectedLevel = entry.level;
+    subclasses = [];
+    selectedSubclass = null;
+    classFeatures = [];
+    featureChoices.clear();
+    _hpRolls.clear();
+    _classSkillIndices.clear();
+    _classSkillRequiredCount = 0;
+
+    // Si el usuario ya había abierto y confirmado esta clase antes en la misma sesión de
+    // edición (sin haber guardado los cambios todavía con "Save Changes"), se retoma desde
+    // ahí; si no, desde lo que el personaje ya tiene persistido.
+    final pendingEdit = _existingClassEdits[entry.dndClassId];
+
+    if (selectedClass != null) {
+      await _loadSubclassesFor(selectedClass!.id);
+      final wantedSubclassId = pendingEdit?.subclass?.id ?? entry.subclassId;
+      if (wantedSubclassId != null) {
+        final subMatch = subclasses.where((s) => s.id == wantedSubclassId);
+        if (subMatch.isNotEmpty) selectedSubclass = subMatch.first;
+      }
+    }
+
+    final preExistingSpells = Set<int>.of(_classSpellIds[entry.dndClassId] ?? {});
+    availableSpells = [];
+    magicalSecretsPool = [];
+    selectedSpellIds
+      ..clear()
+      ..addAll(pendingEdit?.spellIds ?? preExistingSpells);
+    magicalSecretIds.clear();
+    additionalMagicalSecretIds.clear();
+    _spellsStepVisited = false;
+
+    _managingClassId = entry.dndClassId;
+    notifyListeners();
+  }
+
+  void cancelManagingExistingClass() {
+    if (_managingClassId == null) return;
+    _managingClassId = null;
+    _restorePrimaryClassSnapshot();
+    notifyListeners();
+  }
+
+  void confirmManagingExistingClass() {
+    if (_managingClassId == null) return;
+    _existingClassEdits[_managingClassId!] = _ExistingClassEdit(
+      subclass: selectedSubclass,
+      spellIds: Set.of(selectedSpellIds),
+    );
+    _managingClassId = null;
+    _restorePrimaryClassSnapshot();
+    notifyListeners();
   }
 
   /// Multiclase (fase 4b): prepara el paso de hechizos de la clase adicional en curso --
@@ -930,11 +1085,17 @@ class CharacterCreatorViewModel extends ChangeNotifier {
   void selectSubclass(SubclassOption s) {
     selectedSubclass = s;
     subclassFeatures = [];
-    selectedSpellIds.clear();
-    availableSpells.clear();
-    magicalSecretIds.clear();
-    additionalMagicalSecretIds.clear();
-    magicalSecretsPool.clear();
+    // Multiclase (Aurora_Fixes.md #17, fase 4c): al gestionar una clase YA existente,
+    // elegir/cambiar su subclase no debe descartar los hechizos que esa clase ya tiene
+    // conocidos -- solo se limpian en el flujo normal (clase nueva en creación), donde no
+    // hay nada previo que conservar.
+    if (!isManagingExistingClass) {
+      selectedSpellIds.clear();
+      availableSpells.clear();
+      magicalSecretIds.clear();
+      additionalMagicalSecretIds.clear();
+      magicalSecretsPool.clear();
+    }
     _markDirty(WizardStep.dndClass);
     notifyListeners();
     _loadSubclassFeaturesFor(s.id);
@@ -2404,12 +2565,14 @@ void toggleItem(int itemId) {
           await _charService.addSpellsToCharacter(
             id: _editCharacterId!,
             spellIds: newSpells.toList(),
+            classId: selectedClass?.id,
           );
         }
         for (final spellId in removedSpells) {
           await _charService.removeSpell(
             characterId: _editCharacterId!,
             spellId: spellId,
+            classId: selectedClass?.id,
           );
         }
       }
@@ -2424,6 +2587,46 @@ void toggleItem(int itemId) {
       // nivel-up (nueva Expertise ganada al nivel nuevo, p.ej. Rogue nivel 6) — Expertise
       // nunca pasa por PendingTask, así que sin esto no se guarda en ninguno de los dos modos.
       await _syncExpertiseChanges();
+
+      // 7. Multiclase (Aurora_Fixes.md #17, fase 4c): sincronizar subclase/hechizos de
+      // cualquier clase EXISTENTE (secundaria, o primaria si se gestionó desde la lista de
+      // clases) editada vía ManageClassScreen -- no aplica en level-up (ahí la subclase de
+      // la clase que sube ya se maneja en el paso 1, y no hay clases "en gestión").
+      if (!_levelUpMode) {
+        for (final classEntry in _existingClassEdits.entries) {
+          final classId = classEntry.key;
+          final edit = classEntry.value;
+          final original = _levelUpCharacterClasses
+              .where((e) => e.dndClassId == classId)
+              .firstOrNull;
+
+          if (edit.subclass != null && edit.subclass!.id != original?.subclassId) {
+            await _charService.assignSubclassToClass(
+              characterId: _editCharacterId!,
+              classId: classId,
+              subclassId: edit.subclass!.id,
+            );
+          }
+
+          final preExisting = _classSpellIds[classId] ?? {};
+          final newSpells     = edit.spellIds.difference(preExisting);
+          final removedSpells = preExisting.difference(edit.spellIds);
+          if (newSpells.isNotEmpty) {
+            await _charService.addSpellsToCharacter(
+              id: _editCharacterId!,
+              spellIds: newSpells.toList(),
+              classId: classId,
+            );
+          }
+          for (final spellId in removedSpells) {
+            await _charService.removeSpell(
+              characterId: _editCharacterId!,
+              spellId: spellId,
+              classId: classId,
+            );
+          }
+        }
+      }
 
       _saveSuccess = true;
     } catch (e) {

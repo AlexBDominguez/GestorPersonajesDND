@@ -12,6 +12,10 @@ class CharacterSpell {
   final bool prepared;
   final bool learned;
   final String? spellSource; // "CLASS", "SUBCLASS", "RACE", "FEAT"
+  // Multiclase (Aurora_Fixes.md #17, fase 4c): clase concreta a la que se atribuye este
+  // hechizo, si tiene (ver CharacterSpell.dndClass en el backend).
+  final int? dndClassId;
+  final String? dndClassName;
   final String? attackType;  // "ranged", "melee", or null (save)
   final String? dcType;      // "DEX", "CON", etc. or null (attack)
   final String? damageType;  // "Fire", "Cold", etc.
@@ -34,6 +38,8 @@ class CharacterSpell {
     required this.prepared,
     required this.learned,
     this.spellSource,
+    this.dndClassId,
+    this.dndClassName,
     this.attackType,
     this.dcType,
     this.damageType,
@@ -54,7 +60,8 @@ class CharacterSpell {
     school: school, castingTime: castingTime, range: range,
     duration: duration, components: components, description: description,
     prepared: prepared ?? this.prepared, learned: learned,
-    spellSource: spellSource, attackType: attackType, dcType: dcType,
+    spellSource: spellSource, dndClassId: dndClassId, dndClassName: dndClassName,
+    attackType: attackType, dcType: dcType,
     damageType: damageType, damageBase: damageBase,
     damageAtSlotLevel: damageAtSlotLevel, bonusDamage: bonusDamage,
   );
@@ -84,6 +91,8 @@ class CharacterSpell {
     prepared: j['prepared'] as bool? ?? false,
     learned: j['learned'] as bool? ?? false,
     spellSource: j['spellSource'] as String?,
+    dndClassId: (j['dndClassId'] as num?)?.toInt(),
+    dndClassName: j['dndClassName'] as String?,
     attackType: j['attackType'] as String?,
     dcType: j['dcType'] as String?,
     damageType: j['damageType'] as String?,

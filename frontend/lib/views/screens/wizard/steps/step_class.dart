@@ -4,10 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../../config/app_theme.dart';
 import '../../../../config/class_icons.dart';
+import '../../../../models/character/character_class_entry.dart';
 import '../../../../models/wizard/class_option.dart';
 import '../../../../viewmodels/wizard/character_creator_viewmodel.dart';
 import '../class_detail_screen.dart';
 import '../class_options_screen.dart';
+import '../manage_class_screen.dart';
 
 class StepClass extends StatefulWidget {
   const StepClass({super.key});
@@ -32,8 +34,10 @@ class _StepClassState extends State<StepClass> {
       return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
     }
 
-    // Edit mode: class is locked — show compact card + open ClassOptionsScreen directly
-    if (vm.isEditMode && vm.selectedClass != null) {
+    // Level-up mode: class is locked — show compact card + open ClassOptionsScreen
+    // directly to configure the new level (which class this is was already chosen in the
+    // classPicker step).
+    if (vm.isLevelUpMode && vm.selectedClass != null) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -57,6 +61,45 @@ class _StepClassState extends State<StepClass> {
               onClear: () {}, // locked in edit mode — no-op
               showClear: false,
               onEdit: () => _openClassEdit(context, vm),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Multiclase (Aurora_Fixes.md #17, fase 4c): "Edit Character" (edición pura, no
+    // level-up) muestra TODAS las clases del personaje -- tocar una abre su gestión de
+    // subclase + hechizos. El nivel no se toca aquí (solo desde "Level Up").
+    if (vm.isEditMode && !vm.isLevelUpMode) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+            child: Text('Your Classes',
+                style: Theme.of(context).textTheme.displayMedium),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Text(
+              'Level is only changed from "Level Up" on the character sheet. Tap a class to manage its subclass and spells.',
+              style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: vm.characterClasses.length,
+              itemBuilder: (_, i) {
+                final entry = vm.characterClasses[i];
+                return _ManagedClassCard(
+                  entry: entry,
+                  edited: vm.editedClassIds.contains(entry.dndClassId),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => ManageClassScreen(entry: entry)),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -228,6 +271,72 @@ class _StepClassState extends State<StepClass> {
           vm: vm,
           isEditing: true,
         ),
+      ),
+    );
+  }
+}
+
+/// Multiclase (Aurora_Fixes.md #17, fase 4c): fila de una clase existente del personaje en
+/// "Edit Character" (edición pura) -- tocar abre ManageClassScreen para esa clase.
+class _ManagedClassCard extends StatelessWidget {
+  final CharacterClassEntry entry;
+  final bool edited;
+  final VoidCallback onTap;
+
+  const _ManagedClassCard({
+    required this.entry,
+    required this.edited,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = classIcon(entry.dndClassName);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.surfaceVariant),
+        ),
+        child: Row(children: [
+          Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceVariant,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(child: FaIcon(icon, color: AppTheme.primary, size: 18)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(entry.dndClassName,
+                    style: GoogleFonts.libreBaskerville(
+                        color: AppTheme.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(
+                  entry.subclassName != null
+                      ? 'Level ${entry.level} · ${entry.subclassName}'
+                      : 'Level ${entry.level}',
+                  style: GoogleFonts.lato(color: AppTheme.textSecondary, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          if (edited) ...[
+            const Icon(Icons.check_circle, color: AppTheme.primary, size: 16),
+            const SizedBox(width: 6),
+          ],
+          const Icon(Icons.chevron_right, color: AppTheme.textSecondary, size: 18),
+        ]),
       ),
     );
   }

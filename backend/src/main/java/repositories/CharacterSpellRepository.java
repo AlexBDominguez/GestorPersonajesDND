@@ -20,6 +20,11 @@ public interface CharacterSpellRepository extends JpaRepository<CharacterSpell, 
     // pueden conocer el mismo hechizo (p.ej. Fireball en Wizard y en Sorcerer).
     boolean existsByCharacterIdAndSpellIdAndDndClassId(Long characterId, Long spellId, Long classId);
 
+    // Multiclase (Aurora_Fixes.md #17, fase 4c): igual que findByCharacterIdAndSpellId, pero
+    // desambiguando por clase -- necesario para borrar/despreparar la fila correcta cuando
+    // dos clases distintas conocen el mismo hechizo.
+    Optional<CharacterSpell> findByCharacterIdAndSpellIdAndDndClassId(Long characterId, Long spellId, Long classId);
+
     @Query("SELECT COUNT(cs) FROM CharacterSpell cs WHERE cs.character.id = :characterId AND cs.prepared = true AND cs.spell.level > 0")
     int countPreparedNonCantripsByCharacterId(@Param("characterId") Long characterId);
 

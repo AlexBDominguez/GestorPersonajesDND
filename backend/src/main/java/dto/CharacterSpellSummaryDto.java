@@ -15,6 +15,10 @@ public class CharacterSpellSummaryDto {
     private boolean prepared;
     private boolean learned;
     private String spellSource; //"CLASS", "SUBCLASS", "RACE", "FEAT"
+    // Multiclase (Aurora_Fixes.md #17, fase 4c): clase concreta a la que se atribuye este
+    // hechizo (null si no tiene, ver CharacterSpell.dndClass).
+    private Long dndClassId;
+    private String dndClassName;
     private String attackType;
     private String dcType;
     private String damageType;
@@ -123,6 +127,22 @@ public class CharacterSpellSummaryDto {
 
     public void setSpellSource(String spellSource) {
         this.spellSource = spellSource;
+    }
+
+    public Long getDndClassId() {
+        return dndClassId;
+    }
+
+    public void setDndClassId(Long dndClassId) {
+        this.dndClassId = dndClassId;
+    }
+
+    public String getDndClassName() {
+        return dndClassName;
+    }
+
+    public void setDndClassName(String dndClassName) {
+        this.dndClassName = dndClassName;
     }
 
     public String getAttackType() { return attackType; }

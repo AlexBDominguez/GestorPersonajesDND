@@ -280,7 +280,7 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
                   ],
 
                   // Subclass selector ────────────────────────────────
-                  _SubclassSelectorSection(
+                  SubclassSelectorSection(
                     vm: widget.vm,
                     currentLevel: _level,
                   ),
@@ -1424,11 +1424,12 @@ class _HpInputState extends State<_HpInput> {
 
 // ── Subclass selector (inline en ClassOptionsScreen) ─────────────────────────
 
-class _SubclassSelectorSection extends StatelessWidget {
+class SubclassSelectorSection extends StatelessWidget {
   final CharacterCreatorViewModel vm;
   final int currentLevel;
 
-  const _SubclassSelectorSection({
+  const SubclassSelectorSection({
+    super.key,
     required this.vm,
     required this.currentLevel,
   });

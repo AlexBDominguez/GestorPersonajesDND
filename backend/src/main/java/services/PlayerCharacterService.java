@@ -685,6 +685,10 @@ public class PlayerCharacterService {
             spellDto.setPrepared(characterSpell.isPrepared());
             spellDto.setLearned(characterSpell.isLearned());
             spellDto.setSpellSource(characterSpell.getSpellSource());
+            if (characterSpell.getDndClass() != null) {
+                spellDto.setDndClassId(characterSpell.getDndClass().getId());
+                spellDto.setDndClassName(characterSpell.getDndClass().getName());
+            }
             spellDto.setAttackType(s.getAttackType());
             spellDto.setDcType(s.getDcType());
             spellDto.setDamageType(s.getDamageType());
@@ -1012,14 +1016,26 @@ public class PlayerCharacterService {
     // Eliminar spell del personaje
     @Transactional
     public void removeSpellFromCharacter(Long characterId, Long spellId) {
-      CharacterSpell characterSpell = characterSpellRepository
-                .findByCharacterIdAndSpellId(characterId, spellId)
+        removeSpellFromCharacter(characterId, spellId, null);
+    }
+
+    /**
+     * Multiclase (Aurora_Fixes.md #17, fase 4c): con classId informado, borra la fila de
+     * ESA clase concreta -- necesario porque, desde la fase 4a, dos clases distintas pueden
+     * conocer el mismo hechizo (dos filas), y findByCharacterIdAndSpellId (sin classId)
+     * podría no encontrar/ambigüar cuál borrar.
+     */
+    @Transactional
+    public void removeSpellFromCharacter(Long characterId, Long spellId, Long classId) {
+        CharacterSpell characterSpell = (classId != null
+                ? characterSpellRepository.findByCharacterIdAndSpellIdAndDndClassId(characterId, spellId, classId)
+                : characterSpellRepository.findByCharacterIdAndSpellId(characterId, spellId))
                 .orElseThrow(() -> new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Spell not found on this character"));  
+                    HttpStatus.NOT_FOUND, "Spell not found on this character"));
         //No permitir borrar spells otorgados por raza (source = RACE)
         if ("RACE".equalsIgnoreCase(characterSpell.getSpellSource())){
             throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "Racial spells cannot be removed");                
+                HttpStatus.BAD_REQUEST, "Racial spells cannot be removed");
         }
         characterSpellRepository.delete(characterSpell);
     }
@@ -2620,28 +2636,53 @@ public class PlayerCharacterService {
     }
 
     // ========== SUBCLASS ==========
-   @Transactional
-    public PlayerCharacterDto assignSubclass(Long characterId, Long subclassId) {
+
+    /**
+     * Multiclase (Aurora_Fixes.md #17, fase 4c): asigna (o cambia) la subclase de una clase
+     * CONCRETA del personaje sin subir de nivel -- para elegirla "más tarde" (como ya
+     * promete la UI de creación) desde "Edit Character", tanto para la clase primaria como
+     * para cualquier secundaria. Distinto de assignSubclassForClass() (privado, solo se usa
+     * dentro de un level-up, donde el nivel que se valida es el que se ALCANZA en esa misma
+     * llamada) -- aquí se valida contra el nivel YA ALCANZADO de la fila.
+     */
+    @Transactional
+    public PlayerCharacterDto assignSubclassToClass(Long characterId, Long classId, Long subclassId) {
         PlayerCharacter character = characterRepository.findById(characterId)
-                .orElseThrow(() -> new RuntimeException("Character not found with ID: " + characterId));
-        
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Character not found"));
+
+        DndClass targetClass = dndClassRepository.findById(classId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "DndClass not found"));
+
+        PlayerCharacterClass row = playerCharacterClassRepository
+                .findByCharacterAndDndClass(character, targetClass)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Character does not have this class"));
+
         Subclass subclass = subclassRepository.findById(subclassId)
-                .orElseThrow(() -> new RuntimeException("Subclass not found with ID: " + subclassId));
-        
-        // Verificar que la subclase pertenezca a la clase del personaje
-        if (!subclass.getDndClass().getId().equals(character.getDndClass().getId())) {
-            throw new RuntimeException("Subclass does not belong to character's class");
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subclass not found"));
+        if (!subclass.getDndClass().getId().equals(classId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Subclass does not belong to this class");
         }
-        
-        // Verificar que el personaje tenga el nivel adecuado
-        Integer subclassLevel = character.getDndClass().getSubclassLevel();
-        if (subclassLevel != null && character.getLevel() < subclassLevel) {
-            throw new RuntimeException("Character must be at least level " + subclassLevel + " to choose a subclass");
+
+        Integer subclassLevel = targetClass.getSubclassLevel();
+        if (subclassLevel != null && row.getLevel() < subclassLevel) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Character must be at least level "
+                    + subclassLevel + " in " + targetClass.getName() + " to choose a subclass");
         }
-        
-        character.setSubclass(subclass);
+
+        row.setSubclass(subclass);
+        playerCharacterClassRepository.save(row);
+        // classOrder=0 es la clase que dndClass/subclass de PlayerCharacter reflejan
+        // (dual-write, ver create()/levelUpMulticlass()).
+        if (row.getClassOrder() == 0) {
+            character.setSubclass(subclass);
+        }
+
+        subclassSpellService.applySubclassSpells(character, subclass, row.getLevel());
+        subclassProficiencyService.applySubclassProficiencies(character, subclass);
+        applySubclassStatEffects(character, subclass);
         characterRepository.save(character);
-        
+
         return toDto(character);
     }
 

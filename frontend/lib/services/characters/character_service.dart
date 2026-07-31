@@ -196,13 +196,17 @@ class CharacterService {
     }
 
     // DELETE spell del personaje
+    // Multiclase (Aurora_Fixes.md #17, fase 4c): classId opcional -- si el hechizo está
+    // atribuido a una clase concreta, desambigua qué fila borrar (dos clases distintas
+    // pueden conocer el mismo hechizo desde la fase 4a).
     Future<void>removeSpell({
       required int characterId,
       required int spellId,
+      int? classId,
     }) async {
-      final res = await _api.delete(
-        '${ApiConfig.charactersPath}/$characterId/spells/$spellId',
-      );
+      final path = '${ApiConfig.charactersPath}/$characterId/spells/$spellId'
+          '${classId != null ? '?classId=$classId' : ''}';
+      final res = await _api.delete(path);
       if (res.statusCode == 204) return;
       if (res.statusCode == 400) throw Exception('res.body');
       if (res.statusCode == 401) throw Exception('Unauthorized');
@@ -399,6 +403,29 @@ class CharacterService {
       if (res.statusCode == 403) throw Exception('Access denied');
       if (res.statusCode == 404) throw Exception('Character not found');
       throw Exception('Failed to update profile (${res.statusCode})');
+    }
+
+    // Multiclase (Aurora_Fixes.md #17, fase 4c): asignar/cambiar la subclase de una clase
+    // concreta (primaria o secundaria) sin subir de nivel -- usado por "Edit Character".
+    Future<PlayerCharacter> assignSubclassToClass({
+      required int characterId,
+      required int classId,
+      required int subclassId,
+    }) async {
+      final res = await _api.patch(
+        '${ApiConfig.charactersPath}/$characterId/classes/$classId/subclass',
+        body: {'subclassId': subclassId},
+      );
+      if (res.statusCode == 200) {
+        return PlayerCharacter.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
+      }
+      if (res.statusCode == 400) {
+        throw Exception(res.body.isNotEmpty ? res.body : 'Cannot assign subclass');
+      }
+      if (res.statusCode == 401) throw Exception('Unauthorized');
+      if (res.statusCode == 403) throw Exception('Access denied');
+      if (res.statusCode == 404) throw Exception('Character, class or subclass not found');
+      throw Exception('Failed to assign subclass (${res.statusCode})');
     }
 
     // PUT skill proficiency (used when editing class skill choices for an existing character)
