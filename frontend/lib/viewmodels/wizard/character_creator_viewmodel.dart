@@ -62,6 +62,11 @@ class _AdditionalClassConfig {
   final int level;
   final Map<String, String> featureChoices;
   final Map<int, int?> hpRolls;
+  // Multiclase (Aurora_Fixes.md #17, fase 4b): hechizos elegidos para ESTA clase, si es
+  // lanzadora (ver AdditionalClassSpellsScreen).
+  final Set<int> spellIds;
+  final Set<int> magicalSecretIds;
+  final Set<int> additionalMagicalSecretIds;
 
   const _AdditionalClassConfig({
     required this.classOption,
@@ -69,6 +74,9 @@ class _AdditionalClassConfig {
     required this.level,
     required this.featureChoices,
     required this.hpRolls,
+    required this.spellIds,
+    required this.magicalSecretIds,
+    required this.additionalMagicalSecretIds,
   });
 }
 
@@ -84,6 +92,14 @@ class _PrimaryClassSnapshot {
   final Map<int, int?> hpRolls;
   final Set<String> classSkillIndices;
   final int classSkillRequiredCount;
+  // Multiclase (fase 4b): estado de hechizos de la clase primaria, aislado del de la clase
+  // adicional mientras se configura (mismo motivo que el resto de campos de arriba).
+  final List<SpellOption> availableSpells;
+  final Set<int> selectedSpellIds;
+  final List<SpellOption> magicalSecretsPool;
+  final Set<int> magicalSecretIds;
+  final Set<int> additionalMagicalSecretIds;
+  final bool spellsStepVisited;
 
   const _PrimaryClassSnapshot({
     required this.selectedClass,
@@ -95,6 +111,12 @@ class _PrimaryClassSnapshot {
     required this.hpRolls,
     required this.classSkillIndices,
     required this.classSkillRequiredCount,
+    required this.availableSpells,
+    required this.selectedSpellIds,
+    required this.magicalSecretsPool,
+    required this.magicalSecretIds,
+    required this.additionalMagicalSecretIds,
+    required this.spellsStepVisited,
   });
 }
 
@@ -636,6 +658,12 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       hpRolls: Map.of(_hpRolls),
       classSkillIndices: Set.of(_classSkillIndices),
       classSkillRequiredCount: _classSkillRequiredCount,
+      availableSpells: List.of(availableSpells),
+      selectedSpellIds: Set.of(selectedSpellIds),
+      magicalSecretsPool: List.of(magicalSecretsPool),
+      magicalSecretIds: Set.of(magicalSecretIds),
+      additionalMagicalSecretIds: Set.of(additionalMagicalSecretIds),
+      spellsStepVisited: _spellsStepVisited,
     );
     featureChoices.clear();
     _hpRolls.clear();
@@ -644,6 +672,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     // vacío durante toda la sub-sesión, nunca con las skills de la clase primaria.
     _classSkillIndices.clear();
     _classSkillRequiredCount = 0;
+    // Multiclase (fase 4b): estado de hechizos también aislado -- sin esto, elegir
+    // hechizos para la clase adicional se mezclaría con los ya elegidos para la primaria.
+    availableSpells = [];
+    selectedSpellIds.clear();
+    magicalSecretsPool = [];
+    magicalSecretIds.clear();
+    additionalMagicalSecretIds.clear();
+    _spellsStepVisited = false;
     selectedClass = null;
     selectedSubclass = null;
     subclasses = [];
@@ -665,6 +701,9 @@ class CharacterCreatorViewModel extends ChangeNotifier {
         level: selectedLevel,
         featureChoices: Map.of(featureChoices),
         hpRolls: Map.of(_hpRolls),
+        spellIds: Set.of(selectedSpellIds),
+        magicalSecretIds: Set.of(magicalSecretIds),
+        additionalMagicalSecretIds: Set.of(additionalMagicalSecretIds),
       ));
     }
     final snap = _primaryClassSnapshot!;
@@ -683,7 +722,35 @@ class CharacterCreatorViewModel extends ChangeNotifier {
       ..clear()
       ..addAll(snap.classSkillIndices);
     _classSkillRequiredCount = snap.classSkillRequiredCount;
+    availableSpells = snap.availableSpells;
+    selectedSpellIds
+      ..clear()
+      ..addAll(snap.selectedSpellIds);
+    magicalSecretsPool = snap.magicalSecretsPool;
+    magicalSecretIds
+      ..clear()
+      ..addAll(snap.magicalSecretIds);
+    additionalMagicalSecretIds
+      ..clear()
+      ..addAll(snap.additionalMagicalSecretIds);
+    _spellsStepVisited = snap.spellsStepVisited;
     _configuringAdditionalClass = false;
+  }
+
+  /// Multiclase (fase 4b): prepara el paso de hechizos de la clase adicional en curso --
+  /// llamado por AdditionalClassSpellsScreen al entrar, análogo a lo que hace `_loadStepData()`
+  /// para `WizardStep.spells` en el flujo normal, sin tocar `_currentStep` (este paso vive
+  /// dentro de la sub-sesión de "clase adicional", no en la navegación principal del wizard).
+  void prepareAdditionalClassSpellsStep() {
+    _spellsStepVisited = true;
+    if (availableSpells.isEmpty) loadAvailableSpells();
+  }
+
+  /// Multiclase (fase 4b): confirma la clase adicional en curso (ya con sus hechizos
+  /// elegidos, si es lanzadora) -- llamado por AdditionalClassSpellsScreen al confirmar.
+  void confirmAdditionalClass() {
+    _endConfiguringAdditionalClass(save: true);
+    notifyListeners();
   }
 
   /// Limpia un flujo de "clase adicional" que quedó a medias (p.ej. el usuario volvió
@@ -907,11 +974,14 @@ class CharacterCreatorViewModel extends ChangeNotifier {
     _hpRolls
       ..clear()
       ..addAll(rolls);
-    // Multiclase (fase 2b): _onConfirm() de ClassOptionsScreen llama a setLevel() y luego
-    // a este método como último paso antes de cerrar la pantalla con éxito -- si se
-    // estaba configurando una clase adicional, es la señal de "confirmado": se archiva y
-    // se restaura la clase primaria, sin tocar ClassOptionsScreen.
-    if (_configuringAdditionalClass) {
+    // Multiclase (fase 2b/4b): _onConfirm() de ClassOptionsScreen llama a setLevel() y
+    // luego a este método como último paso antes de cerrar la pantalla -- si se estaba
+    // configurando una clase adicional Y NO es lanzadora, es la señal de "confirmado": se
+    // archiva y se restaura la clase primaria aquí mismo, como siempre. Si SÍ es lanzadora,
+    // todavía no se archiva -- ClassOptionsScreen navega en su lugar a
+    // AdditionalClassSpellsScreen, que es quien confirma de verdad llamando a
+    // confirmAdditionalClass() una vez elegidos sus hechizos.
+    if (_configuringAdditionalClass && !isSpellcaster) {
       _endConfiguringAdditionalClass(save: true);
     }
     notifyListeners();
@@ -2045,6 +2115,22 @@ void toggleItem(int itemId) {
             subclassId: (lvl == add.level) ? add.subclass?.id : null,
           );
           creationWarnings.addAll(result.warnings);
+        }
+        // Multiclase (Aurora_Fixes.md #17, fase 4b): hechizos elegidos para esta clase
+        // adicional (si es lanzadora), atribuidos a su classId -- mismo mecanismo que ya
+        // usa la clase primaria en createCharacter(), solo que aquí hace falta una llamada
+        // aparte porque la clase adicional no pasa por ese DTO de creación.
+        final addSpellIds = {
+          ...add.spellIds,
+          ...add.magicalSecretIds,
+          ...add.additionalMagicalSecretIds,
+        };
+        if (addSpellIds.isNotEmpty) {
+          await _charService.addSpellsToCharacter(
+            id: _createdCharacterId!,
+            spellIds: addSpellIds.toList(),
+            classId: add.classOption.id,
+          );
         }
         // Resolver las PendingTask de ESTA clase adicional -- se intercambia featureChoices/
         // _levelUpTargetClassId por su propio snapshot (claves de nivel relativas a ella)

@@ -798,22 +798,42 @@ public class PlayerCharacterService {
 
     @Transactional
     public void addSpellToCharacter(Long characterId, Long spellId) {
-        addSpellToCharacter(characterId, spellId, "CLASS");
+        addSpellToCharacter(characterId, spellId, "CLASS", null);
     }
 
     @Transactional
     public void addSpellToCharacter(Long characterId, Long spellId, String source) {
+        addSpellToCharacter(characterId, spellId, source, null);
+    }
+
+    /**
+     * Multiclase (Aurora_Fixes.md #17, fase 4b): con classId informado, el hechizo queda
+     * atribuido a esa clase y el chequeo de duplicados es POR CLASE -- dos clases distintas
+     * SÍ pueden conocer el mismo hechizo (p.ej. Fireball en Wizard y en Sorcerer), a
+     * diferencia del chequeo character-wide de siempre (sin classId, retrocompatible).
+     */
+    @Transactional
+    public void addSpellToCharacter(Long characterId, Long spellId, String source, Long classId) {
         PlayerCharacter character = characterRepository.findById(characterId)
                 .orElseThrow(() -> new RuntimeException("Character not found"));
         Spell spell = spellRepository.findById(spellId)
                 .orElseThrow(() -> new RuntimeException("Spell not found"));
 
-        // Evitar duplicados
-        if (characterSpellRepository.findByCharacterIdAndSpellId(characterId, spellId).isPresent()) {
+        DndClass targetClass = null;
+        if (classId != null) {
+            targetClass = dndClassRepository.findById(classId)
+                    .orElseThrow(() -> new RuntimeException("DndClass not found"));
+        }
+
+        boolean alreadyExists = targetClass != null
+                ? characterSpellRepository.existsByCharacterIdAndSpellIdAndDndClassId(characterId, spellId, classId)
+                : characterSpellRepository.findByCharacterIdAndSpellId(characterId, spellId).isPresent();
+        if (alreadyExists) {
             return;
         }
 
         CharacterSpell characterSpell = new CharacterSpell(character, spell, source);
+        characterSpell.setDndClass(targetClass);
         characterSpellRepository.save(characterSpell);
     }
 

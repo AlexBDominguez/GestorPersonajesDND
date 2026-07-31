@@ -144,12 +144,17 @@ class CharacterService {
 
 
     // POST toggle prepare/unprepare spell
+    // Multiclase (Aurora_Fixes.md #17, fase 4b): classId opcional -- si viene informado, el
+    // hechizo queda atribuido a esa clase (retrocompatible: sin classId, comportamiento de
+    // siempre).
     Future<void> addSpellToCharacter({
       required int characterId,
       required int spellId,
+      int? classId,
     }) async {
       final res = await _api.post(
         '${ApiConfig.charactersPath}/$characterId/spells/$spellId',
+        body: classId != null ? {'classId': classId} : null,
       );
 
       if (res.statusCode == 200 || res.statusCode == 201 || res.statusCode == 204) {
@@ -164,9 +169,10 @@ class CharacterService {
     Future<void> addSpellsToCharacter({
       required int id,
       required List<int> spellIds,
+      int? classId,
     }) async {
       for (final spellId in spellIds) {
-        await addSpellToCharacter(characterId: id, spellId: spellId);
+        await addSpellToCharacter(characterId: id, spellId: spellId, classId: classId);
       }
     }
 

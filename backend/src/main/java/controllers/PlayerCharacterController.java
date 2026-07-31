@@ -78,10 +78,16 @@ public class PlayerCharacterController {
     @PostMapping("/{characterId}/spells/{spellId}")
     public void addSpellToCharacter(
         @PathVariable Long characterId,
-        @PathVariable Long spellId) {
-            
+        @PathVariable Long spellId,
+        @RequestBody(required = false) Map<String, Object> body) {
+
         verifyCharacterOwnership(characterId);
-        playerCharacterService.addSpellToCharacter(characterId, spellId);
+        // Multiclase (Aurora_Fixes.md #17, fase 4b): classId opcional -- ver learn-spell.
+        Long classId = null;
+        if (body != null && body.get("classId") != null) {
+            classId = Long.valueOf(body.get("classId").toString());
+        }
+        playerCharacterService.addSpellToCharacter(characterId, spellId, "CLASS", classId);
     }
         
     @PostMapping("/{characterId}/learn-spell/{spellId}")

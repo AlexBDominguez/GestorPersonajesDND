@@ -9,6 +9,7 @@ import '../../../config/class_icons.dart';
 import '../../../config/dnd_choice_options.dart';
 import '../../../models/wizard/class_option.dart';
 import '../../../viewmodels/wizard/character_creator_viewmodel.dart';
+import 'additional_class_spells_screen.dart';
 
 /// Returns the stored (resolved) choice display text for a feature at an old
 /// level in level-up mode, or null if none found.
@@ -206,8 +207,20 @@ class _ClassOptionsScreenState extends State<ClassOptionsScreen> {
   }
 
   void _onConfirm() {
+    // Multiclase (Aurora_Fixes.md #17, fase 4b): si se está configurando una clase
+    // adicional Y es lanzadora, todavía falta su paso de hechizos -- evaluado ANTES de
+    // llamar a setHpRolls() (que, para una clase adicional NO lanzadora, ya archiva y
+    // restaura la primaria ahí mismo, dejando isConfiguringAdditionalClass en false).
+    final needsSpellsStep =
+        widget.vm.isConfiguringAdditionalClass && widget.vm.isSpellcaster;
     widget.vm.setLevel(_level);
     widget.vm.setHpRolls({...?(_level > 1 ? _hpRolls : null)});
+    if (needsSpellsStep) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const AdditionalClassSpellsScreen()),
+      );
+      return;
+    }
     Navigator.of(context).pop();
   }
 
