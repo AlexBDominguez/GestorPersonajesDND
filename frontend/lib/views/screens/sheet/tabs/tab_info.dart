@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gestor_personajes_dnd/config/app_theme.dart';
+import 'package:gestor_personajes_dnd/models/character/character_class_entry.dart';
 import 'package:gestor_personajes_dnd/models/character/player_character.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -76,7 +77,7 @@ class TabInfo extends StatelessWidget{
               ? '${c.raceName ?? '—'} (${c.subraceName})'
               : c.raceName ?? '—'),
           const SizedBox(height: 8),
-          _InfoPill(label: 'Class', value: _classPillValue(c)),
+          _MulticlassPill(classes: c.classes),
         ] else
           Row(children: [
             Expanded(
@@ -306,6 +307,54 @@ class _InfoPill extends StatelessWidget{
             fontWeight: FontWeight.w600,
           ),
           overflow: TextOverflow.ellipsis),
+      ]),
+    );
+  }
+}
+
+// Multiclase (Aurora_Fixes.md #17, fase 3): variante del pill de Class con una clase por
+// línea (nombre + nivel, subclase debajo en cursiva) en vez de un único string largo
+// separado por "/", que quedaba apretado y poco legible con 2+ clases.
+class _MulticlassPill extends StatelessWidget {
+  final List<CharacterClassEntry> classes;
+  const _MulticlassPill({required this.classes});
+
+  @override
+  Widget build(BuildContext context) {
+    final sorted = [...classes]..sort((a, b) => a.classOrder.compareTo(b.classOrder));
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.surfaceVariant),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('Class',
+          style: GoogleFonts.lato(
+            color: AppTheme.textSecondary,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.8,
+          )),
+        const SizedBox(height: 6),
+        for (var i = 0; i < sorted.length; i++) ...[
+          if (i > 0) const SizedBox(height: 8),
+          Text('${sorted[i].dndClassName} ${sorted[i].level}',
+            style: GoogleFonts.lato(
+              color: AppTheme.textPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            )),
+          if (sorted[i].subclassName != null)
+            Text(sorted[i].subclassName!,
+              style: GoogleFonts.lato(
+                color: AppTheme.textSecondary,
+                fontSize: 12,
+                fontStyle: FontStyle.italic,
+              )),
+        ],
       ]),
     );
   }
